@@ -28,21 +28,21 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/stories"
-              className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium 
+              href="/explore"
+              className="inline-flex items-center justify-center px-10 py-4 text-xl font-medium 
                          bg-gold text-charcoal rounded-md transition-all duration-300
                          hover:bg-gold-400 hover:shadow-lg hover:shadow-gold/20
                          canon-glow"
             >
-              Enter the Loop
+              Enter the Archive
             </Link>
             <Link
-              href="/lore"
+              href="/stories"
               className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium
                          border border-gold/30 text-gold rounded-md transition-all duration-300
                          hover:border-gold hover:bg-gold/10"
             >
-              Explore the Canon
+              Read Stories
             </Link>
           </div>
 
