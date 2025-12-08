@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@/lib/supabase/middleware'
 
 // Routes that require authentication
 const protectedRoutes = ['/write', '/profile', '/dashboard']
@@ -7,17 +6,23 @@ const protectedRoutes = ['/write', '/profile', '/dashboard']
 // Routes that should redirect to /explore if already authenticated
 const authRoutes = ['/login']
 
+/**
+ * Lightweight middleware that checks for Supabase auth cookies.
+ * Does NOT import @supabase/ssr to avoid Edge Runtime issues with realtime-js.
+ * Actual session validation happens in Server Components/Actions.
+ */
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(request)
-
-  // Refresh session - auth only, no WebSocket
-  const { data: { user } } = await supabase.auth.getUser()
-
   const pathname = request.nextUrl.pathname
+  
+  // Check for Supabase auth cookies (they start with 'sb-')
+  // The cookie name format is: sb-<project-ref>-auth-token
+  const hasAuthCookie = request.cookies.getAll().some(cookie => 
+    cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token')
+  )
 
-  // Check if accessing a protected route without authentication
+  // Protect routes - redirect to login if no auth cookie
   if (protectedRoutes.some(route => pathname.startsWith(route))) {
-    if (!user) {
+    if (!hasAuthCookie) {
       const loginUrl = new URL('/login', request.url)
       loginUrl.searchParams.set('redirected', 'true')
       loginUrl.searchParams.set('next', pathname)
@@ -27,12 +32,12 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (authRoutes.some(route => pathname.startsWith(route))) {
-    if (user) {
+    if (hasAuthCookie) {
       return NextResponse.redirect(new URL('/explore', request.url))
     }
   }
 
-  return response()
+  return NextResponse.next()
 }
 
 export const config = {
