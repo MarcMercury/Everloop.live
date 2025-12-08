@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 7%;
+    --foreground: 40 20% 95%;
+
+    --card: 220 22% 10%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 220 22% 10%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 43 72% 47%;
+    --primary-foreground: 220 20% 7%;
+
+    --secondary: 220 22% 15%;
+    --secondary-foreground: 40 20% 95%;
+
+    --muted: 220 22% 15%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 43 72% 47%;
+    --accent-foreground: 220 20% 7%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 40 20% 95%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 43 72% 47%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-charcoal text-foreground font-sans antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Atmospheric background gradient */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      #0f1419 0%,
+      #161d26 50%,
+      #0f1419 100%
+    );
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0f1419;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #3f444b;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #5a636e;
+  }
+
+  /* Selection styling with gold accent */
+  ::selection {
+    background: rgba(201, 162, 39, 0.3);
+    color: #f6f0cc;
+  }
+
+  /* Headings use serif font */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Canon glow effect for special elements */
+  .canon-glow {
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.3);
+  }
+
+  .canon-glow:hover {
+    box-shadow: 0 0 30px rgba(201, 162, 39, 0.5);
+  }
+
+  /* Text with canon styling */
+  .canon-text {
+    @apply text-gold font-serif;
+    text-shadow: 0 0 20px rgba(201, 162, 39, 0.4);
+  }
+
+  /* Story card styling */
+  .story-card {
+    @apply bg-navy/50 border border-charcoal-700 rounded-lg p-6;
+    @apply transition-all duration-300;
+    @apply hover:border-gold/30 hover:shadow-lg;
+  }
+
+  /* Prose styling for story content */
+  .prose-everloop {
+    @apply prose prose-invert max-w-none;
+    @apply prose-headings:font-serif prose-headings:text-foreground;
+    @apply prose-p:text-foreground/90 prose-p:leading-relaxed;
+    @apply prose-a:text-gold prose-a:no-underline hover:prose-a:underline;
+    @apply prose-blockquote:border-l-gold prose-blockquote:italic;
+    @apply prose-strong:text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Fade effects for atmospheric feel */
+  .fade-edges {
+    mask-image: linear-gradient(
+      to bottom,
+      transparent,
+      black 5%,
+      black 95%,
+      transparent
+    );
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-charcoal/80 backdrop-blur-md;
+  }
+
+  /* Shimmer effect for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      #161d26 0%,
+      #1f2937 50%,
+      #161d26 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
