@@ -1,5 +1,5 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createMiddlewareClient } from '@/lib/supabase/middleware'
 
 // Routes that require authentication
 const protectedRoutes = ['/write', '/profile', '/dashboard']
@@ -8,43 +8,9 @@ const protectedRoutes = ['/write', '/profile', '/dashboard']
 const authRoutes = ['/login']
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
+  const { supabase, response } = createMiddlewareClient(request)
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({ name, value, ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({ name, value, ...options })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({ name, value: '', ...options })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({ name, value: '', ...options })
-        },
-      },
-    }
-  )
-
-  // Refresh session
+  // Refresh session - auth only, no WebSocket
   const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
@@ -66,7 +32,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return response
+  return response()
 }
 
 export const config = {
