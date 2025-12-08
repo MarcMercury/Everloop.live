@@ -31,17 +31,17 @@ export default async function AdminLayout({
   }
   
   return (
-    <div className="min-h-screen bg-charcoal">
+    <div className="min-h-screen">
       {/* Admin Header */}
-      <header className="sticky top-0 z-50 glass border-b border-charcoal-700">
+      <header className="sticky top-0 z-50 glass">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
               <Link href="/" className="text-xl font-serif">
-                <span className="text-foreground">Ever</span>
+                <span className="text-parchment">Ever</span>
                 <span className="text-gold">loop</span>
               </Link>
-              <span className="text-xs px-2 py-1 rounded bg-gold/20 text-gold font-medium">
+              <span className="text-xs px-2 py-1 rounded bg-gold/20 text-gold font-medium border border-gold/30">
                 ADMIN
               </span>
             </div>
@@ -49,20 +49,20 @@ export default async function AdminLayout({
             <nav className="flex items-center gap-6 text-sm">
               <Link 
                 href="/admin" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-parchment-muted hover:text-parchment transition-colors"
               >
                 Submissions
               </Link>
               <Link 
                 href="/admin/entities" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-parchment-muted hover:text-parchment transition-colors"
               >
                 Entities
               </Link>
-              <div className="w-px h-4 bg-charcoal-700" />
+              <div className="w-px h-4 bg-gold/20" />
               <Link 
                 href="/explore" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-parchment-muted hover:text-parchment transition-colors"
               >
                 ← Back to Site
               </Link>

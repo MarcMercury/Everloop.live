@@ -72,24 +72,30 @@ export function CanonCard({ entity, className }: CanonCardProps) {
       <Card
         className={cn(
           'group relative overflow-hidden transition-all duration-300',
-          'hover:border-gold/40 hover:shadow-lg hover:shadow-gold/5',
+          'bg-gradient-to-br from-teal-rich/80 to-teal-deep/90',
+          'border-gold/10 hover:border-gold/30',
+          'hover:shadow-xl hover:shadow-gold/10',
           'hover:-translate-y-1',
-          isCanonical && 'border-gold/20',
+          isCanonical && 'border-gold/25 shadow-lg shadow-gold/5',
           className
         )}
       >
         {/* Canonical glow effect */}
         {isCanonical && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gold/8 via-transparent to-transparent pointer-events-none" />
         )}
+        
+        {/* Subtle texture overlay */}
+        <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
+             style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
 
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 relative">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-lg" aria-hidden="true">
                 {getTypeIcon(entity.type)}
               </span>
-              <CardTitle className="text-xl group-hover:text-gold transition-colors">
+              <CardTitle className="text-xl text-parchment group-hover:text-gold transition-colors">
                 {entity.name}
               </CardTitle>
             </div>
@@ -99,16 +105,16 @@ export function CanonCard({ entity, className }: CanonCardProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 relative">
           {/* Description */}
-          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+          <p className="text-sm text-parchment-muted line-clamp-3 leading-relaxed">
             {entity.description || 'No description available.'}
           </p>
 
           {/* Stability Rating */}
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Canon Stability</span>
+              <span className="text-parchment-muted">Canon Stability</span>
               <span className={cn(
                 'font-medium',
                 stabilityPercent >= 70 ? 'text-emerald-400' : 

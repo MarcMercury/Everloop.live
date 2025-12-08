@@ -74,16 +74,17 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-charcoal-700 bg-charcoal/80 backdrop-blur-md sticky top-0 z-10">
+      <header className="glass sticky top-0 z-10">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="text-xl font-serif">
-              <span className="text-foreground">Ever</span>
+              <span className="text-parchment">Ever</span>
               <span className="text-gold">loop</span>
             </Link>
             <nav className="flex items-center gap-6 text-sm">
               <Link href="/explore" className="text-gold">Archive</Link>
-              <Link href="/stories" className="text-muted-foreground hover:text-foreground transition-colors">Stories</Link>
+              <Link href="/stories" className="text-parchment-muted hover:text-parchment transition-colors">Stories</Link>
+              <Link href="/write" className="text-parchment-muted hover:text-parchment transition-colors">Write</Link>
             </nav>
           </div>
         </div>
@@ -92,10 +93,10 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       <main className="container mx-auto px-6 py-12">
         {/* Page Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-serif mb-4">
+          <h1 className="text-4xl md:text-5xl font-serif mb-4 text-parchment">
             The Everloop <span className="canon-text">Archive</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          <p className="text-parchment-muted text-lg max-w-2xl mx-auto leading-relaxed">
             Explore the canonical entities that shape our shared universe. 
             Every character, location, and artifact documented here is part of the living lore.
           </p>
@@ -140,15 +141,15 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                   'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all',
                   'border',
                   isActive
-                    ? 'bg-gold/10 border-gold/50 text-gold'
-                    : 'bg-charcoal-800 border-charcoal-700 text-muted-foreground hover:border-charcoal-600 hover:text-foreground'
+                    ? 'bg-gold/15 border-gold/50 text-gold shadow-sm shadow-gold/10'
+                    : 'bg-teal-rich/50 border-gold/10 text-parchment-muted hover:border-gold/25 hover:text-parchment'
                 )}
               >
                 <span>{filter.icon}</span>
                 <span>{filter.label}</span>
                 <span className={cn(
                   'text-xs px-1.5 py-0.5 rounded-full',
-                  isActive ? 'bg-gold/20' : 'bg-charcoal-700'
+                  isActive ? 'bg-gold/25' : 'bg-teal-deep/50'
                 )}>
                   {count}
                 </span>
@@ -164,8 +165,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       </main>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-charcoal-700 mt-16">
-        <div className="container mx-auto flex items-center justify-between text-sm text-muted-foreground">
+      <footer className="py-8 px-6 border-t border-gold/10 mt-16">
+        <div className="container mx-auto flex items-center justify-between text-sm text-parchment-muted">
           <p>© 2024 Everloop. All stories live forever.</p>
           <Link href="/" className="hover:text-gold transition-colors">
             ← Back to Home

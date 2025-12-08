@@ -26,13 +26,13 @@ export async function Navbar() {
   }
   
   return (
-    <nav className="sticky top-0 z-50 glass border-b border-charcoal-700">
+    <nav className="sticky top-0 z-50 glass">
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-serif tracking-tight">
-              <span className="text-foreground">Ever</span>
+              <span className="text-parchment">Ever</span>
               <span className="canon-text">loop</span>
             </span>
           </Link>
@@ -41,7 +41,7 @@ export async function Navbar() {
           <div className="flex items-center gap-6">
             <Link 
               href="/explore"
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">Archive</span>
@@ -51,7 +51,7 @@ export async function Navbar() {
               <>
                 {/* Authenticated User */}
                 <Link href="/write">
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/50">
                     <PenLine className="w-4 h-4" />
                     <span className="hidden sm:inline">Write</span>
                   </Button>
@@ -61,17 +61,17 @@ export async function Navbar() {
                 <div className="flex items-center gap-3">
                   <Link 
                     href="/profile"
-                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
                   >
                     {profile?.avatar_url ? (
                       <img 
                         src={profile.avatar_url} 
                         alt={profile.display_name || profile.username || 'Profile'} 
-                        className="w-8 h-8 rounded-full border border-charcoal-700"
+                        className="w-8 h-8 rounded-full border border-gold/20"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-navy border border-charcoal-700 flex items-center justify-center">
-                        <User className="w-4 h-4 text-muted-foreground" />
+                      <div className="w-8 h-8 rounded-full bg-teal-rich border border-gold/20 flex items-center justify-center">
+                        <User className="w-4 h-4 text-parchment-muted" />
                       </div>
                     )}
                     <span className="hidden md:inline">
@@ -85,7 +85,7 @@ export async function Navbar() {
                       type="submit"
                       variant="ghost" 
                       size="sm"
-                      className="text-muted-foreground hover:text-foreground"
+                      className="text-parchment-muted hover:text-parchment hover:bg-teal-light/20"
                     >
                       <LogOut className="w-4 h-4" />
                       <span className="hidden sm:inline ml-2">Sign Out</span>
@@ -97,7 +97,7 @@ export async function Navbar() {
               <>
                 {/* Unauthenticated User */}
                 <Link href="/login">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/50">
                     Sign In
                   </Button>
                 </Link>

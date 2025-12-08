@@ -3,43 +3,43 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-gold/30 focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground shadow hover:bg-primary/80",
+          "border-gold/30 bg-gold/15 text-gold shadow-sm",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-teal-light/30 bg-teal-light/10 text-parchment-muted",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground shadow hover:bg-destructive/80",
-        outline: "text-foreground",
-        // Entity type variants
+          "border-red-500/30 bg-red-500/15 text-red-400 shadow-sm",
+        outline: "text-parchment border-gold/20",
+        // Entity type variants - more vibrant with glow
         character:
-          "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
+          "border-emerald-500/40 bg-emerald-500/15 text-emerald-400 shadow-sm shadow-emerald-500/10",
         location:
-          "border-blue-500/30 bg-blue-500/10 text-blue-400",
+          "border-sky-500/40 bg-sky-500/15 text-sky-400 shadow-sm shadow-sky-500/10",
         artifact:
-          "border-gold/30 bg-gold/10 text-gold",
+          "border-gold/50 bg-gold/20 text-gold shadow-sm shadow-gold/15",
         event:
-          "border-purple-500/30 bg-purple-500/10 text-purple-400",
+          "border-violet-500/40 bg-violet-500/15 text-violet-400 shadow-sm shadow-violet-500/10",
         faction:
-          "border-red-500/30 bg-red-500/10 text-red-400",
+          "border-rose-500/40 bg-rose-500/15 text-rose-400 shadow-sm shadow-rose-500/10",
         concept:
-          "border-cyan-500/30 bg-cyan-500/10 text-cyan-400",
+          "border-cyan-500/40 bg-cyan-500/15 text-cyan-400 shadow-sm shadow-cyan-500/10",
         creature:
-          "border-orange-500/30 bg-orange-500/10 text-orange-400",
+          "border-amber-500/40 bg-amber-500/15 text-amber-400 shadow-sm shadow-amber-500/10",
         // Status variants
         canonical:
-          "border-gold/50 bg-gold/20 text-gold",
+          "border-gold/60 bg-gold/25 text-gold shadow-md shadow-gold/20",
         draft:
           "border-zinc-500/30 bg-zinc-500/10 text-zinc-400",
         proposed:
-          "border-blue-500/30 bg-blue-500/10 text-blue-400",
+          "border-sky-500/30 bg-sky-500/10 text-sky-400",
         deprecated:
           "border-red-500/30 bg-red-500/10 text-red-400",
         contested:
-          "border-amber-500/30 bg-amber-500/10 text-amber-400",
+          "border-amber-500/40 bg-amber-500/15 text-amber-400",
       },
     },
     defaultVariants: {
