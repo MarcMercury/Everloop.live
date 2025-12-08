@@ -60,7 +60,7 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Atmospheric layered background - painterly feel */
+  /* Atmospheric layered background - clean gradient */
   body::before {
     content: "";
     position: fixed;
@@ -69,10 +69,8 @@
     right: 0;
     bottom: 0;
     background: 
-      /* Subtle noise texture overlay */
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E"),
-      /* Radial glow from center */
-      radial-gradient(ellipse 80% 50% at 50% 30%, rgba(26, 51, 51, 0.8) 0%, transparent 70%),
+      /* Radial glow from center-top */
+      radial-gradient(ellipse 100% 60% at 50% 0%, rgba(26, 51, 51, 0.6) 0%, transparent 60%),
       /* Vertical atmospheric gradient */
       linear-gradient(
         180deg,
@@ -82,7 +80,6 @@
         #142424 75%,
         #0d1a1a 100%
       );
-    opacity: 1;
     z-index: -2;
     pointer-events: none;
   }
@@ -314,16 +311,6 @@
   .parchment-bg {
     background: 
       linear-gradient(135deg, rgba(26, 48, 48, 0.9) 0%, rgba(20, 36, 36, 0.95) 100%);
-    position: relative;
-  }
-
-  .parchment-bg::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    opacity: 0.03;
-    pointer-events: none;
   }
 
   /* Shimmer effect - warmer */
