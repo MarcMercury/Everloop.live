@@ -8,10 +8,13 @@ interface CookieToSet {
 }
 
 /**
- * Creates a lightweight Supabase client for Edge Runtime middleware.
- * Uses the new cookie API pattern and disables features not compatible with Edge.
+ * Creates a Supabase client for use in API routes (NOT Edge middleware).
+ * This is for route handlers that run in Node.js runtime, not Edge.
+ * 
+ * For Edge middleware, use cookie-based checks instead of this client
+ * to avoid @supabase/realtime-js Edge Runtime incompatibility.
  */
-export function createMiddlewareClient(request: NextRequest) {
+export function createRouteHandlerClient(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -25,7 +28,7 @@ export function createMiddlewareClient(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({
@@ -43,15 +46,12 @@ export function createMiddlewareClient(request: NextRequest) {
 }
 
 /**
- * Updates the Supabase auth session in middleware.
- * Call this in your middleware.ts to keep sessions fresh.
+ * Helper to check if auth cookies exist (for Edge-compatible checks).
+ * Use this in middleware instead of importing the Supabase client.
  */
-export async function updateSession(request: NextRequest) {
-  const { supabase, response } = createMiddlewareClient(request)
-
-  // Refresh session if expired - this is auth-only, no realtime
-  await supabase.auth.getUser()
-
-  return response()
+export function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some(cookie => 
+    cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token')
+  )
 }
 
