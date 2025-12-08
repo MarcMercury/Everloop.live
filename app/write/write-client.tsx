@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TiptapEditor, type JSONContent } from '@/components/editor/tiptap-editor'
@@ -9,8 +9,11 @@ import { Button } from '@/components/ui/button'
 import { submitStory, saveDraft } from '@/lib/actions/story'
 import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
 import { CanonFeedback } from '@/components/editor/canon-feedback'
+import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
+import { RosterSidebar } from '@/components/editor/roster-sidebar'
 import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles } from 'lucide-react'
 import { type Json } from '@/types/database'
+import { type Editor } from '@tiptap/react'
 
 export function WriteClient() {
   const router = useRouter()
@@ -26,6 +29,11 @@ export function WriteClient() {
   // Canon analysis state
   const [canonAnalysis, setCanonAnalysis] = useState<CanonAnalysisResult | null>(null)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  
+  // AI features state
+  const [showStreamModal, setShowStreamModal] = useState(false)
+  const [showRosterSidebar, setShowRosterSidebar] = useState(false)
+  const editorRef = useRef<Editor | null>(null)
   
   const handleContentChange = (newContent: JSONContent) => {
     setContent(newContent)
@@ -59,6 +67,37 @@ export function WriteClient() {
     }
     
     return ''
+  }
+  
+  // Handle editor ready
+  const handleEditorReady = (editor: Editor) => {
+    editorRef.current = editor
+  }
+  
+  // Insert prose from Stream of Consciousness
+  const handleInsertProse = (prose: string) => {
+    if (editorRef.current) {
+      editorRef.current
+        .chain()
+        .focus()
+        .insertContent(`<p>${prose}</p>`)
+        .run()
+    }
+  }
+  
+  // Insert character from Roster
+  const handleInsertCharacter = (name: string, description: string) => {
+    if (editorRef.current) {
+      const insertText = description 
+        ? `**${name}** — ${description}`
+        : `**${name}**`
+      editorRef.current
+        .chain()
+        .focus()
+        .insertContent(insertText)
+        .run()
+    }
+    setShowRosterSidebar(false)
   }
   
   // Run canon analysis
@@ -233,6 +272,10 @@ export function WriteClient() {
         <TiptapEditor
           onChange={handleContentChange}
           placeholder="Begin your story... Let your words flow into the Everloop."
+          onMagicWand={() => setShowStreamModal(true)}
+          onCanonCheck={handleAnalyze}
+          onRosterOpen={() => setShowRosterSidebar(true)}
+          onEditorReady={handleEditorReady}
         />
         
         {/* Canon Feedback */}
@@ -268,6 +311,20 @@ export function WriteClient() {
           </ul>
         </div>
       </main>
+      
+      {/* Stream of Consciousness Modal */}
+      <StreamOfConsciousnessModal
+        isOpen={showStreamModal}
+        onClose={() => setShowStreamModal(false)}
+        onInsert={handleInsertProse}
+      />
+      
+      {/* Roster Sidebar */}
+      <RosterSidebar
+        isOpen={showRosterSidebar}
+        onClose={() => setShowRosterSidebar(false)}
+        onInsertCharacter={handleInsertCharacter}
+      />
     </div>
   )
 }

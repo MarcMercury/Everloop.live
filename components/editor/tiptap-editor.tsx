@@ -13,6 +13,9 @@ import {
   ListOrdered,
   Undo,
   Redo,
+  Wand2,
+  Shield,
+  User,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type JSONContent } from '@tiptap/react'
@@ -23,6 +26,7 @@ interface ToolbarButtonProps {
   disabled?: boolean
   children: React.ReactNode
   title: string
+  highlight?: boolean
 }
 
 function ToolbarButton({
@@ -31,6 +35,7 @@ function ToolbarButton({
   disabled,
   children,
   title,
+  highlight,
 }: ToolbarButtonProps) {
   return (
     <button
@@ -42,7 +47,8 @@ function ToolbarButton({
         'p-2 rounded-md transition-colors',
         'hover:bg-charcoal-700 hover:text-gold',
         'disabled:opacity-50 disabled:cursor-not-allowed',
-        isActive ? 'bg-charcoal-700 text-gold' : 'text-muted-foreground'
+        isActive ? 'bg-charcoal-700 text-gold' : 'text-muted-foreground',
+        highlight && 'text-gold hover:bg-gold/10'
       )}
     >
       {children}
@@ -52,13 +58,53 @@ function ToolbarButton({
 
 interface ToolbarProps {
   editor: Editor | null
+  onMagicWand?: () => void
+  onCanonCheck?: () => void
+  onRosterOpen?: () => void
 }
 
-function Toolbar({ editor }: ToolbarProps) {
+function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen }: ToolbarProps) {
   if (!editor) return null
 
   return (
     <div className="flex items-center gap-1 p-2 border-b border-charcoal-700 bg-navy/50 rounded-t-lg flex-wrap">
+      {/* AI Tools */}
+      {(onMagicWand || onCanonCheck || onRosterOpen) && (
+        <>
+          {onMagicWand && (
+            <ToolbarButton
+              onClick={onMagicWand}
+              title="Stream of Consciousness - Transform rough notes into prose"
+              highlight
+            >
+              <Wand2 className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+          
+          {onCanonCheck && (
+            <ToolbarButton
+              onClick={onCanonCheck}
+              title="Check Canon - Verify lore consistency"
+              highlight
+            >
+              <Shield className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+          
+          {onRosterOpen && (
+            <ToolbarButton
+              onClick={onRosterOpen}
+              title="Character Roster - Insert characters"
+              highlight
+            >
+              <User className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+          
+          <div className="w-px h-6 bg-charcoal-700 mx-1" />
+        </>
+      )}
+
       {/* Text Formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -149,6 +195,10 @@ interface TiptapEditorProps {
   onChange?: (content: JSONContent) => void
   placeholder?: string
   className?: string
+  onMagicWand?: () => void
+  onCanonCheck?: () => void
+  onRosterOpen?: () => void
+  onEditorReady?: (editor: Editor) => void
 }
 
 export function TiptapEditor({
@@ -156,6 +206,10 @@ export function TiptapEditor({
   onChange,
   placeholder = 'Begin your story...',
   className,
+  onMagicWand,
+  onCanonCheck,
+  onRosterOpen,
+  onEditorReady,
 }: TiptapEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -186,6 +240,9 @@ export function TiptapEditor({
     onUpdate: ({ editor }) => {
       onChange?.(editor.getJSON())
     },
+    onCreate: ({ editor }) => {
+      onEditorReady?.(editor)
+    },
   })
 
   return (
@@ -197,7 +254,12 @@ export function TiptapEditor({
         className
       )}
     >
-      <Toolbar editor={editor} />
+      <Toolbar 
+        editor={editor} 
+        onMagicWand={onMagicWand}
+        onCanonCheck={onCanonCheck}
+        onRosterOpen={onRosterOpen}
+      />
       <EditorContent editor={editor} />
       
       {/* Editor styles */}

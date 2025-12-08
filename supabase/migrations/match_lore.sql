@@ -13,11 +13,11 @@ CREATE OR REPLACE FUNCTION match_canon_entities(
 RETURNS TABLE (
   id uuid,
   name text,
-  type canon_entity_type,
+  type text,
   description text,
   extended_lore jsonb,
   stability_rating decimal,
-  status canon_status,
+  status text,
   tags text[],
   similarity float
 )
