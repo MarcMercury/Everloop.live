@@ -37,12 +37,12 @@ export default function Home() {
               Enter the Archive
             </Link>
             <Link
-              href="/stories"
+              href="/write"
               className="inline-flex items-center justify-center px-8 py-3 text-lg font-medium
                          border border-gold/30 text-gold rounded-md transition-all duration-300
                          hover:border-gold hover:bg-gold/10"
             >
-              Read Stories
+              Write a Story
             </Link>
           </div>
 
