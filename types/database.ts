@@ -278,7 +278,21 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      match_canon_entities: {
+        Args: {
+          query_embedding: number[]
+          match_threshold: number
+          match_count: number
+        }
+        Returns: {
+          id: string
+          name: string
+          type: string
+          description: string
+          status: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       canon_entity_type: CanonEntityType

@@ -7,21 +7,31 @@ import { TiptapEditor, type JSONContent } from '@/components/editor/tiptap-edito
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { submitStory, saveDraft } from '@/lib/actions/story'
-import { ArrowLeft, Send, Save, Loader2, BookOpen } from 'lucide-react'
+import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
+import { CanonFeedback } from '@/components/editor/canon-feedback'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles } from 'lucide-react'
 import { type Json } from '@/types/database'
 
 export function WriteClient() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isSaving, setIsSaving] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   
   const [title, setTitle] = useState('')
   const [content, setContent] = useState<JSONContent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [wordCount, setWordCount] = useState(0)
   
+  // Canon analysis state
+  const [canonAnalysis, setCanonAnalysis] = useState<CanonAnalysisResult | null>(null)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  
   const handleContentChange = (newContent: JSONContent) => {
     setContent(newContent)
+    // Reset analysis when content changes
+    setCanonAnalysis(null)
+    setAnalysisError(null)
     
     // Calculate word count
     const text = extractTextFromJSON(newContent)
@@ -51,10 +61,54 @@ export function WriteClient() {
     return ''
   }
   
+  // Run canon analysis
+  const handleAnalyze = async () => {
+    if (!content || !title) return
+    
+    setIsAnalyzing(true)
+    setAnalysisError(null)
+    
+    try {
+      const storyText = extractTextFromJSON(content)
+      const result = await analyzeStoryCanon(storyText, title)
+      
+      if (result.success && result.analysis) {
+        setCanonAnalysis(result.analysis)
+      } else {
+        setAnalysisError(result.error || 'Analysis failed')
+      }
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : 'Analysis failed')
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+  
   const handleSubmit = () => {
     setError(null)
     
+    // Check if canon analysis was run and score is too low
+    if (canonAnalysis && canonAnalysis.score < 50) {
+      setError('Your story has significant lore violations. Please revise before submitting.')
+      return
+    }
+    
     startTransition(async () => {
+      // If no analysis yet, run it first
+      if (!canonAnalysis) {
+        const storyText = extractTextFromJSON(content!)
+        const analysisResult = await analyzeStoryCanon(storyText, title)
+        
+        if (analysisResult.success && analysisResult.analysis) {
+          setCanonAnalysis(analysisResult.analysis)
+          
+          if (analysisResult.analysis.score < 50) {
+            setError('Your story has significant lore violations. Please revise before submitting.')
+            return
+          }
+        }
+      }
+      
       const result = await submitStory(title, content as Json)
       
       if (!result.success) {
@@ -118,12 +172,28 @@ export function WriteClient() {
                 <span className="ml-2">Save Draft</span>
               </Button>
               
+              {/* Canon Check */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAnalyze}
+                disabled={isAnalyzing || !title || !content || wordCount < 50}
+                className="border-gold/50 hover:border-gold hover:bg-gold/10"
+              >
+                {isAnalyzing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-gold" />
+                )}
+                <span className="ml-2">Check Canon</span>
+              </Button>
+              
               {/* Submit */}
               <Button
                 variant="canon"
                 size="sm"
                 onClick={handleSubmit}
-                disabled={isPending || !title || !content || wordCount < 50}
+                disabled={isPending || !title || !content || wordCount < 50 || (canonAnalysis !== null && canonAnalysis.score < 50)}
               >
                 {isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -164,6 +234,16 @@ export function WriteClient() {
           onChange={handleContentChange}
           placeholder="Begin your story... Let your words flow into the Everloop."
         />
+        
+        {/* Canon Feedback */}
+        <div className="mt-6">
+          <CanonFeedback
+            analysis={canonAnalysis}
+            isAnalyzing={isAnalyzing}
+            error={analysisError}
+            onRetry={handleAnalyze}
+          />
+        </div>
         
         {/* Guidelines */}
         <div className="mt-8 p-6 rounded-lg bg-navy/30 border border-charcoal-700">
