@@ -52,31 +52,32 @@ export default function LoginPage() {
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-charcoal via-navy to-charcoal -z-10" />
-      
       {/* Back link */}
       <Link 
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute top-6 left-6 flex items-center gap-2 text-parchment-muted hover:text-parchment transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
         <span>Home</span>
       </Link>
       
+      {/* Decorative orbs */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gold/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-teal-light/10 rounded-full blur-3xl pointer-events-none" />
+      
       {/* Logo */}
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center relative z-10">
         <h1 className="text-4xl font-serif tracking-tight">
-          <span className="text-foreground">Ever</span>
+          <span className="text-parchment">Ever</span>
           <span className="canon-text">loop</span>
         </h1>
-        <p className="text-muted-foreground mt-2">Enter the universe</p>
+        <p className="text-parchment-muted mt-2">Enter the universe</p>
       </div>
       
-      <Card className="w-full max-w-md bg-navy/80 border-charcoal-700 backdrop-blur">
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader className="text-center pb-4">
           <CardTitle className="font-serif text-2xl">Welcome</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-parchment-muted">
             Sign in to write your story in the Everloop
           </CardDescription>
         </CardHeader>
