@@ -16,14 +16,11 @@ export default async function AdminLayout({
     redirect('/login')
   }
   
-  // Check is_admin flag
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single() as { data: { is_admin: boolean | null } | null; error: Error | null }
+  // Check admin status using RPC function (bypasses RLS)
+  const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin_check')
   
-  if (!profile || profile.is_admin !== true) {
+  if (rpcError || !isAdmin) {
+    console.error('[AdminLayout] Access denied:', rpcError?.message)
     redirect('/explore')
   }
   
