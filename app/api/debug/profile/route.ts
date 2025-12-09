@@ -21,11 +21,15 @@ export async function GET() {
       })
     }
     
+    // Fetch profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, username, display_name, is_admin')
+      .select('id, username, display_name')
       .eq('id', user.id)
       .single()
+    
+    // Use RPC to check admin status
+    const { data: isAdminRpc, error: rpcError } = await supabase.rpc('is_admin_check')
     
     return NextResponse.json({
       status: 'ok',
@@ -37,9 +41,12 @@ export async function GET() {
       profileError: profileError ? {
         message: profileError.message,
         code: profileError.code,
-        details: profileError.details,
       } : null,
-      isAdmin: profile?.is_admin === true,
+      isAdminRpc: isAdminRpc,
+      rpcError: rpcError ? {
+        message: rpcError.message,
+        code: rpcError.code,
+      } : null,
     })
   } catch (error) {
     return NextResponse.json({ 
