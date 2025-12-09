@@ -23,7 +23,7 @@ export async function login(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
@@ -32,6 +32,38 @@ export async function login(formData: FormData): Promise<AuthResult> {
     return {
       success: false,
       error: error.message,
+    }
+  }
+  
+  // Verify session was created
+  if (!data.session) {
+    return {
+      success: false,
+      error: 'Failed to create session. Please try again.',
+    }
+  }
+  
+  // Ensure profile exists for this user (handle orphan case)
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .eq('id', data.user.id)
+    .single()
+  
+  if (profileError || !profile) {
+    // Profile missing - create one with fallback username from email
+    const fallbackUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + Date.now().toString(36).slice(-4)
+    const { error: createError } = await supabase
+      .from('profiles')
+      .insert({
+        id: data.user.id,
+        username: fallbackUsername,
+        display_name: data.user.user_metadata?.display_name || fallbackUsername,
+      } as never)
+    
+    if (createError) {
+      console.error('Failed to create missing profile on login:', createError)
+      // Don't fail login - user can fix profile later
     }
   }
   
@@ -55,10 +87,26 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
   
+  // Validate username format
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/
+  if (!usernameRegex.test(username)) {
+    return {
+      success: false,
+      error: 'Username can only contain letters, numbers, underscores, and hyphens.',
+    }
+  }
+  
   if (username.length < 3) {
     return {
       success: false,
       error: 'Username must be at least 3 characters.',
+    }
+  }
+  
+  if (username.length > 30) {
+    return {
+      success: false,
+      error: 'Username must be 30 characters or less.',
     }
   }
   
@@ -69,11 +117,11 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  // Check if username is already taken
+  // Check if username is already taken (case-insensitive)
   const { data: existingUser } = await supabase
     .from('profiles')
     .select('username')
-    .eq('username', username)
+    .ilike('username', username)
     .single()
   
   if (existingUser) {
@@ -83,14 +131,15 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  // Create the user in Supabase Auth
+  // STEP 1: Create the user in Supabase Auth
+  // Include username in metadata so the database trigger can use it
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
       data: {
-        username,
+        username: username.toLowerCase(),
         display_name: username,
       },
     },
@@ -110,21 +159,48 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  // The profile will be created automatically by the database trigger
-  // But we can also ensure it's created here as a backup
-  if (data.user) {
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert({
-        id: data.user.id,
-        username,
-        display_name: username,
-      } as never, { onConflict: 'id' })
-    
-    if (profileError) {
-      console.error('Error creating profile:', profileError)
-      // Don't return error - the trigger should handle this
+  if (!data.user) {
+    return {
+      success: false,
+      error: 'Failed to create account. Please try again.',
     }
+  }
+  
+  // STEP 2: Explicitly create the profile (backup to database trigger)
+  // The database trigger should handle this, but we ensure it here for robustness
+  const { error: profileError } = await supabase
+    .from('profiles')
+    .upsert({
+      id: data.user.id,
+      username: username.toLowerCase(),
+      display_name: username,
+      role: 'writer',
+      reputation_score: 0,
+    } as never, { 
+      onConflict: 'id',
+      ignoreDuplicates: false 
+    })
+  
+  if (profileError) {
+    console.error('Error creating profile (trigger may handle):', profileError)
+    // Check if it's a genuine error vs duplicate (trigger already created it)
+    if (!profileError.message.includes('duplicate') && !profileError.message.includes('unique')) {
+      // Genuine error - but don't fail signup, the trigger should have handled it
+      console.error('Profile creation failed, relying on trigger:', profileError)
+    }
+  }
+  
+  // STEP 3: Verify profile was created
+  const { data: verifyProfile, error: verifyError } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .eq('id', data.user.id)
+    .single()
+  
+  if (verifyError || !verifyProfile) {
+    console.error('CRITICAL: Profile verification failed after signup:', verifyError)
+    // This is a serious issue - log it but let user proceed
+    // They can fix their profile later
   }
   
   return {

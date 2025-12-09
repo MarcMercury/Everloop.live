@@ -26,17 +26,17 @@ export async function POST() {
       )
     }
     
-    // Get user's profile to check role
+    // Get user's profile to check is_admin
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('is_admin')
       .eq('id', user.id)
-      .single() as { data: { role: string } | null; error: Error | null }
+      .single() as { data: { is_admin: boolean } | null; error: Error | null }
     
     if (profileError || !profile) {
       // If no profile exists, allow for development but log warning
       console.warn('No profile found for user, allowing hydration in dev mode')
-    } else if (profile.role !== 'admin' && profile.role !== 'lorekeeper') {
+    } else if (profile.is_admin !== true) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
@@ -164,6 +164,20 @@ export async function GET() {
       )
     }
     
+    // Check admin status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+    
+    if (profile?.is_admin !== true) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
+    
     // Count entities needing hydration
     const { count, error } = await supabase
       .from('canon_entities')
@@ -171,6 +185,7 @@ export async function GET() {
       .is('embedding', null)
     
     if (error) {
+      console.error('Count entities error:', error)
       return NextResponse.json(
         { error: 'Failed to count entities' },
         { status: 500 }

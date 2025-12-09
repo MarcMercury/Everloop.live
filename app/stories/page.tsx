@@ -84,13 +84,13 @@ function StoryCard({ story }: { story: Story }) {
       
       <div className="flex items-center justify-between text-sm text-parchment-muted">
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 hover:text-gold transition-colors">
             <User className="w-3 h-3" />
             {story.author?.username || 'Anonymous'}
           </span>
           <span className="flex items-center gap-1">
             <BookOpen className="w-3 h-3" />
-            {story.word_count || 0} words
+            {story.word_count?.toLocaleString() || 0} words
           </span>
         </div>
         

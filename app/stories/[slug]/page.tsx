@@ -162,20 +162,20 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
   const readingTime = getReadingTime(story.word_count || 0)
   
   return (
-    <div className="min-h-screen bg-charcoal">
+    <div className="min-h-screen bg-teal-deep">
       {/* Header */}
-      <header className="border-b border-charcoal-700 bg-charcoal/80 backdrop-blur-md sticky top-0 z-10">
+      <header className="border-b border-gold/10 bg-teal-deep/90 backdrop-blur-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link 
               href="/stories" 
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-parchment-muted hover:text-parchment transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Library</span>
             </Link>
             <Link href="/" className="text-xl font-serif">
-              <span className="text-foreground">Ever</span>
+              <span className="text-parchment">Ever</span>
               <span className="text-gold">loop</span>
             </Link>
           </div>
@@ -185,24 +185,27 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-12">
           {/* Main Content */}
-          <article>
+          <article className="max-w-prose">
             {/* Story Header */}
-            <header className="mb-10 pb-8 border-b border-charcoal-700">
+            <header className="mb-10 pb-8 border-b border-gold/10">
               <Badge className="mb-4 bg-gold/10 text-gold border-gold/30">
                 Canonical Story
               </Badge>
               
-              <h1 className="text-4xl md:text-5xl font-serif font-semibold text-foreground mb-6 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-serif font-semibold text-parchment mb-6 leading-tight">
                 {story.title}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-6 text-parchment-muted">
+                <Link 
+                  href={`/profile/${story.author?.username}`}
+                  className="flex items-center gap-2 hover:text-gold transition-colors"
+                >
                   <User className="w-4 h-4" />
                   <span>
                     {story.author?.display_name || story.author?.username || 'Anonymous'}
                   </span>
-                </div>
+                </Link>
                 
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
@@ -225,43 +228,41 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
               </div>
             </header>
             
-            {/* Story Content */}
-            <div className="prose prose-lg prose-invert max-w-none
-                            prose-p:font-serif prose-p:text-foreground/90 prose-p:leading-relaxed prose-p:text-lg
-                            prose-headings:font-serif prose-headings:text-foreground
-                            prose-blockquote:border-l-gold prose-blockquote:border-l-2 prose-blockquote:pl-6 
-                            prose-blockquote:italic prose-blockquote:text-muted-foreground
-                            prose-strong:text-foreground">
+            {/* Story Content - Crimson Text serif for body */}
+            <div className="story-content space-y-6">
               {paragraphs.map((paragraph, index) => (
-                <p key={index} className="mb-6 first-letter:text-3xl first-letter:font-serif first-letter:text-gold first-letter:float-left first-letter:mr-2 first-letter:mt-1">
+                <p 
+                  key={index} 
+                  className="font-serif text-lg text-parchment/90 leading-relaxed first-letter:text-3xl first-letter:font-serif first-letter:text-gold first-letter:float-left first-letter:mr-2 first-letter:mt-1"
+                >
                   {paragraph}
                 </p>
               ))}
               
               {paragraphs.length === 0 && (
-                <p className="text-muted-foreground italic">
+                <p className="text-parchment-muted italic">
                   This story has no content yet.
                 </p>
               )}
             </div>
             
             {/* End Marker */}
-            <div className="mt-12 pt-8 border-t border-charcoal-700 text-center">
+            <div className="mt-12 pt-8 border-t border-gold/10 text-center">
               <span className="text-gold text-2xl">◈</span>
-              <p className="text-muted-foreground text-sm mt-4">
+              <p className="text-parchment-muted text-sm mt-4">
                 End of &quot;{story.title}&quot;
               </p>
             </div>
           </article>
           
-          {/* Sidebar */}
+          {/* Sidebar - Lore Wiki Cards */}
           <aside className="lg:sticky lg:top-24 lg:self-start space-y-6">
             {/* Mentioned Entities */}
             {mentionedEntities.length > 0 && (
-              <div className="p-4 rounded-lg bg-navy/30 border border-charcoal-700">
-                <h3 className="font-medium text-foreground mb-4 flex items-center gap-2">
+              <div className="p-4 rounded-lg bg-teal-rich/50 border border-gold/10">
+                <h3 className="font-medium text-parchment mb-4 flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-gold" />
-                  Mentioned in this story
+                  Lore Mentioned
                 </h3>
                 
                 <div className="space-y-3">
@@ -269,16 +270,16 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
                     <Link
                       key={entity.id}
                       href={`/explore?entity=${entity.slug}`}
-                      className="block p-3 rounded bg-charcoal-700/50 hover:bg-charcoal-700 transition-colors"
+                      className="block p-3 rounded bg-teal-deep/50 border border-gold/5 hover:border-gold/20 transition-colors"
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <EntityTypeIcon type={entity.type} />
-                        <span className="font-medium text-foreground text-sm">
+                        <span className="font-medium text-parchment text-sm">
                           {entity.name}
                         </span>
                       </div>
                       {entity.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">
+                        <p className="text-xs text-parchment-muted line-clamp-2">
                           {entity.description}
                         </p>
                       )}
@@ -290,39 +291,42 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
             
             {/* Author Card */}
             {story.author && (
-              <div className="p-4 rounded-lg bg-navy/30 border border-charcoal-700">
-                <h3 className="font-medium text-foreground mb-3">About the Author</h3>
+              <Link 
+                href={`/profile/${story.author.username}`}
+                className="block p-4 rounded-lg bg-teal-rich/50 border border-gold/10 hover:border-gold/20 transition-colors"
+              >
+                <h3 className="font-medium text-parchment mb-3">About the Author</h3>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
                     <User className="w-5 h-5 text-gold" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">
+                    <p className="font-medium text-parchment">
                       {story.author.display_name || story.author.username}
                     </p>
-                    <p className="text-xs text-muted-foreground">Everloop Writer</p>
+                    <p className="text-xs text-parchment-muted">View Profile →</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             )}
             
-            {/* Share / Actions */}
-            <div className="p-4 rounded-lg bg-navy/30 border border-charcoal-700">
-              <h3 className="font-medium text-foreground mb-3">Explore More</h3>
+            {/* Explore Actions */}
+            <div className="p-4 rounded-lg bg-teal-rich/50 border border-gold/10">
+              <h3 className="font-medium text-parchment mb-3">Explore More</h3>
               <div className="space-y-2">
                 <Link
                   href="/stories"
-                  className="block w-full py-2 px-3 rounded bg-charcoal-700/50 hover:bg-charcoal-700 
-                             text-sm text-center text-muted-foreground hover:text-foreground transition-colors"
+                  className="block w-full py-2 px-3 rounded bg-teal-deep/50 border border-gold/5 hover:border-gold/20 
+                             text-sm text-center text-parchment-muted hover:text-parchment transition-colors"
                 >
-                  Browse all stories
+                  Browse Library
                 </Link>
                 <Link
                   href="/explore"
-                  className="block w-full py-2 px-3 rounded bg-charcoal-700/50 hover:bg-charcoal-700 
-                             text-sm text-center text-muted-foreground hover:text-foreground transition-colors"
+                  className="block w-full py-2 px-3 rounded bg-teal-deep/50 border border-gold/5 hover:border-gold/20 
+                             text-sm text-center text-parchment-muted hover:text-parchment transition-colors"
                 >
-                  Explore the Archive
+                  Explore Archive
                 </Link>
               </div>
             </div>
@@ -331,8 +335,8 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
       </div>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-charcoal-700 mt-16">
-        <div className="max-w-5xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
+      <footer className="py-8 px-6 border-t border-gold/10 mt-16">
+        <div className="max-w-5xl mx-auto flex items-center justify-between text-sm text-parchment-muted">
           <p>© 2024 Everloop. All stories live forever.</p>
           <Link href="/stories" className="hover:text-gold transition-colors">
             ← Back to Library

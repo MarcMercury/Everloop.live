@@ -1,17 +1,19 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-export type AdminRole = 'admin' | 'lorekeeper'
+interface ProfileData {
+  username: string
+  is_admin: boolean | null
+}
 
 interface AdminCheck {
   isAdmin: boolean
-  role: string | null
   userId: string | null
   username: string | null
 }
 
 /**
- * Check if current user has admin privileges (admin or lorekeeper role)
+ * Check if current user has admin privileges (is_admin = true)
  * Does NOT redirect - use for conditional rendering
  */
 export async function checkAdmin(): Promise<AdminCheck> {
@@ -20,24 +22,21 @@ export async function checkAdmin(): Promise<AdminCheck> {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    return { isAdmin: false, role: null, userId: null, username: null }
+    return { isAdmin: false, userId: null, username: null }
   }
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, username')
+    .select('username, is_admin')
     .eq('id', user.id)
-    .single() as { data: { role: string; username: string } | null; error: Error | null }
+    .single() as { data: ProfileData | null; error: Error | null }
   
   if (!profile) {
-    return { isAdmin: false, role: null, userId: user.id, username: null }
+    return { isAdmin: false, userId: user.id, username: null }
   }
   
-  const isAdmin = profile.role === 'admin' || profile.role === 'lorekeeper'
-  
   return {
-    isAdmin,
-    role: profile.role,
+    isAdmin: profile.is_admin === true,
     userId: user.id,
     username: profile.username,
   }
@@ -48,7 +47,6 @@ export async function checkAdmin(): Promise<AdminCheck> {
  * Use in server components/pages that require admin access
  */
 export async function requireAdmin(): Promise<{
-  role: string
   userId: string
   username: string
 }> {
@@ -62,16 +60,15 @@ export async function requireAdmin(): Promise<{
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, username')
+    .select('username, is_admin')
     .eq('id', user.id)
-    .single() as { data: { role: string; username: string } | null; error: Error | null }
+    .single() as { data: ProfileData | null; error: Error | null }
   
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  if (!profile || profile.is_admin !== true) {
     redirect('/explore')
   }
   
   return {
-    role: profile.role,
     userId: user.id,
     username: profile.username,
   }
@@ -83,7 +80,6 @@ export async function requireAdmin(): Promise<{
  */
 export async function verifyAdmin(): Promise<{
   success: true
-  role: string
   userId: string
 } | {
   success: false
@@ -99,17 +95,16 @@ export async function verifyAdmin(): Promise<{
   
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('is_admin')
     .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
+    .single() as { data: { is_admin: boolean | null } | null; error: Error | null }
   
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  if (!profile || profile.is_admin !== true) {
     return { success: false, error: 'Admin access required' }
   }
   
   return {
     success: true,
-    role: profile.role,
     userId: user.id,
   }
 }
