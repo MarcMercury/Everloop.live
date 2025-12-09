@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next'
 import { Crimson_Text, Inter } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/navbar'
-import { AuthProfileCheck } from '@/components/auth-profile-check'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -60,7 +59,6 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.variable} ${crimsonText.variable}`}>
         <Navbar />
-        <AuthProfileCheck />
         <main>{children}</main>
       </body>
     </html>
