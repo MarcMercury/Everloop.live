@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
 
 /**
@@ -15,8 +15,17 @@ export async function POST() {
     })
     
     const supabase = await createClient()
+    const adminClient = createAdminClient()
     
-    // Check if user is authenticated and is an admin
+    if (!adminClient) {
+      console.error('Hydrate API - Admin client not available (missing service role key)')
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      )
+    }
+    
+    // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     console.log('Hydrate API - User:', user?.id, user?.email)
@@ -29,29 +38,33 @@ export async function POST() {
       )
     }
     
-    // Use RPC function to check admin status (bypasses RLS)
-    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_check')
+    // Use admin client to check if user is admin (bypasses RLS completely)
+    const { data: profile, error: profileError } = await adminClient
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single() as { data: { is_admin: boolean } | null; error: Error | null }
     
-    console.log('Hydrate API - isAdmin result:', isAdmin, 'error:', adminError)
+    console.log('Hydrate API - Profile:', profile, 'error:', profileError)
     
-    if (adminError) {
-      console.error('Admin check error:', adminError)
+    if (profileError || !profile) {
+      console.error('Profile fetch error:', profileError)
       return NextResponse.json(
         { error: 'Failed to verify admin status' },
         { status: 500 }
       )
     }
     
-    if (!isAdmin) {
-      console.log('Hydrate API - Admin check returned false for user:', user.id)
+    if (!profile.is_admin) {
+      console.log('Hydrate API - User is not admin:', user.id)
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
       )
     }
     
-    // Fetch all entities with NULL embeddings
-    const { data: entities, error: fetchError } = await supabase
+    // Use admin client to fetch and update entities (bypasses RLS)
+    const { data: entities, error: fetchError } = await adminClient
       .from('canon_entities')
       .select('id, name, description, type, extended_lore')
       .is('embedding', null) as { 
@@ -113,7 +126,7 @@ export async function POST() {
         const embedding = embeddingResponse.data[0].embedding
         
         // Update the entity with the new embedding
-        const { error: updateError } = await supabase
+        const { error: updateError } = await adminClient
           .from('canon_entities')
           .update({ embedding } as never)
           .eq('id', entity.id)
