@@ -93,6 +93,30 @@ async function getReferencedEntities(entityIds: string[]): Promise<CanonEntity[]
   return data || []
 }
 
+// Find entities mentioned in story text by name matching
+async function getMentionedEntities(contentText: string | null): Promise<CanonEntity[]> {
+  if (!contentText) return []
+
+  const supabase = await createClient()
+
+  // Get all canonical entities
+  const { data: allEntities, error } = await supabase
+    .from('canon_entities')
+    .select('id, name, slug, type, description')
+    .eq('status', 'canonical') as { data: CanonEntity[] | null; error: Error | null }
+
+  if (error || !allEntities) return []
+
+  // Find entities whose names appear in the story text (case-insensitive)
+  const lowerContent = contentText.toLowerCase()
+  const mentioned = allEntities.filter(entity => 
+    lowerContent.includes(entity.name.toLowerCase())
+  )
+
+  // Limit to 6 most relevant
+  return mentioned.slice(0, 6)
+}
+
 type TiptapNode = {
   type?: string
   text?: string
@@ -174,7 +198,17 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
   if (!story) notFound()
 
   const paragraphs = extractParagraphs(story.content)
-  const entities = await getReferencedEntities(story.referenced_entities || [])
+  
+  // Get both explicitly referenced entities and entities mentioned in text
+  const referencedEntities = await getReferencedEntities(story.referenced_entities || [])
+  const mentionedEntities = await getMentionedEntities(story.content_text)
+  
+  // Combine and deduplicate entities
+  const entityMap = new Map<string, CanonEntity>()
+  referencedEntities.forEach(e => entityMap.set(e.id, e))
+  mentionedEntities.forEach(e => entityMap.set(e.id, e))
+  const entities = Array.from(entityMap.values())
+  
   const readingTime = calculateReadingTime(story.word_count || 0)
   const publishedDate = story.published_at || story.created_at
   const displayDate = new Date(publishedDate).toLocaleDateString('en-US', {
