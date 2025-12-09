@@ -19,7 +19,10 @@ export async function POST() {
     // Check if user is authenticated and is an admin
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
+    console.log('Hydrate API - User:', user?.id, user?.email)
+    
     if (authError || !user) {
+      console.log('Hydrate API - Auth error:', authError)
       return NextResponse.json(
         { error: 'Unauthorized - Please log in' },
         { status: 401 }
@@ -28,6 +31,8 @@ export async function POST() {
     
     // Use RPC function to check admin status (bypasses RLS)
     const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_check')
+    
+    console.log('Hydrate API - isAdmin result:', isAdmin, 'error:', adminError)
     
     if (adminError) {
       console.error('Admin check error:', adminError)
@@ -38,6 +43,7 @@ export async function POST() {
     }
     
     if (!isAdmin) {
+      console.log('Hydrate API - Admin check returned false for user:', user.id)
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
