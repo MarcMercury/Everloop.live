@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
+import { WriteButton } from '@/components/write-button'
 import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library } from 'lucide-react'
 
 interface ProfileData {
@@ -82,12 +83,7 @@ export async function Navbar() {
                   <span className="hidden sm:inline">Create</span>
                 </Link>
                 
-                <Link href="/write">
-                  <Button variant="outline" size="sm" className="gap-2 border-gold/30 text-gold hover:bg-gold/10 hover:border-gold/50">
-                    <PenLine className="w-4 h-4" />
-                    <span className="hidden sm:inline">Write</span>
-                  </Button>
-                </Link>
+                <WriteButton />
                 
                 {/* Admin Link - only for admins/lorekeepers */}
                 {isAdmin && (
