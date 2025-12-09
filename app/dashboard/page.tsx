@@ -392,9 +392,17 @@ export default async function DashboardPage() {
       <footer className="py-8 px-6 border-t border-gold/10 mt-16">
         <div className="container mx-auto flex items-center justify-between text-sm text-parchment-muted">
           <p>© 2024 Everloop. All stories live forever.</p>
-          <Link href="/" className="hover:text-gold transition-colors">
-            ← Back to Home
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/about" className="hover:text-gold transition-colors">
+              About
+            </Link>
+            <Link href="/guidelines" className="hover:text-gold transition-colors">
+              Guidelines
+            </Link>
+            <Link href="/" className="hover:text-gold transition-colors">
+              ← Home
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
