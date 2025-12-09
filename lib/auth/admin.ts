@@ -1,19 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-interface ProfileData {
-  username: string
-  is_admin: boolean | null
-}
-
 interface AdminCheck {
   isAdmin: boolean
   userId: string | null
-  username: string | null
 }
 
 /**
- * Check if current user has admin privileges (is_admin = true)
+ * Check if current user has admin privileges using database function
+ * This bypasses RLS by using a SECURITY DEFINER function
  * Does NOT redirect - use for conditional rendering
  */
 export async function checkAdmin(): Promise<AdminCheck> {
@@ -22,23 +17,20 @@ export async function checkAdmin(): Promise<AdminCheck> {
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
-    return { isAdmin: false, userId: null, username: null }
+    return { isAdmin: false, userId: null }
   }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, is_admin')
-    .eq('id', user.id)
-    .single() as { data: ProfileData | null; error: Error | null }
+  // Use RPC to check admin status - bypasses RLS
+  const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
   
-  if (!profile) {
-    return { isAdmin: false, userId: user.id, username: null }
+  if (error) {
+    console.error('[checkAdmin] RPC error:', error.message)
+    return { isAdmin: false, userId: user.id }
   }
   
   return {
-    isAdmin: profile.is_admin === true,
+    isAdmin: isAdmin === true,
     userId: user.id,
-    username: profile.username,
   }
 }
 
@@ -48,7 +40,6 @@ export async function checkAdmin(): Promise<AdminCheck> {
  */
 export async function requireAdmin(): Promise<{
   userId: string
-  username: string
 }> {
   const supabase = await createClient()
   
@@ -58,19 +49,16 @@ export async function requireAdmin(): Promise<{
     redirect('/login')
   }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, is_admin')
-    .eq('id', user.id)
-    .single() as { data: ProfileData | null; error: Error | null }
+  // Use RPC to check admin status - bypasses RLS
+  const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
   
-  if (!profile || profile.is_admin !== true) {
-    redirect('/explore')
+  if (error || !isAdmin) {
+    console.error('[requireAdmin] Access denied:', error?.message)
+    redirect('/dashboard')
   }
   
   return {
     userId: user.id,
-    username: profile.username,
   }
 }
 
@@ -93,13 +81,10 @@ export async function verifyAdmin(): Promise<{
     return { success: false, error: 'Unauthorized' }
   }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin')
-    .eq('id', user.id)
-    .single() as { data: { is_admin: boolean | null } | null; error: Error | null }
+  // Use RPC to check admin status - bypasses RLS
+  const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
   
-  if (!profile || profile.is_admin !== true) {
+  if (error || !isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   

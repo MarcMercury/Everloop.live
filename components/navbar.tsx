@@ -8,7 +8,6 @@ interface ProfileData {
   username: string | null
   display_name: string | null
   avatar_url: string | null
-  is_admin: boolean | null
 }
 
 export async function Navbar() {
@@ -17,22 +16,22 @@ export async function Navbar() {
   
   // Fetch profile if user exists
   let profile: ProfileData | null = null
+  let isAdmin = false
+  
   if (user) {
-    const { data, error } = await supabase
+    // Fetch profile data
+    const { data } = await supabase
       .from('profiles')
-      .select('username, display_name, avatar_url, is_admin')
+      .select('username, display_name, avatar_url')
       .eq('id', user.id)
       .single()
     
-    if (error) {
-      console.error('[Navbar] Profile fetch error:', error.message, error.code)
-    }
-    
     profile = data as ProfileData | null
+    
+    // Use RPC to check admin status - bypasses RLS
+    const { data: adminCheck } = await supabase.rpc('is_admin_check')
+    isAdmin = adminCheck === true
   }
-  
-  // Check is_admin boolean for admin access
-  const isAdmin = profile?.is_admin === true
   
   return (
     <nav className="sticky top-0 z-50 glass">
