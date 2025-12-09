@@ -9,6 +9,15 @@ import OpenAI from 'openai'
  */
 export async function POST() {
   try {
+    // Check for OpenAI API key first
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('Hydrate API - OPENAI_API_KEY is not set')
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured' },
+        { status: 500 }
+      )
+    }
+    
     // Initialize OpenAI client inside the function to avoid build-time errors
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -18,9 +27,10 @@ export async function POST() {
     const adminClient = createAdminClient()
     
     if (!adminClient) {
-      console.error('Hydrate API - Admin client not available (missing service role key)')
+      console.error('Hydrate API - Admin client not available')
+      console.error('SUPABASE_SERVICE_ROLE_KEY is set:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: 'Server configuration error - service role key missing' },
         { status: 500 }
       )
     }

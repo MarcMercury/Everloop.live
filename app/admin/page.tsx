@@ -27,6 +27,7 @@ interface StorySubmission {
 async function getSubmissions(): Promise<StorySubmission[]> {
   const supabase = await createClient()
   
+  // Use left join for author - stories may have NULL author_id from bulk imports
   const { data, error } = await supabase
     .from('stories')
     .select(`
@@ -35,7 +36,7 @@ async function getSubmissions(): Promise<StorySubmission[]> {
       created_at,
       canon_status,
       word_count,
-      author:profiles!stories_author_id_fkey(username),
+      author:profiles(username),
       reviews:story_reviews(canon_consistency_score, decision, is_ai_review)
     `)
     .in('canon_status', ['submitted', 'under_review'])
@@ -46,8 +47,11 @@ async function getSubmissions(): Promise<StorySubmission[]> {
   
   if (error) {
     console.error('Error fetching submissions:', error)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     return []
   }
+  
+  console.log('Stories fetched:', data?.length || 0, 'items')
   
   return data || []
 }

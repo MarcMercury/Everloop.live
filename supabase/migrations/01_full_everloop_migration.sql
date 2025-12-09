@@ -1547,7 +1547,7 @@ Silent.
 The second of thirteen.',
         9840,
         admin_id,
-        'pending_review',
+        'submitted',
         false,
         49,
         ARRAY['pending', 'needs-review']
@@ -2190,7 +2190,7 @@ The tide had gone out.
 And the way was clear.',
         6035,
         admin_id,
-        'pending_review',
+        'submitted',
         false,
         30,
         ARRAY['pending', 'needs-review']
@@ -3629,7 +3629,7 @@ They had no destination. Just a reason to move.
 And sometimes, that’s enough.',
         11927,
         admin_id,
-        'pending_review',
+        'submitted',
         false,
         59,
         ARRAY['pending', 'needs-review']
@@ -4430,7 +4430,7 @@ Not in that city, nor the steppes,
 Nor the dreams of those who still whispered his name.',
         8672,
         admin_id,
-        'pending_review',
+        'submitted',
         false,
         43,
         ARRAY['pending', 'needs-review']
@@ -4458,4 +4458,4 @@ SELECT
     (SELECT COUNT(*) FROM public.canon_entities WHERE status = 'proposed') as pending_entities,
     (SELECT COUNT(*) FROM public.canon_entities WHERE embedding IS NULL) as needs_hydration,
     (SELECT COUNT(*) FROM public.stories) as total_stories,
-    (SELECT COUNT(*) FROM public.stories WHERE canon_status = 'pending_review') as pending_stories;
+    (SELECT COUNT(*) FROM public.stories WHERE canon_status = 'submitted') as pending_stories;
