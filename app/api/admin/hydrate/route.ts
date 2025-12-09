@@ -26,17 +26,18 @@ export async function POST() {
       )
     }
     
-    // Get user's profile to check is_admin
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', user.id)
-      .single() as { data: { is_admin: boolean } | null; error: Error | null }
+    // Use RPC function to check admin status (bypasses RLS)
+    const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin_check')
     
-    if (profileError || !profile) {
-      // If no profile exists, allow for development but log warning
-      console.warn('No profile found for user, allowing hydration in dev mode')
-    } else if (profile.is_admin !== true) {
+    if (adminError) {
+      console.error('Admin check error:', adminError)
+      return NextResponse.json(
+        { error: 'Failed to verify admin status' },
+        { status: 500 }
+      )
+    }
+    
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }
