@@ -229,3 +229,55 @@ export async function saveDraft(
     return { success: true, storyId: result?.id }
   }
 }
+
+/**
+ * Delete a story (only drafts or rejected stories owned by the user)
+ */
+export async function deleteStory(storyId: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !user) {
+    return { success: false, error: 'You must be logged in.' }
+  }
+  
+  // First verify the story belongs to this user and is deletable
+  const { data: story, error: fetchError } = await supabase
+    .from('stories')
+    .select('id, author_id, canon_status')
+    .eq('id', storyId)
+    .single() as { data: { id: string; author_id: string; canon_status: string } | null; error: Error | null }
+  
+  if (fetchError || !story) {
+    return { success: false, error: 'Story not found.' }
+  }
+  
+  if (story.author_id !== user.id) {
+    return { success: false, error: 'You can only delete your own stories.' }
+  }
+  
+  // Only allow deletion of drafts and rejected stories
+  if (!['draft', 'rejected'].includes(story.canon_status)) {
+    return { success: false, error: 'You can only delete drafts or rejected stories.' }
+  }
+  
+  // Delete associated reviews first (if any)
+  await supabase
+    .from('story_reviews')
+    .delete()
+    .eq('story_id', storyId)
+  
+  // Delete the story
+  const { error: deleteError } = await supabase
+    .from('stories')
+    .delete()
+    .eq('id', storyId)
+  
+  if (deleteError) {
+    console.error('Delete error:', deleteError)
+    return { success: false, error: 'Failed to delete story.' }
+  }
+  
+  return { success: true }
+}
