@@ -2,12 +2,13 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette } from 'lucide-react'
+import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
   display_name: string | null
   avatar_url: string | null
+  role: string | null
 }
 
 export async function Navbar() {
@@ -19,11 +20,13 @@ export async function Navbar() {
   if (user) {
     const { data } = await supabase
       .from('profiles')
-      .select('username, display_name, avatar_url')
+      .select('username, display_name, avatar_url, role')
       .eq('id', user.id)
       .single()
     profile = data as ProfileData | null
   }
+  
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'lorekeeper'
   
   return (
     <nav className="sticky top-0 z-50 glass">
@@ -72,6 +75,16 @@ export async function Navbar() {
                     <span className="hidden sm:inline">Write</span>
                   </Button>
                 </Link>
+                
+                {/* Admin Link - only for admins/lorekeepers */}
+                {isAdmin && (
+                  <Link href="/admin">
+                    <Button variant="outline" size="sm" className="gap-2 border-gold/50 bg-gold/10 text-gold hover:bg-gold/20">
+                      <Shield className="w-4 h-4" />
+                      <span className="hidden sm:inline">Admin</span>
+                    </Button>
+                  </Link>
+                )}
                 
                 {/* Profile Dropdown / Link */}
                 <div className="flex items-center gap-3">

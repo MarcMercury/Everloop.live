@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { updateCanonEntity, deleteCanonEntity, createCanonEntity } from '@/lib/actions/admin'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { updateCanonEntity, deleteCanonEntity, createCanonEntity, canonizeEntity, hydrateEntity } from '@/lib/actions/admin'
 import { 
   Search, 
   Plus, 
@@ -15,7 +16,9 @@ import {
   Loader2,
   Check,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Crown,
+  Sparkles
 } from 'lucide-react'
 
 interface CanonEntity {
@@ -29,6 +32,12 @@ interface CanonEntity {
   created_at: string
   updated_at: string
   embedding: number[] | null
+  created_by: string | null
+  extended_lore: {
+    tagline?: string
+    image_url?: string | null
+    is_user_created?: boolean
+  } | null
 }
 
 interface EntitiesClientProps {
@@ -56,9 +65,12 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
   const [isPending, startTransition] = useTransition()
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [activeTab, setActiveTab] = useState<'canon' | 'drafts'>('canon')
   const [editingEntity, setEditingEntity] = useState<CanonEntity | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hydratingId, setHydratingId] = useState<string | null>(null)
+  const [canonizingId, setCanonizingId] = useState<string | null>(null)
   
   // Form state
   const [formData, setFormData] = useState({
@@ -70,7 +82,13 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
     stability_rating: 50,
   })
   
-  const filteredEntities = entities.filter(entity => {
+  // Split entities into canon vs user drafts
+  const canonEntities = entities.filter(e => e.status === 'canonical' || e.status === 'proposed')
+  const userDrafts = entities.filter(e => e.status === 'draft' && e.extended_lore?.is_user_created)
+  
+  const currentEntities = activeTab === 'canon' ? canonEntities : userDrafts
+  
+  const filteredEntities = currentEntities.filter(entity => {
     const matchesSearch = entity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          entity.description?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesType = typeFilter === 'all' || entity.type === typeFilter
@@ -167,6 +185,65 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       }
     })
   }
+  
+  const handleCanonize = (entity: CanonEntity) => {
+    if (!confirm(`Promote "${entity.name}" to official canon? This will make it publicly visible.`)) {
+      return
+    }
+    
+    setCanonizingId(entity.id)
+    startTransition(async () => {
+      const result = await canonizeEntity(entity.id)
+      
+      if (!result.success) {
+        alert(result.error || 'Failed to canonize')
+      } else {
+        router.refresh()
+      }
+      setCanonizingId(null)
+    })
+  }
+  
+  const handleHydrate = (entity: CanonEntity) => {
+    setHydratingId(entity.id)
+    startTransition(async () => {
+      const result = await hydrateEntity(entity.id)
+      
+      if (!result.success) {
+        alert(result.error || 'Failed to hydrate')
+      } else {
+        router.refresh()
+      }
+      setHydratingId(null)
+    })
+  }
+  
+  const handleHydrateAll = async () => {
+    const needsHydration = currentEntities.filter(e => !e.embedding)
+    if (needsHydration.length === 0) {
+      alert('All entities are already hydrated!')
+      return
+    }
+    
+    if (!confirm(`Hydrate ${needsHydration.length} entities? This may take a moment.`)) {
+      return
+    }
+    
+    // Call the hydrate API endpoint
+    try {
+      const response = await fetch('/api/admin/hydrate', { method: 'POST' })
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Hydrated ${data.hydrated} entities!`)
+        router.refresh()
+      } else {
+        alert(data.error || 'Failed to hydrate all')
+      }
+    } catch {
+      alert('Failed to hydrate all entities')
+    }
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-6 py-8">
@@ -178,11 +255,35 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
             Create, edit, and manage canon entities
           </p>
         </div>
-        <Button onClick={openCreateModal} className="bg-gold hover:bg-gold/90 text-charcoal">
-          <Plus className="w-4 h-4 mr-2" />
-          New Entity
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleHydrateAll} 
+            variant="outline"
+            className="gap-2 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+          >
+            <Zap className="w-4 h-4" />
+            Hydrate All
+          </Button>
+          <Button onClick={openCreateModal} className="bg-gold hover:bg-gold/90 text-charcoal">
+            <Plus className="w-4 h-4 mr-2" />
+            New Entity
+          </Button>
+        </div>
       </div>
+      
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'canon' | 'drafts')} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="canon" className="gap-2">
+            <Crown className="w-4 h-4" />
+            Official Canon ({canonEntities.length})
+          </TabsTrigger>
+          <TabsTrigger value="drafts" className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            User Drafts ({userDrafts.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
       
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -204,10 +305,10 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
             onClick={() => setTypeFilter('all')}
             className={typeFilter === 'all' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
           >
-            All ({entities.length})
+            All ({currentEntities.length})
           </Button>
           {entityTypes.map((type) => {
-            const count = entities.filter(e => e.type === type).length
+            const count = currentEntities.filter(e => e.type === type).length
             return (
               <Button
                 key={type}
@@ -301,6 +402,42 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      {/* Hydrate button - show if no embedding */}
+                      {!entity.embedding && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleHydrate(entity)}
+                          disabled={isPending || hydratingId === entity.id}
+                          className="h-8 px-2 text-yellow-500 hover:text-yellow-400 hover:bg-yellow-500/10"
+                          title="Hydrate AI Memory"
+                        >
+                          {hydratingId === entity.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Zap className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      
+                      {/* Canonize button - show for user drafts */}
+                      {activeTab === 'drafts' && entity.status === 'draft' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleCanonize(entity)}
+                          disabled={isPending || canonizingId === entity.id}
+                          className="h-8 px-2 text-gold hover:text-gold/80 hover:bg-gold/10"
+                          title="Promote to Canon"
+                        >
+                          {canonizingId === entity.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Crown className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                      
                       <Button
                         variant="ghost"
                         size="sm"

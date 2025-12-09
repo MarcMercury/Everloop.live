@@ -17,6 +17,12 @@ interface CanonEntityData {
   created_at: string
   updated_at: string
   embedding: number[] | null
+  created_by: string | null
+  extended_lore: {
+    tagline?: string
+    image_url?: string | null
+    is_user_created?: boolean
+  } | null
 }
 
 async function getEntities(): Promise<CanonEntityData[]> {
@@ -24,7 +30,7 @@ async function getEntities(): Promise<CanonEntityData[]> {
   
   const { data, error } = await supabase
     .from('canon_entities')
-    .select('id, name, slug, type, description, status, stability_rating, created_at, updated_at, embedding')
+    .select('id, name, slug, type, description, status, stability_rating, created_at, updated_at, embedding, created_by, extended_lore')
     .order('name') as { data: CanonEntityData[] | null; error: Error | null }
   
   if (error) {
