@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library } from 'lucide-react'
@@ -15,10 +15,13 @@ export async function Navbar() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
+  // Use admin client for profile fetch to bypass RLS issues
+  const adminClient = createAdminClient()
+  
   // Fetch profile if user exists
   let profile: ProfileData | null = null
   if (user) {
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('profiles')
       .select('username, display_name, avatar_url, is_admin')
       .eq('id', user.id)
