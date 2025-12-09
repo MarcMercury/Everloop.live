@@ -4,35 +4,28 @@
 -- Run this FIRST before re-inserting migrations
 -- =====================================================
 
--- Disable triggers temporarily for faster deletion
-ALTER TABLE public.canon_entities DISABLE TRIGGER ALL;
-ALTER TABLE public.stories DISABLE TRIGGER ALL;
-ALTER TABLE public.story_reviews DISABLE TRIGGER ALL;
-
 -- Clear in order of foreign key dependencies
+-- (Delete child tables before parent tables)
 
--- 1. Clear story reviews (references stories)
+-- 1. Clear shards first (references canon_entities)
+DELETE FROM public.shards;
+
+-- 2. Clear story reviews (references stories)
 DELETE FROM public.story_reviews;
 
--- 2. Clear stories (references profiles)
+-- 3. Clear stories (references profiles)
 DELETE FROM public.stories;
 
--- 3. Clear canon entities (references profiles)
+-- 4. Clear canon entities (referenced by shards, now safe)
 DELETE FROM public.canon_entities;
 
--- Re-enable triggers
-ALTER TABLE public.canon_entities ENABLE TRIGGER ALL;
-ALTER TABLE public.stories ENABLE TRIGGER ALL;
-ALTER TABLE public.story_reviews ENABLE TRIGGER ALL;
-
 -- Verify all cleared
-SELECT 'canon_entities' as table_name, COUNT(*) as row_count FROM public.canon_entities
+SELECT 'shards' as table_name, COUNT(*) as row_count FROM public.shards
+UNION ALL
+SELECT 'canon_entities', COUNT(*) FROM public.canon_entities
 UNION ALL
 SELECT 'stories', COUNT(*) FROM public.stories
 UNION ALL
 SELECT 'story_reviews', COUNT(*) FROM public.story_reviews;
 
--- Output should show:
--- canon_entities | 0
--- stories        | 0
--- story_reviews  | 0
+-- Output should show all tables with 0 rows

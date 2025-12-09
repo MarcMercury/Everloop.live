@@ -31,10 +31,9 @@ export async function getCanonEntities(options?: {
     `)
     .order('name', { ascending: true })
 
-  // Filter by status (default to 'canonical' for active entities)
-  if (options?.status) {
-    query = query.eq('status', options.status)
-  }
+  // Filter by status - default to 'canonical' so proposed entities stay in queue
+  const statusFilter = options?.status ?? 'canonical'
+  query = query.eq('status', statusFilter)
 
   // Filter by type if specified
   if (options?.type) {
@@ -84,14 +83,16 @@ export async function getCanonEntityBySlug(slug: string): Promise<CanonEntityWit
 }
 
 /**
- * Get count of entities by type
+ * Get count of entities by type (only canonical entities shown in Archive)
  */
 export async function getCanonEntityCounts(): Promise<Record<CanonEntityType, number>> {
   const supabase = await createClient()
   
+  // Only count canonical entities (matches the default filter in getCanonEntities)
   const { data, error } = await supabase
     .from('canon_entities')
-    .select('type') as { data: { type: string }[] | null; error: unknown }
+    .select('type')
+    .eq('status', 'canonical') as { data: { type: string }[] | null; error: unknown }
 
   const defaultCounts: Record<CanonEntityType, number> = {
     character: 0,

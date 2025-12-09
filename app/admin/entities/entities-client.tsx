@@ -65,7 +65,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
   const [isPending, startTransition] = useTransition()
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<string>('all')
-  const [activeTab, setActiveTab] = useState<'canon' | 'drafts'>('canon')
+  const [activeTab, setActiveTab] = useState<'pending' | 'canon' | 'drafts'>('pending')
   const [editingEntity, setEditingEntity] = useState<CanonEntity | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -82,11 +82,12 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
     stability_rating: 50,
   })
   
-  // Split entities into canon vs user drafts
-  const canonEntities = entities.filter(e => e.status === 'canonical' || e.status === 'proposed')
+  // Split entities into pending queue, approved canon, and user drafts
+  const pendingEntities = entities.filter(e => e.status === 'proposed')
+  const canonEntities = entities.filter(e => e.status === 'canonical')
   const userDrafts = entities.filter(e => e.status === 'draft' && e.extended_lore?.is_user_created)
   
-  const currentEntities = activeTab === 'canon' ? canonEntities : userDrafts
+  const currentEntities = activeTab === 'pending' ? pendingEntities : activeTab === 'canon' ? canonEntities : userDrafts
   
   const filteredEntities = currentEntities.filter(entity => {
     const matchesSearch = entity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -272,11 +273,15 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       </div>
       
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'canon' | 'drafts')} className="mb-6">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'pending' | 'canon' | 'drafts')} className="mb-6">
         <TabsList>
+          <TabsTrigger value="pending" className="gap-2">
+            <AlertCircle className="w-4 h-4" />
+            Pending Approval ({pendingEntities.length})
+          </TabsTrigger>
           <TabsTrigger value="canon" className="gap-2">
             <Crown className="w-4 h-4" />
-            Official Canon ({canonEntities.length})
+            Approved Canon ({canonEntities.length})
           </TabsTrigger>
           <TabsTrigger value="drafts" className="gap-2">
             <Sparkles className="w-4 h-4" />
