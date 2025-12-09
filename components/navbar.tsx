@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { PenLine, User, LogOut, BookOpen, LayoutDashboard } from 'lucide-react'
+import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -56,6 +56,14 @@ export async function Navbar() {
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </Link>
+                
+                <Link 
+                  href="/create"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <Palette className="w-4 h-4" />
+                  <span className="hidden sm:inline">Create</span>
                 </Link>
                 
                 <Link href="/write">
