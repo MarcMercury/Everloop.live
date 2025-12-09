@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { type Json, type StoryInsert } from '@/types/database'
+import { type Json, type StoryInsert, type StoryScope } from '@/types/database'
 
 // Helper type for the Supabase client return with explicit any to bypass type issues
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
@@ -230,6 +230,85 @@ export async function saveDraft(
   }
 }
 
+// =============================================================================
+// SUBMIT EXISTING STORY BY ID
+// Submits an existing draft story for review
+// =============================================================================
+
+export async function submitStoryById(storyId: string): Promise<SubmitStoryResult> {
+  const supabase = await createClient()
+  
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !user) {
+    return {
+      success: false,
+      error: 'You must be logged in to submit a story.',
+    }
+  }
+  
+  // Fetch the story to verify ownership and get current data
+  const { data: story, error: fetchError } = await supabase
+    .from('stories')
+    .select('id, author_id, canon_status, title, word_count')
+    .eq('id', storyId)
+    .single() as { data: { id: string; author_id: string; canon_status: string; title: string; word_count: number } | null; error: Error | null }
+  
+  if (fetchError || !story) {
+    return {
+      success: false,
+      error: 'Story not found.',
+    }
+  }
+  
+  if (story.author_id !== user.id) {
+    return {
+      success: false,
+      error: 'You can only submit your own stories.',
+    }
+  }
+  
+  if (story.canon_status !== 'draft') {
+    return {
+      success: false,
+      error: 'Only draft stories can be submitted for review.',
+    }
+  }
+  
+  if (!story.title || story.title.startsWith('Untitled')) {
+    return {
+      success: false,
+      error: 'Please give your story a title before submitting.',
+    }
+  }
+  
+  if (story.word_count < 50) {
+    return {
+      success: false,
+      error: 'Story must be at least 50 words.',
+    }
+  }
+  
+  // Update the story status to submitted
+  const { error: updateError } = await supabase
+    .from('stories')
+    .update({ canon_status: 'submitted' } as never)
+    .eq('id', storyId)
+  
+  if (updateError) {
+    console.error('Error submitting story:', updateError)
+    return {
+      success: false,
+      error: 'Failed to submit story. Please try again.',
+    }
+  }
+  
+  return {
+    success: true,
+    storyId,
+  }
+}
+
 /**
  * Delete a story (only drafts or rejected stories owned by the user)
  */
@@ -280,4 +359,94 @@ export async function deleteStory(storyId: string): Promise<{ success: boolean; 
   }
   
   return { success: true }
+}
+
+// =============================================================================
+// CREATE DRAFT STORY
+// Creates a new empty draft story with the specified scope
+// =============================================================================
+
+export interface CreateDraftResult {
+  success: boolean
+  error?: string
+  storyId?: string
+}
+
+const SCOPE_TITLES: Record<StoryScope, string> = {
+  tome: 'Untitled Tome',
+  tale: 'Untitled Tale',
+  scene: 'Untitled Scene',
+}
+
+export async function createDraftStory(scope: StoryScope): Promise<CreateDraftResult> {
+  const supabase = await createClient()
+  
+  // Check if user is authenticated
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  
+  if (authError || !user) {
+    return {
+      success: false,
+      error: 'You must be logged in to create a story.',
+    }
+  }
+  
+  // Validate scope
+  if (!['tome', 'tale', 'scene'].includes(scope)) {
+    return {
+      success: false,
+      error: 'Invalid story scope.',
+    }
+  }
+  
+  // Generate a default title and unique slug
+  const defaultTitle = SCOPE_TITLES[scope]
+  const timestamp = Date.now().toString(36)
+  const slug = `draft-${scope}-${timestamp}`
+  
+  // Create empty TipTap document structure
+  const emptyContent = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: []
+      }
+    ]
+  }
+  
+  // Build insert data
+  const storyData: StoryInsert = {
+    title: defaultTitle,
+    slug,
+    content: emptyContent,
+    content_text: '',
+    word_count: 0,
+    author_id: user.id,
+    canon_status: 'draft',
+    scope,
+    is_published: false,
+  }
+  
+  // Insert the story
+  const { data, error } = await supabase
+    .from('stories')
+    .insert(storyData as never)
+    .select('id')
+    .single()
+  
+  if (error) {
+    console.error('Error creating draft story:', error)
+    return {
+      success: false,
+      error: 'Failed to create story. Please try again.',
+    }
+  }
+  
+  const result = data as { id: string } | null
+  
+  return {
+    success: true,
+    storyId: result?.id,
+  }
 }

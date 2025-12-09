@@ -19,6 +19,7 @@ export type CanonEntityType = 'character' | 'location' | 'artifact' | 'event' | 
 export type CanonStatus = 'draft' | 'proposed' | 'canonical' | 'deprecated' | 'contested'
 export type ShardState = 'dormant' | 'awakening' | 'active' | 'corrupted' | 'shattered' | 'transcended'
 export type StoryCanonStatus = 'draft' | 'submitted' | 'under_review' | 'revision_requested' | 'approved' | 'rejected' | 'canonical'
+export type StoryScope = 'tome' | 'tale' | 'scene'
 
 export interface Database {
   public: {
@@ -172,6 +173,7 @@ export interface Database {
           word_count: number
           author_id: string
           canon_status: StoryCanonStatus
+          scope: StoryScope
           ai_review_notes: Json
           ai_consistency_score: number | null
           referenced_entities: string[]
@@ -196,6 +198,7 @@ export interface Database {
           word_count?: number
           author_id: string
           canon_status?: StoryCanonStatus
+          scope?: StoryScope
           ai_review_notes?: Json
           ai_consistency_score?: number | null
           referenced_entities?: string[]
@@ -220,6 +223,7 @@ export interface Database {
           word_count?: number
           author_id?: string
           canon_status?: StoryCanonStatus
+          scope?: StoryScope
           ai_review_notes?: Json
           ai_consistency_score?: number | null
           referenced_entities?: string[]
