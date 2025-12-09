@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     
-    // Verify user is authenticated
+    // Verify user is authenticated (uses cookie-based session)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    // Use admin client for profile operations to bypass RLS
+    const adminClient = createAdminClient()
     
     if (authError || !user) {
       return NextResponse.json(
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if username is already taken (case-insensitive)
-    const { data: existingUser } = await supabase
+    const { data: existingUser } = await adminClient
       .from('profiles')
       .select('id')
       .ilike('username', trimmedUsername)
@@ -67,7 +70,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if profile already exists
-    const { data: existingProfile, error: profileCheckError } = await supabase
+    const { data: existingProfile, error: profileCheckError } = await adminClient
       .from('profiles')
       .select('id, username')
       .eq('id', user.id)
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
         display_name: displayName?.trim() || trimmedUsername,
         updated_at: new Date().toISOString(),
       }
-      const { error: updateError } = await supabase
+      const { error: updateError } = await adminClient
         .from('profiles')
         .update(updateData as never)
         .eq('id', user.id)
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
         role: 'writer',
         reputation_score: 0,
       }
-      const { error: insertError } = await supabase
+      const { error: insertError } = await adminClient
         .from('profiles')
         .insert(insertData as never)
       
