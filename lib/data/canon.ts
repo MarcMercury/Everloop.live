@@ -21,11 +21,13 @@ export async function getCanonEntities(options?: {
 }): Promise<CanonEntityWithAuthor[]> {
   const supabase = await createClient()
   
+  // Use left join by not forcing the foreign key (removes the !)
+  // This returns entities even when created_by is NULL
   let query = supabase
     .from('canon_entities')
     .select(`
       *,
-      creator:profiles!canon_entities_created_by_fkey(username, display_name)
+      creator:profiles(username, display_name)
     `)
     .order('name', { ascending: true })
 
@@ -63,11 +65,12 @@ export async function getCanonEntities(options?: {
 export async function getCanonEntityBySlug(slug: string): Promise<CanonEntityWithAuthor | null> {
   const supabase = await createClient()
   
+  // Use left join for author info (entities may have NULL created_by)
   const { data, error } = await supabase
     .from('canon_entities')
     .select(`
       *,
-      creator:profiles!canon_entities_created_by_fkey(username, display_name)
+      creator:profiles(username, display_name)
     `)
     .eq('slug', slug)
     .single()
