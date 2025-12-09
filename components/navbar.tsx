@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library } from 'lucide-react'
@@ -15,14 +15,10 @@ export async function Navbar() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Try admin client first, fall back to regular client
-  const adminClient = createAdminClient()
-  const dbClient = adminClient || supabase
-  
   // Fetch profile if user exists
   let profile: ProfileData | null = null
   if (user) {
-    const { data, error } = await dbClient
+    const { data, error } = await supabase
       .from('profiles')
       .select('username, display_name, avatar_url, is_admin')
       .eq('id', user.id)
@@ -30,8 +26,6 @@ export async function Navbar() {
     
     if (error) {
       console.error('[Navbar] Profile fetch error:', error.message, error.code)
-    } else {
-      console.log('[Navbar] Profile fetched:', JSON.stringify(data))
     }
     
     profile = data as ProfileData | null
@@ -39,7 +33,6 @@ export async function Navbar() {
   
   // Check is_admin boolean for admin access
   const isAdmin = profile?.is_admin === true
-  console.log('[Navbar] isAdmin check:', { is_admin: profile?.is_admin, isAdmin })
   
   return (
     <nav className="sticky top-0 z-50 glass">
