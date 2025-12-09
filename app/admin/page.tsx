@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
@@ -25,10 +25,15 @@ interface StorySubmission {
 }
 
 async function getSubmissions(): Promise<StorySubmission[]> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS - admin page should see all submissions
+  const adminClient = createAdminClient()
   
-  // Use left join for author - stories may have NULL author_id from bulk imports
-  const { data, error } = await supabase
+  if (!adminClient) {
+    console.error('Admin client not available for submissions query')
+    return []
+  }
+  
+  const { data, error } = await adminClient
     .from('stories')
     .select(`
       id,
@@ -57,12 +62,17 @@ async function getSubmissions(): Promise<StorySubmission[]> {
 }
 
 async function getStats() {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS for accurate counts
+  const adminClient = createAdminClient()
+  
+  if (!adminClient) {
+    return { pending: 0, approved: 0, rejected: 0 }
+  }
   
   const [pending, approved, rejected] = await Promise.all([
-    supabase.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'submitted'),
-    supabase.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'approved'),
-    supabase.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'rejected'),
+    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'submitted'),
+    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'approved'),
+    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'rejected'),
   ])
   
   return {

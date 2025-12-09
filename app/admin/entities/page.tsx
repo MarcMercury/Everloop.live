@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { EntitiesClient } from './entities-client'
 
 export const metadata = {
@@ -26,12 +26,26 @@ interface CanonEntityData {
 }
 
 async function getEntities(): Promise<CanonEntityData[]> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS - admin page should see all entities
+  const adminClient = createAdminClient()
   
-  const { data, error } = await supabase
+  if (!adminClient) {
+    console.error('Admin client not available for entities query')
+    return []
+  }
+  
+  const { data, error } = await adminClient
     .from('canon_entities')
     .select('id, name, slug, type, description, status, stability_rating, created_at, updated_at, embedding, created_by, extended_lore')
     .order('name') as { data: CanonEntityData[] | null; error: Error | null }
+  
+  if (error) {
+    console.error('Error fetching entities:', error)
+    return []
+  }
+  
+  return data || []
+}
   
   if (error) {
     console.error('Error fetching entities:', error)
