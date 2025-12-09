@@ -27,17 +27,14 @@ interface StorySubmission {
 async function getSubmissions(): Promise<StorySubmission[]> {
   console.log('[Admin Page] getSubmissions called')
   
-  // Use admin client to bypass RLS - admin page should see all submissions
+  // Try admin client first, fall back to regular client
   const adminClient = createAdminClient()
+  const regularClient = await createClient()
+  const client = adminClient || regularClient
   
-  if (!adminClient) {
-    console.error('[Admin Page] Admin client not available for submissions query')
-    return []
-  }
+  console.log('[Admin Page] Using admin client:', !!adminClient)
   
-  console.log('[Admin Page] Admin client created, querying stories...')
-  
-  const { data, error } = await adminClient
+  const { data, error } = await client
     .from('stories')
     .select(`
       id,
@@ -69,17 +66,15 @@ async function getSubmissions(): Promise<StorySubmission[]> {
 }
 
 async function getStats() {
-  // Use admin client to bypass RLS for accurate counts
+  // Try admin client first, fall back to regular client
   const adminClient = createAdminClient()
-  
-  if (!adminClient) {
-    return { pending: 0, approved: 0, rejected: 0 }
-  }
+  const regularClient = await createClient()
+  const client = adminClient || regularClient
   
   const [pending, approved, rejected] = await Promise.all([
-    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'submitted'),
-    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'approved'),
-    adminClient.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'rejected'),
+    client.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'submitted'),
+    client.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'approved'),
+    client.from('stories').select('*', { count: 'exact', head: true }).eq('canon_status', 'rejected'),
   ])
   
   return {
