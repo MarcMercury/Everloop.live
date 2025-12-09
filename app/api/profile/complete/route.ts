@@ -67,47 +67,34 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if profile already exists
-    const { data: existingProfile } = await supabase
+    const { data: existingProfile, error: profileCheckError } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, username')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { id: string; username: string | null } | null; error: { message: string; code?: string } | null }
+    
+    if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+      // PGRST116 = no rows returned, which is fine
+      console.error('Profile check error:', profileCheckError)
+    }
     
     if (existingProfile) {
       // Update existing profile
+      const updateData = {
+        username: trimmedUsername,
+        display_name: displayName?.trim() || trimmedUsername,
+        updated_at: new Date().toISOString(),
+      }
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({
-          username: trimmedUsername,
-          display_name: displayName?.trim() || trimmedUsername,
-          updated_at: new Date().toISOString(),
-        } as never)
+        .update(updateData as never)
         .eq('id', user.id)
       
       if (updateError) {
         console.error('Profile update error:', updateError)
-        return NextResponse.json(
-          { error: 'Failed to update profile.' },
-          { status: 500 }
-        )
-      }
-    } else {
-      // Create new profile
-      const { error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          id: user.id,
-          username: trimmedUsername,
-          display_name: displayName?.trim() || trimmedUsername,
-          role: 'writer',
-          reputation_score: 0,
-        } as never)
-      
-      if (insertError) {
-        console.error('Profile creation error:', insertError)
         
-        // Handle unique constraint violation
-        if (insertError.message.includes('unique') || insertError.message.includes('duplicate')) {
+        // Check for unique constraint violation
+        if (updateError.message?.includes('unique') || updateError.message?.includes('duplicate') || updateError.message?.includes('23505')) {
           return NextResponse.json(
             { error: 'Username is already taken.' },
             { status: 409 }
@@ -115,7 +102,36 @@ export async function POST(request: NextRequest) {
         }
         
         return NextResponse.json(
-          { error: 'Failed to create profile.' },
+          { error: `Failed to update profile: ${updateError.message}` },
+          { status: 500 }
+        )
+      }
+    } else {
+      // Create new profile
+      const insertData = {
+        id: user.id,
+        username: trimmedUsername,
+        display_name: displayName?.trim() || trimmedUsername,
+        role: 'writer',
+        reputation_score: 0,
+      }
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(insertData as never)
+      
+      if (insertError) {
+        console.error('Profile creation error:', insertError)
+        
+        // Handle unique constraint violation
+        if (insertError.message?.includes('unique') || insertError.message?.includes('duplicate') || insertError.message?.includes('23505')) {
+          return NextResponse.json(
+            { error: 'Username is already taken.' },
+            { status: 409 }
+          )
+        }
+        
+        return NextResponse.json(
+          { error: `Failed to create profile: ${insertError.message}` },
           { status: 500 }
         )
       }
