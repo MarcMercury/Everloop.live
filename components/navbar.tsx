@@ -15,13 +15,14 @@ export async function Navbar() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Use admin client for profile fetch to bypass RLS issues
+  // Try admin client first, fall back to regular client
   const adminClient = createAdminClient()
+  const dbClient = adminClient || supabase
   
   // Fetch profile if user exists
   let profile: ProfileData | null = null
   if (user) {
-    const { data, error } = await adminClient
+    const { data, error } = await dbClient
       .from('profiles')
       .select('username, display_name, avatar_url, is_admin')
       .eq('id', user.id)

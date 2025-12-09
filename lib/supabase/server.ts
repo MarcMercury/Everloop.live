@@ -39,11 +39,19 @@ export async function createClient() {
 /**
  * Creates an admin Supabase client with service role key.
  * ONLY use for server-side admin operations.
+ * Returns null if service role key is not configured.
  */
 export function createAdminClient() {
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!serviceRoleKey) {
+    console.error('[createAdminClient] SUPABASE_SERVICE_ROLE_KEY is not set')
+    return null
+  }
+  
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    serviceRoleKey,
     {
       cookies: {
         get: () => undefined,

@@ -9,7 +9,9 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     // Use admin client for profile operations to bypass RLS
+    // Falls back to regular client if service role key not configured
     const adminClient = createAdminClient()
+    const dbClient = adminClient || supabase
     
     if (authError || !user) {
       return NextResponse.json(
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if username is already taken (case-insensitive)
-    const { data: existingUser } = await adminClient
+    const { data: existingUser } = await dbClient
       .from('profiles')
       .select('id')
       .ilike('username', trimmedUsername)
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if profile already exists
-    const { data: existingProfile, error: profileCheckError } = await adminClient
+    const { data: existingProfile, error: profileCheckError } = await dbClient
       .from('profiles')
       .select('id, username')
       .eq('id', user.id)
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
         display_name: displayName?.trim() || trimmedUsername,
         updated_at: new Date().toISOString(),
       }
-      const { error: updateError } = await adminClient
+      const { error: updateError } = await dbClient
         .from('profiles')
         .update(updateData as never)
         .eq('id', user.id)
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
         role: 'writer',
         reputation_score: 0,
       }
-      const { error: insertError } = await adminClient
+      const { error: insertError } = await dbClient
         .from('profiles')
         .insert(insertData as never)
       
