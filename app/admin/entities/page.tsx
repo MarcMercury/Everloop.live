@@ -46,14 +46,6 @@ async function getEntities(): Promise<CanonEntityData[]> {
   
   return data || []
 }
-  
-  if (error) {
-    console.error('Error fetching entities:', error)
-    return []
-  }
-  
-  return data || []
-}
 
 export default async function EntitiesPage() {
   const entities = await getEntities()
