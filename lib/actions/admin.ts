@@ -4,6 +4,20 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
+ * Helper to verify admin access using is_admin column
+ */
+async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_admin, role')
+    .eq('id', userId)
+    .single() as { data: { is_admin: boolean; role: string } | null; error: Error | null }
+  
+  // Check is_admin first, fallback to role for backwards compatibility
+  return profile?.is_admin === true || profile?.role === 'admin' || profile?.role === 'lorekeeper'
+}
+
+/**
  * Approve a story - sets status to 'approved' (or 'canonical')
  */
 export async function approveStory(storyId: string, reviewNotes?: string) {
@@ -13,13 +27,8 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -60,13 +69,8 @@ export async function rejectStory(storyId: string, reason: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -116,13 +120,8 @@ export async function updateCanonEntity(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -158,13 +157,8 @@ export async function deleteCanonEntity(entityId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || profile.role !== 'admin') {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -200,13 +194,8 @@ export async function createCanonEntity(data: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -239,13 +228,8 @@ export async function canonizeEntity(entityId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
@@ -280,13 +264,8 @@ export async function hydrateEntity(entityId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single() as { data: { role: string } | null; error: Error | null }
-  
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'lorekeeper')) {
+  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
   
