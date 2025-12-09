@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Navbar } from '@/components/navbar'
 import { Card, CardContent } from '@/components/ui/card'
 import { User, MapPin, Sparkles, ChevronRight } from 'lucide-react'
 
@@ -45,9 +44,7 @@ export default async function CreatorStudioPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
-      <main className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-serif text-parchment mb-4">
@@ -102,7 +99,7 @@ export default async function CreatorStudioPage() {
             </Link>
           </p>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
