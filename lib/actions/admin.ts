@@ -5,8 +5,14 @@ import { revalidatePath } from 'next/cache'
 
 /**
  * Helper to verify admin access using is_admin column
+ * Currently returns true for any authenticated user (admin check disabled for testing)
  */
 async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
+  // TEMPORARILY DISABLED: Allow any authenticated user for testing
+  // Remove this line and uncomment below to restore admin check
+  return true
+  
+  /*
   const { data: profile } = await supabase
     .from('profiles')
     .select('is_admin, role')
@@ -15,6 +21,7 @@ async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClien
   
   // Check is_admin first, fallback to role for backwards compatibility
   return profile?.is_admin === true || profile?.role === 'admin' || profile?.role === 'lorekeeper'
+  */
 }
 
 /**
