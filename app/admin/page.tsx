@@ -34,21 +34,21 @@ async function getSubmissions(): Promise<StorySubmission[]> {
   
   console.log('[Admin Page] Using admin client:', !!adminClient)
   
+  // Simplified query without joins to avoid PGRST201 errors
   const { data, error } = await client
     .from('stories')
-    .select(`
-      id,
-      title,
-      created_at,
-      canon_status,
-      word_count,
-      author:profiles(username),
-      reviews:story_reviews(canon_consistency_score, decision, is_ai_review)
-    `)
+    .select('id, title, created_at, canon_status, word_count, author_id')
     .in('canon_status', ['submitted', 'under_review'])
-    .order('created_at', { ascending: false }) as { 
-      data: StorySubmission[] | null
-      error: Error | null 
+    .order('created_at', { ascending: false }) as {
+      data: Array<{
+        id: string
+        title: string
+        created_at: string
+        canon_status: string
+        word_count: number | null
+        author_id: string | null
+      }> | null
+      error: Error | null
     }
   
   if (error) {
@@ -58,11 +58,17 @@ async function getSubmissions(): Promise<StorySubmission[]> {
   }
   
   console.log('[Admin Page] Stories fetched:', data?.length || 0, 'items')
-  if (data && data.length > 0) {
-    console.log('[Admin Page] First story:', data[0].title)
-  }
   
-  return data || []
+  // Map to expected format
+  return (data || []).map(story => ({
+    id: story.id,
+    title: story.title,
+    created_at: story.created_at,
+    canon_status: story.canon_status,
+    word_count: story.word_count,
+    author: null,
+    reviews: []
+  }))
 }
 
 async function getStats() {

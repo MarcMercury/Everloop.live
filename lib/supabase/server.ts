@@ -53,15 +53,18 @@ export function createAdminClient() {
   
   if (!serviceRoleKey) {
     console.error('[createAdminClient] SUPABASE_SERVICE_ROLE_KEY is not set')
-    console.error('[createAdminClient] Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPA')))
     return null
   }
   
-  // Use direct supabase-js client for admin operations (more reliable than SSR client)
+  // Use direct supabase-js client for admin operations
+  // db.schema ensures we use the public schema
   return createSupabaseClient<Database>(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+    },
+    db: {
+      schema: 'public',
     },
   })
 }
