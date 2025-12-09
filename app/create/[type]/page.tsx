@@ -1,6 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Navbar } from '@/components/navbar'
 import { CreateEntityForm } from './create-form'
 
 const validTypes = ['character', 'location', 'creature'] as const
@@ -43,9 +42,7 @@ export default async function CreateEntityPage({
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
-      <main className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="max-w-2xl mx-auto mb-10">
           <h1 className="text-3xl md:text-4xl font-serif text-parchment mb-2">
@@ -58,7 +55,7 @@ export default async function CreateEntityPage({
 
         {/* Form */}
         <CreateEntityForm type={type as EntityType} />
-      </main>
+      </div>
     </div>
   )
 }

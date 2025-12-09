@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Navbar } from '@/components/navbar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -67,9 +66,7 @@ export default async function RosterPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      
-      <main className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <div>
@@ -169,7 +166,7 @@ export default async function RosterPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
     </div>
   )
 }

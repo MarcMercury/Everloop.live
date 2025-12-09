@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Navbar } from '@/components/navbar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -251,9 +250,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-
-      <main className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 py-12">
         {/* Welcome & Page Title */}
         <div className="mb-10">
           <p className="text-parchment-muted text-sm mb-1">Welcome back,</p>
@@ -389,7 +386,7 @@ export default async function DashboardPage() {
             )}
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-gold/10 mt-16">
