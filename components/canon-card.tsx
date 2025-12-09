@@ -1,12 +1,17 @@
+"use client"
+
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import type { CanonEntity, CanonEntityType, CanonStatus } from '@/types/database'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import type { CanonEntityType, CanonStatus } from '@/types/database'
+import type { CanonEntityWithAuthor } from '@/lib/data/canon'
 import { cn } from '@/lib/utils'
 
 interface CanonCardProps {
-  entity: CanonEntity
+  entity: CanonEntityWithAuthor
   className?: string
 }
 
@@ -66,93 +71,172 @@ function getStabilityLabel(rating: number): string {
 export function CanonCard({ entity, className }: CanonCardProps) {
   const stabilityPercent = entity.stability_rating * 100
   const isCanonical = entity.status === 'canonical'
+  
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  // Get entity image from metadata if available
+  const entityImage = (entity.metadata as { image_url?: string })?.image_url
 
   return (
-    <Link href={`/explore/${entity.slug}`}>
-      <Card
-        className={cn(
-          'group relative overflow-hidden transition-all duration-300',
-          'bg-gradient-to-br from-teal-rich/80 to-teal-deep/90',
-          'border-gold/10 hover:border-gold/30',
-          'hover:shadow-xl hover:shadow-gold/10',
-          'hover:-translate-y-1',
-          isCanonical && 'border-gold/25 shadow-lg shadow-gold/5',
-          className
-        )}
-      >
-        {/* Canonical glow effect */}
-        {isCanonical && (
-          <div className="absolute inset-0 bg-gradient-to-br from-gold/8 via-transparent to-transparent pointer-events-none" />
-        )}
+    <HoverCard openDelay={300} closeDelay={100}>
+      <HoverCardTrigger asChild>
+        <Link href={`/explore/${entity.slug}`}>
+          <Card
+            className={cn(
+              'group relative overflow-hidden transition-all duration-300',
+              'bg-gradient-to-br from-teal-rich/80 to-teal-deep/90',
+              'border-gold/10 hover:border-gold/30',
+              'hover:shadow-xl hover:shadow-gold/10',
+              'hover:-translate-y-1',
+              isCanonical && 'border-gold/25 shadow-lg shadow-gold/5',
+              className
+            )}
+          >
+            {/* Canonical glow effect */}
+            {isCanonical && (
+              <div className="absolute inset-0 bg-gradient-to-br from-gold/8 via-transparent to-transparent pointer-events-none" />
+            )}
 
-        <CardHeader className="pb-3 relative">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-lg" aria-hidden="true">
-                {getTypeIcon(entity.type)}
-              </span>
-              <CardTitle className="text-xl text-parchment group-hover:text-gold transition-colors">
-                {entity.name}
-              </CardTitle>
-            </div>
-            <Badge variant={entity.type as CanonEntityType}>
-              {getTypeLabel(entity.type)}
-            </Badge>
-          </div>
-        </CardHeader>
+            <CardHeader className="pb-3 relative">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg" aria-hidden="true">
+                    {getTypeIcon(entity.type)}
+                  </span>
+                  <CardTitle className="text-xl text-parchment group-hover:text-gold transition-colors">
+                    {entity.name}
+                  </CardTitle>
+                </div>
+                <Badge variant={entity.type as CanonEntityType}>
+                  {getTypeLabel(entity.type)}
+                </Badge>
+              </div>
+            </CardHeader>
 
-        <CardContent className="space-y-4 relative">
-          {/* Description */}
-          <p className="text-sm text-parchment-muted line-clamp-3 leading-relaxed">
-            {entity.description || 'No description available.'}
-          </p>
+            <CardContent className="space-y-4 relative">
+              {/* Description */}
+              <p className="text-sm text-parchment-muted line-clamp-3 leading-relaxed">
+                {entity.description || 'No description available.'}
+              </p>
 
-          {/* Stability Rating */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-parchment-muted">Canon Stability</span>
-              <span className={cn(
-                'font-medium',
-                stabilityPercent >= 70 ? 'text-emerald-400' : 
-                stabilityPercent >= 40 ? 'text-gold' : 'text-red-400'
-              )}>
-                {getStabilityLabel(entity.stability_rating)}
-              </span>
-            </div>
-            <Progress 
-              value={stabilityPercent} 
-              indicatorClassName={getStabilityColor(entity.stability_rating)}
-            />
-          </div>
+              {/* Stability Rating */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-parchment-muted">Canon Stability</span>
+                  <span className={cn(
+                    'font-medium',
+                    stabilityPercent >= 70 ? 'text-emerald-400' : 
+                    stabilityPercent >= 40 ? 'text-gold' : 'text-red-400'
+                  )}>
+                    {getStabilityLabel(entity.stability_rating)}
+                  </span>
+                </div>
+                <Progress 
+                  value={stabilityPercent} 
+                  indicatorClassName={getStabilityColor(entity.stability_rating)}
+                />
+              </div>
 
-          {/* Tags */}
-          {entity.tags && entity.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {entity.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-2 py-0.5 rounded-full bg-charcoal-700 text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-              {entity.tags.length > 3 && (
-                <span className="text-xs px-2 py-0.5 text-muted-foreground">
-                  +{entity.tags.length - 3}
-                </span>
+              {/* Tags */}
+              {entity.tags && entity.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {entity.tags.slice(0, 3).map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-0.5 rounded-full bg-charcoal-700 text-muted-foreground"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {entity.tags.length > 3 && (
+                    <span className="text-xs px-2 py-0.5 text-muted-foreground">
+                      +{entity.tags.length - 3}
+                    </span>
+                  )}
+                </div>
               )}
+
+              {/* Status indicator */}
+              {entity.status !== 'canonical' && (
+                <Badge variant={entity.status as CanonStatus} className="mt-2">
+                  {entity.status}
+                </Badge>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
+      </HoverCardTrigger>
+      
+      {/* Hover popup with metadata */}
+      <HoverCardContent className="w-72" side="right" align="start">
+        <div className="space-y-3">
+          {/* Entity Image */}
+          {entityImage ? (
+            <div className="relative w-full h-32 rounded-md overflow-hidden border border-gold/20">
+              <Image
+                src={entityImage}
+                alt={entity.name}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-full h-32 rounded-md bg-charcoal-700/50 flex items-center justify-center border border-gold/10">
+              <span className="text-4xl">{getTypeIcon(entity.type)}</span>
             </div>
           )}
-
-          {/* Status indicator */}
-          {entity.status !== 'canonical' && (
-            <Badge variant={entity.status as CanonStatus} className="mt-2">
-              {entity.status}
-            </Badge>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
+          
+          {/* Entity name and type */}
+          <div>
+            <h4 className="font-serif text-lg text-gold">{entity.name}</h4>
+            <p className="text-xs text-parchment-muted">{getTypeLabel(entity.type)}</p>
+          </div>
+          
+          {/* Author info */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-parchment-muted">Created by:</span>
+            {entity.creator ? (
+              <span className="text-parchment">
+                {entity.creator.display_name || entity.creator.username}
+              </span>
+            ) : (
+              <span className="text-parchment-muted italic">System</span>
+            )}
+          </div>
+          
+          {/* Last updated */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-parchment-muted">Last updated:</span>
+            <span className="text-parchment">{formatDate(entity.updated_at)}</span>
+          </div>
+          
+          {/* Stability */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-parchment-muted">Stability:</span>
+            <span className={cn(
+              'font-medium',
+              stabilityPercent >= 70 ? 'text-emerald-400' : 
+              stabilityPercent >= 40 ? 'text-gold' : 'text-red-400'
+            )}>
+              {getStabilityLabel(entity.stability_rating)} ({Math.round(stabilityPercent)}%)
+            </span>
+          </div>
+          
+          {/* Click hint */}
+          <p className="text-xs text-parchment-muted/70 pt-2 border-t border-gold/10">
+            Click to view full details →
+          </p>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   )
 }
 

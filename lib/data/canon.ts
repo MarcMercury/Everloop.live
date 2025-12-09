@@ -2,18 +2,31 @@ import { createClient } from '@/lib/supabase/server'
 import type { CanonEntity, CanonEntityType, CanonStatus } from '@/types/database'
 
 /**
- * Fetch all active canon entities from the database
+ * Extended canon entity with author info for display
+ */
+export interface CanonEntityWithAuthor extends CanonEntity {
+  creator?: {
+    username: string
+    display_name: string | null
+  } | null
+}
+
+/**
+ * Fetch all active canon entities from the database with author info
  */
 export async function getCanonEntities(options?: {
   status?: CanonStatus
   type?: CanonEntityType
   limit?: number
-}): Promise<CanonEntity[]> {
+}): Promise<CanonEntityWithAuthor[]> {
   const supabase = await createClient()
   
   let query = supabase
     .from('canon_entities')
-    .select('*')
+    .select(`
+      *,
+      creator:profiles!canon_entities_created_by_fkey(username, display_name)
+    `)
     .order('name', { ascending: true })
 
   // Filter by status (default to 'canonical' for active entities)
@@ -45,14 +58,17 @@ export async function getCanonEntities(options?: {
 }
 
 /**
- * Fetch a single canon entity by slug
+ * Fetch a single canon entity by slug with author info
  */
-export async function getCanonEntityBySlug(slug: string): Promise<CanonEntity | null> {
+export async function getCanonEntityBySlug(slug: string): Promise<CanonEntityWithAuthor | null> {
   const supabase = await createClient()
   
   const { data, error } = await supabase
     .from('canon_entities')
-    .select('*')
+    .select(`
+      *,
+      creator:profiles!canon_entities_created_by_fkey(username, display_name)
+    `)
     .eq('slug', slug)
     .single()
 
