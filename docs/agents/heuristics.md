@@ -22,6 +22,8 @@
 | Do NOT use Postgres ENUM types - use TEXT with CHECK constraints or app-level validation | 2024-12-09 |
 | `shards` table uses INTEGER primary keys, not UUID | 2024-12-09 |
 | Use Dollar Quoting (`$$text$$`) in SQL seed files to safely handle apostrophes | 2024-12-09 |
+| Use `createAdminClient()` (service role) for server-side profile CRUD - RLS with `auth.uid()` fails in API routes | 2024-12-10 |
+| "permission denied for table X" = table-level GRANT issue, not RLS policy issue | 2024-12-10 |
 
 ---
 
