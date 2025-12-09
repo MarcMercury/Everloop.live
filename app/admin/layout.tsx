@@ -16,17 +16,14 @@ export default async function AdminLayout({
     redirect('/login')
   }
   
-  // Check admin role
+  // Check is_admin flag
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, username')
+    .select('is_admin')
     .eq('id', user.id)
-    .single() as { data: { role: string; username: string } | null; error: Error | null }
+    .single() as { data: { is_admin: boolean | null } | null; error: Error | null }
   
-  // Allow if admin or lorekeeper, or if no profile (dev mode)
-  const isAdmin = !profile || profile.role === 'admin' || profile.role === 'lorekeeper'
-  
-  if (!isAdmin) {
+  if (!profile || profile.is_admin !== true) {
     redirect('/explore')
   }
   

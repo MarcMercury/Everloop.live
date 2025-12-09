@@ -2,13 +2,13 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield } from 'lucide-react'
+import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
   display_name: string | null
   avatar_url: string | null
-  role: string | null
+  is_admin: boolean | null
 }
 
 export async function Navbar() {
@@ -18,15 +18,24 @@ export async function Navbar() {
   // Fetch profile if user exists
   let profile: ProfileData | null = null
   if (user) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
-      .select('username, display_name, avatar_url, role')
+      .select('username, display_name, avatar_url, is_admin')
       .eq('id', user.id)
       .single()
+    
+    if (error) {
+      console.error('[Navbar] Profile fetch error:', error.message, error.code)
+    } else {
+      console.log('[Navbar] Profile fetched:', JSON.stringify(data))
+    }
+    
     profile = data as ProfileData | null
   }
   
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'lorekeeper'
+  // Check is_admin boolean for admin access
+  const isAdmin = profile?.is_admin === true
+  console.log('[Navbar] isAdmin check:', { is_admin: profile?.is_admin, isAdmin })
   
   return (
     <nav className="sticky top-0 z-50 glass">
@@ -48,6 +57,14 @@ export async function Navbar() {
             >
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">Archive</span>
+            </Link>
+            
+            <Link 
+              href="/stories"
+              className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+            >
+              <Library className="w-4 h-4" />
+              <span className="hidden sm:inline">Library</span>
             </Link>
             
             {user ? (
@@ -89,7 +106,7 @@ export async function Navbar() {
                 {/* Profile Dropdown / Link */}
                 <div className="flex items-center gap-3">
                   <Link 
-                    href="/dashboard"
+                    href={profile?.username ? `/profile/${profile.username}` : '/dashboard'}
                     className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
                   >
                     {profile?.avatar_url ? (
