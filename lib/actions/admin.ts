@@ -320,11 +320,11 @@ export async function hydrateEntity(entityId: string) {
     
     const embedding = embeddingResponse.data[0].embedding
     
-    // Save embedding to database
+    // Save embedding to database - embedding should be array, not JSON string
     const { error: updateError } = await supabase
       .from('canon_entities')
       .update({ 
-        embedding: JSON.stringify(embedding),
+        embedding: embedding,
         updated_at: new Date().toISOString(),
       } as never)
       .eq('id', entityId)
