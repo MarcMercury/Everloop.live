@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Navbar } from '@/components/navbar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -228,6 +229,15 @@ export default async function DashboardPage() {
     redirect('/login?redirected=true')
   }
   
+  // Fetch profile for welcome message
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username, display_name')
+    .eq('id', user.id)
+    .single() as { data: { username: string | null, display_name: string | null } | null }
+  
+  const displayName = profile?.display_name || profile?.username || 'Writer'
+  
   const [stories, stats] = await Promise.all([
     getUserStories(user.id),
     getUserStats(user.id),
@@ -241,29 +251,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <header className="glass sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-serif">
-              <span className="text-parchment">Ever</span>
-              <span className="text-gold">loop</span>
-            </Link>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link href="/explore" className="text-parchment-muted hover:text-parchment transition-colors">Archive</Link>
-              <Link href="/stories" className="text-parchment-muted hover:text-parchment transition-colors">Library</Link>
-              <Link href="/dashboard" className="text-gold">Dashboard</Link>
-              <Link href="/write" className="text-parchment-muted hover:text-parchment transition-colors">Write</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container mx-auto px-6 py-12">
-        {/* Page Title */}
+        {/* Welcome & Page Title */}
         <div className="mb-10">
+          <p className="text-parchment-muted text-sm mb-1">Welcome back,</p>
           <h1 className="text-3xl md:text-4xl font-serif text-parchment mb-2">
-            My <span className="text-gold">Dashboard</span>
+            {displayName}&apos;s <span className="text-gold">Dashboard</span>
           </h1>
           <p className="text-parchment-muted">
             Track your stories and monitor their journey to becoming canon.
