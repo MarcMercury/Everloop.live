@@ -23,7 +23,10 @@ export async function GET() {
       .from('profiles')
       .select('id, username, role, is_admin')
       .eq('id', user.id)
-      .single()
+      .single() as {
+        data: { id: string; username: string; role: string; is_admin: boolean } | null
+        error: { message: string; code?: string } | null
+      }
     
     if (profileError) {
       return NextResponse.json({
@@ -31,8 +34,19 @@ export async function GET() {
         userId: user.id,
         email: user.email,
         profileError: profileError.message,
-        profileCode: profileError.code,
+        profileCode: profileError.code || 'UNKNOWN',
         hint: 'The is_admin column may not exist in your database'
+      })
+    }
+
+    if (!profile) {
+      return NextResponse.json({
+        authenticated: true,
+        userId: user.id,
+        email: user.email,
+        profileError: 'No profile found',
+        profileCode: 'NOT_FOUND',
+        hint: 'Profile record does not exist for this user'
       })
     }
     

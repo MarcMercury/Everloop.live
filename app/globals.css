@@ -307,6 +307,11 @@
     border-bottom: 1px solid rgba(212, 168, 75, 0.1);
   }
 
+  /* Explicit Crimson Text utility for reader view */
+  .font-crimson {
+    font-family: var(--font-crimson), 'Crimson Text', serif;
+  }
+
   /* Parchment background texture */
   .parchment-bg {
     background: 
