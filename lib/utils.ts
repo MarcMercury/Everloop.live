@@ -2,6 +2,11 @@ import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 /**
+ * Canonical story statuses surfaced to the public library
+ */
+export const CANON_STORY_STATUSES = ['canon', 'canonical'] as const
+
+/**
  * Utility function for merging Tailwind CSS classes
  * Combines clsx for conditional classes with tailwind-merge for deduplication
  */
