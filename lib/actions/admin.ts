@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -266,18 +266,18 @@ export async function canonizeEntity(entityId: string) {
  */
 export async function hydrateEntity(entityId: string) {
   const supabase = await createClient()
+  const adminClient = createAdminClient()
   
-  // Verify admin
+  if (!adminClient) {
+    return { success: false, error: 'Admin client not available' }
+  }
+  
+  // Verify user is authenticated
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
-  // Fetch the entity
-  const { data: entity, error: fetchError } = await supabase
+  // Fetch the entity using admin client
+  const { data: entity, error: fetchError } = await adminClient
     .from('canon_entities')
     .select('id, name, description, type, extended_lore')
     .eq('id', entityId)
@@ -293,6 +293,7 @@ export async function hydrateEntity(entityId: string) {
     }
   
   if (fetchError || !entity) {
+    console.error('[hydrateEntity] Fetch error:', fetchError)
     return { success: false, error: 'Entity not found' }
   }
   
@@ -308,6 +309,11 @@ export async function hydrateEntity(entityId: string) {
     return { success: false, error: 'Entity has no content to embed' }
   }
   
+  // Check for OpenAI key
+  if (!process.env.OPENAI_API_KEY) {
+    return { success: false, error: 'OpenAI API key not configured' }
+  }
+  
   // Generate embedding
   const { default: OpenAI } = await import('openai')
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -320,8 +326,8 @@ export async function hydrateEntity(entityId: string) {
     
     const embedding = embeddingResponse.data[0].embedding
     
-    // Save embedding to database - embedding should be array, not JSON string
-    const { error: updateError } = await supabase
+    // Save embedding to database using admin client
+    const { error: updateError } = await adminClient
       .from('canon_entities')
       .update({ 
         embedding: embedding,
@@ -330,14 +336,14 @@ export async function hydrateEntity(entityId: string) {
       .eq('id', entityId)
     
     if (updateError) {
-      console.error('Update embedding error:', updateError)
+      console.error('[hydrateEntity] Update error:', updateError)
       return { success: false, error: 'Failed to save embedding' }
     }
     
     revalidatePath('/admin/entities')
     return { success: true }
   } catch (err) {
-    console.error('OpenAI embedding error:', err)
+    console.error('[hydrateEntity] OpenAI error:', err)
     return { success: false, error: 'Failed to generate embedding' }
   }
 }

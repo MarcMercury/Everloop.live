@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { type Database } from '@/types/database'
 
@@ -42,26 +43,25 @@ export async function createClient() {
  * Returns null if service role key is not configured.
  */
 export function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   
-  if (!serviceRoleKey) {
-    console.error('[createAdminClient] SUPABASE_SERVICE_ROLE_KEY is not set')
+  if (!supabaseUrl) {
+    console.error('[createAdminClient] NEXT_PUBLIC_SUPABASE_URL is not set')
     return null
   }
   
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    serviceRoleKey,
-    {
-      cookies: {
-        get: () => undefined,
-        set: () => {},
-        remove: () => {},
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  )
+  if (!serviceRoleKey) {
+    console.error('[createAdminClient] SUPABASE_SERVICE_ROLE_KEY is not set')
+    console.error('[createAdminClient] Available env vars:', Object.keys(process.env).filter(k => k.includes('SUPA')))
+    return null
+  }
+  
+  // Use direct supabase-js client for admin operations (more reliable than SSR client)
+  return createSupabaseClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
 }

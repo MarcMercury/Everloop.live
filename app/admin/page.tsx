@@ -25,13 +25,17 @@ interface StorySubmission {
 }
 
 async function getSubmissions(): Promise<StorySubmission[]> {
+  console.log('[Admin Page] getSubmissions called')
+  
   // Use admin client to bypass RLS - admin page should see all submissions
   const adminClient = createAdminClient()
   
   if (!adminClient) {
-    console.error('Admin client not available for submissions query')
+    console.error('[Admin Page] Admin client not available for submissions query')
     return []
   }
+  
+  console.log('[Admin Page] Admin client created, querying stories...')
   
   const { data, error } = await adminClient
     .from('stories')
@@ -51,12 +55,15 @@ async function getSubmissions(): Promise<StorySubmission[]> {
     }
   
   if (error) {
-    console.error('Error fetching submissions:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
+    console.error('[Admin Page] Error fetching submissions:', error)
+    console.error('[Admin Page] Error details:', JSON.stringify(error, null, 2))
     return []
   }
   
-  console.log('Stories fetched:', data?.length || 0, 'items')
+  console.log('[Admin Page] Stories fetched:', data?.length || 0, 'items')
+  if (data && data.length > 0) {
+    console.log('[Admin Page] First story:', data[0].title)
+  }
   
   return data || []
 }
