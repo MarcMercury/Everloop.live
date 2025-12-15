@@ -152,6 +152,35 @@ function extractParagraphs(content: unknown): string[] {
   return paragraphs
 }
 
+/**
+ * Parse plain text content into paragraphs, preserving line breaks
+ */
+function parseContentText(contentText: string): string[] {
+  // Split by double newlines (paragraph breaks) or single newlines
+  return contentText
+    .split(/\r?\n\r?\n|\r?\n/)
+    .map(p => p.trim())
+    .filter(p => p.length > 0)
+}
+
+/**
+ * Check if TipTap content is just a placeholder (not real story content)
+ */
+function isPlaceholderContent(content: unknown): boolean {
+  if (!content || typeof content !== 'object') return true
+  
+  const root = content as TiptapNode
+  if (!Array.isArray(root.content) || root.content.length === 0) return true
+  
+  // Check if the only content is the placeholder text
+  const paragraphs = extractParagraphs(content)
+  if (paragraphs.length === 1 && paragraphs[0].toLowerCase().includes('content_text field')) {
+    return true
+  }
+  
+  return false
+}
+
 const TYPE_ICONS: Record<string, string> = {
   character: '👤',
   location: '🏛',
@@ -197,7 +226,11 @@ export default async function StoryReaderPage({ params }: StoryPageProps) {
 
   if (!story) notFound()
 
-  const paragraphs = extractParagraphs(story.content)
+  // Use TipTap content if available and not a placeholder, otherwise fall back to content_text
+  const useTipTapContent = !isPlaceholderContent(story.content)
+  const paragraphs = useTipTapContent 
+    ? extractParagraphs(story.content)
+    : parseContentText(story.content_text || '')
   
   // Get both explicitly referenced entities and entities mentioned in text
   const referencedEntities = await getReferencedEntities(story.referenced_entities || [])
