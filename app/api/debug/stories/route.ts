@@ -24,13 +24,13 @@ export async function GET() {
       const { data: adminStories, error: adminError } = await adminClient
         .from('stories')
         .select('id, title, canon_status')
-        .limit(10)
+        .limit(10) as { data: Array<{ id: string; title: string; canon_status: string }> | null; error: Error | null }
       
       results.adminQuery = {
         success: !adminError,
         error: adminError ? adminError.message : null,
         count: adminStories?.length || 0,
-        stories: adminStories?.map(s => ({ id: s.id, title: s.title, status: s.canon_status })) || []
+        stories: adminStories || []
       }
     }
     
@@ -39,13 +39,13 @@ export async function GET() {
     const { data: regularStories, error: regularError } = await regularClient
       .from('stories')
       .select('id, title, canon_status')
-      .limit(10)
+      .limit(10) as { data: Array<{ id: string; title: string; canon_status: string }> | null; error: Error | null }
     
     results.regularQuery = {
       success: !regularError,
       error: regularError ? regularError.message : null,
       count: regularStories?.length || 0,
-      stories: regularStories?.map(s => ({ id: s.id, title: s.title, status: s.canon_status })) || []
+      stories: regularStories || []
     }
     
     // Test 4: Check auth status with regular client
@@ -62,7 +62,7 @@ export async function GET() {
       const { data: entities, error: entityError } = await adminClient
         .from('canon_entities')
         .select('id, name, status')
-        .limit(5)
+        .limit(5) as { data: Array<{ id: string; name: string; status: string }> | null; error: Error | null }
       
       results.entitiesQuery = {
         success: !entityError,
