@@ -3,8 +3,9 @@ import { twMerge } from 'tailwind-merge'
 
 /**
  * Canonical story statuses surfaced to the public library
+ * Valid enum values: draft, submitted, under_review, revision_requested, approved, rejected, canonical
  */
-export const CANON_STORY_STATUSES = ['canon', 'canonical'] as const
+export const CANON_STORY_STATUSES = ['canonical'] as const
 
 /**
  * Utility function for merging Tailwind CSS classes

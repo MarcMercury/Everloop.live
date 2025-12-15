@@ -6,6 +6,9 @@ import { HydrateButton } from '@/components/hydrate-button'
 import type { CanonEntityType } from '@/types/database'
 import { cn } from '@/lib/utils'
 
+// Force dynamic rendering - page depends on searchParams
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'The Everloop Archive',
   description: 'Explore the canonical entities of the Everloop universe — characters, locations, artifacts, and more.',
