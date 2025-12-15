@@ -17,6 +17,9 @@ dist/
 .env*.local
 !.env.example
 
+# Credentials (NEVER COMMIT)
+.credentials/
+
 # Vercel
 .vercel
 
