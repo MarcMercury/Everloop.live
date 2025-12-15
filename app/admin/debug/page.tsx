@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAdminQueueDebug } from '@/lib/actions/debug'
 
 interface ProfileCheck {
   is_admin: boolean | null
@@ -31,6 +32,9 @@ export default async function AdminDebug() {
     }
   }
 
+  // 4. Run the full debug action
+  const debugResults = await getAdminQueueDebug()
+
   return (
     <div className="p-10 bg-teal-deep text-parchment min-h-screen font-mono">
       <h1 className="text-3xl text-gold mb-6 border-b border-gold pb-2">Admin Diagnostic</h1>
@@ -47,7 +51,7 @@ export default async function AdminDebug() {
           <h2 className="text-xl font-bold text-gold">2. RPC Function Check (is_admin_check)</h2>
           <p>Result: <span className={isAdmin ? "text-green-400" : "text-red-500"}>{String(isAdmin)}</span></p>
           {rpcError && <p className="text-red-500">RPC Error: {rpcError.message}</p>}
-          {!rpcError && isAdmin === null && <p className="text-yellow-400">Function may not exist in database</p>}
+          {!rpcError && isAdmin === null && <p className="text-yellow-400">Function may not exist in database - run complete_rls_fix.sql</p>}
         </div>
 
         <div className="p-4 border border-gold/30 rounded bg-teal-rich">
@@ -62,10 +66,29 @@ export default async function AdminDebug() {
           {isAdmin === true ? (
             <p className="text-green-400 text-lg">✓ Admin access GRANTED via RPC</p>
           ) : rpcError ? (
-            <p className="text-yellow-400 text-lg">⚠ RPC function not working - run the SQL migration</p>
+            <p className="text-yellow-400 text-lg">⚠ RPC function not working - run complete_rls_fix.sql</p>
           ) : (
             <p className="text-red-400 text-lg">✗ Admin access DENIED</p>
           )}
+        </div>
+
+        <div className="p-4 border border-gold/30 rounded bg-teal-rich">
+          <h2 className="text-xl font-bold text-gold mb-4">5. Full Queue Debug</h2>
+          <div className="space-y-3">
+            {debugResults.map((result, i) => (
+              <div key={i} className={`p-3 rounded ${result.success ? 'bg-green-900/30' : 'bg-red-900/30'}`}>
+                <p className="font-bold">{result.step}</p>
+                {result.data && (
+                  <pre className="text-sm mt-1 text-parchment/80 overflow-x-auto">
+                    {JSON.stringify(result.data, null, 2)}
+                  </pre>
+                )}
+                {result.error && (
+                  <p className="text-red-400 mt-1">Error: {result.error}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
