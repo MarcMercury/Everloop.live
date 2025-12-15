@@ -50,7 +50,51 @@ types/        # TypeScript interfaces (database.ts)
 
 ---
 
-## 5. Before Starting Any Task
+## 5. Architecture Rules (RLS & Auth)
+
+### 5.1 Admin Permission Check Pattern
+```typescript
+// ✅ CORRECT: Use RPC function that bypasses RLS
+const { data: isAdmin } = await supabase.rpc('is_admin_check')
+if (!isAdmin) return { success: false, error: 'Admin required' }
+
+// ❌ WRONG: Direct table query (blocked by RLS)
+const { data } = await supabase.from('profiles').select('is_admin')
+```
+
+### 5.2 RLS Policy Requirements
+Every table MUST have these policies for admin access:
+```sql
+CREATE POLICY "Admins have full read access" ON table FOR SELECT USING (public.is_admin_check() = true);
+CREATE POLICY "Admins have full update access" ON table FOR UPDATE USING (public.is_admin_check() = true);
+CREATE POLICY "Admins have full delete access" ON table FOR DELETE USING (public.is_admin_check() = true);
+```
+
+### 5.3 Error Handling Pattern
+```typescript
+// ✅ CORRECT: Check both data and error
+const { data, error } = await supabase.from('stories').select()
+if (error) {
+  console.error('[FunctionName] Query failed:', error.message, error.code)
+  throw new Error(`Database error: ${error.message}`)
+}
+if (!data) {
+  return [] // Explicitly handle empty result
+}
+
+// ❌ WRONG: Silent failure
+const { data } = await supabase.from('stories').select()
+return data || [] // Hides RLS errors!
+```
+
+### 5.4 Type Safety
+- `types/database.ts` MUST match actual DB schema
+- Run audit when adding columns: compare DB vs TypeScript
+- `canon_entities.type` and `canon_entities.status` are TEXT, not enums
+
+---
+
+## 6. Before Starting Any Task
 
 1. Read `docs/agents/heuristics.md` for lessons learned
 2. Check `docs/agents/domain.md` for lore rules
@@ -58,7 +102,7 @@ types/        # TypeScript interfaces (database.ts)
 
 ---
 
-## 6. After Completing Any Task
+## 7. After Completing Any Task
 
 1. Update task summary with pitfalls and decisions
 2. Add stable facts to `docs/agents/domain.md`
@@ -67,11 +111,25 @@ types/        # TypeScript interfaces (database.ts)
 
 ---
 
-## 7. Commands
+## 8. Commands
 
 ```bash
 npm run dev      # Start dev server
 npm run build    # Production build (validates types)
 npm run lint     # ESLint
 git push         # Deploy to Vercel
+
+# Database queries (via Management API)
+./scripts/db-query.sh "SELECT * FROM stories LIMIT 5"
 ```
+
+---
+
+## 9. Scar Tissue (Lessons Learned)
+
+| Date | Issue | Fix | Prevention |
+|------|-------|-----|------------|
+| 2024-12 | RLS blocking admin queries | Created `is_admin_check()` function | Always use RPC for permission checks |
+| 2024-12 | Service role key not bypassing RLS | Use Management API for direct SQL | Service role still respects RLS on REST API |
+| 2024-12 | TypeScript types missing DB columns | Added `is_canon`, `is_private`, `trust_score` | Audit types vs schema regularly |
+| 2024-12 | `verifyAdminAccess` bypassed (`return true`) | Fixed to use `is_admin_check()` RPC | Never hardcode auth bypasses |

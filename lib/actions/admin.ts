@@ -4,24 +4,20 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
- * Helper to verify admin access using is_admin column
- * Currently returns true for any authenticated user (admin check disabled for testing)
+ * Helper to verify admin access using is_admin_check() RPC function.
+ * This function BYPASSES RLS by using SECURITY DEFINER.
+ * 
+ * NEVER use direct table queries for permission checks - they will fail due to RLS.
  */
-async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClient>>, userId: string): Promise<boolean> {
-  // TEMPORARILY DISABLED: Allow any authenticated user for testing
-  // Remove this line and uncomment below to restore admin check
-  return true
+async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+  const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
   
-  /*
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_admin, role')
-    .eq('id', userId)
-    .single() as { data: { is_admin: boolean; role: string } | null; error: Error | null }
+  if (error) {
+    console.error('[verifyAdminAccess] RPC error:', error.message)
+    return false
+  }
   
-  // Check is_admin first, fallback to role for backwards compatibility
-  return profile?.is_admin === true || profile?.role === 'admin' || profile?.role === 'lorekeeper'
-  */
+  return isAdmin === true
 }
 
 /**
@@ -34,7 +30,7 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
@@ -76,7 +72,7 @@ export async function rejectStory(storyId: string, reason: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
@@ -127,7 +123,7 @@ export async function updateCanonEntity(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
@@ -164,7 +160,7 @@ export async function deleteCanonEntity(entityId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
@@ -201,7 +197,7 @@ export async function createCanonEntity(data: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }
@@ -235,7 +231,7 @@ export async function canonizeEntity(entityId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Unauthorized' }
   
-  const isAdmin = await verifyAdminAccess(supabase, user.id)
+  const isAdmin = await verifyAdminAccess(supabase)
   if (!isAdmin) {
     return { success: false, error: 'Admin access required' }
   }

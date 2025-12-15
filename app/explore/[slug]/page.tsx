@@ -14,8 +14,8 @@ interface EntityPageProps {
 /**
  * Get display label for entity type
  */
-function getTypeLabel(type: CanonEntityType): string {
-  const labels: Record<CanonEntityType, string> = {
+function getTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
     character: 'Character',
     location: 'Location',
     artifact: 'Artifact',
@@ -24,14 +24,14 @@ function getTypeLabel(type: CanonEntityType): string {
     concept: 'Concept',
     creature: 'Creature',
   }
-  return labels[type]
+  return labels[type] || type
 }
 
 /**
  * Get icon for entity type
  */
-function getTypeIcon(type: CanonEntityType): string {
-  const icons: Record<CanonEntityType, string> = {
+function getTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
     character: '👤',
     location: '🏛️',
     artifact: '✨',
@@ -40,7 +40,7 @@ function getTypeIcon(type: CanonEntityType): string {
     concept: '💭',
     creature: '🐉',
   }
-  return icons[type]
+  return icons[type] || '📄'
 }
 
 /**
