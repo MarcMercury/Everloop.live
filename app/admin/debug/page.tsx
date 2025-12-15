@@ -78,7 +78,7 @@ export default async function AdminDebug() {
             {debugResults.map((result, i) => (
               <div key={i} className={`p-3 rounded ${result.success ? 'bg-green-900/30' : 'bg-red-900/30'}`}>
                 <p className="font-bold">{result.step}</p>
-                {result.data && (
+                {result.data !== undefined && result.data !== null && (
                   <pre className="text-sm mt-1 text-parchment/80 overflow-x-auto">
                     {JSON.stringify(result.data, null, 2)}
                   </pre>

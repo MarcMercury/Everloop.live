@@ -34,6 +34,7 @@ export interface Database {
           role: UserRole
           is_admin: boolean
           reputation_score: number
+          trust_score: number
           created_at: string
           updated_at: string
         }
@@ -46,6 +47,7 @@ export interface Database {
           role?: UserRole
           is_admin?: boolean
           reputation_score?: number
+          trust_score?: number
           created_at?: string
           updated_at?: string
         }
@@ -58,6 +60,7 @@ export interface Database {
           role?: UserRole
           is_admin?: boolean
           reputation_score?: number
+          trust_score?: number
           created_at?: string
           updated_at?: string
         }
@@ -67,11 +70,11 @@ export interface Database {
           id: string
           name: string
           slug: string
-          type: CanonEntityType
+          type: string // TEXT in DB, not constrained enum
           description: string | null
           extended_lore: Json
           stability_rating: number
-          status: CanonStatus
+          status: string // TEXT in DB with default 'draft'
           created_by: string | null
           approved_by: string | null
           embedding: number[] | null
@@ -80,16 +83,18 @@ export interface Database {
           metadata: Json
           created_at: string
           updated_at: string
+          is_canon: boolean
+          is_private: boolean
         }
         Insert: {
           id?: string
           name: string
           slug: string
-          type: CanonEntityType
+          type: string
           description?: string | null
           extended_lore?: Json
           stability_rating?: number
-          status?: CanonStatus
+          status?: string
           created_by?: string | null
           approved_by?: string | null
           embedding?: number[] | null
@@ -98,16 +103,18 @@ export interface Database {
           metadata?: Json
           created_at?: string
           updated_at?: string
+          is_canon?: boolean
+          is_private?: boolean
         }
         Update: {
           id?: string
           name?: string
           slug?: string
-          type?: CanonEntityType
+          type?: string
           description?: string | null
           extended_lore?: Json
           stability_rating?: number
-          status?: CanonStatus
+          status?: string
           created_by?: string | null
           approved_by?: string | null
           embedding?: number[] | null
@@ -116,6 +123,8 @@ export interface Database {
           metadata?: Json
           created_at?: string
           updated_at?: string
+          is_canon?: boolean
+          is_private?: boolean
         }
       }
       shards: {
