@@ -23,7 +23,10 @@
 | `shards` table uses INTEGER primary keys, not UUID | 2024-12-09 |
 | Use Dollar Quoting (`$$text$$`) in SQL seed files to safely handle apostrophes | 2024-12-09 |
 | Use `createAdminClient()` (service role) for server-side profile CRUD - RLS with `auth.uid()` fails in API routes | 2024-12-10 |
-| "permission denied for table X" = table-level GRANT issue, not RLS policy issue | 2024-12-10 |
+| "permission denied for table X" = table-level GRANT issue, not RLS policy issue - run `GRANT SELECT ON tablename TO anon, authenticated` | 2024-12-10 |
+| Multiple FKs to same table (e.g. `created_by` + `approved_by` → profiles) require explicit FK hint: `profiles!canon_entities_created_by_fkey` | 2024-12-10 |
+| Supabase RLS policies alone aren't enough - roles also need table-level GRANT permissions | 2024-12-10 |
+| CANON_STORY_STATUSES in code must match database enum values exactly - check with `SELECT unnest(enum_range(NULL::enum_name))` | 2024-12-10 |
 
 ---
 
