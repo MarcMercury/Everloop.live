@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, BookOpen, Feather } from 'lucide-react'
+import { ArrowRight, BookOpen, Feather, Download } from 'lucide-react'
 
 export const metadata = {
   title: 'Welcome to the Everloop',
