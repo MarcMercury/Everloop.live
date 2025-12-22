@@ -62,6 +62,53 @@ export interface ChapterUpdate {
   chapter_order?: number
 }
 
+// Comment types for inline annotations
+export type CommentType = 'note' | 'suggestion' | 'question' | 'issue'
+
+export interface StoryComment {
+  id: string
+  story_id: string
+  chapter_id: string | null
+  user_id: string
+  content: string
+  comment_type: CommentType
+  position_start: number
+  position_end: number
+  selected_text: string | null
+  thread_id: string | null
+  parent_id: string | null
+  is_private: boolean
+  is_resolved: boolean
+  resolved_at: string | null
+  resolved_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface StoryCommentInsert {
+  id?: string
+  story_id: string
+  chapter_id?: string | null
+  user_id?: string // Will be set by server
+  content: string
+  comment_type?: CommentType
+  position_start: number
+  position_end: number
+  selected_text?: string | null
+  thread_id?: string | null
+  parent_id?: string | null
+  is_private?: boolean
+}
+
+export interface StoryCommentUpdate {
+  content?: string
+  comment_type?: CommentType
+  is_private?: boolean
+  is_resolved?: boolean
+  resolved_at?: string | null
+  resolved_by?: string | null
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -328,6 +375,105 @@ export interface Database {
           flagged_issues?: Json
           decision?: 'approve' | 'request_revision' | 'reject' | null
           created_at?: string
+        }
+      }
+      story_chapters: {
+        Row: {
+          id: string
+          story_id: string
+          title: string
+          content: Json
+          content_text: string | null
+          word_count: number
+          word_target: number
+          summary: string | null
+          status: ChapterStatus
+          chapter_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          title?: string
+          content?: Json
+          content_text?: string | null
+          word_count?: number
+          word_target?: number
+          summary?: string | null
+          status?: ChapterStatus
+          chapter_order: number
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          title?: string
+          content?: Json
+          content_text?: string | null
+          word_count?: number
+          word_target?: number
+          summary?: string | null
+          status?: ChapterStatus
+          chapter_order?: number
+        }
+      }
+      story_comments: {
+        Row: {
+          id: string
+          story_id: string
+          chapter_id: string | null
+          user_id: string
+          content: string
+          comment_type: CommentType
+          position_start: number
+          position_end: number
+          selected_text: string | null
+          thread_id: string | null
+          parent_id: string | null
+          is_private: boolean
+          is_resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          chapter_id?: string | null
+          user_id: string
+          content: string
+          comment_type?: CommentType
+          position_start: number
+          position_end: number
+          selected_text?: string | null
+          thread_id?: string | null
+          parent_id?: string | null
+          is_private?: boolean
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          chapter_id?: string | null
+          user_id?: string
+          content?: string
+          comment_type?: CommentType
+          position_start?: number
+          position_end?: number
+          selected_text?: string | null
+          thread_id?: string | null
+          parent_id?: string | null
+          is_private?: boolean
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          created_at?: string
+          updated_at?: string
         }
       }
     }

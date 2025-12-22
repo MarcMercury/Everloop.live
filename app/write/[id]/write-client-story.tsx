@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useRef, useEffect } from 'react'
+import { useState, useTransition, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { TiptapEditor, type JSONContent } from '@/components/editor/tiptap-editor'
@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge'
 import { submitStoryById, saveDraft } from '@/lib/actions/story'
 import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
 import { saveChapterContent, type Chapter } from '@/lib/actions/chapters'
+import { type StoryComment } from '@/lib/actions/comments'
 import { CanonFeedback } from '@/components/editor/canon-feedback'
 import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
 import { RosterSidebar } from '@/components/editor/roster-sidebar'
 import { ChapterSidebar } from '@/components/editor/chapter-sidebar'
+import { CommentsSidebar } from '@/components/editor/comments'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -74,6 +76,27 @@ export function WriteClientWithStory({
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
   const [showChapterSidebar, setShowChapterSidebar] = useState(scope === 'tome')
   const [chapterHasChanges, setChapterHasChanges] = useState(false)
+  
+  // Comments state
+  const [showCommentsSidebar, setShowCommentsSidebar] = useState(false)
+  const [comments, setComments] = useState<StoryComment[]>([])
+  
+  // Handle new comment created
+  const handleCommentCreated = useCallback((comment: StoryComment) => {
+    setComments(prev => [...prev, comment])
+  }, [])
+  
+  // Handle comment click from sidebar - scroll to position
+  const handleCommentClick = useCallback((comment: StoryComment) => {
+    if (editorRef.current) {
+      editorRef.current.commands.setTextSelection({
+        from: comment.position_start,
+        to: comment.position_end,
+      })
+      editorRef.current.commands.scrollIntoView()
+    }
+    setShowCommentsSidebar(false)
+  }, [])
   
   // Calculate initial word count
   useEffect(() => {
@@ -340,6 +363,20 @@ export function WriteClientWithStory({
                 {/* Split View Toggle */}
                 <SplitViewToggle />
                 
+                {/* Comments Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCommentsSidebar(!showCommentsSidebar)}
+                  className={showCommentsSidebar ? 'border-gold text-gold' : ''}
+                  title="Comments & Notes"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  {comments.length > 0 && (
+                    <span className="ml-1 text-xs">{comments.length}</span>
+                  )}
+                </Button>
+                
                 {/* Save Draft */}
                 <Button
                   variant="outline"
@@ -454,6 +491,10 @@ export function WriteClientWithStory({
           onCanonCheck={handleAnalyze}
           onRosterOpen={() => setShowRosterSidebar(true)}
           onEditorReady={handleEditorReady}
+          storyId={storyId}
+          chapterId={currentChapter?.id}
+          onCommentCreated={handleCommentCreated}
+          comments={comments}
         />
         
         {/* Canon Feedback */}
@@ -515,6 +556,15 @@ export function WriteClientWithStory({
           isOpen={showRosterSidebar}
           onClose={() => setShowRosterSidebar(false)}
           onInsertCharacter={handleInsertCharacter}
+        />
+        
+        {/* Comments Sidebar */}
+        <CommentsSidebar
+          storyId={storyId}
+          chapterId={currentChapter?.id}
+          isOpen={showCommentsSidebar}
+          onClose={() => setShowCommentsSidebar(false)}
+          onCommentClick={handleCommentClick}
         />
       </div>
     </SplitViewProvider>
