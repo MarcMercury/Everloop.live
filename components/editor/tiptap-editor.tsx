@@ -1,7 +1,7 @@
 'use client'
 
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import {
@@ -17,9 +17,13 @@ import {
   Wand2,
   Shield,
   User,
+  MessageSquarePlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type JSONContent } from '@tiptap/react'
+import { CommentMark } from './extensions/comment-mark'
+import { CommentPopover } from './comments/comment-popover'
+import { type StoryComment } from '@/lib/actions/comments'
 
 interface ToolbarButtonProps {
   onClick: () => void
@@ -62,9 +66,11 @@ interface ToolbarProps {
   onMagicWand?: () => void
   onCanonCheck?: () => void
   onRosterOpen?: () => void
+  onAddComment?: () => void
+  hasSelection?: boolean
 }
 
-function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen }: ToolbarProps) {
+function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen, onAddComment, hasSelection }: ToolbarProps) {
   if (!editor) return null
 
   return (
@@ -99,6 +105,17 @@ function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen }: ToolbarPro
               highlight
             >
               <User className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+          
+          {onAddComment && (
+            <ToolbarButton
+              onClick={onAddComment}
+              title="Add Comment (select text first)"
+              highlight
+              disabled={!hasSelection}
+            >
+              <MessageSquarePlus className="w-4 h-4" />
             </ToolbarButton>
           )}
           
@@ -200,6 +217,11 @@ interface TiptapEditorProps {
   onCanonCheck?: () => void
   onRosterOpen?: () => void
   onEditorReady?: (editor: Editor) => void
+  // Comment support
+  storyId?: string
+  chapterId?: string | null
+  onCommentCreated?: (comment: StoryComment) => void
+  comments?: StoryComment[]
 }
 
 export function TiptapEditor({
@@ -211,7 +233,18 @@ export function TiptapEditor({
   onCanonCheck,
   onRosterOpen,
   onEditorReady,
+  storyId,
+  chapterId,
+  onCommentCreated,
+  comments = [],
 }: TiptapEditorProps) {
+  // Comment popover state
+  const [showCommentPopover, setShowCommentPopover] = useState(false)
+  const [commentPopoverPosition, setCommentPopoverPosition] = useState({ x: 0, y: 0 })
+  const [selectedText, setSelectedText] = useState('')
+  const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null)
+  const [hasSelection, setHasSelection] = useState(false)
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -223,6 +256,7 @@ export function TiptapEditor({
         placeholder,
         emptyEditorClass: 'is-editor-empty',
       }),
+      CommentMark,
     ],
     content,
     editorProps: {
@@ -262,13 +296,68 @@ export function TiptapEditor({
       contentRef.current = content
     }
   }, [editor, content])
+  
+  // Track text selection for comments
+  useEffect(() => {
+    if (!editor) return
+    
+    const handleSelectionUpdate = () => {
+      const { from, to } = editor.state.selection
+      const text = editor.state.doc.textBetween(from, to, ' ')
+      
+      setHasSelection(from !== to && text.trim().length > 0)
+      
+      if (from !== to && text.trim().length > 0) {
+        setSelectedText(text)
+        setSelectionRange({ from, to })
+      }
+    }
+    
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+    }
+  }, [editor])
+  
+  // Handle adding a comment
+  const handleAddComment = useCallback(() => {
+    if (!editor || !selectionRange || !selectedText) return
+    
+    // Get the cursor position for popover placement
+    const { view } = editor
+    const { from } = selectionRange
+    const coords = view.coordsAtPos(from)
+    
+    setCommentPopoverPosition({ x: coords.left, y: coords.bottom })
+    setShowCommentPopover(true)
+  }, [editor, selectionRange, selectedText])
+  
+  // Handle comment created
+  const handleCommentCreated = useCallback((comment: StoryComment) => {
+    if (!editor || !selectionRange) return
+    
+    // Apply comment mark to selected text
+    editor
+      .chain()
+      .focus()
+      .setTextSelection(selectionRange)
+      .setCommentMark({ 
+        commentId: comment.id, 
+        threadId: comment.thread_id || comment.id 
+      })
+      .run()
+    
+    onCommentCreated?.(comment)
+    setShowCommentPopover(false)
+  }, [editor, selectionRange, onCommentCreated])
 
   return (
     <div
       className={cn(
         'rounded-lg border border-charcoal-700 bg-charcoal/50 overflow-hidden',
         'focus-within:border-gold/50 focus-within:ring-1 focus-within:ring-gold/20',
-        'transition-colors',
+        'transition-colors relative',
         className
       )}
     >
@@ -277,8 +366,24 @@ export function TiptapEditor({
         onMagicWand={onMagicWand}
         onCanonCheck={onCanonCheck}
         onRosterOpen={onRosterOpen}
+        onAddComment={storyId ? handleAddComment : undefined}
+        hasSelection={hasSelection}
       />
       <EditorContent editor={editor} />
+      
+      {/* Comment Popover */}
+      {showCommentPopover && storyId && (
+        <CommentPopover
+          storyId={storyId}
+          chapterId={chapterId}
+          selectedText={selectedText}
+          selectionStart={selectionRange?.from}
+          selectionEnd={selectionRange?.to}
+          position={commentPopoverPosition}
+          onClose={() => setShowCommentPopover(false)}
+          onCommentCreated={handleCommentCreated}
+        />
+      )}
       
       {/* Editor styles */}
       <style jsx global>{`
@@ -322,6 +427,18 @@ export function TiptapEditor({
         
         .tiptap li {
           margin-bottom: 0.25rem;
+        }
+        
+        /* Comment highlight styles */
+        .comment-highlight {
+          background-color: rgba(234, 179, 8, 0.2);
+          border-bottom: 2px solid rgba(234, 179, 8, 0.5);
+          cursor: pointer;
+          transition: background-color 0.2s;
+        }
+        
+        .comment-highlight:hover {
+          background-color: rgba(234, 179, 8, 0.3);
         }
       `}</style>
     </div>
