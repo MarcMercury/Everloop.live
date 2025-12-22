@@ -105,6 +105,19 @@ export default function WelcomePage() {
               </Button>
             </Link>
           </div>
+          
+          {/* Full Guide Download */}
+          <div className="text-center mt-8">
+            <a 
+              href="/🌌 EVERLOOP - A Guide to the Broken World.pdf" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-parchment-muted hover:text-gold transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download the Full World Guide (PDF)
+            </a>
+          </div>
         </div>
       </section>
     </div>
