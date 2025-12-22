@@ -82,7 +82,7 @@ CREATE POLICY "Users can view public comments on accessible stories"
     AND EXISTS (
       SELECT 1 FROM stories s
       WHERE s.id = story_comments.story_id
-      AND (s.author_id = auth.uid() OR s.status = 'published')
+      AND (s.author_id = auth.uid() OR s.is_published = true)
     )
   );
 
@@ -105,7 +105,7 @@ CREATE POLICY "Users can create comments"
     AND EXISTS (
       SELECT 1 FROM stories s
       WHERE s.id = story_comments.story_id
-      AND (s.author_id = auth.uid() OR s.status = 'published')
+      AND (s.author_id = auth.uid() OR s.is_published = true)
     )
   );
 
