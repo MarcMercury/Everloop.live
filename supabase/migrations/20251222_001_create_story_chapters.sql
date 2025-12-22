@@ -5,7 +5,7 @@
 
 -- Create the story_chapters table
 CREATE TABLE IF NOT EXISTS public.story_chapters (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     story_id UUID NOT NULL REFERENCES public.stories(id) ON DELETE CASCADE,
     title TEXT NOT NULL DEFAULT 'Untitled Chapter',
     content JSONB NOT NULL DEFAULT '{}',
