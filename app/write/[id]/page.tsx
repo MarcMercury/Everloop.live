@@ -4,7 +4,7 @@ import { WriteClientWithStory } from './write-client-story'
 import { type Json, type StoryScope } from '@/types/database'
 
 interface WriteStoryPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 interface StoryData {
@@ -17,6 +17,7 @@ interface StoryData {
 }
 
 export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -28,7 +29,7 @@ export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
   const { data: story, error } = await supabase
     .from('stories')
     .select('id, title, content, scope, author_id, canon_status')
-    .eq('id', params.id)
+    .eq('id', id)
     .single() as { data: StoryData | null; error: Error | null }
 
   if (error || !story) {

@@ -55,11 +55,23 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
   const [open, setOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [selectedScope, setSelectedScope] = useState<StoryScope | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+
+  function handleOpenChange(newOpen: boolean) {
+    setOpen(newOpen)
+    if (!newOpen) {
+      // Reset state when closing
+      setIsCreating(false)
+      setSelectedScope(null)
+      setError(null)
+    }
+  }
 
   async function handleScopeSelect(scope: StoryScope) {
     setSelectedScope(scope)
     setIsCreating(true)
+    setError(null)
 
     try {
       const result = await createDraftStory(scope)
@@ -69,18 +81,20 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
         router.push(`/write/${result.storyId}`)
       } else {
         console.error('Failed to create story:', result.error)
+        setError(result.error || 'Failed to create story. Please try again.')
         setIsCreating(false)
         setSelectedScope(null)
       }
     } catch (error) {
       console.error('Error creating story:', error)
+      setError('An unexpected error occurred. Please try again.')
       setIsCreating(false)
       setSelectedScope(null)
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -97,6 +111,7 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
         <div className="grid gap-4 py-4">
           {SCOPE_OPTIONS.map((option) => (
             <button
+              type="button"
               key={option.scope}
               onClick={() => handleScopeSelect(option.scope)}
               disabled={isCreating}
@@ -147,6 +162,12 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
             </button>
           ))}
         </div>
+
+        {error && (
+          <div className="text-center py-2 px-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+            <p className="text-sm text-red-400">{error}</p>
+          </div>
+        )}
 
         <div className="text-center pt-2 border-t border-gold/10">
           <p className="text-xs text-parchment-muted">
