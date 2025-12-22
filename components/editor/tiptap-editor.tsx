@@ -1,6 +1,7 @@
 'use client'
 
 import { useEditor, EditorContent, type Editor } from '@tiptap/react'
+import { useEffect, useRef } from 'react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import {
@@ -244,6 +245,23 @@ export function TiptapEditor({
       onEditorReady?.(editor)
     },
   })
+  
+  // Track previous content to avoid unnecessary updates
+  const contentRef = useRef(content)
+  
+  // Update editor content when prop changes (for chapter switching)
+  useEffect(() => {
+    if (editor && content !== contentRef.current) {
+      // Only update if content actually changed (external update like chapter switch)
+      const currentContent = JSON.stringify(editor.getJSON())
+      const newContent = JSON.stringify(content)
+      
+      if (currentContent !== newContent) {
+        editor.commands.setContent(content || '')
+      }
+      contentRef.current = content
+    }
+  }, [editor, content])
 
   return (
     <div

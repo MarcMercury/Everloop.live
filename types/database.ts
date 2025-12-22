@@ -20,6 +20,47 @@ export type CanonStatus = 'draft' | 'proposed' | 'canonical' | 'deprecated' | 'c
 export type ShardState = 'dormant' | 'awakening' | 'active' | 'corrupted' | 'shattered' | 'transcended'
 export type StoryCanonStatus = 'draft' | 'submitted' | 'under_review' | 'revision_requested' | 'approved' | 'rejected' | 'canonical'
 export type StoryScope = 'tome' | 'tale' | 'scene'
+export type ChapterStatus = 'draft' | 'in_progress' | 'complete' | 'revision'
+
+// Chapter type for Tomes
+export interface Chapter {
+  id: string
+  story_id: string
+  title: string
+  content: Json
+  content_text: string | null
+  word_count: number
+  word_target: number
+  summary: string | null
+  status: ChapterStatus
+  chapter_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface ChapterInsert {
+  id?: string
+  story_id: string
+  title?: string
+  content?: Json
+  content_text?: string | null
+  word_count?: number
+  word_target?: number
+  summary?: string | null
+  status?: ChapterStatus
+  chapter_order: number
+}
+
+export interface ChapterUpdate {
+  title?: string
+  content?: Json
+  content_text?: string | null
+  word_count?: number
+  word_target?: number
+  summary?: string | null
+  status?: ChapterStatus
+  chapter_order?: number
+}
 
 export interface Database {
   public: {

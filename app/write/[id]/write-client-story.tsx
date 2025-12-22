@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { submitStoryById, saveDraft } from '@/lib/actions/story'
 import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
+import { saveChapterContent, type Chapter } from '@/lib/actions/chapters'
 import { CanonFeedback } from '@/components/editor/canon-feedback'
 import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
 import { RosterSidebar } from '@/components/editor/roster-sidebar'
+import { ChapterSidebar } from '@/components/editor/chapter-sidebar'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -67,6 +69,11 @@ export function WriteClientWithStory({
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [showRosterSidebar, setShowRosterSidebar] = useState(false)
   const editorRef = useRef<Editor | null>(null)
+  
+  // Chapter state (for Tomes)
+  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
+  const [showChapterSidebar, setShowChapterSidebar] = useState(scope === 'tome')
+  const [chapterHasChanges, setChapterHasChanges] = useState(false)
   
   // Calculate initial word count
   useEffect(() => {
@@ -140,6 +147,57 @@ export function WriteClientWithStory({
     }
   }
   
+  // Handle chapter selection (for Tomes)
+  const handleChapterSelect = async (chapter: Chapter) => {
+    // Save current chapter if there are changes
+    if (currentChapter && chapterHasChanges && content) {
+      setIsSaving(true)
+      const contentText = extractTextFromJSON(content as JSONContent)
+      const result = await saveChapterContent(
+        currentChapter.id,
+        currentChapter.title,
+        content as Json,
+        contentText
+      )
+      if (!result.success) {
+        setError('Failed to save chapter before switching')
+        setIsSaving(false)
+        return
+      }
+      setIsSaving(false)
+    }
+    
+    // Load the selected chapter
+    setCurrentChapter(chapter)
+    setContent(chapter.content as JSONContent | null)
+    setChapterHasChanges(false)
+    setHasChanges(false)
+    setCanonAnalysis(null)
+    setAnalysisError(null)
+    
+    // Update word count for this chapter
+    if (chapter.content) {
+      const text = extractTextFromJSON(chapter.content as JSONContent)
+      const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
+      setWordCount(words)
+    } else {
+      setWordCount(0)
+    }
+  }
+  
+  // Handle chapter content change
+  const handleChapterContentChange = (newContent: JSONContent) => {
+    setContent(newContent)
+    setHasChanges(true)
+    setChapterHasChanges(true)
+    setCanonAnalysis(null)
+    setAnalysisError(null)
+    
+    const text = extractTextFromJSON(newContent)
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
+    setWordCount(words)
+  }
+  
   // Analyze story for canon consistency
   const handleAnalyze = async () => {
     if (!title || !content || wordCount < 50) return
@@ -197,12 +255,31 @@ export function WriteClientWithStory({
     setError(null)
     
     try {
-      const result = await saveDraft(title, content as Json, storyId)
-      
-      if (result.success) {
-        setHasChanges(false)
+      // For Tomes with a current chapter, save to chapter
+      if (scope === 'tome' && currentChapter) {
+        const contentText = extractTextFromJSON(content as JSONContent)
+        const result = await saveChapterContent(
+          currentChapter.id,
+          currentChapter.title,
+          content as Json,
+          contentText
+        )
+        
+        if (result.success) {
+          setHasChanges(false)
+          setChapterHasChanges(false)
+        } else {
+          setError(result.error || 'Failed to save chapter')
+        }
       } else {
-        setError(result.error || 'Failed to save draft')
+        // For Tales/Scenes, save to story
+        const result = await saveDraft(title, content as Json, storyId)
+        
+        if (result.success) {
+          setHasChanges(false)
+        } else {
+          setError(result.error || 'Failed to save draft')
+        }
       }
     } finally {
       setIsSaving(false)
@@ -242,7 +319,23 @@ export function WriteClientWithStory({
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <BookOpen className="w-4 h-4" />
                   <span>{wordCount} words</span>
+                  {currentChapter && (
+                    <span className="text-gold/70">· {currentChapter.title}</span>
+                  )}
                 </div>
+                
+                {/* Chapter Toggle (Tomes only) */}
+                {scope === 'tome' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowChapterSidebar(!showChapterSidebar)}
+                    className={showChapterSidebar ? 'border-gold text-gold' : ''}
+                  >
+                    <List className="w-4 h-4" />
+                    <span className="ml-2 hidden sm:inline">Chapters</span>
+                  </Button>
+                )}
                 
                 {/* Split View Toggle */}
                 <SplitViewToggle />
@@ -299,8 +392,20 @@ export function WriteClientWithStory({
         
         {/* Split View Container */}
         <SplitViewContainer storyId={storyId}>
-          {/* Main Editor Area */}
-          <main className="max-w-4xl mx-auto px-6 py-8">
+          <div className="flex h-full">
+            {/* Chapter Sidebar (Tomes only) */}
+            {scope === 'tome' && showChapterSidebar && (
+              <ChapterSidebar
+                storyId={storyId}
+                currentChapterId={currentChapter?.id}
+                onChapterSelect={handleChapterSelect}
+                onClose={() => setShowChapterSidebar(false)}
+              />
+            )}
+            
+            {/* Main Editor Area */}
+            <main className={`flex-1 overflow-y-auto ${scope === 'tome' && showChapterSidebar ? 'ml-0' : ''}`}>
+              <div className="max-w-4xl mx-auto px-6 py-8">
             {/* Error Display */}
             {error && (
               <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
@@ -339,9 +444,12 @@ export function WriteClientWithStory({
         
         {/* Editor */}
         <TiptapEditor
-          content={initialContent as JSONContent}
-          onChange={handleContentChange}
-          placeholder="Begin your story... Let your words flow into the Everloop."
+          content={content as JSONContent}
+          onChange={scope === 'tome' && currentChapter ? handleChapterContentChange : handleContentChange}
+          placeholder={currentChapter 
+            ? `Continue writing "${currentChapter.title}"...`
+            : "Begin your story... Let your words flow into the Everloop."
+          }
           onMagicWand={() => setShowStreamModal(true)}
           onCanonCheck={handleAnalyze}
           onRosterOpen={() => setShowRosterSidebar(true)}
@@ -382,9 +490,17 @@ export function WriteClientWithStory({
               <span className="text-gold">•</span>
               <span>Use the Reference panel (Cmd/Ctrl + \) to browse lore and canon stories while writing.</span>
             </li>
+            {scope === 'tome' && (
+              <li className="flex items-start gap-2">
+                <span className="text-gold">•</span>
+                <span>Organize your Tome into chapters using the chapter sidebar for better structure.</span>
+              </li>
+            )}
           </ul>
         </div>
-          </main>
+              </div>
+            </main>
+          </div>
         </SplitViewContainer>
       
         {/* Stream of Consciousness Modal */}
