@@ -12,7 +12,8 @@ import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analy
 import { CanonFeedback } from '@/components/editor/canon-feedback'
 import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
 import { RosterSidebar } from '@/components/editor/roster-sidebar'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll } from 'lucide-react'
+import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -211,108 +212,114 @@ export function WriteClientWithStory({
   const scopeConfig = SCOPE_CONFIG[scope]
   
   return (
-    <div className="min-h-screen bg-charcoal">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-charcoal-700">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link 
-                href="/dashboard"
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Dashboard</span>
-              </Link>
-              
-              {/* Scope Badge */}
-              <Badge 
-                variant="outline" 
-                className="border-gold/50 text-gold bg-gold/10 gap-1.5"
-              >
-                {scopeConfig.icon}
-                <span>Writing a {scopeConfig.label}</span>
-              </Badge>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Word count */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <BookOpen className="w-4 h-4" />
-                <span>{wordCount} words</span>
+    <SplitViewProvider>
+      <div className="min-h-screen h-screen bg-charcoal flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-50 glass border-b border-charcoal-700 flex-shrink-0">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link 
+                  href="/dashboard"
+                  className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Link>
+                
+                {/* Scope Badge */}
+                <Badge 
+                  variant="outline" 
+                  className="border-gold/50 text-gold bg-gold/10 gap-1.5"
+                >
+                  {scopeConfig.icon}
+                  <span>Writing a {scopeConfig.label}</span>
+                </Badge>
               </div>
               
-              {/* Save Draft */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSaveDraft}
-                disabled={isSaving || !content || !hasChanges}
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
-                <span className="ml-2">{hasChanges ? 'Save Draft' : 'Saved'}</span>
-              </Button>
-              
-              {/* Canon Check */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAnalyze}
-                disabled={isAnalyzing || !title || !content || wordCount < 50}
-                className="border-gold/50 hover:border-gold hover:bg-gold/10"
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Sparkles className="w-4 h-4 text-gold" />
-                )}
-                <span className="ml-2">Check Canon</span>
-              </Button>
-              
-              {/* Submit */}
-              <Button
-                variant="canon"
-                size="sm"
-                onClick={handleSubmit}
-                disabled={isPending || !title || !content || wordCount < 50 || (canonAnalysis !== null && canonAnalysis.score < 50)}
-              >
-                {isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                <span className="ml-2">Submit for Review</span>
-              </Button>
+              <div className="flex items-center gap-3">
+                {/* Word count */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <BookOpen className="w-4 h-4" />
+                  <span>{wordCount} words</span>
+                </div>
+                
+                {/* Split View Toggle */}
+                <SplitViewToggle />
+                
+                {/* Save Draft */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveDraft}
+                  disabled={isSaving || !content || !hasChanges}
+                >
+                  {isSaving ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  <span className="ml-2">{hasChanges ? 'Save Draft' : 'Saved'}</span>
+                </Button>
+                
+                {/* Canon Check */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAnalyze}
+                  disabled={isAnalyzing || !title || !content || wordCount < 50}
+                  className="border-gold/50 hover:border-gold hover:bg-gold/10"
+                >
+                  {isAnalyzing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-gold" />
+                  )}
+                  <span className="ml-2">Check Canon</span>
+                </Button>
+                
+                {/* Submit */}
+                <Button
+                  variant="canon"
+                  size="sm"
+                  onClick={handleSubmit}
+                  disabled={isPending || !title || !content || wordCount < 50 || (canonAnalysis !== null && canonAnalysis.score < 50)}
+                >
+                  {isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  <span className="ml-2">Submit for Review</span>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
-      
-      {/* Main Editor Area */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
-            {error}
-          </div>
-        )}
+        </header>
         
-        {/* Scope Description */}
-        <div className="mb-6 p-4 rounded-lg bg-navy/30 border border-charcoal-700">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gold/10">
-              {scopeConfig.icon}
+        {/* Split View Container */}
+        <SplitViewContainer storyId={storyId}>
+          {/* Main Editor Area */}
+          <main className="max-w-4xl mx-auto px-6 py-8">
+            {/* Error Display */}
+            {error && (
+              <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
+                {error}
+              </div>
+            )}
+            
+            {/* Scope Description */}
+            <div className="mb-6 p-4 rounded-lg bg-navy/30 border border-charcoal-700">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gold/10">
+                  {scopeConfig.icon}
+                </div>
+                <div>
+                  <h2 className="font-serif text-lg text-gold">{scopeConfig.label}</h2>
+                  <p className="text-sm text-muted-foreground">{scopeConfig.description}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 className="font-serif text-lg text-gold">{scopeConfig.label}</h2>
-              <p className="text-sm text-muted-foreground">{scopeConfig.description}</p>
-            </div>
-          </div>
-        </div>
         
         {/* Title Input */}
         <div className="mb-6">
@@ -371,23 +378,29 @@ export function WriteClientWithStory({
               <span className="text-gold">•</span>
               <span>You can save drafts at any time and return to continue writing later.</span>
             </li>
+            <li className="flex items-start gap-2">
+              <span className="text-gold">•</span>
+              <span>Use the Reference panel (Cmd/Ctrl + \) to browse lore and canon stories while writing.</span>
+            </li>
           </ul>
         </div>
-      </main>
+          </main>
+        </SplitViewContainer>
       
-      {/* Stream of Consciousness Modal */}
-      <StreamOfConsciousnessModal
-        isOpen={showStreamModal}
-        onClose={() => setShowStreamModal(false)}
-        onInsert={handleInsertProse}
-      />
-      
-      {/* Roster Sidebar */}
-      <RosterSidebar
-        isOpen={showRosterSidebar}
-        onClose={() => setShowRosterSidebar(false)}
-        onInsertCharacter={handleInsertCharacter}
-      />
-    </div>
+        {/* Stream of Consciousness Modal */}
+        <StreamOfConsciousnessModal
+          isOpen={showStreamModal}
+          onClose={() => setShowStreamModal(false)}
+          onInsert={handleInsertProse}
+        />
+        
+        {/* Roster Sidebar */}
+        <RosterSidebar
+          isOpen={showRosterSidebar}
+          onClose={() => setShowRosterSidebar(false)}
+          onInsertCharacter={handleInsertCharacter}
+        />
+      </div>
+    </SplitViewProvider>
   )
 }
