@@ -25,8 +25,9 @@ import { CommentsSidebar } from '@/components/editor/comments'
 import { VersionHistorySidebar } from '@/components/editor/version-history'
 import { CollaboratorsModal, PresenceIndicator } from '@/components/editor/collaborators'
 import { ExportModal } from '@/components/editor/export'
+import { ReadingMode } from '@/components/editor/reading-mode'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download, Eye } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -93,6 +94,9 @@ export function WriteClientWithStory({
   
   // Export modal state
   const [showExportModal, setShowExportModal] = useState(false)
+  
+  // Reading mode state
+  const [showReadingMode, setShowReadingMode] = useState(false)
   
   // Chapter state (for Tomes)
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
@@ -517,6 +521,17 @@ export function WriteClientWithStory({
                   <Download className="w-4 h-4" />
                 </Button>
                 
+                {/* Reading Mode */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowReadingMode(true)}
+                  title="Reading Mode"
+                  disabled={!content || wordCount < 10}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+                
                 {/* Save Draft */}
                 <Button
                   variant="outline"
@@ -735,6 +750,16 @@ export function WriteClientWithStory({
           storyTitle={title || 'Untitled Story'}
           scope={scope}
           currentChapterId={currentChapter?.id}
+        />
+        
+        {/* Reading Mode */}
+        <ReadingMode
+          isOpen={showReadingMode}
+          onClose={() => setShowReadingMode(false)}
+          title={title || 'Untitled Story'}
+          content={getText()}
+          wordCount={wordCount}
+          chapterTitle={currentChapter?.title}
         />
       </div>
     </SplitViewProvider>

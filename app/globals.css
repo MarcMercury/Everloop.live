@@ -380,6 +380,36 @@
     box-shadow: 0 0 0 3px rgba(212, 168, 75, 0.15);
   }
 
+  /* Reading Mode Styles */
+  .prose-content p {
+    margin: 1em 0;
+  }
+
+  .prose-content p.first-paragraph {
+    text-indent: 0;
+  }
+
+  .prose-content p:not(.first-paragraph) {
+    text-indent: 1.5em;
+  }
+
+  .prose-content .drop-cap {
+    float: left;
+    font-size: 3.5em;
+    line-height: 0.8;
+    margin-right: 0.1em;
+    margin-top: 0.1em;
+    font-family: Georgia, serif;
+  }
+
+  .prose-content strong {
+    font-weight: 600;
+  }
+
+  .prose-content em {
+    font-style: italic;
+  }
+
   /* Floating animation for magical elements */
   .float {
     animation: gentle-float 6s ease-in-out infinite;
