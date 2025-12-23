@@ -109,6 +109,77 @@ export interface StoryCommentUpdate {
   resolved_by?: string | null
 }
 
+// Writing Stats types
+export interface WritingSession {
+  id: string
+  user_id: string
+  story_id: string | null
+  chapter_id: string | null
+  started_at: string
+  ended_at: string | null
+  duration_seconds: number
+  words_at_start: number
+  words_at_end: number
+  words_written: number
+  is_active: boolean
+  created_at: string
+}
+
+export interface WritingSessionInsert {
+  id?: string
+  user_id?: string // Set by server
+  story_id?: string | null
+  chapter_id?: string | null
+  started_at?: string
+  words_at_start?: number
+  is_active?: boolean
+}
+
+export interface WritingSessionUpdate {
+  ended_at?: string
+  duration_seconds?: number
+  words_at_end?: number
+  is_active?: boolean
+}
+
+export interface DailyWritingStats {
+  id: string
+  user_id: string
+  date: string
+  total_words: number
+  total_sessions: number
+  total_duration_seconds: number
+  stories_worked_on: { story_id: string; title: string; words: number }[]
+  daily_goal: number
+  goal_met: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WritingGoals {
+  id: string
+  user_id: string
+  daily_word_goal: number
+  weekly_word_goal: number
+  monthly_word_goal: number
+  current_streak: number
+  longest_streak: number
+  last_writing_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WritingStatsSummary {
+  total_words: number
+  total_sessions: number
+  total_duration_seconds: number
+  avg_words_per_day: number
+  avg_session_duration_seconds: number
+  current_streak: number
+  longest_streak: number
+  days_with_writing: number
+}
+
 export interface Database {
   public: {
     Tables: {

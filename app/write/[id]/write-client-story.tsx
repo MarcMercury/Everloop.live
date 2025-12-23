@@ -11,6 +11,11 @@ import { submitStoryById, saveDraft } from '@/lib/actions/story'
 import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
 import { saveChapterContent, type Chapter } from '@/lib/actions/chapters'
 import { type StoryComment } from '@/lib/actions/comments'
+import { 
+  startWritingSession, 
+  endWritingSession, 
+  updateSessionWords 
+} from '@/lib/actions/writing-stats'
 import { CanonFeedback } from '@/components/editor/canon-feedback'
 import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
 import { RosterSidebar } from '@/components/editor/roster-sidebar'
@@ -81,6 +86,10 @@ export function WriteClientWithStory({
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false)
   const [comments, setComments] = useState<StoryComment[]>([])
   
+  // Writing session state
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const initialWordCountRef = useRef(0)
+  
   // Handle new comment created
   const handleCommentCreated = useCallback((comment: StoryComment) => {
     setComments(prev => [...prev, comment])
@@ -104,8 +113,53 @@ export function WriteClientWithStory({
       const text = extractTextFromJSON(initialContent as JSONContent)
       const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
       setWordCount(words)
+      initialWordCountRef.current = words
     }
   }, [initialContent])
+  
+  // Start writing session on mount
+  useEffect(() => {
+    const initSession = async () => {
+      const result = await startWritingSession(storyId, null, initialWordCountRef.current)
+      if (result.data) {
+        setSessionId(result.data.id)
+      }
+    }
+    
+    initSession()
+    
+    // End session on unmount or page unload
+    return () => {
+      if (sessionId) {
+        endWritingSession(sessionId, wordCount)
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyId])
+  
+  // Handle beforeunload to end session
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (sessionId) {
+        // Use sendBeacon for reliable delivery on page close
+        navigator.sendBeacon('/api/end-session', JSON.stringify({ sessionId, wordCount }))
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [sessionId, wordCount])
+  
+  // Update session word count periodically (every 30 seconds)
+  useEffect(() => {
+    if (!sessionId) return
+    
+    const interval = setInterval(() => {
+      updateSessionWords(sessionId, wordCount)
+    }, 30000)
+    
+    return () => clearInterval(interval)
+  }, [sessionId, wordCount])
   
   const handleContentChange = (newContent: JSONContent) => {
     setContent(newContent)
