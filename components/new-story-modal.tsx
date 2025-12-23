@@ -13,7 +13,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { PenLine, BookOpen, ScrollText, Sparkles, Loader2 } from 'lucide-react'
 import { createDraftStory } from '@/lib/actions/story'
-import type { StoryScope } from '@/types/database'
+import { TemplatePicker } from '@/components/template-picker'
+import type { StoryScope, StoryTemplate, Json } from '@/types/database'
 
 interface ScopeOption {
   scope: StoryScope
@@ -55,6 +56,7 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
   const [open, setOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [selectedScope, setSelectedScope] = useState<StoryScope | null>(null)
+  const [step, setStep] = useState<'scope' | 'template'>('scope')
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -64,17 +66,28 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
       // Reset state when closing
       setIsCreating(false)
       setSelectedScope(null)
+      setStep('scope')
       setError(null)
     }
   }
 
   async function handleScopeSelect(scope: StoryScope) {
     setSelectedScope(scope)
+    setStep('template')
+  }
+
+  async function handleTemplateSelect(template: StoryTemplate | null) {
+    if (!selectedScope) return
+    
     setIsCreating(true)
     setError(null)
 
     try {
-      const result = await createDraftStory(scope)
+      const result = await createDraftStory(
+        selectedScope,
+        template?.suggested_title || undefined,
+        template?.initial_content as Json | undefined
+      )
       
       if (result.success && result.storyId) {
         setOpen(false)
@@ -83,14 +96,18 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
         console.error('Failed to create story:', result.error)
         setError(result.error || 'Failed to create story. Please try again.')
         setIsCreating(false)
-        setSelectedScope(null)
       }
     } catch (error) {
       console.error('Error creating story:', error)
       setError('An unexpected error occurred. Please try again.')
       setIsCreating(false)
-      setSelectedScope(null)
     }
+  }
+
+  function handleBackToScope() {
+    setStep('scope')
+    setSelectedScope(null)
+    setError(null)
   }
 
   return (
@@ -99,81 +116,93 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
         {children}
       </DialogTrigger>
       <DialogContent className="sm:max-w-xl bg-teal-deep border-gold/20">
-        <DialogHeader className="text-center pb-2">
-          <DialogTitle className="text-2xl font-serif text-parchment">
-            What are you weaving today?
-          </DialogTitle>
-          <DialogDescription className="text-parchment-muted">
-            Choose the scope of your story. This helps the Canon Keeper understand your intent.
-          </DialogDescription>
-        </DialogHeader>
+        {step === 'scope' ? (
+          <>
+            <DialogHeader className="text-center pb-2">
+              <DialogTitle className="text-2xl font-serif text-parchment">
+                What are you weaving today?
+              </DialogTitle>
+              <DialogDescription className="text-parchment-muted">
+                Choose the scope of your story. This helps the Canon Keeper understand your intent.
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {SCOPE_OPTIONS.map((option) => (
-            <button
-              type="button"
-              key={option.scope}
-              onClick={() => handleScopeSelect(option.scope)}
-              disabled={isCreating}
-              className={`
-                group relative flex items-start gap-4 p-4 rounded-lg text-left
-                bg-teal-rich/50 border border-gold/10 
-                hover:border-gold/30 hover:bg-teal-rich/80
-                transition-all duration-300
-                disabled:opacity-50 disabled:cursor-not-allowed
-                ${selectedScope === option.scope ? 'border-gold/50 bg-gold/10' : ''}
-              `}
-            >
-              {/* Icon */}
-              <div className={`
-                flex-shrink-0 w-14 h-14 rounded-lg 
-                bg-gradient-to-br from-gold/20 to-gold/5
-                flex items-center justify-center
-                text-gold group-hover:text-gold/80
-                transition-colors
-                ${selectedScope === option.scope ? 'from-gold/30 to-gold/10' : ''}
-              `}>
-                {isCreating && selectedScope === option.scope ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : (
-                  option.icon
-                )}
-              </div>
+            <div className="grid gap-4 py-4">
+              {SCOPE_OPTIONS.map((option) => (
+                <button
+                  type="button"
+                  key={option.scope}
+                  onClick={() => handleScopeSelect(option.scope)}
+                  disabled={isCreating}
+                  className={`
+                    group relative flex items-start gap-4 p-4 rounded-lg text-left
+                    bg-teal-rich/50 border border-gold/10 
+                    hover:border-gold/30 hover:bg-teal-rich/80
+                    transition-all duration-300
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    ${selectedScope === option.scope ? 'border-gold/50 bg-gold/10' : ''}
+                  `}
+                >
+                  {/* Icon */}
+                  <div className={`
+                    flex-shrink-0 w-14 h-14 rounded-lg 
+                    bg-gradient-to-br from-gold/20 to-gold/5
+                    flex items-center justify-center
+                    text-gold group-hover:text-gold/80
+                    transition-colors
+                    ${selectedScope === option.scope ? 'from-gold/30 to-gold/10' : ''}
+                  `}>
+                    {option.icon}
+                  </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-serif text-lg text-parchment group-hover:text-gold transition-colors">
-                    {option.title}
-                  </h3>
-                  <span className="text-xs text-parchment-muted uppercase tracking-wider">
-                    {option.subtitle}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-parchment-muted leading-relaxed">
-                  {option.description}
-                </p>
-              </div>
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-serif text-lg text-parchment group-hover:text-gold transition-colors">
+                        {option.title}
+                      </h3>
+                      <span className="text-xs text-parchment-muted uppercase tracking-wider">
+                        {option.subtitle}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-parchment-muted leading-relaxed">
+                      {option.description}
+                    </p>
+                  </div>
 
-              {/* Hover Arrow */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <PenLine className="w-5 h-5 text-gold" />
-              </div>
-            </button>
-          ))}
-        </div>
+                  {/* Hover Arrow */}
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <PenLine className="w-5 h-5 text-gold" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogHeader className="text-center pb-2">
+              <DialogTitle className="text-2xl font-serif text-parchment">
+                Choose a Starting Point
+              </DialogTitle>
+              <DialogDescription className="text-parchment-muted">
+                Pick a template to jumpstart your writing, or start fresh.
+              </DialogDescription>
+            </DialogHeader>
+
+            <TemplatePicker
+              scope={selectedScope!}
+              onSelect={handleTemplateSelect}
+              onCancel={handleBackToScope}
+              isLoading={isCreating}
+            />
+          </>
+        )}
 
         {error && (
           <div className="text-center py-2 px-4 bg-red-900/20 border border-red-500/30 rounded-lg">
             <p className="text-sm text-red-400">{error}</p>
           </div>
         )}
-
-        <div className="text-center pt-2 border-t border-gold/10">
-          <p className="text-xs text-parchment-muted">
-            You can always change the scope later in the editor.
-          </p>
-        </div>
       </DialogContent>
     </Dialog>
   )

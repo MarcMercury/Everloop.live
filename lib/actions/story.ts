@@ -378,7 +378,11 @@ const SCOPE_TITLES: Record<StoryScope, string> = {
   scene: 'Untitled Scene',
 }
 
-export async function createDraftStory(scope: StoryScope): Promise<CreateDraftResult> {
+export async function createDraftStory(
+  scope: StoryScope,
+  templateTitle?: string,
+  templateContent?: Json
+): Promise<CreateDraftResult> {
   const supabase = await createClient()
   
   // Check if user is authenticated
@@ -399,13 +403,13 @@ export async function createDraftStory(scope: StoryScope): Promise<CreateDraftRe
     }
   }
   
-  // Generate a default title and unique slug
-  const defaultTitle = SCOPE_TITLES[scope]
+  // Use template title/content if provided, otherwise defaults
+  const title = templateTitle || SCOPE_TITLES[scope]
   const timestamp = Date.now().toString(36)
   const slug = `draft-${scope}-${timestamp}`
   
-  // Create empty TipTap document structure
-  const emptyContent = {
+  // Create empty TipTap document structure or use template content
+  const content = templateContent || {
     type: 'doc',
     content: [
       {
@@ -415,13 +419,17 @@ export async function createDraftStory(scope: StoryScope): Promise<CreateDraftRe
     ]
   }
   
+  // Calculate word count from template content if present
+  const contentText = templateContent ? extractTextFromContent(templateContent) : ''
+  const wordCount = templateContent ? countWords(contentText) : 0
+  
   // Build insert data
   const storyData: StoryInsert = {
-    title: defaultTitle,
+    title,
     slug,
-    content: emptyContent,
-    content_text: '',
-    word_count: 0,
+    content,
+    content_text: contentText,
+    word_count: wordCount,
     author_id: user.id,
     canon_status: 'draft',
     scope,

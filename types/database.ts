@@ -180,6 +180,56 @@ export interface WritingStatsSummary {
   days_with_writing: number
 }
 
+// Story Template types
+export type TemplateType = 'system' | 'user'
+
+export interface StoryTemplate {
+  id: string
+  name: string
+  description: string | null
+  scope: StoryScope
+  template_type: TemplateType
+  created_by: string | null
+  initial_content: Json | null
+  suggested_title: string | null
+  chapter_outline: Json | null
+  tags: string[]
+  genre: string | null
+  estimated_words: number | null
+  use_count: number
+  is_public: boolean
+  is_featured: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StoryTemplateInsert {
+  name: string
+  description?: string | null
+  scope: StoryScope
+  template_type?: TemplateType
+  created_by?: string | null
+  initial_content?: Json | null
+  suggested_title?: string | null
+  chapter_outline?: Json | null
+  tags?: string[]
+  genre?: string | null
+  estimated_words?: number | null
+  is_public?: boolean
+}
+
+export interface StoryTemplateUpdate {
+  name?: string
+  description?: string | null
+  initial_content?: Json | null
+  suggested_title?: string | null
+  chapter_outline?: Json | null
+  tags?: string[]
+  genre?: string | null
+  estimated_words?: number | null
+  is_public?: boolean
+}
+
 export interface Database {
   public: {
     Tables: {
