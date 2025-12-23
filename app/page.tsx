@@ -38,8 +38,7 @@ export default function Home() {
 
           {/* Tagline */}
           <p className="text-xl md:text-2xl text-parchment-dark max-w-2xl mx-auto leading-relaxed">
-            A collaborative universe where writers build within a living world
-            — <span className="text-gold font-medium">guided by AI</span>, grounded in canon.
+            A collaborative universe where writers build the history of a world that is slowly unraveling.
           </p>
 
           {/* CTA Buttons */}
