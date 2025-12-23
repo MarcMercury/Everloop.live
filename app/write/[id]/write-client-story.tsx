@@ -107,6 +107,12 @@ export function WriteClientWithStory({
     setShowCommentsSidebar(false)
   }, [])
   
+  // Get current text for voice analysis
+  const getText = useCallback(() => {
+    if (!content) return ''
+    return extractTextFromJSON(content)
+  }, [content])
+  
   // Calculate initial word count
   useEffect(() => {
     if (initialContent) {
@@ -482,7 +488,7 @@ export function WriteClientWithStory({
         </header>
         
         {/* Split View Container */}
-        <SplitViewContainer storyId={storyId}>
+        <SplitViewContainer storyId={storyId} getText={getText}>
           <div className="flex h-full">
             {/* Chapter Sidebar (Tomes only) */}
             {scope === 'tome' && showChapterSidebar && (

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 
-export type PanelType = 'lore' | 'stories' | 'notes' | 'drafts' | null
+export type PanelType = 'lore' | 'stories' | 'notes' | 'drafts' | 'voice' | null
 
 interface SplitViewContextValue {
   isPanelOpen: boolean
