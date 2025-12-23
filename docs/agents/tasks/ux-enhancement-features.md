@@ -19,7 +19,7 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | 3 | Inline Comments | ✅ Complete | DB migration: `20251223_001_create_story_comments.sql` |
 | 4 | Writing Stats Dashboard | ✅ Complete | DB migration: `20251224_001_create_writing_stats.sql` |
 | 5 | Voice & Tone Analyzer | ✅ Complete | AI + readability metrics in split view |
-| 6 | Story Templates | ⏳ Pending | - |
+| 6 | Story Templates | ✅ Complete | DB migration: `20251225_001_create_story_templates.sql` |
 | 7 | Canon Entity Linker | ⏳ Pending | - |
 | 8 | Living Archive | ⏳ Pending | - |
 | 9 | Collaborative Mode | ⏳ Pending | - |
@@ -143,16 +143,34 @@ supabase db push
 
 ---
 
-## Feature 6: Story Templates
+## Feature 6: Story Templates ✅
 
-**Phase 6.1: Template Storage**
-- [ ] Create `story_templates` table
-- [ ] System templates vs user templates
+**Completed Components:**
+- `/supabase/migrations/20251225_001_create_story_templates.sql` - Table, RLS, seed data
+- `/types/database.ts` - StoryTemplate, StoryTemplateInsert, StoryTemplateUpdate types
+- `/lib/actions/templates.ts` - CRUD operations for templates
+- `/components/template-picker.tsx` - Template selection UI with preview modal
+- Updated `/components/new-story-modal.tsx` - Two-step flow (scope → template)
+- Updated `/lib/actions/story.ts` - createDraftStory accepts template content
 
-**Phase 6.2: Template UI**
-- [ ] Template picker in new story flow
-- [ ] Template preview
-- [ ] Create template from existing story
+**Database Table:**
+- `story_templates` - Template storage with system/user types, scope, featured flag
+- `increment_template_use_count()` - RPC for tracking usage
+
+**Pre-seeded System Templates (7):**
+- **Scenes:** "Moment of Decision", "Chance Encounter", "The Revelation"
+- **Tales:** "The Journey Begins", "Mystery Unfolds"
+- **Tomes:** "Epic Saga Outline", "Chronicle Template"
+
+**Features:**
+- [x] System templates (featured, pre-built starting points)
+- [x] User templates (save your own)
+- [x] Template picker in new story flow
+- [x] Template preview modal with full content
+- [x] "Blank Canvas" option for fresh starts
+- [x] Create template from existing story
+- [x] Template use count tracking
+- [x] Scope-specific templates (scenes, tales, tomes)
 
 ---
 
