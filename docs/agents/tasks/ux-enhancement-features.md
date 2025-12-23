@@ -18,7 +18,7 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | 2 | Chapter Manager | ✅ Complete | DB migration: `20251222_001_create_story_chapters.sql` |
 | 3 | Inline Comments | ✅ Complete | DB migration: `20251223_001_create_story_comments.sql` |
 | 4 | Writing Stats Dashboard | ✅ Complete | DB migration: `20251224_001_create_writing_stats.sql` |
-| 5 | Voice & Tone Analyzer | ⏳ Pending | - |
+| 5 | Voice & Tone Analyzer | ✅ Complete | AI + readability metrics in split view |
 | 6 | Story Templates | ⏳ Pending | - |
 | 7 | Canon Entity Linker | ⏳ Pending | - |
 | 8 | Living Archive | ⏳ Pending | - |
@@ -119,17 +119,27 @@ supabase db push
 
 ---
 
-## Feature 5: Voice & Tone Analyzer
+## Feature 5: Voice & Tone Analyzer ✅
 
-**Phase 5.1: Analysis Engine**
-- [ ] Integrate with OpenAI for style analysis
-- [ ] Readability metrics (Flesch-Kincaid, etc.)
-- [ ] Sentence length distribution
+**Completed Components:**
+- `/lib/actions/voice-analyzer.ts` - AI analysis with OpenAI GPT-4o-mini
+- `/lib/utils/readability.ts` - Flesch-Kincaid, Gunning Fog, sentence metrics
+- `/components/editor/split-view/panels/voice-tone-panel.tsx` - Full analysis UI
+- Updated `/components/editor/split-view/split-view-context.tsx` - Added 'voice' panel type
+- Updated `/components/editor/split-view/split-view-container.tsx` - Voice tab + getText prop
+- Updated `/app/write/[id]/write-client-story.tsx` - getText callback for analysis
 
-**Phase 5.2: Feedback UI**
-- [ ] Real-time tone indicators
-- [ ] Suggestions panel
-- [ ] Historical comparison
+**Features:**
+- [x] AI-powered voice/tone analysis (contemplative, urgent, melancholic, etc.)
+- [x] Readability metrics (Flesch-Kincaid Grade, Flesch Reading Ease, Gunning Fog)
+- [x] Sentence length distribution with visual chart
+- [x] Voice characteristics with strength percentages
+- [x] Canon style fit score (how well it matches Everloop style)
+- [x] Similar author/work comparisons
+- [x] Writing strengths identification
+- [x] Actionable improvement suggestions with priority levels
+- [x] Collapsible sections for organized viewing
+- [x] Re-analyze button for updated content
 
 ---
 
