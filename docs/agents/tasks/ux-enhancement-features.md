@@ -20,7 +20,7 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | 4 | Writing Stats Dashboard | ✅ Complete | DB migration: `20251224_001_create_writing_stats.sql` |
 | 5 | Voice & Tone Analyzer | ✅ Complete | AI + readability metrics in split view |
 | 6 | Story Templates | ✅ Complete | DB migration: `20251225_001_create_story_templates.sql` |
-| 7 | Canon Entity Linker | ⏳ Pending | - |
+| 7 | Canon Entity Linker | ✅ Complete | Entity detection, linking, hover cards |
 | 8 | Living Archive | ⏳ Pending | - |
 | 9 | Collaborative Mode | ⏳ Pending | - |
 | 10 | Export Suite | ⏳ Pending | - |
@@ -174,16 +174,27 @@ supabase db push
 
 ---
 
-## Feature 7: Canon Entity Linker
+## Feature 7: Canon Entity Linker ✅
 
-**Phase 7.1: Entity Detection**
-- [ ] Scan text for known entity names
-- [ ] Highlight potential matches
+**Completed Components:**
+- `/components/editor/extensions/entity-link.ts` - TipTap mark extension for entity links
+- `/lib/actions/entity-linker.ts` - Server actions for detection and search
+- `/components/editor/entity-linker/entity-hover-card.tsx` - Hover cards with lazy-loading
+- `/components/editor/entity-linker/entity-link-popover.tsx` - Manual linking popover
+- `/components/editor/split-view/panels/entity-link-panel.tsx` - Auto-detection panel
+- Updated `/components/editor/tiptap-editor.tsx` - EntityLink extension + toolbar button
+- Updated `/components/editor/split-view/split-view-container.tsx` - Entities tab
 
-**Phase 7.2: Linking UI**
-- [ ] One-click entity linking
-- [ ] Entity hover cards
-- [ ] Auto-suggest while typing
+**Features:**
+- [x] Scan text for known entity names (word boundary matching)
+- [x] Highlight linked entities with type-specific colors
+- [x] One-click entity linking from auto-detection
+- [x] Entity hover cards with lazy-loaded details
+- [x] Manual linking via toolbar (select text → click Link icon)
+- [x] Search entities while linking
+- [x] Color-coded entity types (character, location, artifact, event, faction, concept, creature)
+- [x] "Link All" button for batch linking
+- [x] Keyboard navigation in search results
 
 ---
 
