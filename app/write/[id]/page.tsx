@@ -36,8 +36,28 @@ export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
     notFound()
   }
 
-  // Verify ownership
-  if (story.author_id !== user.id) {
+  // Verify ownership or collaboration access
+  const isOwner = story.author_id === user.id
+  
+  // Check if user is a collaborator with edit access
+  let hasEditAccess = isOwner
+  if (!isOwner) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('role')
+      .eq('story_id', id)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    
+    if (collab) {
+      const role = (collab as { role: string }).role
+      hasEditAccess = role === 'editor' || role === 'co_author'
+    }
+  }
+  
+  if (!hasEditAccess) {
     redirect('/dashboard')
   }
 
@@ -45,6 +65,15 @@ export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
   if (story.canon_status !== 'draft') {
     redirect('/dashboard')
   }
+  
+  // Fetch user profile for presence
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('username, display_name, avatar_url')
+    .eq('id', user.id)
+    .single()
+  
+  const profile = profileData as { username: string; display_name: string | null; avatar_url: string | null } | null
 
   return (
     <WriteClientWithStory 
@@ -52,6 +81,12 @@ export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
       initialTitle={story.title}
       initialContent={story.content}
       scope={story.scope || 'tale'}
+      currentUser={profile ? {
+        id: user.id,
+        username: profile.username || '',
+        displayName: profile.display_name,
+        avatarUrl: profile.avatar_url,
+      } : undefined}
     />
   )
 }
