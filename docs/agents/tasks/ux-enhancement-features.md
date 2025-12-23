@@ -24,7 +24,7 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | 8 | Living Archive | ✅ Complete | Version history with diffs, restore capability |
 | 9 | Collaborative Mode | ✅ Complete | Collaborators, roles, real-time presence |
 | 10 | Export Suite | ✅ Complete | PDF, EPUB, Markdown, TXT, HTML export |
-| 11 | Reading Mode | ⏳ Pending | - |
+| 11 | Reading Mode | ✅ Complete | Themes, typography controls, progress tracking |
 | 12 | Achievement System | ⏳ Pending | - |
 | 13 | Auto-Save Indicators | ⏳ Pending | - |
 | 14 | Distraction-Free Mode | ⏳ Pending | - |
@@ -248,12 +248,28 @@ supabase db push
 
 ---
 
-## Feature 11: Reading Mode
+## Feature 11: Reading Mode ✅
 
-- [ ] Toggle to reading view
-- [ ] Adjustable typography
-- [ ] Night mode / sepia mode
-- [ ] Estimated reading time
+### Implementation
+- [x] Toggle to reading view (Eye button in toolbar)
+- [x] Adjustable typography (font family, size, line height, alignment)
+- [x] Night mode / sepia mode (3 themes: Light, Dark, Sepia)
+- [x] Estimated reading time (based on 225 wpm average)
+
+### Files Created
+- `components/editor/reading-mode/reading-mode.tsx` - Full reading experience
+- `components/editor/reading-mode/index.ts` - Exports
+
+### Features
+- **Three Themes**: Light (parchment), Dark (night), Sepia (warm)
+- **Font Controls**: Serif, Sans, Mono with size 12-32px
+- **Line Spacing**: Adjustable from 1.2 to 2.4
+- **Text Alignment**: Left, Center, Justified
+- **Reading Progress**: Progress bar + percentage
+- **Reading Time**: Calculated at 225 wpm
+- **Keyboard Shortcuts**: Esc (close), +/- (font size), H (toggle controls)
+- **Drop Caps**: Elegant first letter styling
+- **Auto-hide Controls**: Clean reading experience
 
 ---
 
