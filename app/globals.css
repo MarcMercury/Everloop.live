@@ -443,4 +443,48 @@
     from { width: 100%; }
     to { width: 0%; }
   }
+
+  /* Mobile slide-in animation */
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+
+  /* Safe area insets for mobile notches */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-area-inset-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Focus paragraphs mode for distraction-free */
+  .focus-paragraphs > *:not(:focus-within) {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+  }
+
+  .focus-paragraphs > *:focus-within,
+  .focus-paragraphs > *:hover {
+    opacity: 1;
+  }
+
+  /* Mobile touch-friendly targets */
+  @media (max-width: 768px) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }

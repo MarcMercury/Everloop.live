@@ -28,8 +28,11 @@ import { ExportModal } from '@/components/editor/export'
 import { ReadingMode } from '@/components/editor/reading-mode'
 import { AchievementToastContainer } from '@/components/achievements'
 import { checkAchievements, type NewAchievement } from '@/lib/actions/achievements'
+import { AutoSaveIndicator, useAutoSave } from '@/components/editor/auto-save'
+import { DistractionFreeMode } from '@/components/editor/distraction-free'
+import { MobileToolbar, MobileMenu, useIsMobile } from '@/components/editor/mobile'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download, Eye } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download, Eye, Maximize2 } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -62,6 +65,29 @@ const SCOPE_CONFIG: Record<StoryScope, { label: string; icon: React.ReactNode; d
     icon: <Scroll className="w-3.5 h-3.5" />,
     description: 'Single moment in time'
   },
+}
+
+// Utility function to extract plain text from TipTap JSON
+const extractTextFromJSON = (json: JSONContent | null): string => {
+  if (!json) return ''
+  
+  const extractText = (node: JSONContent): string => {
+    if (node.type === 'text' && typeof node.text === 'string') {
+      return node.text
+    }
+    
+    if (Array.isArray(node.content)) {
+      return node.content.map(extractText).join(' ')
+    }
+    
+    return ''
+  }
+  
+  if (Array.isArray(json.content)) {
+    return json.content.map(extractText).join('\n')
+  }
+  
+  return ''
 }
 
 export function WriteClientWithStory({ 
@@ -100,6 +126,13 @@ export function WriteClientWithStory({
   // Reading mode state
   const [showReadingMode, setShowReadingMode] = useState(false)
   
+  // Distraction-free mode state
+  const [showDistractionFree, setShowDistractionFree] = useState(false)
+  
+  // Mobile menu state
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const isMobile = useIsMobile()
+  
   // Achievement state
   const [newAchievements, setNewAchievements] = useState<NewAchievement[]>([])
   
@@ -118,6 +151,44 @@ export function WriteClientWithStory({
   // Writing session state
   const [sessionId, setSessionId] = useState<string | null>(null)
   const initialWordCountRef = useRef(0)
+  
+  // Auto-save hook
+  const handleAutoSave = useCallback(async () => {
+    if (!content) return { success: false, error: 'No content' }
+    
+    const contentText = extractTextFromJSON(content as JSONContent)
+    
+    if (scope === 'tome' && currentChapter) {
+      const result = await saveChapterContent(
+        currentChapter.id,
+        currentChapter.title,
+        content as Json,
+        contentText
+      )
+      if (result.success) {
+        setHasChanges(false)
+        setChapterHasChanges(false)
+      }
+      return { success: result.success, error: result.error }
+    } else {
+      const result = await saveDraft(title, content as Json, storyId)
+      if (result.success) {
+        setHasChanges(false)
+      }
+      return { success: result.success, error: result.error }
+    }
+  }, [content, scope, currentChapter, title, storyId])
+  
+  const { 
+    status: autoSaveStatus, 
+    lastSaved, 
+    errorMessage: autoSaveError,
+    triggerSave 
+  } = useAutoSave({
+    onSave: handleAutoSave,
+    delay: 3000,
+    enabled: hasChanges && !!content,
+  })
   
   // Handle new comment created
   const handleCommentCreated = useCallback((comment: StoryComment) => {
@@ -212,28 +283,9 @@ export function WriteClientWithStory({
     const text = extractTextFromJSON(newContent)
     const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
     setWordCount(words)
-  }
-  
-  const extractTextFromJSON = (json: JSONContent): string => {
-    if (!json) return ''
     
-    const extractText = (node: JSONContent): string => {
-      if (node.type === 'text' && typeof node.text === 'string') {
-        return node.text
-      }
-      
-      if (Array.isArray(node.content)) {
-        return node.content.map(extractText).join(' ')
-      }
-      
-      return ''
-    }
-    
-    if (Array.isArray(json.content)) {
-      return json.content.map(extractText).join('\n')
-    }
-    
-    return ''
+    // Trigger auto-save
+    triggerSave()
   }
   
   // Handle editor ready
@@ -313,6 +365,9 @@ export function WriteClientWithStory({
     const text = extractTextFromJSON(newContent)
     const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
     setWordCount(words)
+    
+    // Trigger auto-save
+    triggerSave()
   }
   
   // Analyze story for canon consistency
@@ -462,12 +517,20 @@ export function WriteClientWithStory({
                   />
                 )}
                 
+                {/* Auto-save status */}
+                <AutoSaveIndicator 
+                  status={autoSaveStatus}
+                  lastSaved={lastSaved}
+                  errorMessage={autoSaveError}
+                />
+                
                 {/* Word count */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <BookOpen className="w-4 h-4" />
-                  <span>{wordCount} words</span>
+                  <span className="hidden sm:inline">{wordCount} words</span>
+                  <span className="sm:hidden">{wordCount}w</span>
                   {currentChapter && (
-                    <span className="text-gold/70">· {currentChapter.title}</span>
+                    <span className="text-gold/70 hidden md:inline">· {currentChapter.title}</span>
                   )}
                 </div>
                 
@@ -539,8 +602,20 @@ export function WriteClientWithStory({
                   onClick={() => setShowReadingMode(true)}
                   title="Reading Mode"
                   disabled={!content || wordCount < 10}
+                  className="hidden sm:flex"
                 >
                   <Eye className="w-4 h-4" />
+                </Button>
+                
+                {/* Distraction-Free Mode */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDistractionFree(true)}
+                  title="Distraction-Free Mode"
+                  className="hidden sm:flex"
+                >
+                  <Maximize2 className="w-4 h-4" />
                 </Button>
                 
                 {/* Save Draft */}
@@ -772,6 +847,96 @@ export function WriteClientWithStory({
           wordCount={wordCount}
           chapterTitle={currentChapter?.title}
         />
+        
+        {/* Distraction-Free Mode */}
+        <DistractionFreeMode
+          isOpen={showDistractionFree}
+          onClose={() => setShowDistractionFree(false)}
+          title={title || 'Untitled Story'}
+          content={getText()}
+          wordCount={wordCount}
+          readOnly={true}
+        />
+        
+        {/* Mobile Toolbar */}
+        {isMobile && (
+          <MobileToolbar
+            editor={editorRef.current}
+            wordCount={wordCount}
+            onToggleDistractionFree={() => setShowDistractionFree(true)}
+            onToggleReadingMode={() => setShowReadingMode(true)}
+            onOpenMenu={() => setShowMobileMenu(true)}
+          />
+        )}
+        
+        {/* Mobile Menu */}
+        <MobileMenu
+          isOpen={showMobileMenu}
+          onClose={() => setShowMobileMenu(false)}
+        >
+          <div className="space-y-4">
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3"
+              onClick={() => { setShowRosterSidebar(true); setShowMobileMenu(false) }}
+            >
+              <PanelRight className="w-4 h-4" />
+              Character Roster
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3"
+              onClick={() => { setShowCommentsSidebar(true); setShowMobileMenu(false) }}
+            >
+              <MessageSquare className="w-4 h-4" />
+              Comments & Notes
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3"
+              onClick={() => { setShowVersionHistory(true); setShowMobileMenu(false) }}
+            >
+              <History className="w-4 h-4" />
+              Version History
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3"
+              onClick={() => { setShowExportModal(true); setShowMobileMenu(false) }}
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start gap-3"
+              onClick={() => { setShowCollaboratorsModal(true); setShowMobileMenu(false) }}
+            >
+              <Users className="w-4 h-4" />
+              Collaborators
+            </Button>
+            <div className="pt-4 border-t border-charcoal-700">
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3"
+                onClick={handleSaveDraft}
+                disabled={isSaving || !hasChanges}
+              >
+                <Save className="w-4 h-4" />
+                {hasChanges ? 'Save Draft' : 'Saved'}
+              </Button>
+              <Button
+                variant="canon"
+                className="w-full mt-2"
+                onClick={handleSubmit}
+                disabled={isPending || !title || !content || wordCount < 50}
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Submit for Review
+              </Button>
+            </div>
+          </div>
+        </MobileMenu>
         
         {/* Achievement Notifications */}
         {newAchievements.length > 0 && (
