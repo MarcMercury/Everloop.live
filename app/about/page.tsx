@@ -7,7 +7,8 @@ import {
   Sparkles, 
   BookOpen,
   Brain,
-  Heart
+  Heart,
+  Download
 } from 'lucide-react'
 
 export const metadata = {
@@ -147,11 +148,25 @@ export default function AboutPage() {
                 the loop in ways they rarely understand. Some seek to escape the cycle. Others 
                 embrace it, learning to read the patterns of recurrence.
               </p>
-              <p className="text-parchment-muted leading-relaxed">
+              <p className="text-parchment-muted leading-relaxed mb-6">
                 Between the loops, in the spaces where time hesitates, the 
                 <strong className="text-parchment"> Hollow Courts</strong> gather — neither living nor dead, 
                 watching, waiting, remembering everything that ever was and will be again.
               </p>
+              <div className="pt-4 border-t border-gold/10">
+                <a 
+                  href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-gold hover:text-gold/80 transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  <span className="font-medium">Download: A Guide to the Broken World (PDF)</span>
+                </a>
+                <p className="text-xs text-parchment-muted mt-2">
+                  Complete lore guide with world history, factions, and writing guidelines
+                </p>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -182,6 +197,16 @@ export default function AboutPage() {
             <Link href="/guidelines">
               <Button variant="outline">Read Guidelines</Button>
             </Link>
+            <a 
+              href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" className="gap-2">
+                <Download className="w-4 h-4" />
+                World Guide
+              </Button>
+            </a>
             <Link href="/login">
               <Button>Join Everloop</Button>
             </Link>

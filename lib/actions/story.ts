@@ -445,9 +445,10 @@ export async function createDraftStory(
   
   if (error) {
     console.error('Error creating draft story:', error)
+    console.error('Story data was:', JSON.stringify(storyData, null, 2))
     return {
       success: false,
-      error: 'Failed to create story. Please try again.',
+      error: `Failed to create story: ${error.message}`,
     }
   }
   
