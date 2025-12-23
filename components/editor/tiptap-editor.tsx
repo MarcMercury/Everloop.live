@@ -18,12 +18,16 @@ import {
   Shield,
   User,
   MessageSquarePlus,
+  Link2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type JSONContent } from '@tiptap/react'
 import { CommentMark } from './extensions/comment-mark'
+import { EntityLink } from './extensions/entity-link'
 import { CommentPopover } from './comments/comment-popover'
+import { EntityLinkPopover } from './entity-linker/entity-link-popover'
 import { type StoryComment } from '@/lib/actions/comments'
+import { type EntityMatch } from '@/lib/actions/entity-linker'
 
 interface ToolbarButtonProps {
   onClick: () => void
@@ -67,10 +71,11 @@ interface ToolbarProps {
   onCanonCheck?: () => void
   onRosterOpen?: () => void
   onAddComment?: () => void
+  onLinkEntity?: () => void
   hasSelection?: boolean
 }
 
-function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen, onAddComment, hasSelection }: ToolbarProps) {
+function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen, onAddComment, onLinkEntity, hasSelection }: ToolbarProps) {
   if (!editor) return null
 
   return (
@@ -116,6 +121,17 @@ function Toolbar({ editor, onMagicWand, onCanonCheck, onRosterOpen, onAddComment
               disabled={!hasSelection}
             >
               <MessageSquarePlus className="w-4 h-4" />
+            </ToolbarButton>
+          )}
+          
+          {onLinkEntity && (
+            <ToolbarButton
+              onClick={onLinkEntity}
+              title="Link to Canon Entity (select text first)"
+              highlight
+              disabled={!hasSelection}
+            >
+              <Link2 className="w-4 h-4" />
             </ToolbarButton>
           )}
           
@@ -245,6 +261,10 @@ export function TiptapEditor({
   const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null)
   const [hasSelection, setHasSelection] = useState(false)
   
+  // Entity link popover state
+  const [showEntityPopover, setShowEntityPopover] = useState(false)
+  const [entityPopoverPosition, setEntityPopoverPosition] = useState({ x: 0, y: 0 })
+  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -257,6 +277,7 @@ export function TiptapEditor({
         emptyEditorClass: 'is-editor-empty',
       }),
       CommentMark,
+      EntityLink,
     ],
     content,
     editorProps: {
@@ -351,6 +372,38 @@ export function TiptapEditor({
     onCommentCreated?.(comment)
     setShowCommentPopover(false)
   }, [editor, selectionRange, onCommentCreated])
+  
+  // Handle linking an entity
+  const handleLinkEntity = useCallback(() => {
+    if (!editor || !selectionRange || !selectedText) return
+    
+    // Get the cursor position for popover placement
+    const { view } = editor
+    const { from } = selectionRange
+    const coords = view.coordsAtPos(from)
+    
+    setEntityPopoverPosition({ x: coords.left, y: coords.bottom })
+    setShowEntityPopover(true)
+  }, [editor, selectionRange, selectedText])
+  
+  // Handle entity link applied
+  const handleEntityLinked = useCallback((entity: EntityMatch) => {
+    if (!editor || !selectionRange) return
+    
+    // Apply entity link mark to selected text
+    editor
+      .chain()
+      .focus()
+      .setTextSelection(selectionRange)
+      .setEntityLink({
+        entityId: entity.id,
+        entityName: entity.name,
+        entityType: entity.type,
+      })
+      .run()
+    
+    setShowEntityPopover(false)
+  }, [editor, selectionRange])
 
   return (
     <div
@@ -367,6 +420,7 @@ export function TiptapEditor({
         onCanonCheck={onCanonCheck}
         onRosterOpen={onRosterOpen}
         onAddComment={storyId ? handleAddComment : undefined}
+        onLinkEntity={handleLinkEntity}
         hasSelection={hasSelection}
       />
       <EditorContent editor={editor} />
@@ -382,6 +436,18 @@ export function TiptapEditor({
           position={commentPopoverPosition}
           onClose={() => setShowCommentPopover(false)}
           onCommentCreated={handleCommentCreated}
+        />
+      )}
+      
+      {/* Entity Link Popover */}
+      {showEntityPopover && editor && selectionRange && (
+        <EntityLinkPopover
+          editor={editor}
+          position={entityPopoverPosition}
+          selectedText={selectedText}
+          selectionRange={selectionRange}
+          onClose={() => setShowEntityPopover(false)}
+          onLink={handleEntityLinked}
         />
       )}
       
@@ -439,6 +505,46 @@ export function TiptapEditor({
         
         .comment-highlight:hover {
           background-color: rgba(234, 179, 8, 0.3);
+        }
+        
+        /* Entity link styles */
+        .entity-link {
+          border-bottom: 1px dotted currentColor;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .entity-link:hover {
+          border-bottom-style: solid;
+          opacity: 0.8;
+        }
+        
+        .entity-link[data-entity-type="character"] {
+          color: #60a5fa;
+        }
+        
+        .entity-link[data-entity-type="location"] {
+          color: #4ade80;
+        }
+        
+        .entity-link[data-entity-type="artifact"] {
+          color: #c084fc;
+        }
+        
+        .entity-link[data-entity-type="event"] {
+          color: #fb923c;
+        }
+        
+        .entity-link[data-entity-type="faction"] {
+          color: #f87171;
+        }
+        
+        .entity-link[data-entity-type="concept"] {
+          color: #22d3ee;
+        }
+        
+        .entity-link[data-entity-type="creature"] {
+          color: #facc15;
         }
       `}</style>
     </div>

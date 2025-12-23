@@ -113,6 +113,11 @@ export function WriteClientWithStory({
     return extractTextFromJSON(content)
   }, [content])
   
+  // Get editor for entity linking
+  const getEditor = useCallback(() => {
+    return editorRef.current
+  }, [])
+  
   // Calculate initial word count
   useEffect(() => {
     if (initialContent) {
@@ -488,7 +493,7 @@ export function WriteClientWithStory({
         </header>
         
         {/* Split View Container */}
-        <SplitViewContainer storyId={storyId} getText={getText}>
+        <SplitViewContainer storyId={storyId} getText={getText} getEditor={getEditor}>
           <div className="flex h-full">
             {/* Chapter Sidebar (Tomes only) */}
             {scope === 'tome' && showChapterSidebar && (
