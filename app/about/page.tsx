@@ -30,10 +30,22 @@ export default function AboutPage() {
           <h1 className="text-4xl md:text-5xl font-serif text-parchment mb-4">
             About <span className="text-gold">Everloop</span>
           </h1>
-          <p className="text-parchment-muted text-lg max-w-2xl mx-auto">
+          <p className="text-parchment-muted text-lg max-w-2xl mx-auto mb-6">
             A Canon Engine for collaborative storytelling, where writers build within a living 
             world — guided by AI, grounded in canon.
           </p>
+          
+          {/* Download World Guide - Prominent placement */}
+          <a 
+            href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button variant="outline" size="lg" className="gap-2 border-gold/50 hover:border-gold hover:bg-gold/10">
+              <Download className="w-5 h-5" />
+              Download the World Guide (PDF)
+            </Button>
+          </a>
         </div>
 
         {/* What is Everloop */}
