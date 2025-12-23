@@ -23,7 +23,7 @@ export default function WelcomePage() {
           </div>
 
           {/* Hero Image */}
-          <div className="relative w-full aspect-[16/9] mb-16 rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
+          <div className="relative w-full aspect-[16/9] mb-8 rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
             <Image
               src="/Gemini_Generated_Image_2aqbhj2aqbhj2aqb.png"
               alt="The Everloop Universe"
@@ -32,6 +32,20 @@ export default function WelcomePage() {
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-teal-deep via-transparent to-transparent" />
+          </div>
+          
+          {/* World Guide Download - Prominent placement */}
+          <div className="text-center mb-16">
+            <a 
+              href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf" 
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button variant="outline" size="lg" className="gap-2 border-gold/50 hover:border-gold hover:bg-gold/10">
+                <Download className="w-5 h-5" />
+                Download the World Guide (PDF)
+              </Button>
+            </a>
           </div>
 
           {/* Lore Sections */}
@@ -104,19 +118,6 @@ export default function WelcomePage() {
                 Read Stories
               </Button>
             </Link>
-          </div>
-          
-          {/* Full Guide Download */}
-          <div className="text-center mt-8">
-            <a 
-              href="/🌌 EVERLOOP - A Guide to the Broken World.pdf" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-parchment-muted hover:text-gold transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              Download the Full World Guide (PDF)
-            </a>
           </div>
         </div>
       </section>
