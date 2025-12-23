@@ -11,6 +11,7 @@ import { submitStoryById, saveDraft } from '@/lib/actions/story'
 import { analyzeStoryCanon, type CanonAnalysisResult } from '@/lib/actions/analyze'
 import { saveChapterContent, type Chapter } from '@/lib/actions/chapters'
 import { type StoryComment } from '@/lib/actions/comments'
+import { createRevision } from '@/lib/actions/revisions'
 import { 
   startWritingSession, 
   endWritingSession, 
@@ -21,8 +22,9 @@ import { StreamOfConsciousnessModal } from '@/components/editor/stream-modal'
 import { RosterSidebar } from '@/components/editor/roster-sidebar'
 import { ChapterSidebar } from '@/components/editor/chapter-sidebar'
 import { CommentsSidebar } from '@/components/editor/comments'
+import { VersionHistorySidebar } from '@/components/editor/version-history'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -85,6 +87,9 @@ export function WriteClientWithStory({
   // Comments state
   const [showCommentsSidebar, setShowCommentsSidebar] = useState(false)
   const [comments, setComments] = useState<StoryComment[]>([])
+  
+  // Version History state
+  const [showVersionHistory, setShowVersionHistory] = useState(false)
   
   // Writing session state
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -343,9 +348,10 @@ export function WriteClientWithStory({
     setError(null)
     
     try {
+      const contentText = extractTextFromJSON(content as JSONContent)
+      
       // For Tomes with a current chapter, save to chapter
       if (scope === 'tome' && currentChapter) {
-        const contentText = extractTextFromJSON(content as JSONContent)
         const result = await saveChapterContent(
           currentChapter.id,
           currentChapter.title,
@@ -356,6 +362,14 @@ export function WriteClientWithStory({
         if (result.success) {
           setHasChanges(false)
           setChapterHasChanges(false)
+          
+          // Create revision snapshot for manual saves
+          await createRevision(storyId, title || 'Untitled', content as Json, {
+            chapterId: currentChapter.id,
+            revisionType: 'manual',
+            contentText,
+            wordCount,
+          })
         } else {
           setError(result.error || 'Failed to save chapter')
         }
@@ -365,6 +379,13 @@ export function WriteClientWithStory({
         
         if (result.success) {
           setHasChanges(false)
+          
+          // Create revision snapshot for manual saves
+          await createRevision(storyId, title || 'Untitled', content as Json, {
+            revisionType: 'manual',
+            contentText,
+            wordCount,
+          })
         } else {
           setError(result.error || 'Failed to save draft')
         }
@@ -440,6 +461,17 @@ export function WriteClientWithStory({
                   {comments.length > 0 && (
                     <span className="ml-1 text-xs">{comments.length}</span>
                   )}
+                </Button>
+                
+                {/* Version History Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowVersionHistory(!showVersionHistory)}
+                  className={showVersionHistory ? 'border-gold text-gold' : ''}
+                  title="Version History"
+                >
+                  <History className="w-4 h-4" />
                 </Button>
                 
                 {/* Save Draft */}
@@ -631,6 +663,18 @@ export function WriteClientWithStory({
           onClose={() => setShowCommentsSidebar(false)}
           onCommentClick={handleCommentClick}
         />
+        
+        {/* Version History Sidebar */}
+        {showVersionHistory && (
+          <div className="fixed inset-y-0 right-0 z-40 flex">
+            <VersionHistorySidebar
+              storyId={storyId}
+              chapterId={currentChapter?.id}
+              currentWordCount={wordCount}
+              onClose={() => setShowVersionHistory(false)}
+            />
+          </div>
+        )}
       </div>
     </SplitViewProvider>
   )

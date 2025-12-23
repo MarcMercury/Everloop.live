@@ -230,6 +230,39 @@ export interface StoryTemplateUpdate {
   is_public?: boolean
 }
 
+// Revision types for Living Archive
+export type RevisionType = 'auto' | 'manual' | 'submit' | 'publish'
+
+export interface StoryRevision {
+  id: string
+  story_id: string
+  chapter_id: string | null
+  revision_number: number
+  revision_type: RevisionType
+  title: string
+  content: Json
+  content_text: string | null
+  word_count: number
+  change_summary: string | null
+  words_added: number
+  words_removed: number
+  created_by: string
+  created_at: string
+}
+
+export interface StoryRevisionInsert {
+  story_id: string
+  chapter_id?: string | null
+  revision_type?: RevisionType
+  title: string
+  content: Json
+  content_text?: string | null
+  word_count?: number
+  change_summary?: string | null
+  words_added?: number
+  words_removed?: number
+}
+
 export interface Database {
   public: {
     Tables: {
