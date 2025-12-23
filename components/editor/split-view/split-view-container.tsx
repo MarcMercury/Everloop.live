@@ -1,26 +1,29 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSplitView } from './split-view-context'
 import { ResizablePanel } from './resizable-panel'
 import { LoreBrowserPanel } from './panels/lore-browser-panel'
 import { StoryReaderPanel } from './panels/story-reader-panel'
 import { NotesPanel } from './panels/notes-panel'
-import { X, BookOpen, ScrollText, FileText, PanelRightClose } from 'lucide-react'
+import { VoiceTonePanel } from './panels/voice-tone-panel'
+import { X, BookOpen, ScrollText, FileText, PanelRightClose, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SplitViewContainerProps {
   children: React.ReactNode
   storyId?: string
+  getText?: () => string
 }
 
 const PANEL_TABS = [
   { type: 'lore' as const, label: 'Lore', icon: BookOpen },
   { type: 'stories' as const, label: 'Stories', icon: ScrollText },
   { type: 'notes' as const, label: 'Notes', icon: FileText },
+  { type: 'voice' as const, label: 'Voice', icon: Sparkles },
 ] as const
 
-export function SplitViewContainer({ children, storyId }: SplitViewContainerProps) {
+export function SplitViewContainer({ children, storyId, getText }: SplitViewContainerProps) {
   const { isPanelOpen, panelType, openPanel, closePanel } = useSplitView()
 
   return (
@@ -70,6 +73,7 @@ export function SplitViewContainer({ children, storyId }: SplitViewContainerProp
               {panelType === 'lore' && <LoreBrowserPanel />}
               {panelType === 'stories' && <StoryReaderPanel />}
               {panelType === 'notes' && <NotesPanel storyId={storyId} />}
+              {panelType === 'voice' && getText && <VoiceTonePanel getText={getText} />}
             </div>
           </div>
         </ResizablePanel>
