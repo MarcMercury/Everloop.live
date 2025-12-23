@@ -263,6 +263,70 @@ export interface StoryRevisionInsert {
   words_removed?: number
 }
 
+// Collaborator types for Collaborative Mode
+export type CollaboratorRole = 'viewer' | 'commenter' | 'editor' | 'co_author'
+export type InvitationStatus = 'pending' | 'accepted' | 'declined' | 'expired'
+
+export interface StoryCollaborator {
+  id: string
+  story_id: string
+  user_id: string
+  role: CollaboratorRole
+  invited_by: string | null
+  invited_at: string
+  accepted_at: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  // Joined data
+  user?: {
+    id: string
+    username: string
+    display_name: string | null
+    avatar_url: string | null
+  }
+}
+
+export interface StoryCollaboratorInsert {
+  story_id: string
+  user_id: string
+  role?: CollaboratorRole
+  invited_by?: string
+  is_active?: boolean
+}
+
+export interface StoryInvitation {
+  id: string
+  story_id: string
+  email: string
+  role: CollaboratorRole
+  invited_by: string
+  message: string | null
+  token: string
+  status: InvitationStatus
+  created_at: string
+  expires_at: string
+  accepted_at: string | null
+  // Joined data
+  story?: {
+    id: string
+    title: string
+    slug: string
+    author?: {
+      username: string
+      display_name: string | null
+    }
+  }
+}
+
+export interface StoryInvitationInsert {
+  story_id: string
+  email: string
+  role?: CollaboratorRole
+  invited_by: string
+  message?: string
+}
+
 export interface Database {
   public: {
     Tables: {

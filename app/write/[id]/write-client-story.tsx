@@ -23,8 +23,9 @@ import { RosterSidebar } from '@/components/editor/roster-sidebar'
 import { ChapterSidebar } from '@/components/editor/chapter-sidebar'
 import { CommentsSidebar } from '@/components/editor/comments'
 import { VersionHistorySidebar } from '@/components/editor/version-history'
+import { CollaboratorsModal, PresenceIndicator } from '@/components/editor/collaborators'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -33,6 +34,12 @@ interface WriteClientWithStoryProps {
   initialTitle: string
   initialContent: Json
   scope: StoryScope
+  currentUser?: {
+    id: string
+    username: string
+    displayName: string | null
+    avatarUrl: string | null
+  }
 }
 
 const SCOPE_CONFIG: Record<StoryScope, { label: string; icon: React.ReactNode; description: string }> = {
@@ -57,7 +64,8 @@ export function WriteClientWithStory({
   storyId, 
   initialTitle, 
   initialContent,
-  scope 
+  scope,
+  currentUser 
 }: WriteClientWithStoryProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -78,6 +86,9 @@ export function WriteClientWithStory({
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [showRosterSidebar, setShowRosterSidebar] = useState(false)
   const editorRef = useRef<Editor | null>(null)
+  
+  // Collaborators state
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false)
   
   // Chapter state (for Tomes)
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
@@ -424,6 +435,14 @@ export function WriteClientWithStory({
               </div>
               
               <div className="flex items-center gap-3">
+                {/* Presence Indicator */}
+                {currentUser && (
+                  <PresenceIndicator 
+                    storyId={storyId} 
+                    currentUser={currentUser}
+                  />
+                )}
+                
                 {/* Word count */}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <BookOpen className="w-4 h-4" />
@@ -432,6 +451,16 @@ export function WriteClientWithStory({
                     <span className="text-gold/70">· {currentChapter.title}</span>
                   )}
                 </div>
+                
+                {/* Collaborators */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCollaboratorsModal(true)}
+                  title="Manage Collaborators"
+                >
+                  <Users className="w-4 h-4" />
+                </Button>
                 
                 {/* Chapter Toggle (Tomes only) */}
                 {scope === 'tome' && (
@@ -675,6 +704,14 @@ export function WriteClientWithStory({
             />
           </div>
         )}
+        
+        {/* Collaborators Modal */}
+        <CollaboratorsModal
+          storyId={storyId}
+          storyTitle={title || 'Untitled Story'}
+          isOpen={showCollaboratorsModal}
+          onClose={() => setShowCollaboratorsModal(false)}
+        />
       </div>
     </SplitViewProvider>
   )
