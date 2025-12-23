@@ -433,4 +433,14 @@
       box-shadow: 0 0 40px rgba(212, 168, 75, 0.4);
     }
   }
+
+  /* Shrink animation for achievement toast progress */
+  .animate-shrink-x {
+    animation: shrink-x linear forwards;
+  }
+
+  @keyframes shrink-x {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
 }

@@ -26,6 +26,8 @@ import { VersionHistorySidebar } from '@/components/editor/version-history'
 import { CollaboratorsModal, PresenceIndicator } from '@/components/editor/collaborators'
 import { ExportModal } from '@/components/editor/export'
 import { ReadingMode } from '@/components/editor/reading-mode'
+import { AchievementToastContainer } from '@/components/achievements'
+import { checkAchievements, type NewAchievement } from '@/lib/actions/achievements'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
 import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download, Eye } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
@@ -97,6 +99,9 @@ export function WriteClientWithStory({
   
   // Reading mode state
   const [showReadingMode, setShowReadingMode] = useState(false)
+  
+  // Achievement state
+  const [newAchievements, setNewAchievements] = useState<NewAchievement[]>([])
   
   // Chapter state (for Tomes)
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
@@ -408,6 +413,12 @@ export function WriteClientWithStory({
         } else {
           setError(result.error || 'Failed to save draft')
         }
+      }
+      
+      // Check for new achievements after save
+      const achievementResult = await checkAchievements()
+      if (achievementResult.data && achievementResult.data.length > 0) {
+        setNewAchievements(achievementResult.data)
       }
     } finally {
       setIsSaving(false)
@@ -761,6 +772,14 @@ export function WriteClientWithStory({
           wordCount={wordCount}
           chapterTitle={currentChapter?.title}
         />
+        
+        {/* Achievement Notifications */}
+        {newAchievements.length > 0 && (
+          <AchievementToastContainer
+            achievements={newAchievements}
+            onDismissAll={() => setNewAchievements([])}
+          />
+        )}
       </div>
     </SplitViewProvider>
   )
