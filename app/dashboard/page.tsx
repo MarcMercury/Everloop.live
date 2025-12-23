@@ -18,6 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { DeleteStoryButton } from './delete-story-button'
+import { WritingStatsCard } from '@/components/dashboard/writing-stats-card'
 
 export const metadata = {
   title: 'My Dashboard | Everloop',
@@ -319,6 +320,11 @@ export default async function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Writing Stats Card */}
+        <div className="mb-10">
+          <WritingStatsCard />
         </div>
 
         {/* Story Tabs */}
