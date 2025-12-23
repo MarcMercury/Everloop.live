@@ -24,8 +24,9 @@ import { ChapterSidebar } from '@/components/editor/chapter-sidebar'
 import { CommentsSidebar } from '@/components/editor/comments'
 import { VersionHistorySidebar } from '@/components/editor/version-history'
 import { CollaboratorsModal, PresenceIndicator } from '@/components/editor/collaborators'
+import { ExportModal } from '@/components/editor/export'
 import { SplitViewProvider, SplitViewContainer, SplitViewToggle } from '@/components/editor/split-view'
-import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users } from 'lucide-react'
+import { ArrowLeft, Send, Save, Loader2, BookOpen, Sparkles, Book, FileText, Scroll, PanelRight, List, MessageSquare, History, Users, Download } from 'lucide-react'
 import { type Json, type StoryScope } from '@/types/database'
 import { type Editor } from '@tiptap/react'
 
@@ -89,6 +90,9 @@ export function WriteClientWithStory({
   
   // Collaborators state
   const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false)
+  
+  // Export modal state
+  const [showExportModal, setShowExportModal] = useState(false)
   
   // Chapter state (for Tomes)
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null)
@@ -503,6 +507,16 @@ export function WriteClientWithStory({
                   <History className="w-4 h-4" />
                 </Button>
                 
+                {/* Export */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowExportModal(true)}
+                  title="Export Story"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+                
                 {/* Save Draft */}
                 <Button
                   variant="outline"
@@ -711,6 +725,16 @@ export function WriteClientWithStory({
           storyTitle={title || 'Untitled Story'}
           isOpen={showCollaboratorsModal}
           onClose={() => setShowCollaboratorsModal(false)}
+        />
+        
+        {/* Export Modal */}
+        <ExportModal
+          open={showExportModal}
+          onOpenChange={setShowExportModal}
+          storyId={storyId}
+          storyTitle={title || 'Untitled Story'}
+          scope={scope}
+          currentChapterId={currentChapter?.id}
         />
       </div>
     </SplitViewProvider>

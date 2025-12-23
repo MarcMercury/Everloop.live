@@ -21,9 +21,9 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | 5 | Voice & Tone Analyzer | ✅ Complete | AI + readability metrics in split view |
 | 6 | Story Templates | ✅ Complete | DB migration: `20251225_001_create_story_templates.sql` |
 | 7 | Canon Entity Linker | ✅ Complete | Entity detection, linking, hover cards |
-| 8 | Living Archive | ⏳ Pending | - |
-| 9 | Collaborative Mode | ⏳ Pending | - |
-| 10 | Export Suite | ⏳ Pending | - |
+| 8 | Living Archive | ✅ Complete | Version history with diffs, restore capability |
+| 9 | Collaborative Mode | ✅ Complete | Collaborators, roles, real-time presence |
+| 10 | Export Suite | ✅ Complete | PDF, EPUB, Markdown, TXT, HTML export |
 | 11 | Reading Mode | ⏳ Pending | - |
 | 12 | Achievement System | ⏳ Pending | - |
 | 13 | Auto-Save Indicators | ⏳ Pending | - |
@@ -222,13 +222,29 @@ supabase db push
 
 ---
 
-## Feature 10: Export Suite
+## Feature 10: Export Suite ✅
 
-- [ ] Export to PDF with styling
-- [ ] Export to EPUB
-- [ ] Export to Markdown
-- [ ] Export to plain text
-- [ ] Batch export (all chapters)
+### Implementation
+- [x] Export to PDF with styling (styled HTML for print-to-PDF)
+- [x] Export to EPUB (XHTML format compatible with e-readers)
+- [x] Export to Markdown (with proper formatting)
+- [x] Export to plain text
+- [x] Export to HTML (styled web page)
+- [x] Batch export (all chapters for Tomes)
+
+### Files Created
+- `lib/actions/export.ts` - Server actions for all export formats
+- `components/editor/export/export-modal.tsx` - Export format selection UI
+- `components/editor/export/index.ts` - Exports
+
+### Features
+- **PDF Export**: Styled HTML with Crimson Pro font, drop caps, elegant typography
+- **EPUB Export**: XHTML format ready for e-reader conversion
+- **Markdown Export**: Preserves formatting (bold, italic, links, headings)
+- **Plain Text**: Clean text extraction
+- **HTML Export**: Fully styled standalone web page
+- **Tome Support**: Export full story or individual chapters
+- **Access Control**: Author and collaborator access only
 
 ---
 
