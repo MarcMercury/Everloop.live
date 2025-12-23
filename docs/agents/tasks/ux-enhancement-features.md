@@ -15,9 +15,9 @@ Comprehensive writing suite enhancements for medium-to-advanced writers. Goal: "
 | # | Feature | Status | Notes |
 |---|---------|--------|-------|
 | 1 | Split View Editor | ✅ Complete | Lore browser, story reader, notes panels |
-| 2 | Chapter Manager | ✅ Complete | DB migration needed: `create_story_chapters.sql` |
-| 3 | Inline Comments | ✅ Complete | DB migration needed: `create_story_comments.sql` |
-| 4 | Writing Stats Dashboard | ⏳ Pending | - |
+| 2 | Chapter Manager | ✅ Complete | DB migration: `20251222_001_create_story_chapters.sql` |
+| 3 | Inline Comments | ✅ Complete | DB migration: `20251223_001_create_story_comments.sql` |
+| 4 | Writing Stats Dashboard | ✅ Complete | DB migration: `20251224_001_create_writing_stats.sql` |
 | 5 | Voice & Tone Analyzer | ⏳ Pending | - |
 | 6 | Story Templates | ⏳ Pending | - |
 | 7 | Canon Entity Linker | ⏳ Pending | - |
@@ -87,29 +87,35 @@ supabase db push
 - Click comment to scroll to position
 - Comment highlighting in editor
 
-**Database Migration Required:**
-```bash
-supabase db push
-```
-
 ---
 
-## Feature 4: Writing Stats Dashboard
+## Feature 4: Writing Stats Dashboard ✅
 
-**Phase 4.1: Session Tracking**
-- [ ] Track words written per session
-- [ ] Time spent writing
-- [ ] Session start/end timestamps
+**Completed Components:**
+- `/supabase/migrations/20251224_001_create_writing_stats.sql` - Tables + RLS
+- `/types/database.ts` - WritingSession, DailyWritingStats, WritingGoals types
+- `/lib/actions/writing-stats.ts` - Server actions for session tracking
+- `/lib/utils/writing-stats.ts` - Formatting utilities
+- `/components/dashboard/writing-stats-card.tsx` - Full dashboard UI
+- `/app/api/end-session/route.ts` - Reliable session ending API
+- `/app/write/[id]/write-client-story.tsx` - Session integration
 
-**Phase 4.2: Analytics Storage**
-- [ ] Create `writing_sessions` table
-- [ ] Create `daily_stats` aggregation
+**Database Tables:**
+- `writing_sessions` - Individual writing session tracking
+- `daily_writing_stats` - Daily aggregation with story breakdown
+- `writing_goals` - User goals and streak tracking
 
-**Phase 4.3: Dashboard UI**
-- [ ] Daily/weekly/monthly word counts
-- [ ] Writing streak tracker
-- [ ] Best writing times heatmap
-- [ ] Goal progress visualization
+**Features:**
+- [x] Track words written per session
+- [x] Time spent writing
+- [x] Session start/end timestamps
+- [x] Daily/weekly/monthly word counts
+- [x] Writing streak tracker (current + longest)
+- [x] Activity heatmap (30-day visualization)
+- [x] Goal progress visualization
+- [x] Configurable daily/weekly/monthly goals
+- [x] Reliable session ending on page close (sendBeacon)
+- [x] Periodic word count updates (30s interval)
 
 ---
 
