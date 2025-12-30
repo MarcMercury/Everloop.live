@@ -1,641 +1,37 @@
---=====================================================
---FULL EVERLOOP MIGRATION
---All 5 sources: World Guide + 4 Stories
---All entities start as PROPOSED (need approval)
---All stories start as PENDING_REVIEW (need approval)
---Run AFTER clearing tables
---=====================================================
+-- =====================================================
+-- INSERT CANONICAL STORIES
+-- Extracted from Everloop Story PDFs
+-- Run in Supabase SQL Editor
+-- =====================================================
 
 DO $$
 DECLARE
- admin_id UUID;
+    admin_id UUID;
 BEGIN
---Get admin user for created_by
- SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
- 
- IF admin_id IS NULL THEN
- RAISE NOTICE 'No admin user found-entities will have NULL created_by';
- END IF;
+    SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
+    
+    IF admin_id IS NULL THEN
+        RAISE EXCEPTION 'No admin user found. Please ensure an admin user exists.';
+    END IF;
 
---=====================================================
---WORLD GUIDE ENTITIES
---=====================================================
- 
---LOCATIONS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Drift',
- 'the-drift',
- 'location',
- 'The primordial sea of chaos — matter and will without boundary. The Drift is not a place but a condition. Nothing within it is still. To enter it is to dissolve into what you once were. From its outer reaches the First Architects drew substance, shaping the first forms of stability.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Fold',
- 'the-fold',
- 'location',
- 'The intermediary plane of thought, design, and intent — neither matter nor spirit, it is the mind of creation. The Fold holds the First Map, a construct of pure geometry and tone that describes the world. It is the wall upon which all else is hung.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
---CONCEPTS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Weaving',
- 'the-weaving',
- 'concept',
- 'The vast lattice of luminous threads binding time, space, and thought into continuity. The act of creation by which the Pattern was made. Within the Pattern once stood the Anchors, pillars that pinned the Weaving to the Fold. The Weaving grows thin, and Hollows spread.',
- 'proposed',
- 0.90,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Everloop',
- 'the-everloop',
- 'concept',
- 'Both the living world and the eternal cycle of return. The world of mortals layered upon the Pattern, nourished by it. Each life lived is a single thread in its design. Its purpose: to enact the Pattern''s rhythm — birth, loss, return. A cycle that spins ever onward, never the same, never truly new.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The First Map',
- 'the-first-map',
- 'concept',
- 'The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they began the Weaving.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Anchors',
- 'the-anchors',
- 'concept',
- 'Great pillars of intent and memory driven into the Pattern by the First Architects to hold the Weaving firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.',
- 'proposed',
- 0.90,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Shards',
- 'the-shards',
- 'concept',
- 'Broken remnants of the Anchors — each still hums with the intent that once held the world together. Where Shards lie buried, the world trembles most, and time runs like spilled ink. Shard-touched regions are the most unstable, with time, matter, and memory contorting where their influence spreads.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Hollows',
- 'the-hollows',
- 'concept',
- 'Weak points in the Pattern where space, time, and memory flicker. Places where the Pattern forgets itself and existence falters. Their cause remains unknown. The Hollows widened over time, leading the Rogue Architects to attempt their fateful repair.',
- 'proposed',
- 0.80,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Fray',
- 'the-fray',
- 'concept',
- 'The unraveling edge of reality where the Pattern frays and loops collapse. The Fray is not a place but a condition — where time stutters, memory bleeds, and the world forgets itself. It spreads from Shard-touched regions, corrupting all it touches.',
- 'proposed',
- 0.80,
- admin_id
- );
- 
---FACTIONS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Prime Beings',
- 'the-prime-beings',
- 'faction',
- 'Vast entities that roamed the Drift before memory — shapes of hunger, storm, and birth. They were not gods, for gods require worship, and in the beginning there was none to give it. They were instinct given gravity. They embody elemental forces: Hunger, Storm, Ash, Birth, Silence.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The First Architects',
- 'the-first-architects',
- 'faction',
- 'Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and began the Weaving. They drove the Anchors into the Pattern to hold reality firm. Some claim they were absorbed into the Fold itself.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Rogue Architects',
- 'the-rogue-architects',
- 'faction',
- 'A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could weave anew as their ancestors once had. But they misjudged the balance. In their attempt to mend the Weaving, they shattered the Anchors — creating the Shards and the Fray.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Vaultkeepers',
- 'the-vaultkeepers',
- 'faction',
- 'Stewards of memory who perceive the echoes within the Fold through the threads of the Pattern. Born upon the Everloop with the gift to see its threads. They interpret what they see, though meaning is rarely clear. Some work alone, others in Circles.',
- 'proposed',
- 0.90,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Dreamers',
- 'dreamers',
- 'faction',
- 'Walkers between waking and Fold, born tethered to that liminal plane. Through discipline, accident, or madness they can nudge the threads of the Pattern — subtle shifts that bend fate, soften storms, or still hearts. Their art is not conjuring but persuasion.',
- 'proposed',
- 0.90,
- admin_id
- );
-
---=====================================================
---STORY 1 ENTITIES: The Bell Tree and The Broken World
---=====================================================
- 
---CHARACTERS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Kaerlin',
- 'kaerlin',
- 'character',
- 'One of three siblings on a quest to gather the Shards. Known as "Kerr" by her family. The natural leader of the group, practical and determined. She carries a Shard with her that pulses when near the Bell Tree. Her father left the siblings maps that led them to Drelmere.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Mira',
- 'mira',
- 'character',
- 'The cartographer and mapmaker among the three siblings. Analytical and scholarly, she carries weathered maps that she constantly updates as the Fray shifts the land. She realized the roots of the Bell Tree form a map.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Thomel',
- 'thomel',
- 'character',
- 'The youngest of the three siblings, also called "Thom." A skilled tracker who promised his Uncle Edran he would keep his siblings safe. Practical and grounded, he notices details others miss.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Eidon',
- 'eidon',
- 'character',
- 'A Folder who lived on Watcher''s Hill in Drelmere. Appeared young but was actually ancient, having been "folded" across time layers. His mind scattered across moments—remembering things that hadn''t happened while forgetting the present.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Merra Dune',
- 'merra-dune',
- 'character',
- 'The apothecary, midwife, and practical voice of Drelmere. She wears her silver hair in a braid, smells of pine and herbs, and has the gift of coaxing life back into the sick. When children forget their names from the Fray, she helps them remember.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Halrick Vann',
- 'halrick-vann',
- 'character',
- 'Mayor of Drelmere and former soldier. A man of routine who refuses to acknowledge the supernatural events in his town. When the Bell Tree appeared, he ordered it cut down—the axes dulled after one strike.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
---LOCATIONS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Drelmere',
- 'drelmere',
- 'location',
- 'A town in the Broken World, once a sanctuary and gathering place for Dreamers. Located in a valley with a dry riverbed and half-collapsed bell tower. The town has been affected by the Fray—children wake without memories, crops bloom early then turn to dust.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Watcher''s Hill',
- 'watchers-hill',
- 'location',
- 'A hill above Drelmere where Eidon the Folder lived. Features uneven stone stairs that seem to change configuration. The hut at the summit is impossibly larger inside than outside.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Gorge',
- 'the-gorge',
- 'location',
- 'A deep, dry gorge outside Drelmere where the true origin point of the Bell Tree''s roots lies. Hidden in the gorge wall is a narrow cave entrance with iron bars and silver-veined carvings.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
---ARTIFACTS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Bell Tree',
- 'the-bell-tree',
- 'artifact',
- 'A mysterious manifestation that appeared suddenly in Drelmere''s town square. Resembles a cloaked figure carved in shadow with limbs hung with bells of all sizes. When rung in the correct sequence, it transformed into the Second Shard.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Second Shard',
- 'the-second-shard',
- 'artifact',
- 'A black shard, smooth and silent, revealed when the Bell Tree was rung in the correct sequence of 22 spirals. One of the thirteen Shards of the Pattern.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
---CREATURES/CONCEPTS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Folders',
- 'folders',
- 'creature',
- 'Rare beings who have been "folded" across multiple time layers. They remember things that haven''t happened and forget things happening now. If a Folder leaves their grounding place, they risk becoming scattered.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Triumvirate',
- 'the-triumvirate',
- 'concept',
- 'A philosophical or religious concept in the Broken World, represented by statues depicting Time, Memory, Flesh. The three fundamental aspects of existence that the Pattern attempts to hold stable.',
- 'proposed',
- 0.7,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The First Loop',
- 'the-first-loop',
- 'event',
- 'The original weave forged by the Architects to hold time still. Before the Pattern, there was only Drift. Then came the Architects who forged the First Loop.',
- 'proposed',
- 0.75,
- admin_id
- );
-
---=====================================================
---STORY 2 ENTITIES: The Prince and the Drowning City
---=====================================================
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Auren Thorne',
- 'auren-thorne',
- 'character',
- 'The young lord of House Thorne, also known as "The Lord of Luck." Despite being an exceptionally poor fighter, Auren possesses genuine compassion for his people. He dove into a Fray-corrupted sea to retrieve a Shard.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Lord Thorne',
- 'lord-thorne',
- 'character',
- 'Father of Auren Thorne, Lord of House Thorne. A loving father who secretly planned to prevent Auren from traveling to Virelay.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Lady Thorne',
- 'lady-thorne',
- 'character',
- 'Mother of Auren Thorne. Together with Lord Thorne, she recognized both Auren''s generous heart and his complete lack of combat prowess.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Virelay',
- 'virelay',
- 'location',
- 'A coastal harbor town severely affected by the Fray. Buildings appear and disappear without warning, streets rearrange themselves, people vanish from memory only to return.',
- 'proposed',
- 0.75,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'House Thorne Manor',
- 'house-thorne-manor',
- 'location',
- 'The ancestral home of House Thorne, featuring the Winter Room where the hearth is always full and curtains never open.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Third Shard',
- 'the-third-shard',
- 'artifact',
- 'A Shard retrieved by Auren Thorne from beneath the waters of Virelay. Found in a drowned room at the bottom of a Well.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Well of Virelay',
- 'the-well-of-virelay',
- 'artifact',
- 'A perfect ring of ancient carved stone embedded in the seafloor beneath Virelay''s harbor. The Well was not a hole but a wound.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Scholars',
- 'the-scholars',
- 'faction',
- 'Those who study the Shards and the Pattern. They believe the Shards were safeguards—anchors placed by the First Architects.',
- 'proposed',
- 0.8,
- admin_id
- );
-
---=====================================================
---STORY 3 ENTITIES: The Ballad of Rook and Myx
---=====================================================
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Rook',
- 'rook',
- 'character',
- 'A wandering con artist and storyteller who travels with his Servine companion Myx. Abandoned by his mother at age five. He uses stories and persuasion rather than violence.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Myx',
- 'myx',
- 'character',
- 'A Servine—a creature with shifting eye colors that reflect emotion and state. Born in fighting pits, torn from his mother before his eyes opened. He refused to snarl even when tortured.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Sera',
- 'sera',
- 'character',
- 'A young woman who discovered a cracked black tower and exploited its Fray-dampening effect to build power over a village. Though she became a tyrant, she was ultimately motivated by fear.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Servine',
- 'servine',
- 'creature',
- 'A species of intelligent, telepathic creatures with fur and shifting eye colors. Servines hold emotions and truths, absorbing them into their eyes and bodies. Deeply loyal companions.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Black Tower of Sera',
- 'the-black-tower-of-sera',
- 'location',
- 'A lean, looming obsidian spire that appeared in a Fray-touched region. The tower repelled the Fray—the closer to it, the more stable reality became.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Fourth Shard',
- 'the-fourth-shard',
- 'artifact',
- 'A Shard obtained by Rook when he entered the Black Tower and pulled a miniature replica of the tower from its roots.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Everloop (Game)',
- 'everloop-game',
- 'concept',
- 'A game played with coins, referenced by Rook and Myx as something they played together to stay warm in their early days.',
- 'proposed',
- 0.7,
- admin_id
- );
-
---=====================================================
---STORY 4 ENTITIES: In Service of the Veykar
---=====================================================
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Nyra',
- 'nyra',
- 'character',
- 'A survivor who rose from conquered slave to personal cook of the Veykar, ultimately becoming his assassin. Taken at age five when her village was destroyed.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Veykar',
- 'the-veykar',
- 'character',
- 'A self-made conqueror who unified the eastern steppes through brutal efficiency. He had no bloodline worth boasting, only fire and will.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Crippled Boy',
- 'the-crippled-boy',
- 'character',
- 'A young dreamer who arrived in the Veykar''s kitchens with a twisted leg and unbroken spirit. He spoke constantly of escape and freedom.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Morran',
- 'morran',
- 'character',
- 'The old master cook who served the Veykar before Nyra''s rise. His dishes were flawless but uninspired.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Draethan',
- 'the-draethan',
- 'faction',
- 'The Veykar''s sworn Brethren—his voice, ears, breath, and blood made flesh. Their oaths were tattooed from wrist to throat to jaw.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Deyune Steppe',
- 'the-deyune-steppe',
- 'location',
- 'The vast eastern expanse of the world, beyond border stones and merchant routes. Also called the Barren Reach or the Long Wind.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Wheel',
- 'the-wheel',
- 'location',
- 'The Veykar''s moving camp, a living machine organized in concentric rings. At the center: the Hall and the Veykar''s tent.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Hall',
- 'the-hall',
- 'location',
- 'The vast kitchen pavilion at the heart of the Veykar''s Wheel—half sunken into rock, half built upon it. The engine of empire.',
- 'proposed',
- 0.85,
- admin_id
- );
-
-END $$;
-
-
---=====================================================
---FULL STORY CONTENT (4 Stories)
---All stories start as pending_review for approval
---=====================================================
-
-DO $$
-DECLARE
- admin_id UUID;
-BEGIN
- SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
-
---The Bell Tree and The Broken World
- INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
- ) VALUES (
- 'The Bell Tree and The Broken World',
- 'the-bell-tree-and-the-broken-world',
- 'Rogue Architects tried to repair the weave, but only deepened the damage. 
+    -- The Bell Tree and The Broken World
+    INSERT INTO public.stories (
+        title,
+        slug,
+        summary,
+        content,
+        content_text,
+        word_count,
+        author_id,
+        canon_status,
+        is_published,
+        published_at,
+        reading_time_minutes,
+        tags
+    ) VALUES (
+        'The Bell Tree and The Broken World',
+        'the-bell-tree-and-the-broken-world',
+        'Rogue Architects tried to repair the weave, but only deepened the damage. 
 Now, we live in the Fray. 
 The world no longer holds a single truth. Each region bears a different scar. Some lands are trapped in loops —
 an unending morning, a single grief. Others drift, unanchored and wild. 
@@ -645,10 +41,10 @@ The Everloop might be healed.
 Or unmade. 
 The Pattern is breaking. The threads are loosening. 
 And no one —not even the Vaultkeepers —knows what...',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Pattern and the Fray 
+        '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content available in content_text field."}]}]}'::jsonb,
+        'Prologue: The Pattern and the Fray 
 Before there were names, before there were maps, before time dared to call itself time —there was only drift. 
-This was the Dawn, the age before shape. The world had no corners, no centers, no memory. Mountains walked 
+This was the Dawn , the age before shape. The world had no corners, no centers, no memory. Mountains walked 
 like beasts. Rivers unspooled into the sky. The wind forgot where it came from. In this primal dream roamed the 
 Prime Beings —not gods, but forces: hunger, storm, ash, birth. They whispered through roots and rumbled 
 beneath stone. 
@@ -656,13 +52,13 @@ There was no writing then. Only memory passed through blood.
 But even in the chaos, something reached upward. 
 The First Architects —whether mortal or something in between —began to pin the world down. They built 
 monuments of intent: towers that hummed, stones that pulsed, maps that bled when torn. These were not 
-creations. They were anchors. They did not tame the world —only slowed its unraveling. 
-This was the beginning of the Weaving. 
-And from the Weaving came the Pattern. 
-It began with the First Map, a living tapestry sewn from starlight, bone, and breath. It did not merely describe 
+creations. They were anchors . They did not tame the world —only slowed its unraveling. 
+This was the beginning of the Weaving . 
+And from the Weaving came the Pattern . 
+It began with the First Map , a living tapestry sewn from starlight, bone, and breath. It did not merely describe 
 reality —it made it. Time stitched itself into loops and cycles. The world settled. Seasons held. The sun returned 
-when it should. This was the birth of the Everloop. 
-Civilizations bloomed, woven into the Pattern —along invisible rivers of thread-energy that hummed through 
+when it should. This was the birth of the Everloop . 
+Civilizations bloomed, woven into the Pattern —along invisible rivers of thread -energy that hummed through 
 everything. The people flourished. 
 But the price of stability was hidden. 
 Life and death fell into rhythm. But that rhythm was a trap. Decay and renewal became clockwork. History 
@@ -694,16 +90,16 @@ This is where our story begins.
 Story 1: The Bell Tree and the Broken World 
 Chapter 1 – A Fire, A Story, A Shard 
 The fire crackled low in the hearth of the cottage, throwing soft light against the beams of the ceiling and the 
-shelves packed with jars, herbs, and hand-bound books. Outside, the wind pressed gently at the shuttered 
+shelves packed with jars, herbs, and hand -bound books. Outside, the wind pressed gently at the shuttered 
 windows, but inside all was warmth, quiet, and the breath of listening. 
-Three children sat before their mother, cross-legged on the thick woven rug, eyes wide in the firelight. The eldest, a 
+Three children sat before their mother, cross -legged on the thick woven rug, eyes wide in the firelight. The eldest, a 
 girl with dark hair braided into a thick rope down her back, tilted her head slightly, the way she always did when 
-she was trying to remember every word. Her name was Kaerlin, though to her siblings she was always Kerr. 
-Her sister, Mira, younger by two years, leaned against her knee, chewing thoughtfully on a leather strap —restless, 
+she was trying to remember every word. Her name was Kaerlin , though to her siblings she was always Kerr . 
+Her sister, Mira , younger by two years, leaned against her knee, chewing thoughtfully on a leather strap —restless, 
 but enraptured. 
 The boy, the youngest of the three, had his elbows on his knees, chin in his hands, mouth slightly open. His name 
-was Thomel, though only adults ever called him that. To the rest of the family, he was just Thom. 
-Their mother, Alira, tall and strong in her presence even seated, spoke with a low, certain voice —the kind that 
+was Thomel , though only adults ever called him that. To the rest of the family, he was just Thom . 
+Their mother, Alira , tall and strong in her presence even seated, spoke with a low, certain voice —the kind that 
 built a world out of words and invited you to live inside it. 
 "It began," she said, staring into the flames, "with a lie. Not a lie told to a person. A lie told to the Pattern itself." 
 Kaerlin’s brow furrowed, imagining what it meant to lie to something as big as the world. 
@@ -721,7 +117,7 @@ You breathe the air and begin to lose your name. Your memories. Your reasons. So
 it simply fails to remember it exists." 
 The door creaked open behind them. Uncle Edran entered, brushing snow off his shoulders, boots heavy. He 
 grunted as he shut the door and dropped onto a stool. 
-"She’s filling your heads again with those Fray stories," he said, voice half-growl. "The world is the world. The 
+"She’s filling your heads again with those Fray stories," he said, voice half -growl. "The world is the world. The 
 Overlook’s always been there, and it always will. You stay away from it, and you’re fine. That’s all there is to it." 
 Alira turned to him, her jaw firm. "The Overlook is growing. Every winter, the edge is closer. The air feels different. 
 People forget things. Their names. Their homes. Their children." 
@@ -744,7 +140,7 @@ But always glowing in places no one else could see."
 The children said nothing. 
 But they would remember. 
 
-Chapter 2-Two Graves, One Goodbye 
+Chapter 2 - Two Graves, One Goodbye 
 Fifteen years later, the Bell Tree had not rung. 
 
 But the cottage was quieter. 
@@ -754,7 +150,7 @@ Kaerlin stood at the foot of her mother’s grave, hands clenched. Mira placed a
 mound, one she had carried for years. Thomel —now a man —said nothing, but his eyes glistened. 
 Uncle Edran stood apart, arms crossed, staring into the woods as if daring the dark to send something from the 
 Fray. 
-Later that afternoon, the three of them sat beneath the birch, knees brushing in the wind-stirred grass. Their bags 
+Later that afternoon, the three of them sat beneath the birch, knees brushing in the wind -stirred grass. Their bags 
 leaned against the trunk. The sky above was pale and wide. 
 “We’re leaving,” Kaerlin said, not unkindly. 
 She looked at Thomel with steady eyes. “I know you won’t want to come. I know this place matters more to 
@@ -781,7 +177,7 @@ where the next rift is.”
 West of the Hollow Vale.” 
 Thomel raised an eyebrow. “I wondered. The boots by the door were never muddy from the garden.” 
 
-Kaerlin gave a half-smile. “We needed to know what we were talking about before we asked you to come.” 
+Kaerlin gave a half -smile. “We needed to know what we were talking about before we asked you to come.” 
 Thomel looked down at his hands. “She told me —before she passed —that she could feel the Fray pressing in. 
 Said the threads were shifting in the floorboards.” 
 There was silence for a moment as they sat in a line, quiet and somber. 
@@ -821,7 +217,7 @@ As if the world had been waiting for it to remember.
 Twisted limbs like cloaked arms. Bells swaying in windless air. A hollow where a face should be. 
 The children did not sleep. 
 
-Chapter 3-The Ringing 
+Chapter 3 - The Ringing 
 The town of Drelmere had known peace for decades. It sat far from the Overlook’s edge, nestled in a valley where 
 merchants still passed, where weddings were still sung. People still danced on Feastdays. But something had 
 changed. 
@@ -845,7 +241,7 @@ The morning market opened as it always did. The baker’s boy swept the stones. 
 ropes. And where there had been open square —stone and sun and birdsong —there now stood something else. 
 A tree, they called it. But it was no tree. 
 It rose from the earth like a cloaked figure carved in shadow. The trunk hung in long, torn ribbons, shaped like 
-fabric frozen in motion —wind-blown but motionless, shredded like a battle banner long forgotten. Its hood 
+fabric frozen in motion —wind -blown but motionless, shredded like a battle banner long forgotten. Its hood 
 
 drooped forward, hollow where a face might be, and inside that darkness: nothing. Not shadow. Not shade. 
 Nothing. A black that pulled at the eye like gravity. 
@@ -867,12 +263,12 @@ At dawn, it rang.
 Not a chime or a toll, but a scream wrapped in melody. A sound that didn’t echo —it clung. It spread through 
 rooftops, seeped into cellar stone. It found cracks in the wall and made them weep. Windows bowed. Children 
 woke with nosebleeds. Dogs ran from town. 
-High above, on the ridgeline, Kaerlin, Mira, and Thomel stopped. 
+High above, on the ridgeline, Kaerlin , Mira , and Thomel stopped. 
 Their eyes met. 
 It had begun. 
 
-Chapter 4-The Map and the Valley 
-They stood just below the ridgeline, boots half-buried in wind-swept loam, where the earth gave way to a plunging 
+Chapter 4 - The Map and the Valley 
+They stood just below the ridgeline, boots half -buried in wind -swept loam, where the earth gave way to a plunging 
 valley bathed in an amber hush. The morning sun had broken through a cage of high clouds, casting long fingers of 
 light across the land. It touched broken stone and forest veins alike, pulling gold from green. 
 The wind curled past them in gentle bursts, smelling faintly of ash and thyme. 
@@ -890,17 +286,17 @@ why I bring these maps. Every climb shows something new.”
 The youngest of the three was already a few paces ahead, crouched low to the earth, where the mud had softened 
 overnight. “Tracks,” Thom said. 
 “What kind?” Kerr asked. 
-Thomel pressed his palm beside one. The print was deep, three-toed, and wide. His eyes followed the trail through 
+Thomel pressed his palm beside one. The print was deep, three -toed, and wide. His eyes followed the trail through 
 a patch of thistle. “Hoofed. Big. But steady. No skid, no scatter. Nothing was chasing it.” 
 “Just passing through,” he said, rising and brushing off his hands. “Still warm. Maybe a few hours ahead.” 
 “You always notice things like that,” Kerr said. “You missed your calling as a tracker.” 
 “Somebody’s got to keep you two fed,” Thom said, trying to sound gruff. “And I promised Uncle Edran I’d make sure 
 you didn’t get killed.” 
-“We didn’t ask for a chaperone,” Mira teased, rolling her map again with a half-smile. 
+“We didn’t ask for a chaperone,” Mira teased, rolling her map again with a half -smile. 
 “You didn’t have to,” Thom said. “I’m here anyway.” 
 Kerr clapped a hand on his shoulder. “We know.” 
 They stood together for a while, silent again, staring down into the valley’s mouth. The ruins of Drelmere were 
-visible now —a scatter of rooftops, one half-collapsed bell tower, and the bone-white curve of the dry riverbed. But 
+visible now —a scatter of rooftops, one half -collapsed bell tower, and the bone -white curve of the dry riverbed. But 
 something else caught their eyes. 
 Above the valley, above Drelmere, the air shimmered. 
 It wasn’t heat —not really. It moved like heat, bent light like it, but there was no warmth to it. No breeze touched 
@@ -913,15 +309,15 @@ But they knew.
 The Fray was here. 
 And it was growing. 
 
-Chapter 5-The Dreamers of Drelmere 
+Chapter 5 - The Dreamers of Drelmere 
 The path into Drelmere twisted through fields once bright with lavender. Now the grass grew in brittle clumps, 
 shadows fell in unnatural angles, and the wind whispered directions that contradicted the map. 
-At the edge of town, they passed a ruined chapel, half-swallowed by gray moss. A cracked statue of the 
+At the edge of town, they passed a ruined chapel, half -swallowed by gray moss. A cracked statue of the 
 Triumvirate —Time, Memory, Flesh —stared with hollow eyes. Thomel paused, brushing his hand along the stone’s 
 cold cheek. 
 “Another skip,” Mira muttered, scratching a note onto her map. “This shouldn’t be here.” 
 Kaerlin shrugged. “The Fray doesn’t obey lines on paper.” 
-The town square opened before them in quiet decay: moss-veined cobblestones, rusted shutters, and cautious 
+The town square opened before them in quiet decay: moss -veined cobblestones, rusted shutters, and cautious 
 townsfolk who stared, then looked quickly away. At the center, rising like a question no one dared ask, stood the 
 Bell Tree. 
 Its roots pushed through the flagstones like veins through old hands. They moved —slowly, subtly, like breathing. 
@@ -965,7 +361,7 @@ Merra’s expression shifted —tightened. A flicker of warning in her eyes.
 She looked away and spoke with a voice almost too low to hear. 
 “Expect no welcome.” 
 
-Chapter 6-Watcher’s Hill 
+Chapter 6 - Watcher’s Hill 
 Watcher’s Hill had stairs. Which, frankly, was insulting. 
 “They could’ve at least been even,” Mira muttered, dragging her boots up another tilted stone. “Who builds a 
 staircase with nine steps, then three sideways ones?” 
@@ -1007,7 +403,7 @@ She blinked. “Is this —”
 “Drawer soup,” he said proudly. “Keeps well.” 
 He handed another bowl to Thom. This one came from under a cushion. 
 Kerr eyed hers suspiciously. “This smells like cinnamon and… chalk?” 
-“That’s the Tuesday batch,” Eidon said, sitting cross-legged on a stool that immediately collapsed under him. He 
+“That’s the Tuesday batch,” Eidon said, sitting cross -legged on a stool that immediately collapsed under him. He 
 didn’t seem to notice. 
 “So,” Kerr said, hands on hips, “you’re telling us you’re broken?” 
 Eidon grinned. “No. I’m rare. Big difference.” 
@@ -1047,7 +443,7 @@ Then, suddenly serious, he looked at each of them.
 “You’re meant to choose,” he said softly. 
 “Something. Anything.” 
 
-Chapter 7-The Soup and the Self 
+Chapter 7 - The Soup and the Self 
 “Come with us,” Kaerlin said, for what was definitely not the first time. 
 “No,” Eidon replied brightly, setting a third bowl of soup on the crooked table. “Soup?” 
 “We don’t need soup, we need answers!” snapped Mira. 
@@ -1084,13 +480,13 @@ Mira groaned audibly.
 Eidon stared at him for a moment, then perked up. “Is it a concave mirror or the kind that makes your chin look like 
 a duck?” 
 “Yes,” Thom replied confidently. “Exactly. And that’s the thing —it’s reflecting the self that’s been folded through 
-time, so the duck-chin effect is actually prophetic. But what it needs —what you need —is Everfern. That’s the key 
-note. That’s the grounding…” He paused, searching desperately for the right word. “ Frequency.” 
+time, so the duck -chin effect is actually prophetic. But what it needs —what you need —is Everfern. That’s the key 
+note. That’s the grounding…” He paused, searching desperately for the right word. “ Frequency .” 
 Mira, completely lost, mumbled, “What is happening?” 
 “The herb as a harmonic stabilizer,” Eidon whispered, eyes wide. “It would complete the chord. Like a melody 
 finally remembering where it began. We must go. ” 
 Mira blinked. “What just happened?” 
-Kerr shook her head. “He logic-looped the lunatic.” 
+Kerr shook her head. “He logic -looped the lunatic.” 
 Thom nodded to Eidon. “Otherwise you’ll just keep making soup that almost tastes like you.” 
 Ignoring his sisters’ skepticism, Thom stood, smiling, and patted Eidon’s shoulder. “Let’s go find your herb.” 
 Eidon stood so fast his chair wheezed. “Yes! We must go. For soup. For identity. For seasoning!” 
@@ -1099,7 +495,7 @@ everything it implies!”
 Mira looked exhausted. “We’ve broken him.” 
 Kerr shrugged. “No. He was already broken. We just… found the missing herb.” 
 
-Chapter 8-The Roots Beneath Us 
+Chapter 8 - The Roots Beneath Us 
 
 It was a journey fraught with peril. The wind howled. The clouds hung heavy. The slope stretched downward like a 
 treacherous ribbon unraveled by fate. 
@@ -1138,7 +534,7 @@ The hermit clutched his chest. “You manipulated me with symbolic seasoning?”
 Eidon winked at Thom and mouthed, “I know,” then turned to Mira and Kerr with mock outrage. “Deceivers, you 
 all!” 
 “Let’s look at the tree,” Kerr interrupted, already turning toward the square. 
-They approached the Bell Tree. Its dark trunk shimmered faintly under the mid-morning sun, and the bells swayed 
+They approached the Bell Tree. Its dark trunk shimmered faintly under the mid -morning sun, and the bells swayed 
 ever so slightly —never quite in time with the wind. 
 In Kaerlin’s coat, the Shard began to pulse gently. A warmth. A presence. Not loud, but familiar. 
 “It’s… humming,” she said, resting her palm over the pocket. 
@@ -1152,8 +548,8 @@ Merra shrugged. “Survival demands realism.”
 But Eidon was already circling the tree. “It’s a clue,” he muttered. “I know it. I’ve seen it. Felt it. Or maybe I just 
 want to. But there’s something here.” 
 He prodded the bark. Licked a bell. Knocked three times on the roots. 
-Mira sighed. “Okay, this incoherent puzzle-flirting is going to drive me insane. I’m working on my maps.” 
-She sat cross-legged nearby, parchment spreading in a fan around her. Thom joined Eidon, equally enthralled. 
+Mira sighed. “Okay, this incoherent puzzle -flirting is going to drive me insane. I’m working on my maps.” 
+She sat cross -legged nearby, parchment spreading in a fan around her. Thom joined Eidon, equally enthralled. 
 “Do you think if we sing to it, it’ll respond?” Thom asked. 
 “Only if it’s a waltz,” Eidon replied seriously. 
 Then he tripped over a thick root. “These roots shouldn’t be here,” he muttered. 
@@ -1184,7 +580,7 @@ The hermit grinned. “Or maybe it’s soup. With Everfern.”
 They all looked to the gorge. 
 They would go. 
 
-Chapter 9-The Sound Below 
+Chapter 9 - The Sound Below 
 The path to the gorge wound beneath a sky dull with overcast gray, the silence around them broken only by the 
 muffled crunch of boots on loam. No one spoke for a while. Even Eidon, whose chatter usually peppered the air like 
 scattered leaves, kept his curtain rod cane close and quiet. 
@@ -1239,7 +635,7 @@ Because now they all knew: this wasn’t just a door.
 It was an invitation. 
 And something had been waiting to answer. 
 
-Chapter 10-What Was Folded 
+Chapter 10 - What Was Folded 
 The cave entrance was no more than a slice in the rock —narrow, jagged, uninviting. Two ancient iron bars ran 
 vertical through the center, set so seamlessly into the stone it was as if the mountain itself had grown them. 
 Whatever lay beyond, it was not meant to be stumbled into. 
@@ -1264,7 +660,7 @@ bear its own shape.’”
 Below that, a second line of symbols: 
 To Enter is the key 
 Mira lit up. “Aha! A riddle!” 
-She clapped her hands and began pacing before the entrance like a professor in mid-lecture. “It’s paradoxical. No —
+She clapped her hands and began pacing before the entrance like a professor in mid -lecture. “It’s paradoxical. No —
 recursive. Wait… no, it’s performative recursion embedded inside metaphor. Maybe.” 
 She dropped to the ground, scrawling letters and loops in the dirt with the tip of a charcoal nub pulled from her 
 pouch. “What was folded. What was folded? That could mean a physical fold... but maybe it’s temporal. Or 
@@ -1281,7 +677,7 @@ She tapped one with a knuckle. It gave a dull click.
 “No resonance,” she muttered. “Not sonic, then.” 
 Thomel tried to speak, but Mira held up a hand. She was now drawing a diagram that resembled a bell tree tangled 
 with an algebra equation. 
-“It could be Fibonacci-based!” she whispered. “The spacing —if you count the grooves —could align with the golden 
+“It could be Fibonacci -based!” she whispered. “The spacing —if you count the grooves —could align with the golden 
 spiral. If we just fold the Pattern inward on itself —” 
 “Mira,” Kaerlin said gently, but Mira cut her off. 
 “Don’t interrupt. I’m almost at a breakthrough.” 
@@ -1324,7 +720,7 @@ The siblings gathered around him.
 “I’ve been folded across too many layers,” Eidon continued, voice light with wonder. “When I came through... the 
 fold ended. And I became what I’ve always been.” 
 “We can take you back out,” Thomel said, kneeling beside him. 
-Eidon smiled, gentle and clear-eyed. “You can’t fold me back up. That part of me is finished. What’s done is done —
+Eidon smiled, gentle and clear -eyed. “You can’t fold me back up. That part of me is finished. What’s done is done —
 and I am glad for it. I am all of myself again.” 
 “You’re dying,” Thom said gently. 
 “Yes,” he nodded. “And I’m finally all in one piece. For the first time in... I don’t know how long.” 
@@ -1364,7 +760,7 @@ The siblings were quiet.
 Then, slowly, they turned toward the tunnel ahead —dark, uncertain, waiting. 
 And they walked forward. 
 
-Chapter 11-The Bound Thread 
+Chapter 11 - The Bound Thread 
 As they walked deeper into the cave, time grew heavy. 
 The world outside had been loose, almost fluid —distances bending, days blurring, moments folding into each 
 other. But here, the deeper they traveled, the more weight the seconds seemed to carry. Time no longer drifted. It 
@@ -1372,11 +768,11 @@ pressed. Solid and thick.
 Each footstep landed harder. Each breath echoed slower. 
 
 They didn’t speak. They didn’t have to. They all felt it: space was closing in around them —not in walls, but in 
-certainty. Time and space were being re-bound to the Pattern. 
+certainty. Time and space were being re -bound to the Pattern. 
 And their bones knew. Their minds resisted. 
 It wasn’t malevolent. 
 It was inevitable. 
-The only light came from the moss —faint threads woven into the walls like veins, glowing a soft silver-blue. It 
+The only light came from the moss —faint threads woven into the walls like veins, glowing a soft silver -blue. It 
 pulsed slowly, like breath. 
 They didn’t know how long they walked. 
 It could have been hours. 
@@ -1426,12 +822,12 @@ One spiral.
 Then another. 
 Larger. 
 Smaller. 
-Some half-hidden beneath overlapping tendrils. Some deep in knots of root. 
+Some half -hidden beneath overlapping tendrils. Some deep in knots of root. 
 Mira tracked them all, drawing feverishly with blackened fingertips, sweat cutting paths through the dust on her 
 cheeks. 
-“Twenty,” she whispered. “Twenty-one…” 
+“Twenty,” she whispered. “Twenty -one…” 
 And then —after what felt like forever — 
-“Twenty-two.” 
+“Twenty -two.” 
 Each spiral different, but not chaotic. 
 They aligned with something unseen. 
 Not understood —but felt. 
@@ -1446,11 +842,11 @@ And the cavern unraveled.
 They were outside. 
 In daylight. 
 Back in the square of Drelmere. 
-Mayor Halrick was mid-sentence atop his wooden platform, addressing the townsfolk. 
+Mayor Halrick was mid -sentence atop his wooden platform, addressing the townsfolk. 
 “—and as I have said many times, there is nothing unusual occurring within this town —” 
 He stopped. 
 The entire town turned. 
-The siblings stood there —filthy, smoke-smeared, disheveled, covered in soot and sap and streaks of ash, blinking 
+The siblings stood there —filthy, smoke -smeared, disheveled, covered in soot and sap and streaks of ash, blinking 
 in the sunlight like creatures dragged from a dream. 
 The mayor’s jaw dropped. 
 Near the edge of the crowd, Merra slowly raised one eyebrow. 
@@ -1458,7 +854,7 @@ No one spoke.
 Above them, the bells swayed — 
 But gave no sound. 
 
-Chapter 12-The Second Shard 
+Chapter 12 - The Second Shard 
 Merra helped clean them up. 
 No fuss, no commentary —just soap, water, and sharp glances when anyone winced. The siblings sat around her 
 workroom, wrapped in towels, hands raw, hair matted with black dust. As they scrubbed the grime from their skin, 
@@ -1545,36 +941,44 @@ Smooth.
 Silent. 
 
 The second of thirteen.',
- 9840,
- admin_id,
- 'submitted',
- false,
- 49,
- ARRAY['pending', 'needs-review']
- );
+        9840,
+        admin_id,
+        'canonical',
+        true,
+        NOW(),
+        49,
+        ARRAY['canonical', 'official']
+    ) ON CONFLICT (slug) DO UPDATE SET
+        content_text = EXCLUDED.content_text,
+        word_count = EXCLUDED.word_count,
+        summary = EXCLUDED.summary,
+        is_published = true,
+        canon_status = 'canonical',
+        published_at = COALESCE(stories.published_at, NOW());
 
---The Prince and the Drowning City
- INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
- ) VALUES (
- 'The Prince and the Drowning City',
- 'the-prince-and-the-drowning-city',
- 'The Fray spreads. The Shards awaken. The Everloop turns. 
+    -- The Prince and the Drowning City
+    INSERT INTO public.stories (
+        title,
+        slug,
+        summary,
+        content,
+        content_text,
+        word_count,
+        author_id,
+        canon_status,
+        is_published,
+        published_at,
+        reading_time_minutes,
+        tags
+    ) VALUES (
+        'The Prince and the Drowning City',
+        'the-prince-and-the-drowning-city',
+        'The Fray spreads. The Shards awaken. The Everloop turns. 
 And somewhere deeper still, the world begins to ask: 
 If the Pattern was a prison... 
 …what was it meant to hold? ',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'PROLOGUE: THE EVERLOOP 
+        '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content available in content_text field."}]}]}'::jsonb,
+        'PROLOGUE: THE EVERLOOP 
 The Pattern was never meant to break. 
 That is what the First Architects believed. What they carved into stone and bent into sky. 
 What they whispered as they shaped the rivers and flung the stars like seeds across the 
@@ -1614,7 +1018,7 @@ If the Pattern was a prison...
 Chapter 1 – The Lord of Luck 
 The blade struck Auren across the ribs, a clean slice that would’ve laid a soldier flat. 
 Auren grinned. 
-“Excellent parry, Master-at-Arms!” he called as he stumbled backward, tripped over a 
+“Excellent parry, Master -at-Arms!” he called as he stumbled backward, tripped over a 
 training dummy, and landed flat on his back with a triumphant whoop. 
 Across the courtyard, the older man —scarred, stocky, and utterly unreadable —offered 
 only a slight nod. 
@@ -1623,13 +1027,13 @@ Auren rolled to his feet with the flourish of a man who believed the tumble had 
 strategic. 
 “Not many could’ve baited a feint with a stumble,” he declared, adjusting his collar and 
 flicking imaginary dust from his shoulder. “I rather like that one.” 
-The Master-at-Arms held his sword with both hands, knuckles white, breathing through his 
+The Master -at-Arms held his sword with both hands, knuckles white, breathing through his 
 nose in what might’ve been a prayer. 
 “Your instincts are… unorthodox,” he said. 
 “Unorthodox victory is still victory,” Auren said cheerfully. “It’s not how you fall —it’s how 
 you convince the world you meant to.” 
 The older man offered no rebuttal. Instead, he raised his sword again. 
-Auren sprang forward with a lunging jab, slipped mid-step, and accidentally hurled his 
+Auren sprang forward with a lunging jab, slipped mid -step, and accidentally hurled his 
 weapon ten feet across the yard. 
 “Ah!” he cried, spinning as though it had been intentional. “Disarmament test. Yours. Go.” 
 The Master blinked. 
@@ -1637,7 +1041,7 @@ The Master blinked.
 
 “Which makes it harder for you,” Auren said brightly, circling him with wide, theatrical 
 steps. “Unless you want me to retrieve it?” 
-“No… need.” The Master-at-Arms sighed and stepped forward, swiping downward with a 
+“No… need.” The Master -at-Arms sighed and stepped forward, swiping downward with a 
 clean strike. 
 Auren twisted to dodge, lost his footing, and fell straight into the older man —knocking him 
 off balance and sending both of them tumbling to the ground in a tangled heap. 
@@ -1647,14 +1051,14 @@ There was a long pause. Then Auren, lying on top, gave a satisfied nod.
 “Precisely. A tactical descent.” Auren clambered upright with a theatrical bow. “If your 
 technique doesn’t improve, I may need to start requesting two opponents just to keep my 
 skills fresh.” 
-The Master-at-Arms turned away, his expression hidden beneath the scowl that had 
+The Master -at-Arms turned away, his expression hidden beneath the scowl that had 
 become his armor. He retrieved Auren’s sword, handed it back with perfect form, and 
 muttered: 
 “A duel of one is still a duel, my lord. Let the record show… decisive.” 
 
 Dinner that night was served in the Winter Room, where the hearth was always full and the 
 curtains never opened. The scent of cinnamon broth and roasted parsnip drifted lazily 
-through the wood-paneled hall. At the long table sat the Lord and Lady of House Thorne, 
+through the wood -paneled hall. At the long table sat the Lord and Lady of House Thorne, 
 eyes soft with warmth and worry. 
 Auren entered in half armor and half silk, still glistening faintly from the fight. 
 “You should’ve seen me today,” he said, sliding into his seat. “I nearly broke my foot off 
@@ -1703,10 +1107,10 @@ Not willingly.
 For in some part of them, too, they believed that if the world could be mended through 
 compassion, through stories, through the quiet magic of belief, then perhaps Auren truly 
 had a part to play. 
-But not out there. Not in Virelay. Not in the heart of the Fray. 
+But not out there . Not in Virelay. Not in the heart of the Fray. 
 There was one truth they had never spoken aloud. Not to the court. Not to each other. Not 
 even to him. 
-For all his book-learning, for all his study of lore and maps and myths, for all his generous 
+For all his book -learning, for all his study of lore and maps and myths, for all his generous 
 heart and brilliant mind... 
 Auren Thorne was, by every measure of battle and blade, an exceptionally bad fighter. 
 And so they smiled again, faintly. 
@@ -1726,7 +1130,7 @@ with it.
 garden, “stealth movement across the perimeter.” 
 
 He darted out from behind the hedge like a fox in the moonlight, only to be spotted 
-immediately by two gardeners taking a smoke break by the fountain. Auren froze mid-stride, 
+immediately by two gardeners taking a smoke break by the fountain. Auren froze mid -stride, 
 one leg lifted dramatically in the air. 
 “Evening, m’lord,” one of the gardeners said. 
 Auren narrowed his eyes. “Forget you saw me.” 
@@ -1754,7 +1158,7 @@ He slipped —no, swept—through the gate like a shadow in motion, vanishing in
 beyond with dramatic flare, the bread tucked triumphantly under one arm, the cheese in 
 his satchel, and his father’s old compass dangling from his belt. 
 
-High above, on the west-facing balcony of Thorne Manor, Alira and Eldren stood shoulder to 
+High above, on the west -facing balcony of Thorne Manor, Alira and Eldren stood shoulder to 
 shoulder, wrapped in shawls against the night breeze. 
 
 “He’s gone,” Eldren said softly. 
@@ -1782,14 +1186,14 @@ knew ink. Virelay lay beyond the coastal ridge, two days’ ride or four days’
 walked sensibly. Auren, it should be said, did not. 
 At first, he kept to the brush beside the road, imagining patrols scouring the land for him, 
 dramatic reunions and forced returns. But brambles had no flair for choreography, and 
-after the third trip, tumble, and face-full of thistle, he conceded to practi cality and returned 
+after the third trip, tumble, and face -full of thistle, he conceded to practi cality and returned 
 to the road —deciding that the true disguise was confidence. 
 Which is how he began rehearsing his cover story aloud as he marched down the empty 
 road in full view of absolutely no one. 
 
 “I’m a body double,” he muttered, “for the Prince. Due to assassination attempts. Yes. 
 Dangerous work, really. But someone''s got to do it.” He cleared his throat, tried a deeper 
-voice. “He’s bed-bound this week with… chronic kneecap inversion. Very serious. 
+voice. “He’s bed -bound this week with… chronic kneecap inversion. Very serious . 
 Kneecaps —flipped entirely inward. Happens when you spend too long horseback fencing 
 in cold weather. Nothing can be done.” 
 He nodded to himself. Convincing. Specific. Devastating. 
@@ -1797,7 +1201,7 @@ The sun dipped low when he reached a small village just shy of the river bend, w
 woodsmoke curled up from squat chimneys and warm light spilled out of a tavern window 
 that shimmered like syrup against the coming dark. His stomach made the decision befo re 
 his mind could catch up. 
-The place was called The Cracked Pot, and it lived up to its name —walls slightly leaning, 
+The place was called The Cracked Pot , and it lived up to its name —walls slightly leaning, 
 shutters mismatched, but golden with welcome. A heavy drink bell swung above the bar, 
 and a sign hung over the hearth that read: 
 NO SWORDS, NO SHOUTING, NO WEEPING —UNLESS IT’S A BEAUTIFUL SONG. 
@@ -1821,26 +1225,26 @@ The barkeep stared. “Right.”
 
 As things settled and Auren took a sip of cider, still scanning the room for betrayal, the door 
 slammed open behind him. 
-A hulking man stumbled in —shirt half-tucked, eyes bleary, and carrying the mood of a 
+A hulking man stumbled in —shirt half -tucked, eyes bleary, and carrying the mood of a 
 storm that had already decided who it wanted to hit. The tavern quieted at once. 
 The drunk scanned the room. “Anyone here got a face needin’ fixin’?” 
 Auren stood slowly, finished chewing a bit of bread. Destiny he thought to himself. 
 “Go home, friend,” he said. “Sober up. No need to trouble these kind people.” 
-The man blinked at him. “ I’ll show you trouble, then? You look soft.” 
-“I’m trained,” Auren said calmly, “to appear soft. Assassin-like-soft.” 
+The man blinked at him. “ I’ll show you trouble , then? You look soft.” 
+“I’m trained,” Auren said calmly, “to appear soft. Assassin -like-soft.” 
 The man snorted and took a step forward. “You talk soft.” 
 Auren held his ground. “And you smell like a sewer.” 
 A few chuckles bubbled up, quickly stifled. 
 The man scowled and advanced with fists rising. 
-Auren, calmly and with purpose, began to stretch. Not as mockery —genuine warm-up. A 
-wrist roll. A shoulder circle. He bent sideways, trying to remember the stance Master-at-
+Auren, calmly and with purpose, began to stretch. Not as mockery —genuine warm -up. A 
+wrist roll. A shoulder circle. He bent sideways, trying to remember the stance Master -at-
 Arms—Edran—always corrected. Then, with practiced poise, he swept his leg out to lo osen 
 his hip— 
 —and clipped the side of the table. 
 His cup tipped. “No, no, no,” he muttered, reaching to catch it with the speed of a man who 
-really liked his cider. 
+really liked his cider . 
 In doing so, his foot swung out again, low and unplanned, just as the drunk was closing in. 
-It struck the man square in the shin, buckling his knees. The brute stumbled backward, off-
+It struck the man square in the shin, buckling his knees. The brute stumbled backward, off -
 balance, and pitched sideways —striking his temple clang against the tavern''s brass drink 
 bell. 
 Auren rose with his cider in hand, satisfied. 
@@ -1851,7 +1255,7 @@ man who can’t defend himself.”
 
 He gently laid the man down, tucked a few coins under a coaster, and handed a silver to the 
 barkeep. “See that he gets water and… directions.” 
-Then, brushing off his coat, he nodded to the silent, wide-eyed room and stepped out into 
+Then, brushing off his coat, he nodded to the silent, wide -eyed room and stepped out into 
 the cool night. 
 Behind him, after a beat of stunned quiet, someone muttered: 
 "We’re gonna be telling that story for years—and it won’t sound any less stupid." 
@@ -1877,13 +1281,13 @@ He saw buildings where none had been a moment before. Streets that narrowed into
 and then widened again without a sound. Children chasing marbles down steps that hadn’t 
 existed when he passed the square that morning. 
 
-And the people —gods, the people. Talking in half-sentences. Selling pears with names that 
+And the people —gods, the people. Talking in half -sentences. Selling pears with names that 
 changed between customers. An old woman scolding a chicken as though it were a boy 
 named Lark. 
 At first, Auren tried to chalk it up to nerves. New places always had rhythms. But Virelay 
 didn’t settle—it shifted. Like trying to read a sentence written on water. 
 By afternoon, he was ready to rest and regroup. He found an inn that looked promising —
-The Oar and Candle, its sign swaying gently beside a narrow stone door. Inside was warm, 
+The Oar and Candle , its sign swaying gently beside a narrow stone door. Inside was warm, 
 modest, and mostly normal. A front desk. A bored clerk. Chairs. A woven rug with far too 
 many birds on it. 
 “I’d like a room,” Auren said. 
@@ -1949,7 +1353,7 @@ between heartbeats.
 CHAPTER 5: The Constant 
 Auren awoke with a groan and the distinct sense that he hadn’t truly slept. The hotel lobby, 
 though dim and stuttering between three different versions of itself through the night, had 
-at least stayed a version of itself. He rubbed his eyes, blinked toward the check-in desk—
+at least stayed a version of itself. He rubbed his eyes, blinked toward the check -in desk—
 which now had a hanging fern, a different clerk, and a placard declaring it The Azure Marlin 
 Inn: Newly Reopened! —and walked right past. 
 "Checking in?" called the man, cheerful as a summer bell. 
@@ -1969,7 +1373,7 @@ whose memories did not include failing to exist. The day before —no one had kn
 Not even the innkeeper. Now she was here, as normal as sunlight. 
 
 It undid something inside him. 
-Auren turned and walked away mid-sentence, letting her voice trail off behind him. The 
+Auren turned and walked away mid -sentence, letting her voice trail off behind him. The 
 street was shifting again —new doors, new faces. Some things remained. A man arguing 
 with a goose. A pair of children skipping in opposite directions. But even those piec es had a 
 disjointed feel, like torn cloth trying to pass as whole. 
@@ -1994,7 +1398,7 @@ tarred. But the man gave him a nervous glance and said, “Feels wrong. Looks ri
 feels wrong. That sky’s got a hum to it.” 
 Auren took the oars anyway. 
 He pushed off alone. 
-The first ten minutes were calm —so much so he nearly second-guessed the dockmaster’s 
+The first ten minutes were calm —so much so he nearly second -guessed the dockmaster’s 
 warning. But then, without warning, the sea around him was not the sea he’d left. Wind tore 
 
 across the surface. The sky did not darken —it simply changed, all at once, from gentle blue 
@@ -2033,8 +1437,8 @@ Just… depth.
 He reached down and grabbed one of the lines. It was wet and rough, anchored deep. 
 The answer wasn’t on the sea. 
 It was beneath it. 
-Whatever held this cursed loop in place, whatever made the town forget, reshape, re-
-begin—it was down there, in the dark, beneath the tide and memory both. 
+Whatever held this cursed loop in place, whatever made the town forget, reshape, re -
+begin—it was down there , in the dark, beneath the tide and memory both. 
 And Auren Thorne, untested knight of tales, terrible at fighting but too full of belief to stop 
 now… 
 …began to tie the line around his waist. 
@@ -2072,7 +1476,7 @@ His lungs were still full, but already they knew. They whispered panic in small 
 cramp behind the ribs. A pinch in his throat. 
 Below, the lines vanished into a hazy blur. But he saw it. 
 A circle. No —a well. 
-A perfect ring of stone, maybe ten feet wide, embedded in the seafloor. Ancient, moss-
+A perfect ring of stone, maybe ten feet wide, embedded in the seafloor. Ancient, moss -
 covered. Not ruins. Not broken. 
 Just... waiting. 
 He swam further. 
@@ -2080,7 +1484,7 @@ The ropes coiled around it like reverent hands. They didn’t go into the well. 
 above it, floating like offerings. 
 And suddenly, the instinct hit. 
 Turn back. 
-His body screamed it —not a thought, not a fear, but a command. His lungs were burning 
+His body screamed it —not a thought, not a fear, but a command . His lungs were burning 
 now. Not a metaphor. Burning. He could feel the last air thrumming in his chest like a drum 
 stretched too tight. 
 If he swam now, now, he could reach the surface. Maybe. 
@@ -2139,11 +1543,11 @@ wrong. His ears rang with the absence of the sea.
 The hearth burned steady, the only sound in the room besides his own breath. But 
 something was off. Auren stepped closer. 
 Within the flames sat an ember that wasn’t like the others. 
-It was shaped like a shard of obsidian —only it glowed with a pulse, as if breathing. Red-
+It was shaped like a shard of obsidian —only it glowed with a pulse, as if breathing. Red -
 gold light flickered from its edges, each pulse stronger than the last. It didn’t burn. It 
 radiated. 
 He should have hesitated. Should have questioned. 
-But all he could feel was a strange recognition. Like it had been waiting. 
+But all he could feel was a strange recognition . Like it had been waiting. 
 
 Auren pulled the edge of his damp tunic over his hand and reached into the fire. 
 The heat should’ve seared him. But it didn’t. The moment his fingers closed around the 
@@ -2160,7 +1564,7 @@ hadn’t been there a moment before —and torrents of seawater came rushing in.
 Auren spun. The hearth exploded outward, bricks scattering. The ceiling bowed. Water 
 poured from above. 
 He was trapped. 
-Within seconds, he was waist-deep. Then chest. The door was gone. The fire was gone. 
+Within seconds, he was waist -deep. Then chest. The door was gone. The fire was gone. 
 Only the shard remained, clenched in his hand, warm and alive. 
 He held it tight, squeezed his eyes shut, and took one last breath before the room filled 
 completely. 
@@ -2182,45 +1586,53 @@ Auren looked down.
 The shard sat in his palm, dark and cool. Silent now. But full of something he couldn’t 
 name. 
 He smiled, just a little. 
-“…Master-at-Arms—Edran,” he whispered hoarsely. “You’d never believe it.” 
+“…Master -at-Arms—Edran,” he whispered hoarsely. “You’d never believe it.” 
 And then, without fanfare or flourish, he stood. 
 The wind shifted. Somewhere in the distance, a bell rang once —soft and low. 
 Auren turned toward the town. 
 The tide had gone out. 
 And the way was clear.',
- 6035,
- admin_id,
- 'submitted',
- false,
- 30,
- ARRAY['pending', 'needs-review']
- );
+        6035,
+        admin_id,
+        'canonical',
+        true,
+        NOW(),
+        30,
+        ARRAY['canonical', 'official']
+    ) ON CONFLICT (slug) DO UPDATE SET
+        content_text = EXCLUDED.content_text,
+        word_count = EXCLUDED.word_count,
+        summary = EXCLUDED.summary,
+        is_published = true,
+        canon_status = 'canonical',
+        published_at = COALESCE(stories.published_at, NOW());
 
---The Ballad of Rook and Myx
- INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
- ) VALUES (
- 'The Ballad of Rook and Myx',
- 'the-ballad-of-rook-and-myx',
- 'CHAPTER 1 — Play the Game or Play the Player 
+    -- The Ballad of Rook and Myx
+    INSERT INTO public.stories (
+        title,
+        slug,
+        summary,
+        content,
+        content_text,
+        word_count,
+        author_id,
+        canon_status,
+        is_published,
+        published_at,
+        reading_time_minutes,
+        tags
+    ) VALUES (
+        'The Ballad of Rook and Myx',
+        'the-ballad-of-rook-and-myx',
+        'CHAPTER 1 — Play the Game or Play the Player 
 Dusk rolled across the hills like a wolf deciding which sheep to kill first. 
 The town of Varnhalt —if you could call it a town —was little more than a cluster of stone 
 huts, wood planks, and stubborn people who hadn’t yet been burned, buried, or bought. It 
 sat hunched against the shoulder of a cliffside, where the wind howled like it had bad news 
 and nowhere to be. 
 Myx lay in the dirt outside the tavern, watching the day exhale. A rusted...',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Fold Beneath 
+        '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content available in content_text field."}]}]}'::jsonb,
+        'Prologue: The Fold Beneath 
 The Pattern was not the first thing to exist. It was simply the first thing that stuck. 
 A moment of order bold enough to resist the drift. 
 But beneath every map is an erasure. And beneath every song, a silence that shaped it. 
@@ -2229,7 +1641,7 @@ What came before the Weaving did not vanish.
 It folded. 
 Deep under the seams of the world —beneath soil, below sea, behind time —something 
 else remained: The Fold. 
-A place without shape or sequence. Not before, not after. Only between. Where discarded 
+A place without shape or sequence. Not before, not after. Only between . Where discarded 
 possibilities gather like dust in a closed book. 
 The Fold is not evil. It is not alive. But it listens. And sometimes, it answers. 
 Each time a Shard is unearthed —each time a thread is touched or plucked or broken — 
@@ -2272,25 +1684,25 @@ Percy didn’t bite much, and he kept to himself.
 His amber eyes scanned the street again. Smoke. Boots. Harsh hands. Quiet knives. 
 This was not a town that made room for softness. 
 And Myx, bless his soul, was soft. Not weak. Not fragile. Just... made of loyalty and thick fur 
-and deep sighs. Which made him an anomaly, in a place like this. Not that anyone here 
+and deep sighs. Which made him an anomaly , in a place like this. Not that anyone here 
 knew what the word anomaly meant. 
 He narrowed his eyes toward the front door of the tavern. 
 
 Inside, the tavern’s only light came from the hearth and a crooked lantern strung low above 
 the card table, where five rough men hunched over a game of Everloop —a local vice that 
 ruined wages and friendships in equal measure. 
-“Wasn’t there yesterday,” said Dorn, the broad-shouldered smith, voice low. “Whole bloody 
+“Wasn’t there yesterday,” said Dorn, the broad -shouldered smith, voice low. “Whole bloody 
 ridge was bare. Now it’s there. Black stone. Tall as three steeples.” 
 “Things are drawn to it,” said Vett, tapping a finger against his mug. “Birds. Flies. Even the 
 wind. Like it’s got a pull.” 
 
-“Or a prize,” muttered Marlo, bald with burn-scabbed hands. “Something worth guarding. 
+“Or a prize,” muttered Marlo, bald with burn -scabbed hands. “Something worth guarding. 
 Or stealing.” 
 Rook had said nothing then. He’d only sipped his drink and listened, eyes fixed not on the 
 fire, but on the reflection of the table in his cup. 
 Now, the talk was cards. 
 
-The game was Everloop, played with a single spiral board and a deck of ninety cards —
+The game was Everloop , played with a single spiral board and a deck of ninety cards —
 Score cards, Modifiers, and the dreaded FRAY setups. The goal was simple in theory: reach 
 a high Personal Score when the shared Table Score hit exactly 100. 
 In practice? It was anything but simple. 
@@ -2301,7 +1713,7 @@ the game.
 And in Everloop, the end could be snatched away at any time —especially when someone 
 marked a FRAY. 
 Rook slouched like a man fading from luck. Three cards left. One spun lazily between two 
-fingers. His grin was crooked, his jacket only half-buttoned, and his boots had once been 
+fingers. His grin was crooked, his jacket only half -buttoned, and his boots had once been 
 handsome. He looked like someone who got lucky just often enough to be danger ous. 
 He’s up to something, Myx thought from outside. He always is. He looks broke, which 
 means he’s about to take everything. 
@@ -2321,7 +1733,7 @@ Rook turned to Marlo. “Marlo. You’ve got a Crown Inverse in-hand—I saw the
 you drew. Use it. Flip the table’s gain to your own without helping them. Do that, and we all 
 walk out with coin.” 
 Marlo shrugged. “Nah. Let’s see you sweat.” 
-He dropped a plain +4 Spiral Tail. No modifier. No disruption. 
+He dropped a plain +4 Spiral Tail . No modifier. No disruption. 
 Of course, Myx thought. Why prevent disaster when you can make it worse? 
 Moves snapped into place. The Table Score surged past 88. Right into dangerous territory. 
 Everyone paused. No one marked a Fray —at least, no one had claimed to. 
@@ -2332,15 +1744,15 @@ Rook stared at the board. Then casually, he laid two facedown cards in front of 
 Vett frowned. “Now? Bit late, don’t you think?” 
 Rook flipped one card: a +6. 
 “Targets space 66. Last round. You boys skipped over it.” 
-He flipped the second card: Fractured Crown. 
+He flipped the second card: Fractured Crown . 
 “Modifier card. Legal FRAY setup.” 
 Groans. Swearing. 
-“You had a Fray set on sixty-six?” Marlo snapped. “That was two rounds ago!” 
-“Correct,” said Rook, flipping his remaining card —a Low Spiral, once discarded, now 
+“You had a Fray set on sixty -six?” Marlo snapped. “That was two rounds ago!” 
+“Correct,” said Rook, flipping his remaining card —a Low Spiral , once discarded, now 
 reclaimed. 
 “I just didn’t feel like wasting it until now.” 
 The room went still. 
-FRAYs, once triggered, voided everything. All cards played the round they triggered were 
+FRAYs, once triggered, voided everything . All cards played the round they triggered were 
 discarded. All score gains? Gone. The Loop Totem reset to where it was before the round 
 began. 
 “You bastard,” Dorn growled. 
@@ -2379,7 +1791,7 @@ Rook stepped backward with a smile like a man leaving a dinner party he hadn’t
 invited to. 
 “Gentlemen,” he said cheerfully. “It’s been educational.” 
 Then he slipped out the door. 
-Myx followed. But not before grabbing a half-cooked sausage off the counter. 
+Myx followed. But not before grabbing a half -cooked sausage off the counter. 
 Hazard pay. 
 
 They walked through the night air, boots and paws quiet on the dirt path. Varnhalt shrank 
@@ -2391,14 +1803,14 @@ He never did.
 But in the quiet between their footfalls, the thought landed anyway: 
 You always say it. And I clean it up. 
 Rook chuckled under his breath. “Details.” 
-They walked a while in silence, boots crunching over frost-bitten dirt and brittle leaves, the 
+They walked a while in silence, boots crunching over frost -bitten dirt and brittle leaves, the 
 tavern’s noise long behind them. The trees here seemed less like scenery and more like 
 witnesses. Watching. Listening. One of them creaked with no wind to justif y it. 
 “You heard what they said, right?” Rook finally asked, eyes scanning the trees. “At the 
 table?” 
 “The drunk one, or the … drunker one? ” Myx thought 
 Rook adjusted the strap of his pack. “Yeah,” he said after a moment. “ You heard.” 
-The tower. The thing out east. A story half-told through slurred words and darting eyes. 
+The tower. The thing out east. A story half -told through slurred words and darting eyes. 
 Black stone. No doors. A place the locals didn’t go near, but couldn’t quite stay away from 
 either. 
 Rook glanced at the horizon. “Could be nothing.” 
@@ -2412,8 +1824,8 @@ chase.”
 Myx’s ears twitched, nose tilted to the wind. It moved oddly here —curling back on itself, 
 folding in ways it shouldn’t. 
 That’s the kind of thing that gets you killed. 
-Rook smiled, just a little. “ Don’t worry pal... so long as we ’re together …” 
-He reached down and ruffled the fur between Myx’s ears. Myx leaned away, but only half-
+Rook smiled, just a little. “ Don’t worry pal ... so long as we ’re together …” 
+He reached down and ruffled the fur between Myx’s ears. Myx leaned away, but only half -
 heartedly. 
 “I’m going to look, you know,” Rook added. 
 I know. 
@@ -2440,7 +1852,7 @@ He moved toward it.
 A low huff stopped him. 
 Rook froze. Glanced sideways. 
 Green eyes stared back. 
-No—amber. Or something between. Not glowing. Not monstrous. Just watching. At first he 
+No—amber. Or something between. Not glowing. Not monstrous. Just watching . At first he 
 thought it was a strange dog. But the shape was wrong. Taller. Sleeker. Covered in soot and 
 scrapes. The creature was crouched at the other end of the alley, ribs sharp under skin, 
 head tilted slightly to one side. 
@@ -2462,7 +1874,7 @@ No leash. No words. No trust, not yet. Just a broken meal on a broken night.
 In time, he would name the creature Myx. 
 And Myx would never call him anything at all. 
 
-They weren’t raised so much as not removed. They grew up like weeds through stone —
+They weren’t raised so much as not removed . They grew up like weeds through stone —
 unwatered, unwanted, and impossible to kill. 
 Alarook—Rook now, and forever —learned early how to pass for useful. How to soften his 
 voice just right. How to smile like a question. How to make himself a reflection of what 
@@ -2472,14 +1884,14 @@ The Servine didn’t speak, not in words. But Rook began to feel things. A nudge
 thought. A quiet no when he reached for something too hot, too sharp, too risky. Not 
 phrases. Not language. More like shapes, passed between them. 
 It wasn’t telepathy. It wasn’t magic. 
-It was understanding. 
+It was understanding . 
 Over time, Rook noticed other things. The way Myx’s eyes shifted. They were amber at 
 dusk—lit like sap held to flame. In fear, they paled like frost. And once —just once —when 
 they sat together beneath an overhang and Rook looked into his companion’s face wi th real 
 gratitude, the Servine’s eyes turned the same pale gray as his own. 
 Not a trick. 
 A mirror. 
-Later, he’d learn this was common to the Servine —not a camouflage, but a tether. Their 
+Later, he’d learn this was common to the Servine —not a camouflage, but a tether . Their 
 eyes responded to the world around them: color in emotion, in memory, in trust. A 
 spectrum of selfhood that changed moment to moment. 
 That night, Rook had said aloud, “You see me.” 
@@ -2503,13 +1915,13 @@ Not out of duty.
 Because they didn’t owe anyone else. 
 
 They wandered the fractured places. Always near the edge of something broken. Port 
-towns, scavenger camps, Fray-warped borderlands. Wherever there was risk, there was 
+towns, scavenger camps, Fray -warped borderlands. Wherever there was risk, there was 
 opportunity —and Rook was very good at pretending he was more lucky than he was smart. 
 Once, they worked a caravan that smuggled memory coins —tokens etched with someone 
 else’s past, meant to be swallowed, sold, or stolen. 
 Once, they posed as healers for two weeks just to sleep under a roof and steal clean water. 
 Another time, Rook faked a noble lineage and nearly married into a vineyard estate by 
-charming some princess named Thorne —sharp-tongued, well-read, and just curious 
+charming some princess named Thorne —sharp-tongued, well -read, and just curious 
 enough to fall for someone who always knew the right lie to tell. She was kind, but caged. 
 Too smart for her own nobility, too sheltered to recognize a con until it was halfway gone. 
 The lie might’ve held, too, if Myx hadn’t knocked over a crate of silver and exposed their 
@@ -2537,12 +1949,12 @@ Just there.
 On the edge of everything. 
 Waiting. 
 
-CHAPTER-3 Opportunity at the F rayed Edge 
+CHAPTER - 3 Opportunity at the F rayed Edge 
 They saw the smoke before the people. 
 Thin columns rising in odd intervals, curling in the still air like fingers beckoning. The smell 
 that followed wasn’t fire, but wet stone, old metal, and something like memory. 
 Then the ridge gave way. 
-Below: a scatter of tents, lean-tos, and broken-wagon shelters —shanties cobbled together 
+Below: a scatter of tents, lean -tos, and broken -wagon shelters —shanties cobbled together 
 from tarps and driftwood, patched canvas and scavenged steel. A village not built, but 
 accumulated. 
 From a distance, it looked like chaos. But as Rook and Myx drew closer, a pattern emerged. 
@@ -2554,13 +1966,13 @@ Not physically. Psychologically.
 The people, the layout, the daily rhythms of life all seemed pulled toward the base of the 
 tower—as if gravity had shifted, not by weight, but by will. 
 Even Myx paused. His amber eyes narrowed, and the fur along his spine bristled. 
-“It’s not just big,” Rook murmured. “It’s... centered.” 
+“It’s not just big,” Rook murmured. “It’s... centered .” 
 And at that center, draped in silk and shade, sat Sera. 
 No throne. No armor. No crown. 
 Just a young woman barefoot on cushions, wrapped in soft layers and ringed by flowers 
 that never wilted. People moved around her with the ease of ritual —eyes downcast, hands 
 busy, minds hushed. 
-She spoke softly and sparingly. She didn’t give orders. She suggested. 
+She spoke softly and sparingly. She didn’t give orders. She suggested . 
 And they obeyed. 
 
 They were welcomed without question. 
@@ -2572,7 +1984,7 @@ They were given blankets, water, a bowl of soup that tasted like thyme and woods
 And so, Rook and Myx stayed. 
 
 The first task was sweeping. 
-Not for cleanliness —but to preserve the spiral ash-lines drawn into the dirt between tents. 
+Not for cleanliness —but to preserve the spiral ash -lines drawn into the dirt between tents. 
 Rook was told, gently, to follow the curves. To not cross them. To keep them smooth. 
 The second task was water. From the trough beside the tower’s base —its rim blackened by 
 age or proximity —he ladled water into clay vessels for distribution. Only a few were 
@@ -2581,7 +1993,7 @@ Each task came with more proximity. To the tower. To the people. To her.
 And Rook changed. 
 He stopped asking questions. He started listening more. 
 He shared meals in silence. Sat beside the fire with children and taught them old caravan 
-songs. Repaired bone-chimes outside the healer’s tent. Helped the old smith sort rusted 
+songs. Repaired bone -chimes outside the healer’s tent. Helped the old smith sort rusted 
 tools. 
 He smiled when she spoke. He stood when she approached. 
 He called her Sera. 
@@ -2596,7 +2008,7 @@ But as the days passed, that hope thinned.
 Rook no longer left the inner circle of camp at night. He no longer whispered jokes. He no 
 longer touched the carved stone at his hip —the one from the old ruins, the one he always 
 rubbed when thinking. 
-Now, he sat cross-legged near her pavilion, listening to her hum melodies with no names. 
+Now, he sat cross -legged near her pavilion, listening to her hum melodies with no names. 
 
 Sera noticed Myx’s distance. She never said it aloud, but Myx felt her attention press on 
 him. 
@@ -2624,7 +2036,7 @@ Her eyes glowed faintly in the firelight.
 
 “Stillness. Safety. A place where the Fray does not twist them.” 
 She reached out, placed her hand lightly on his chest. 
-“I’ll build it around me. A new kingdom. Not ruled. Anchored.” 
+“I’ll build it around me. A new kingdom. Not ruled. Anchored .” 
 He didn’t flinch. 
 “I understand,” he said. 
 And Myx—watching from just beyond the firelight —lowered his head. 
@@ -2638,7 +2050,7 @@ And the Center.
  CHAPTER 4 – The Sun Never Bends This Way 
 Each morning began the same. 
 Rook rose to the bell’s low chime —its sound less a tone than a feeling, like the tug of tide in 
-the belly—and emerged from his lean-to before the dew dried. The shanty town still 
+the belly—and emerged from his lean -to before the dew dried. The shanty town still 
 crouched like it feared the light. He washed in silence, dressed in plain clo th, and received 
 his task. 
 There was always a task. Deliver this, fetch that, rebuild the fence, walk the grieving, carry 
@@ -2721,7 +2133,7 @@ between her commands and his footsteps, there was a look. And when her gaze caug
 him idling, watching the frayed shimmer around the tower’s base with a distant stare, she 
 would speak more softly. 
 No one had ever disobeyed her with gentleness before. 
-Myx lounged beneath a silk-draped awning, fed and pampered, his coat brushed to a mirror 
+Myx lounged beneath a silk -draped awning, fed and pampered, his coat brushed to a mirror 
 sheen. He did not look at Rook. Not when he passed. Not when their eyes might have met. 
 His eyes—dull, cold, colorless as early ash —said everything. 
 The girl had ordered him to be treated like a lap pet. And Rook, eyes full of apologies he 
@@ -2729,7 +2141,7 @@ never voiced, had obeyed.
 But not without cost. 
 
 That night, the wine was sweeter than usual. Or perhaps her mood was. She wore her loose 
-hair in waves and no crown of command. Just the scent of crushed pears and wind-blown 
+hair in waves and no crown of command. Just the scent of crushed pears and wind -blown 
 herbs, and a dress of tattered red that flickered in the firelight like smoke. 
 "You’re not like the others,” she murmured, reclining beside him on the couch she alone sat 
 on without permission. “They worship. You observe.” 
@@ -2827,7 +2239,7 @@ Myx rose at last from his perch, stretching with a slow yawn. His eyes —deep g
 glinted in the firelight. He padded toward Rook slowly, deliberately. There was no hesitation 
 in his steps. Almost like he’d known this moment would come. 
 
-When he stopped in front of Rook, he sat down, straight-backed, head tilted slightly 
+When he stopped in front of Rook, he sat down, straight -backed, head tilted slightly 
 upward—offering his neck. 
 The soft leather collar, too fine for a creature like him, sat snugly around his throat. 
 Rook crouched and undid the buckle with gentle fingers. He let the collar fall to the earth. 
@@ -2949,15 +2361,15 @@ He and Myx had stirred this hornet’s nest. Pulled off the blindfold. Sparked t
 reaction. And now — 
 He glanced around. 
 Everyone was looking at them. 
-Every single villager. Even Sera. Wide-eyed. Expectant. 
+Every single villager. Even Sera. Wide -eyed. Expectant. 
 Myx sighed through his nose. His eyes —an unsettled mix of steel and green —met Rook’s. 
 Too late. 
 Rook ran a hand down his face. “Right,” he muttered, “let’s go knock over a tower, shall 
 we?” 
 
-CHAPTER 7-"Pull, You Imbeciles!" 
+CHAPTER 7 - "Pull, You Imbeciles!" 
 It began with rope. 
-Rook stood atop a barrel, shirt half-open, hair windswept (or at least ruffled by some 
+Rook stood atop a barrel, shirt half -open, hair windswept (or at least ruffled by some 
 particularly opinionated breeze), and declared with a finger pointed at the sky: 
 “We bring it down today!” 
 Behind him, thirty confused villagers squinted up at the looming black tower that pulsed 
@@ -2973,7 +2385,7 @@ equivalent of you absolute fools.
 
 The next attempt was fire. 
 Rook’s theory was simple: “If it’s tall, mysterious, and black —it’s probably flammable.” 
-Myx disagreed through narrowed, flickering eyes. Amber one moment. Slate-gray the next. 
+Myx disagreed through narrowed, flickering eyes. Amber one moment. Slate -gray the next. 
 The kind of color change that suggested deep internal shame by association. 
 Rook lit the base with every flammable thing he could find: hay, oil, old shoes, an angry 
 letter Sera had written him three nights ago. 
@@ -2996,11 +2408,11 @@ Sera watched all of this with a kind of glassy detachment.
 She still liked Rook. Sort of. Probably. 
 But she had also seen him spend two days organizing a “siege choir,” convinced that the 
 right harmony might destabilize the tower’s frequency. 
-They sang in F-sharp for six hours. The only thing destabilized was everyone’s patience. 
+They sang in F -sharp for six hours. The only thing destabilized was everyone’s patience. 
 “What did I ever see in him?” Sera muttered into her tea, before sighing at how quickly she 
 still smiled when he grinned at her. 
 
-That night, Rook sat beside the fire with Myx curled near his feet, fur twitching with half-
+That night, Rook sat beside the fire with Myx curled near his feet, fur twitching with half -
 formed dreams. The tower loomed in the distance, impossibly still. 
 The village had gone quiet. 
 “I’ve been going about this all wrong,” Rook whispered to no one. 
@@ -3021,7 +2433,7 @@ In the morning, he found Sera packing dried fruit into small bundles.
 “I need your help,” he said, all business. 
 She narrowed her eyes. 
 “If this is about the trebuchet again —” 
-“No! No more wood-based nonsense.” 
+“No! No more wood -based nonsense.” 
 He explained his theory. That the tower repelled the Fray for a reason. That the Fracture 
 might be a seam —a weakness. That maybe, just maybe, the Fray wanted in. And they 
 needed to find a way to bring it. 
@@ -3106,7 +2518,7 @@ He never saw her again.
 
 They didn’t kill him. They threw him out. 
 Too weak. Too soft. Too dull. 
-They left him near a drainage tunnel, half-dead and twitching. A bag of fur and bone that 
+They left him near a drainage tunnel, half -dead and twitching. A bag of fur and bone that 
 wouldn’t die fast enough. 
 But something inside him moved. 
 A crawl, not a fight. 
@@ -3116,7 +2528,7 @@ The city was worse.
 At least in the pit, there was a reason for the pain. 
 Here, there was none. 
 Here, it came for sport. For boredom. For cruelty’s own sake. 
-He scrounged what he could —from carts, from bins, from bones half-gnawed by dogs 
+He scrounged what he could —from carts, from bins, from bones half -gnawed by dogs 
 larger than him. He didn’t speak. Couldn’t beg. His tongue was too thick, his voice too 
 alien. He hadn’t been taught to plead. 
 He slept where shadows gathered. Under crates. Behind broken chimneys. Inside barrels 
@@ -3124,7 +2536,7 @@ that stank of vinegar and blood.
 At night, he dreamed of the pit. 
 During the day, he tried not to. 
 
-He saw others like him —broken things, limping things, hollowed-out husks too slow to hide 
+He saw others like him —broken things, limping things, hollowed -out husks too slow to hide 
 and too stubborn to die. 
 He stayed away. No one shared here. 
 There were nights when he stared too long at children walking past with meat pies. Nights 
@@ -3350,7 +2762,7 @@ Or rather, Sera and Rook stood. Myx sat on his haunches, shaking, the effort of 
 clearly unsustainable. 
 “Well, it’s not going to be you,” Rook said, nodding to Myx. 
 Myx blinked, almost offended. 
-“No offense. You look like a week-old sack of fish guts.” 
+“No offense. You look like a week -old sack of fish guts.” 
 Myx’s head drooped in reluctant agreement. 
 “Not me either,” Sera said firmly. 
 
@@ -3392,7 +2804,7 @@ There was no floor.
 He was floating. Just drifting, like a leaf on windless air. 
 He spun slightly, hands paddling uselessly at nothing. 
 Above him: a chasm. Endless, spiraling upward in a slow, impossible curve. 
-Below him: a pit that went down forever. 
+Below him: a pit that went down forever . 
 Around him: only that void. Still. Silent. The very idea of space and direction began to fray at 
 the edges. 
 “Right,” Rook said. “So I’m floating. That’s new.” 
@@ -3421,7 +2833,7 @@ By Rook (Edited by No One, Because Everyone Else Was Busy Panicking)
 Step 1: Confirm That You Are, in Fact, Floating in Infinity 
 This step is crucial. If there’s a floor beneath you, this guide does not apply. If there’s wind, 
 birds, or any sign of “sky,” please refer to “So You’ve Been Catapulted Into the Upper 
-Atmosphere: A Scream-by-Scream Survival Manual.” 
+Atmosphere: A Scream -by-Scream Survival Manual.” 
 Signs you are floating in infinity: 
 • No up, no down, no sideways —just you. 
 • Your limbs drift like kelp in black water. 
@@ -3477,7 +2889,7 @@ parasite feeding on the world.
 Step 7: Pull the Tower from the Roots (or: Ruin Everything Gloriously) 
 Rook approached. The room trembled. The roots twitched. 
 He didn’t ask permission. He never had. 
-He grabbed the mini-Tower with both hands and pulled. 
+He grabbed the mini -Tower with both hands and pulled. 
 The roots screamed. Not with sound, but with pressure. Memory. Sorrow. He tasted Sera’s 
 tears, Myx’s fear, his own regret. The Fray itself wailed through the walls. 
 Still—he pulled. 
@@ -3491,9 +2903,9 @@ And it’s probably listening already.
 
 CHAPTER 11 – The Collapse 
 It happened faster than thought. 
-One breath he was in the room —the roots still writhing where the mini-tower had been 
+One breath he was in the room —the roots still writhing where the mini -tower had been 
 ripped free —and in the next, it folded. 
-Not with a snap or crack but a slow, impossibly smooth curling inward, like watching paper 
+Not with a snap or crack but a slow, impossibly smooth curling inward , like watching paper 
 burn in reverse. The tower in his hands folded down to something smaller than his palm —
 slick, black, pulsing faintly red. A shard. 
 And then the shaking began. 
@@ -3502,7 +2914,7 @@ Outside, the ground trembled like a beast being roused. Dust poured from rooftop
 Buckets fell. Cries echoed. And the Tower —the great one, the real one —shuddered. 
 The impossible tower. The unmovable one. It trembled. 
 Villagers screamed. Some dropped to their knees. Others ran without direction, their minds 
-already half-unhinged from Fray exposure. Myx growled sharply—no words, never words, 
+already half -unhinged from Fray exposure. Myx growled sharply—no words, never words, 
 but the urgency was clear. Move. Sera joined him, helping drag dazed townsfolk away from 
 the base. 
 “Where is he?” Sera shouted. 
@@ -3511,7 +2923,7 @@ the tower''s surface, like maybe he could see through it.
 
 Inside, Rook stumbled. 
 The floor lurched like a ship on black water. The walls cracked —not just physically but 
-dimensionally, light leaking in from directions that didn’t exist. 
+dimensionally , light leaking in from directions that didn’t exist. 
 He clutched the shard harder. 
 The void poured in. 
 Not fell, not surged —poured. Like water from a thousand unseen faucets, it slipped 
@@ -3523,7 +2935,7 @@ And still, he held the shard.
 It burned. 
 Just a little at first, then more and more. 
 It was cooking his hand he thought, I’m hungry, was his next thought, which was 
-immediately interrupted by the ongoing burning sensation. 
+immediately interrupted by the ongoing burning sensation . 
 It burned hot enough that he dropped to his knees, hand fused around the fragment like it 
 had grown roots in his flesh. 
 The void coiled tighter. It hissed —not a sound, exactly, but a pressure in the skull. Like the 
@@ -3532,7 +2944,7 @@ His other hand clawed at his wrist. It was reflex. Useless. He had to hold on.
 He screamed. 
 The void listened. 
 And then — 
-It funneled. 
+It funneled . 
 All of it. In an instant, as if a great unseen drain had opened in the center of the shard, the 
 entire void rushed toward him. Ripped the walls apart in its wake. Crushed sound into 
 silence. Pulled everything —not just matter but meaning—into the small, molten shard in 
@@ -3542,7 +2954,7 @@ He blinked.
 He was standing. 
 Still clutching the shard. 
 The tower was gone. 
-The tower was gone. 
+The tower was gone . 
 The cracked, gnarled earth where it had stood now steamed slightly in the cool morning air, 
 as if exhaling from a fever. Around him, people cowered. Sera had her arm around a child. 
 Myx stood ready to leap, ears flat, body coiled like a spring. 
@@ -3587,7 +2999,7 @@ Sera looked down. “I’m sorry.”
 “I know.” Rook replied 
 Sera smiled. “And the shard?” 
 
-Rook touched the pouch in his pocket. “Feels like the kind of thing that breaks the world. Or 
+Rook touched the pouch in his pocket . “Feels like the kind of thing that breaks the world. Or 
 maybe puts it back together.” 
 She touched his hand, just briefly. “Be careful.” 
 He looked up. “Don’t make it weird.” 
@@ -3599,10 +3011,10 @@ Myx stretched long and low, his strange eyes —today a warm gold —flashing wi
 He looked at Rook, then ahead, then back again. 
 That’s it? 
 “That’s it.” Rook said aloud as if he could hear Myx ’s thoughts. 
-No dramatic last kiss? No tragic slow-motion run to the gates? 
-“No drama for this guy.” Rook continued 
+No dramatic last kiss? No tragic slow -motion run to the gates? 
+“No drama for this guy .” Rook continued 
 Myx snorted. 
-Rook chuckled and looked at Myx. “Have you ever been in love? Kissed anyone? ” 
+Rook chuckled and looked at Myx . “Have you ever been in love? Kissed anyone? ” 
 I’ve bitten a prince. Myx thought 
 “Of course you have you heartbreaker. ” 
 They crested a hill and looked back once. The village was already small in the distance. The 
@@ -3616,7 +3028,7 @@ the bell tree? Whole place went back to normal after it fell. That tower wasn’
 like it. I know it.” 
 Myx gave a loo k of “You want to fix the world now? ” 
 
-“Those shards ” Rook grinned. “ They’ve gotta be worth something, and theirs gotta be more 
+“Those shards ” Rook grinned. “ They’ve gotta be worth something , and theirs gotta be more 
 of them” 
 Oh good. For a second you almost sounded noble. 
 Rook shrugged. “We’ll need supplies. Maps. Luck.” 
@@ -3627,31 +3039,39 @@ cracked.
 The road was open. The world, broken and vast. 
 They had no destination. Just a reason to move. 
 And sometimes, that’s enough.',
- 11927,
- admin_id,
- 'submitted',
- false,
- 59,
- ARRAY['pending', 'needs-review']
- );
+        11927,
+        admin_id,
+        'canonical',
+        true,
+        NOW(),
+        59,
+        ARRAY['canonical', 'official']
+    ) ON CONFLICT (slug) DO UPDATE SET
+        content_text = EXCLUDED.content_text,
+        word_count = EXCLUDED.word_count,
+        summary = EXCLUDED.summary,
+        is_published = true,
+        canon_status = 'canonical',
+        published_at = COALESCE(stories.published_at, NOW());
 
---In Service of the Veykar
- INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
- ) VALUES (
- 'In Service of the Veykar',
- 'in-service-of-the-veykar',
- 'The Vaultkeepers have stopped keeping. 
+    -- In Service of the Veykar
+    INSERT INTO public.stories (
+        title,
+        slug,
+        summary,
+        content,
+        content_text,
+        word_count,
+        author_id,
+        canon_status,
+        is_published,
+        published_at,
+        reading_time_minutes,
+        tags
+    ) VALUES (
+        'In Service of the Veykar',
+        'in-service-of-the-veykar',
+        'The Vaultkeepers have stopped keeping. 
 The Dreamers sleep uneasily. 
 And the Fold — 
 the Fold begins to shine through the seams. 
@@ -3663,8 +3083,8 @@ The Everloop thins.
 The Pattern forgets. 
 And beneath it all, the world begins to remember... 
 what it was before it was held. ',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Hollow Thread 
+        '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content available in content_text field."}]}]}'::jsonb,
+        'Prologue: The Hollow Thread 
 The Pattern was never seamless. 
 Even in the golden age of the Weave —when time curled obediently, when cities pulsed in rhythm with the 
 stars— 
@@ -3716,7 +3136,7 @@ what it was before it was held.
 
 CHAPTER ONE – The Land That Bows to No One 
 The wind here was older than language. 
-It carried the dust of bones and ash across the wide-backed steppe, brushing over hills worn low by time 
+It carried the dust of bones and ash across the wide -backed steppe, brushing over hills worn low by time 
 and hoof, past stone shrines long since swallowed by grass. It did not whisper. It did not howl. It moved 
 like memory —steady, shapeless, and impossible to hold. 
 This was the eastern expanse of the world, beyond the reach of border stones and merchant routes, 
@@ -3724,7 +3144,7 @@ beyond the maps that hung in the war rooms of western lords. Here, the land bent
 to the sky, the animals, and those born of both. 
 People lived simply here —not because they lacked the ambition for more, but because they understood 
 the cost of taming what never asked to be ruled. Clans rose and fell like tides. Some traveled with herds 
-across the plains. Others carved villages into val leys, stony and wind-bitten. There were no cities. No 
+across the plains. Others carved villages into val leys, stony and wind -bitten. There were no cities. No 
 kings. Only the land, the clan, and the weather. 
 They called it by many names —the Deyune Steppe, the Barren Reach, the Long Wind. But those were 
 names others gave. The people here rarely bothered. When you were born of the land, you didn’t name it. 
@@ -3748,7 +3168,7 @@ where chaos had always reigned. Under his rule, merchan ts moved freely for the 
 Crops were requisitioned, but no longer stolen. Raids were punished, but trade was protected. 
 To the ones who bent, he was order. 
 To those who resisted, he was fire. 
-One such village stood nestled in a shallow bowl of rock and wind, where sheep clung to life in tough-
+One such village stood nestled in a shallow bowl of rock and wind, where sheep clung to life in tough -
 furred herds and smoke rose in thin trails from yurts and stone huts. Its name was known to those who 
 lived there, and that was enough. The people had see n smoke on the horizon —distant, rising in straight 
 black lines. Another village gone. Then another. The rumors came fast and loose: a warlord, a prophet, a 
@@ -3777,28 +3197,28 @@ A gash split her left brow, raw and crusted, an accident of falling timbers or f
 remembered. She did not cry. She only watched. 
 She was sent to the kitchens. 
 
-CHAPTER 2-The Kitchens 
+CHAPTER 2 - The Kitchens 
 The smoke hung low and constant, a heavy veil that clung to the skin like rot and grief. It filled the lungs 
 and eyes, coated the tongue with the taste of ash. Breathing became a chore. Seeing, optional. Suffering, 
 guaranteed. 
 The kitchens of the early days were not kitchens in the way of comfort or warmth or the nurturing aroma 
-of stews. They were dug pits and raw stone. They were fire-blackened cauldrons and rusted spits. They 
-were sweat and screaming and iron-stained hands. T hey were hell, made daily. 
+of stews. They were dug pits and raw stone. They were fire -blackened cauldrons and rusted spits. They 
+were sweat and screaming and iron -stained hands. T hey were hell, made daily. 
 Before the fires, there were trenches —trenches dug by hand with warped spades and broken fingers. No 
 one arrived in the kitchens by choice. You were sent. Sometimes as punishment. Sometimes because 
 you looked weak. Often, simply because you were there when the order came down. 
 They dug first —always dug. Deep into the stubborn earth, hacking through roots like bones, hitting stone 
 that blistered hands and shattered tools. No gloves. No water. No rest. Blisters peeled, then bled, then 
 hardened. The blood mixed into the dirt until the trenches smelled of copper and rot. 
-Then came the hauling. Wood from the dry hills. Buckets of brackish water from the half-poisoned creek. 
-Dead weight dragged on too-thin limbs. The fires had to be kept burning, and no matter how many 
+Then came the hauling. Wood from the dry hills. Buckets of brackish water from the half -poisoned creek. 
+Dead weight dragged on too -thin limbs. The fires had to be kept burning, and no matter how many 
 mouths the Veykar brought to heel, the fires demanded mo re. There were no breaks. Only shifts —
 endless, aching shifts where you passed the labor like a sickness, one broken body to the next. 
 And the fires —Gods, the fires. They raged without kindness. Smoke bled into the eyes until everything 
 looked like sorrow. Flames licked too high and too fast, and many a girl lost her eyebrows, her skin, her 
 scream. Oil pots burst without warning. Meat cau ght fire. Stones exploded in the heat. Everything was too 
 hot or too sharp or too heavy. 
-And above all —noise. The cacophony of hunger. Orders barked by pit-leaders. Wailing. Always wailing. 
+And above all —noise. The cacophony of hunger. Orders barked by pit -leaders. Wailing. Always wailing. 
 There was never a moment when someone wasn’t weeping. From pain. From hunger. From remembering 
 the village they’d lost. From a name that no one answered to anymore. There wer e girls who cried while 
 they peeled roots. Girls who cried while they stirred vats of boiling fat. Girls who cried until they broke, 
@@ -3808,7 +3228,7 @@ Except her.
 The girl with the scar did not cry. Not once. 
 She dug. When her fingers bled, she wrapped them in rags and dug more. When her palms blistered, she 
 pressed them tighter against the wood until the flesh tore and hardened into callus. She hauled wood 
-until her knees gave, then crawled it forward. She sti rred the fire-pots until the skin of her arms was 
+until her knees gave, then crawled it forward. She sti rred the fire -pots until the skin of her arms was 
 spiderwebbed with burns. She cooked until the smell of fat and rot soaked into her hair and skin and 
 bones. But she did not cry. 
 Others noticed. They whispered. At first, they thought she was broken. Empty. But it was worse than that. 
@@ -3822,7 +3242,7 @@ She became a presence. Like fire. Like smoke. You didn’t talk to it. You just 
 to get too close. 
 One night, when the heat was so bad it baked your breath dry before you even spoke, and the flies moved 
 like molasses over the offal trench, a girl collapsed beside the soup pit. Her hands were raw meat, her 
-eyes glassed with fever. She didn’t make a sound. Just crumpled, mouth open in a scream she couldn’t 
+eyes glassed with fever. She didn’t make a sound . Just crumpled, mouth open in a scream she couldn’t 
 voice. 
 The scarred girl didn’t flinch. Didn’t pause. She stepped over her, took the ladle from the twitching hand, 
 and kept stirring. 
@@ -3851,8 +3271,8 @@ off the dozens of fire pits and smoke channels that lined the outer ring, while 
 chopped wood and layered iron grates turned raw slaughter into the illusion of civilization. Here, the 
 chaos of the conquest was turned into ceremony. 
 It was here the girl first learned: food was not simply food. 
-There were scraps —always scraps. The gristle and marrow-fat left from butchering, the charred bone 
-ends, the limp onions too soft for boiling, the half-spoiled potatoes. These went to the soldiers. Not all 
+There were scraps —always scraps. The gristle and marrow -fat left from butchering, the charred bone 
+ends, the limp onions too soft for boiling, the half -spoiled potatoes. These went to the soldiers. Not all 
 soldiers, of course —only the ones who bled, dug, b urned, and buried. The ones who didn’t bark orders 
 but took them. The ones whose faces blurred in dust and smoke until one became the next. These men 
 ate with their hands, sitting on their helmets, carving meat with the same blades they’d used to carve 
@@ -3873,8 +3293,8 @@ And then —there was him.
 The Veykar. 
 She hadn’t seen him yet, not truly, but she had seen the food meant for him. It came into the Hall on trays 
 larger than horses’ backs, pulled by two men each, sometimes more. The food was sculpted. Not 
-shaped. Sculpted. Towers of roasted fowl stacked like battlements. A haunch of elk seared in the shape 
-of a rearing warhorse. Fish twisted and curled into serpents, their scales re-glazed with oils and herbs to 
+shaped. Sculpted . Towers of roasted fowl stacked like battlements. A haunch of elk seared in the shape 
+of a rearing warhorse. Fish twisted and curled into serpents, their scales re -glazed with oils and herbs to 
 shimmer like polished obsidian. Bowls of stew that shimmered gold, tinted with saffron and black sa lt 
 
 and thistle oil. Meats cured and lacquered until they looked more like stone than flesh. Desserts that 
@@ -3894,10 +3314,10 @@ jostling her with elbows and trays. She simply moved, adjusted, absorbed.
 Every day she saw more. 
 And every day the structure of it all became clearer. 
 This was not a kitchen —it was the engine of an empire. 
-The Hall sat at the center of the Veykar’s moving camp, which they called the Wheel. The Wheel was a 
+The Hall sat at the center of the Veykar’s moving camp, which they called the Wheel . The Wheel was a 
 living machine, shifting as needed but always organized. At its outermost ring were the pits: latrines, 
 stables, and butcher grounds. Inside that: the soldiers’ quarters, built from hide tents and bone stakes, 
-easy to burn if needed. Clos er in still: the command tents, the archives, the black-robed men’s quarters, 
+easy to burn if needed. Clos er in still: the command tents, the archives, the black -robed men’s quarters, 
 and the Hall itself —always at the center, because what you fed the body was what you fed the wa r. 
 Above all of this, somewhere she had never yet glimpsed, was the Veykar’s tent. Or palace. Or tower. No 
 one could agree on what it looked like. But everyone knew: it moved with them. And nothing entered it 
@@ -3905,7 +3325,7 @@ unless it had passed the Hall first.
 The Hall was the final filter. What left here was not just food. It was offering. 
 And something in her began to understand. 
 She didn’t smile. She didn’t laugh. But something in her face softened, just slightly. A tightness relaxed. A 
-wall inside, long-held and rigid, cracked a little. 
+wall inside, long -held and rigid, cracked a little. 
 Was it pride? No, not quite. 
 Was it relief? Maybe. Maybe not. 
 But it was something. 
@@ -3948,7 +3368,7 @@ She learned the science of fire: where the coals must be banked for bread versus
 plumroot wood softened the sting of fermented milk, how a blade could slice an onion into four kinds of 
 
 sweetness depending on its angle. She learned to render fat in stages —first for the crackle, then for the 
-oil, then again for the glaze —and saved every drop in clay-stoppered jars for future meals. She boiled 
+oil, then again for the glaze —and saved every drop in clay -stoppered jars for future meals. She boiled 
 bones until they sang, and then boiled them aga in for the silence beneath. 
 Her palate sharpened. She tasted everything, even raw. A hint of iron here, a whisper of cardamom there. 
 She knew how to mask the sourness of horse meat with honey vinegar, how to draw the bitterness from 
@@ -3962,7 +3382,7 @@ Morran walked with a stoop and sneered without smiling. He did not speak to the 
 teach. He watched her from across the hearth, lips tight. He knew he could not harm her. The Draethan 
 had made that clear. 
 Still, resentment burned in him like a low fire. His dishes were flawless, but uninspired. Always the same 
-three things: cured stag back, spiced marrow stew, and fire-roasted root clusters soaked in bone oil. 
+three things: cured stag back, spiced marrow stew, and fire -roasted root clusters soaked in bone oil. 
 He claimed that was what the Veykar preferred. No one questioned it —not out loud. 
 And so the girl cooked below him. But never for him. She cooked for the Draethan, and they, in turn, killed 
 for her. 
@@ -3995,7 +3415,7 @@ The Wheel had stopped turning.
 And when a wheel stops, it is not always peace it brings. 
 The Veykar —his conquests complete, or paused —had begun to gather the conquered. He would no 
 longer roll into the hills and flatten resistance with flame and hoof. Now, they came to him, dragging carts 
-of tribute, baskets of dried fruit, shivering daughters. They came not for mercy. They came because they 
+of tribute, baskets of dried fruit, shivering daughters . They came not for mercy. They came because they 
 had no other choice. And around her, from the Hall outward, rose the skeleton of something new. Not a 
 camp. A city. 
 And that is when it happened. 
@@ -4010,7 +3430,7 @@ punishment. Fingers scrubbed into the crevices where smoke had lived for years. 
 hair that had never once been cut or combed. Oil and grease were forced from her skin with hot water 
 and bark soap. When she winced, they said nothing. When she clenched her fists, they did not stop. 
 Then came the clothes. 
-Not the soft silks of the pleasure-women. Not painted cloth or sheer linen. She was given thick animal 
+Not the soft silks of the pleasure -women. Not painted cloth or sheer linen. She was given thick animal 
 hide, shaped into a tunic that tied at the waist, stitched leggings with no tears, and boots —actual 
 boots—that covered her feet entire. She had never owned a pair of shoes. Now she wore the dead skin of 
 something far stronger than herself. 
@@ -4029,11 +3449,11 @@ ground was carpeted in cloth so fine it looked like a spilled painting.
 She was marched forward. Down the long path toward the throne. 
 And that is when she nearly gasped. 
 Hands. 
-Lining the walls of the tent —human hands. Dozens of them. Stripped clean, preserved, the wrists bound 
+Lining the walls of the tent —human hands . Dozens of them. Stripped clean, preserved, the wrists bound 
 by the thumbs and hung like garlands. Some small, some large, some still bearing the trace calluses of 
 their final acts. Trophies? Warnings? Art? 
 And then her eyes caught one she knew. 
-Wrinkled. Curved at the second knuckle from a bad break. A half-faded burn scar across the base of the 
+Wrinkled. Curved at the second knuckle from a bad break. A half -faded burn scar across the base of the 
 thumb. 
 Morran. 
 She didn’t breathe. 
@@ -4107,7 +3527,7 @@ that matters.”
 He began walking again, slower now. 
 “The way your people lived —mud huts, boiled roots, cold gruel by firelight —that ends now. My empire will 
 not eat like peasants. The most glorious crops will be brought from the farthest reaches. Spices, meats, 
-fruits the likes of which you’ve never touched. And it will be you—” he stopped again, inches from her, “ —
+fruits the likes of which you’ve never touched . And it will be you—” he stopped again, inches from her, “ —
 who shapes that table. For me. Only for me.” 
 He let the words hang. 
 “You will cook for no one else. But you will teach others to cook for my most trusted. You will build the 
@@ -4141,7 +3561,7 @@ who followed her rhythm were not elevated —they were still slaves —but they 
 sleep on, extra crusts of bread, and —most rare of all —moments without fear. 
 She spoke often now, but never loudly. Her voice moved like her hands: efficiently, with purpose. Those 
 who listened closely might hear her shift between dialects —coarse street bark from the eastern isles, 
-guttural northern trade tongue, the click-and-hiss of the desert coast. She had heard them all in the long 
+guttural northern trade tongue, the click -and-hiss of the desert coast. She had heard them all in the long 
 years of servitude, and now they lived in her like spices —each drawn forth only when needed. 
 The Veykar had noticed. 
 He noticed everything about her now. 
@@ -4158,7 +3578,7 @@ repetition, even of joy, dulls the tongue.
 “I liked it,” he replied. 
 “So have something new,” she said, and he obeyed. 
 There were whispers that she could calm him with a word, with a dish, with a look. That when his temper 
-flared, she simply stepped closer, and the storm passed. 
+flared, she simply stepped closer , and the storm passed. 
 But no one dared say these things aloud —not just because they feared the Veykar, but because they 
 feared her. She was no longer “the girl with the scar.” She was Her. And no one quite knew her name. 
 In the stillness of their shared nights —when the fire dimmed and the bloodlust ebbed —he spoke to her of 
@@ -4172,7 +3592,7 @@ It did not belong to the world.
 Only to them. 
 
 CHAPTER 8 – Aged Like Wine 
-They dragged him in on a rain-slick morning. Barefoot, cloaked in soot and ash, the boy stumbled as the 
+They dragged him in on a rain -slick morning. Barefoot, cloaked in soot and ash, the boy stumbled as the 
 guards pushed him toward the kitchens like garbage set to burn. His left leg dragged slightly behind him, 
 twisted at the ankle or perhaps the knee —too much to run, too small to notice from atop a horse. 
 He didn’t cry. He coughed. A dry, ragged bark that echoed through the steaming halls of the great kitchen. 
@@ -4286,17 +3706,17 @@ And now, he was simply gone.
 She went about her duties, methodical and mute. But her thoughts wandered —slipping through the 
 cracks like steam from a boiling pot. She remembered his voice, how it trembled not from weakness but 
 from dreaming too loudly. She remembered the look in his ey es when he spoke of escape, of rebellion, of 
-beauty outside the black-sooted tents and kitchens. She remembered his cracked fingers fumbling 
+beauty outside the black -sooted tents and kitchens. She remembered his cracked fingers fumbling 
 spices as if they were precious stones. 
 And then —one night. 
 Not special. Not marked by omen or moonlight. 
-She stood by the hearth as the Veykar ate, the silver edge of his knife glinting in firelight, his black-cloaked 
+She stood by the hearth as the Veykar ate, the silver edge of his knife glinting in firelight, his black -cloaked 
 guards standing still as stone. 
 The meal was perfect. He was pleased. All was as it should be. 
 So why did she speak? 
 "What happened to the boy?" 
 The words dropped like hot iron. 
-The Veykar’s utensils paused mid-cut. Still. Silent. 
+The Veykar’s utensils paused mid -cut. Still. Silent. 
 But the rage —it pulsed from him like heat from an oven’s mouth. 
 He did not look up as he spoke, low and venomous. 
 "What boy?" 
@@ -4336,7 +3756,7 @@ The girl stopped breathing.
 The Veykar emerged from behind him like a shadow. 
 He looked tired. No —emptied. 
 His voice was calm. Terrifyingly calm. 
-"Obedience is absolute," he said. "There is no half-measure. 
+"Obedience is absolute," he said. "There is no half -measure. 
 Treason is death. 
 The boy was heard whispering poison. Of escape. Of betrayal. If it is true, there is no choice." 
 He gestured to the cloaked man behind the boy. Blade already drawn. 
@@ -4365,7 +3785,7 @@ Then softly, barely audible:
 
 CHAPTER 10 – Calm 
 That night, she slept. 
-Not the restless dozing of kitchen nights or the half-conscious stupor of exhaustion, but real sleep —
+Not the restless dozing of kitchen nights or the half -conscious stupor of exhaustion, but real sleep —
 deep, soundless, without dream. Her mind drifted as she fell into it: flickers of flame, the face of a burnt 
 child, the sting of calloused hands, the silen ce of a girl who never cried. Then, flashes of the Veykar’s rare 
 kindness, the reckless hope of the crippled boy, the long, humming years of fire and metal and meat. 
@@ -4376,7 +3796,7 @@ No one could tell the difference.
 Not even her. 
 She moved through the kitchen with the same quiet precision as always. Her fingers knew every handle, 
 every hinge, every soft spot in the floor. She checked the herb stocks without looking, plucked the spoiled 
-roots from the pile before anyone else noticed, stirred the stewing bones clockwise four times, then 
+roots from the pile before anyone else noticed , stirred the stewing bones clockwise four times, then 
 counterclockwise three, because that’s how the flavor settled. She knew the ovens would burn hot that 
 morning—the wind had shifted, and the draft pulled stronger from the east —so she adjusted the chimn ey 
 damper by half a brick and propped the side door with a wedge of blackened wood. 
@@ -4428,34 +3848,19 @@ She turned, slipped quietly out the back of the tent, and vanished into the nigh
 She was never seen again — 
 Not in that city, nor the steppes, 
 Nor the dreams of those who still whispered his name.',
- 8672,
- admin_id,
- 'submitted',
- false,
- 43,
- ARRAY['pending', 'needs-review']
- );
+        8672,
+        admin_id,
+        'canonical',
+        true,
+        NOW(),
+        43,
+        ARRAY['canonical', 'official']
+    ) ON CONFLICT (slug) DO UPDATE SET
+        content_text = EXCLUDED.content_text,
+        word_count = EXCLUDED.word_count,
+        summary = EXCLUDED.summary,
+        is_published = true,
+        canon_status = 'canonical',
+        published_at = COALESCE(stories.published_at, NOW());
 
 END $$;
-
---=====================================================
---VERIFICATION QUERIES
---=====================================================
-
---Count entities by status
-SELECT status, COUNT(*) as count 
-FROM public.canon_entities 
-GROUP BY status;
-
---Count stories by status
-SELECT canon_status, COUNT(*) as count 
-FROM public.stories 
-GROUP BY canon_status;
-
---Summary
-SELECT 
- (SELECT COUNT(*) FROM public.canon_entities) as total_entities,
- (SELECT COUNT(*) FROM public.canon_entities WHERE status = 'proposed') as pending_entities,
- (SELECT COUNT(*) FROM public.canon_entities WHERE embedding IS NULL) as needs_hydration,
- (SELECT COUNT(*) FROM public.stories) as total_stories,
- (SELECT COUNT(*) FROM public.stories WHERE canon_status = 'submitted') as pending_stories;

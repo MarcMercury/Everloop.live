@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { User, Save, ArrowLeft, CheckCircle, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { ProfileUpdate } from '@/types/database'
 
 interface ProfileData {
   id: string
@@ -167,15 +166,16 @@ export default function ProfileSettingsPage() {
       return
     }
     
-    const updateData: ProfileUpdate = {
+    const updateData = {
       display_name: displayName.trim() || null,
       bio: bio.trim() || null,
       avatar_url: avatarUrl.trim() || null,
       updated_at: new Date().toISOString(),
     }
     
-    const { error } = await supabase
-      .from('profiles')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase
+      .from('profiles') as any)
       .update(updateData)
       .eq('id', profile.id)
     
@@ -291,37 +291,85 @@ export default function ProfileSettingsPage() {
                 </p>
               </div>
               
-              {/* Avatar URL */}
-              <div className="space-y-2">
-                <Label htmlFor="avatarUrl" className="text-parchment">
-                  Avatar URL
+              {/* Avatar Upload */}
+              <div className="space-y-3">
+                <Label className="text-parchment">
+                  Profile Picture
                 </Label>
-                <Input
-                  id="avatarUrl"
-                  type="url"
-                  value={avatarUrl}
-                  onChange={(e) => setAvatarUrl(e.target.value)}
-                  placeholder="https://example.com/your-avatar.jpg"
-                  className="bg-teal-deep border-gold/20 text-parchment placeholder:text-parchment-muted/50"
-                />
-                <p className="text-xs text-parchment-muted">
-                  Paste a URL to an image for your profile picture.
-                </p>
                 
-                {/* Avatar Preview */}
-                {avatarUrl && (
-                  <div className="mt-3 flex items-center gap-3">
-                    <img
-                      src={avatarUrl}
-                      alt="Avatar preview"
-                      className="w-16 h-16 rounded-full border-2 border-gold/30 object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none'
-                      }}
-                    />
-                    <span className="text-sm text-parchment-muted">Preview</span>
+                {/* Current Avatar Preview */}
+                <div className="flex items-start gap-4">
+                  <div className="relative">
+                    {avatarUrl ? (
+                      <div className="relative">
+                        <img
+                          src={avatarUrl}
+                          alt="Avatar preview"
+                          className="w-20 h-20 rounded-full border-2 border-gold/30 object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setAvatarUrl('')}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-400 transition-colors"
+                        >
+                          <X className="w-3 h-3 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-full border-2 border-dashed border-gold/20 flex items-center justify-center bg-teal-deep/50">
+                        <ImageIcon className="w-8 h-8 text-parchment-muted/50" />
+                      </div>
+                    )}
                   </div>
-                )}
+                  
+                  <div className="flex-1 space-y-2">
+                    {/* Upload Button */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploading}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-gold/30 text-parchment hover:bg-gold/10"
+                    >
+                      {uploading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-parchment/30 border-t-parchment rounded-full animate-spin mr-2" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Image
+                        </>
+                      )}
+                    </Button>
+                    
+                    {/* Or use URL */}
+                    <div className="text-xs text-parchment-muted">Or paste an image URL:</div>
+                    <Input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://example.com/your-avatar.jpg"
+                      className="bg-teal-deep border-gold/20 text-parchment placeholder:text-parchment-muted/50 text-sm"
+                    />
+                    <p className="text-xs text-parchment-muted">
+                      JPG, PNG, GIF, or WebP. Max 2MB.
+                    </p>
+                  </div>
+                </div>
               </div>
               
               {/* Error/Success Messages */}

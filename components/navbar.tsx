@@ -56,25 +56,25 @@ export async function Navbar() {
               <span className="hidden sm:inline">Overview</span>
             </Link>
             
-            <Link 
-              href="/explore"
-              className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              <span className="hidden sm:inline">Archive</span>
-            </Link>
-            
-            <Link 
-              href="/stories"
-              className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-            >
-              <Library className="w-4 h-4" />
-              <span className="hidden sm:inline">Library</span>
-            </Link>
-            
             {user ? (
               <>
-                {/* Authenticated User */}
+                {/* Authenticated User Navigation */}
+                <Link 
+                  href="/explore"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span className="hidden sm:inline">Archive</span>
+                </Link>
+                
+                <Link 
+                  href="/stories"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <Library className="w-4 h-4" />
+                  <span className="hidden sm:inline">Library</span>
+                </Link>
+                
                 <Link 
                   href="/dashboard"
                   className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"

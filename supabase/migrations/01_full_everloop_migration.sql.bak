@@ -10,599 +10,599 @@ DO $$
 DECLARE
  admin_id UUID;
 BEGIN
---Get admin user for created_by
+ --Get admin user for created_by
  SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
  
  IF admin_id IS NULL THEN
- RAISE NOTICE 'No admin user found-entities will have NULL created_by';
+  RAISE NOTICE 'No admin user found-entities will have NULL created_by';
  END IF;
 
---=====================================================
---WORLD GUIDE ENTITIES
---=====================================================
+ --=====================================================
+ --WORLD GUIDE ENTITIES
+ --=====================================================
  
---LOCATIONS
+ --LOCATIONS
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Drift',
- 'the-drift',
- 'location',
- 'The primordial sea of chaos — matter and will without boundary. The Drift is not a place but a condition. Nothing within it is still. To enter it is to dissolve into what you once were. From its outer reaches the First Architects drew substance, shaping the first forms of stability.',
- 'proposed',
- 0.95,
- admin_id
+  'The Drift',
+  'the-drift',
+  'location',
+  'The primordial sea of chaos — matter and will without boundary. The Drift is not a place but a condition. Nothing within it is still. To enter it is to dissolve into what you once were. From its outer reaches the First Architects drew substance, shaping the first forms of stability.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Fold',
- 'the-fold',
- 'location',
- 'The intermediary plane of thought, design, and intent — neither matter nor spirit, it is the mind of creation. The Fold holds the First Map, a construct of pure geometry and tone that describes the world. It is the wall upon which all else is hung.',
- 'proposed',
- 0.95,
- admin_id
+  'The Fold',
+  'the-fold',
+  'location',
+  'The intermediary plane of thought, design, and intent — neither matter nor spirit, it is the mind of creation. The Fold holds the First Map, a construct of pure geometry and tone that describes the world. It is the wall upon which all else is hung.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
---CONCEPTS
+ --CONCEPTS
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Weaving',
- 'the-weaving',
- 'concept',
- 'The vast lattice of luminous threads binding time, space, and thought into continuity. The act of creation by which the Pattern was made. Within the Pattern once stood the Anchors, pillars that pinned the Weaving to the Fold. The Weaving grows thin, and Hollows spread.',
- 'proposed',
- 0.90,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Everloop',
- 'the-everloop',
- 'concept',
- 'Both the living world and the eternal cycle of return. The world of mortals layered upon the Pattern, nourished by it. Each life lived is a single thread in its design. Its purpose: to enact the Pattern''s rhythm — birth, loss, return. A cycle that spins ever onward, never the same, never truly new.',
- 'proposed',
- 0.95,
- admin_id
+  'The Weaving',
+  'the-weaving',
+  'concept',
+  'The vast lattice of luminous threads binding time, space, and thought into continuity. The act of creation by which the Pattern was made. Within the Pattern once stood the Anchors, pillars that pinned the Weaving to the Fold. The Weaving grows thin, and Hollows spread.',
+  'proposed',
+  0.90,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The First Map',
- 'the-first-map',
- 'concept',
- 'The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they began the Weaving.',
- 'proposed',
- 0.95,
- admin_id
+  'The Everloop',
+  'the-everloop',
+  'concept',
+  'Both the living world and the eternal cycle of return. The world of mortals layered upon the Pattern, nourished by it. Each life lived is a single thread in its design. Its purpose: to enact the Pattern''s rhythm — birth, loss, return. A cycle that spins ever onward, never the same, never truly new.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Anchors',
- 'the-anchors',
- 'concept',
- 'Great pillars of intent and memory driven into the Pattern by the First Architects to hold the Weaving firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.',
- 'proposed',
- 0.90,
- admin_id
+  'The First Map',
+  'the-first-map',
+  'concept',
+  'The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they began the Weaving.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Shards',
- 'the-shards',
- 'concept',
- 'Broken remnants of the Anchors — each still hums with the intent that once held the world together. Where Shards lie buried, the world trembles most, and time runs like spilled ink. Shard-touched regions are the most unstable, with time, matter, and memory contorting where their influence spreads.',
- 'proposed',
- 0.85,
- admin_id
+  'The Anchors',
+  'the-anchors',
+  'concept',
+  'Great pillars of intent and memory driven into the Pattern by the First Architects to hold the Weaving firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.',
+  'proposed',
+  0.90,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Hollows',
- 'the-hollows',
- 'concept',
- 'Weak points in the Pattern where space, time, and memory flicker. Places where the Pattern forgets itself and existence falters. Their cause remains unknown. The Hollows widened over time, leading the Rogue Architects to attempt their fateful repair.',
- 'proposed',
- 0.80,
- admin_id
+  'The Shards',
+  'the-shards',
+  'concept',
+  'Broken remnants of the Anchors — each still hums with the intent that once held the world together. Where Shards lie buried, the world trembles most, and time runs like spilled ink. Shard-touched regions are the most unstable, with time, matter, and memory contorting where their influence spreads.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Fray',
- 'the-fray',
- 'concept',
- 'The unraveling edge of reality where the Pattern frays and loops collapse. The Fray is not a place but a condition — where time stutters, memory bleeds, and the world forgets itself. It spreads from Shard-touched regions, corrupting all it touches.',
- 'proposed',
- 0.80,
- admin_id
- );
- 
---FACTIONS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Prime Beings',
- 'the-prime-beings',
- 'faction',
- 'Vast entities that roamed the Drift before memory — shapes of hunger, storm, and birth. They were not gods, for gods require worship, and in the beginning there was none to give it. They were instinct given gravity. They embody elemental forces: Hunger, Storm, Ash, Birth, Silence.',
- 'proposed',
- 0.95,
- admin_id
+  'The Hollows',
+  'the-hollows',
+  'concept',
+  'Weak points in the Pattern where space, time, and memory flicker. Places where the Pattern forgets itself and existence falters. Their cause remains unknown. The Hollows widened over time, leading the Rogue Architects to attempt their fateful repair.',
+  'proposed',
+  0.80,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The First Architects',
- 'the-first-architects',
- 'faction',
- 'Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and began the Weaving. They drove the Anchors into the Pattern to hold reality firm. Some claim they were absorbed into the Fold itself.',
- 'proposed',
- 0.95,
- admin_id
+  'The Fray',
+  'the-fray',
+  'concept',
+  'The unraveling edge of reality where the Pattern frays and loops collapse. The Fray is not a place but a condition — where time stutters, memory bleeds, and the world forgets itself. It spreads from Shard-touched regions, corrupting all it touches.',
+  'proposed',
+  0.80,
+  admin_id
+ );
+ 
+ --FACTIONS
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Prime Beings',
+  'the-prime-beings',
+  'faction',
+  'Vast entities that roamed the Drift before memory — shapes of hunger, storm, and birth. They were not gods, for gods require worship, and in the beginning there was none to give it. They were instinct given gravity. They embody elemental forces: Hunger, Storm, Ash, Birth, Silence.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Rogue Architects',
- 'the-rogue-architects',
- 'faction',
- 'A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could weave anew as their ancestors once had. But they misjudged the balance. In their attempt to mend the Weaving, they shattered the Anchors — creating the Shards and the Fray.',
- 'proposed',
- 0.85,
- admin_id
+  'The First Architects',
+  'the-first-architects',
+  'faction',
+  'Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and began the Weaving. They drove the Anchors into the Pattern to hold reality firm. Some claim they were absorbed into the Fold itself.',
+  'proposed',
+  0.95,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Vaultkeepers',
- 'the-vaultkeepers',
- 'faction',
- 'Stewards of memory who perceive the echoes within the Fold through the threads of the Pattern. Born upon the Everloop with the gift to see its threads. They interpret what they see, though meaning is rarely clear. Some work alone, others in Circles.',
- 'proposed',
- 0.90,
- admin_id
+  'The Rogue Architects',
+  'the-rogue-architects',
+  'faction',
+  'A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could weave anew as their ancestors once had. But they misjudged the balance. In their attempt to mend the Weaving, they shattered the Anchors — creating the Shards and the Fray.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Dreamers',
- 'dreamers',
- 'faction',
- 'Walkers between waking and Fold, born tethered to that liminal plane. Through discipline, accident, or madness they can nudge the threads of the Pattern — subtle shifts that bend fate, soften storms, or still hearts. Their art is not conjuring but persuasion.',
- 'proposed',
- 0.90,
- admin_id
- );
-
---=====================================================
---STORY 1 ENTITIES: The Bell Tree and The Broken World
---=====================================================
- 
---CHARACTERS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Kaerlin',
- 'kaerlin',
- 'character',
- 'One of three siblings on a quest to gather the Shards. Known as "Kerr" by her family. The natural leader of the group, practical and determined. She carries a Shard with her that pulses when near the Bell Tree. Her father left the siblings maps that led them to Drelmere.',
- 'proposed',
- 0.9,
- admin_id
+  'The Vaultkeepers',
+  'the-vaultkeepers',
+  'faction',
+  'Stewards of memory who perceive the echoes within the Fold through the threads of the Pattern. Born upon the Everloop with the gift to see its threads. They interpret what they see, though meaning is rarely clear. Some work alone, others in Circles.',
+  'proposed',
+  0.90,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Mira',
- 'mira',
- 'character',
- 'The cartographer and mapmaker among the three siblings. Analytical and scholarly, she carries weathered maps that she constantly updates as the Fray shifts the land. She realized the roots of the Bell Tree form a map.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Thomel',
- 'thomel',
- 'character',
- 'The youngest of the three siblings, also called "Thom." A skilled tracker who promised his Uncle Edran he would keep his siblings safe. Practical and grounded, he notices details others miss.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Eidon',
- 'eidon',
- 'character',
- 'A Folder who lived on Watcher''s Hill in Drelmere. Appeared young but was actually ancient, having been "folded" across time layers. His mind scattered across moments—remembering things that hadn''t happened while forgetting the present.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Merra Dune',
- 'merra-dune',
- 'character',
- 'The apothecary, midwife, and practical voice of Drelmere. She wears her silver hair in a braid, smells of pine and herbs, and has the gift of coaxing life back into the sick. When children forget their names from the Fray, she helps them remember.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Halrick Vann',
- 'halrick-vann',
- 'character',
- 'Mayor of Drelmere and former soldier. A man of routine who refuses to acknowledge the supernatural events in his town. When the Bell Tree appeared, he ordered it cut down—the axes dulled after one strike.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
---LOCATIONS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Drelmere',
- 'drelmere',
- 'location',
- 'A town in the Broken World, once a sanctuary and gathering place for Dreamers. Located in a valley with a dry riverbed and half-collapsed bell tower. The town has been affected by the Fray—children wake without memories, crops bloom early then turn to dust.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Watcher''s Hill',
- 'watchers-hill',
- 'location',
- 'A hill above Drelmere where Eidon the Folder lived. Features uneven stone stairs that seem to change configuration. The hut at the summit is impossibly larger inside than outside.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Gorge',
- 'the-gorge',
- 'location',
- 'A deep, dry gorge outside Drelmere where the true origin point of the Bell Tree''s roots lies. Hidden in the gorge wall is a narrow cave entrance with iron bars and silver-veined carvings.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
---ARTIFACTS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Bell Tree',
- 'the-bell-tree',
- 'artifact',
- 'A mysterious manifestation that appeared suddenly in Drelmere''s town square. Resembles a cloaked figure carved in shadow with limbs hung with bells of all sizes. When rung in the correct sequence, it transformed into the Second Shard.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Second Shard',
- 'the-second-shard',
- 'artifact',
- 'A black shard, smooth and silent, revealed when the Bell Tree was rung in the correct sequence of 22 spirals. One of the thirteen Shards of the Pattern.',
- 'proposed',
- 0.95,
- admin_id
- );
- 
---CREATURES/CONCEPTS
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Folders',
- 'folders',
- 'creature',
- 'Rare beings who have been "folded" across multiple time layers. They remember things that haven''t happened and forget things happening now. If a Folder leaves their grounding place, they risk becoming scattered.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Triumvirate',
- 'the-triumvirate',
- 'concept',
- 'A philosophical or religious concept in the Broken World, represented by statues depicting Time, Memory, Flesh. The three fundamental aspects of existence that the Pattern attempts to hold stable.',
- 'proposed',
- 0.7,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The First Loop',
- 'the-first-loop',
- 'event',
- 'The original weave forged by the Architects to hold time still. Before the Pattern, there was only Drift. Then came the Architects who forged the First Loop.',
- 'proposed',
- 0.75,
- admin_id
+  'The Dreamers',
+  'dreamers',
+  'faction',
+  'Walkers between waking and Fold, born tethered to that liminal plane. Through discipline, accident, or madness they can nudge the threads of the Pattern — subtle shifts that bend fate, soften storms, or still hearts. Their art is not conjuring but persuasion.',
+  'proposed',
+  0.90,
+  admin_id
  );
 
---=====================================================
---STORY 2 ENTITIES: The Prince and the Drowning City
---=====================================================
+ --=====================================================
+ --STORY 1 ENTITIES: The Bell Tree and The Broken World
+ --=====================================================
  
+ --CHARACTERS
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Auren Thorne',
- 'auren-thorne',
- 'character',
- 'The young lord of House Thorne, also known as "The Lord of Luck." Despite being an exceptionally poor fighter, Auren possesses genuine compassion for his people. He dove into a Fray-corrupted sea to retrieve a Shard.',
- 'proposed',
- 0.9,
- admin_id
+  'Kaerlin',
+  'kaerlin',
+  'character',
+  'One of three siblings on a quest to gather the Shards. Known as "Kerr" by her family. The natural leader of the group, practical and determined. She carries a Shard with her that pulses when near the Bell Tree. Her father left the siblings maps that led them to Drelmere.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Lord Thorne',
- 'lord-thorne',
- 'character',
- 'Father of Auren Thorne, Lord of House Thorne. A loving father who secretly planned to prevent Auren from traveling to Virelay.',
- 'proposed',
- 0.85,
- admin_id
+  'Mira',
+  'mira',
+  'character',
+  'The cartographer and mapmaker among the three siblings. Analytical and scholarly, she carries weathered maps that she constantly updates as the Fray shifts the land. She realized the roots of the Bell Tree form a map.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Lady Thorne',
- 'lady-thorne',
- 'character',
- 'Mother of Auren Thorne. Together with Lord Thorne, she recognized both Auren''s generous heart and his complete lack of combat prowess.',
- 'proposed',
- 0.85,
- admin_id
+  'Thomel',
+  'thomel',
+  'character',
+  'The youngest of the three siblings, also called "Thom." A skilled tracker who promised his Uncle Edran he would keep his siblings safe. Practical and grounded, he notices details others miss.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Virelay',
- 'virelay',
- 'location',
- 'A coastal harbor town severely affected by the Fray. Buildings appear and disappear without warning, streets rearrange themselves, people vanish from memory only to return.',
- 'proposed',
- 0.75,
- admin_id
+  'Eidon',
+  'eidon',
+  'character',
+  'A Folder who lived on Watcher''s Hill in Drelmere. Appeared young but was actually ancient, having been "folded" across time layers. His mind scattered across moments—remembering things that hadn''t happened while forgetting the present.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'House Thorne Manor',
- 'house-thorne-manor',
- 'location',
- 'The ancestral home of House Thorne, featuring the Winter Room where the hearth is always full and curtains never open.',
- 'proposed',
- 0.9,
- admin_id
+  'Merra Dune',
+  'merra-dune',
+  'character',
+  'The apothecary, midwife, and practical voice of Drelmere. She wears her silver hair in a braid, smells of pine and herbs, and has the gift of coaxing life back into the sick. When children forget their names from the Fray, she helps them remember.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Third Shard',
- 'the-third-shard',
- 'artifact',
- 'A Shard retrieved by Auren Thorne from beneath the waters of Virelay. Found in a drowned room at the bottom of a Well.',
- 'proposed',
- 0.9,
- admin_id
+  'Halrick Vann',
+  'halrick-vann',
+  'character',
+  'Mayor of Drelmere and former soldier. A man of routine who refuses to acknowledge the supernatural events in his town. When the Bell Tree appeared, he ordered it cut down—the axes dulled after one strike.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ --LOCATIONS
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Drelmere',
+  'drelmere',
+  'location',
+  'A town in the Broken World, once a sanctuary and gathering place for Dreamers. Located in a valley with a dry riverbed and half-collapsed bell tower. The town has been affected by the Fray—children wake without memories, crops bloom early then turn to dust.',
+  'proposed',
+  0.8,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Well of Virelay',
- 'the-well-of-virelay',
- 'artifact',
- 'A perfect ring of ancient carved stone embedded in the seafloor beneath Virelay''s harbor. The Well was not a hole but a wound.',
- 'proposed',
- 0.85,
- admin_id
+  'Watcher''s Hill',
+  'watchers-hill',
+  'location',
+  'A hill above Drelmere where Eidon the Folder lived. Features uneven stone stairs that seem to change configuration. The hut at the summit is impossibly larger inside than outside.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Scholars',
- 'the-scholars',
- 'faction',
- 'Those who study the Shards and the Pattern. They believe the Shards were safeguards—anchors placed by the First Architects.',
- 'proposed',
- 0.8,
- admin_id
+  'The Gorge',
+  'the-gorge',
+  'location',
+  'A deep, dry gorge outside Drelmere where the true origin point of the Bell Tree''s roots lies. Hidden in the gorge wall is a narrow cave entrance with iron bars and silver-veined carvings.',
+  'proposed',
+  0.8,
+  admin_id
  );
-
---=====================================================
---STORY 3 ENTITIES: The Ballad of Rook and Myx
---=====================================================
  
+ --ARTIFACTS
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Rook',
- 'rook',
- 'character',
- 'A wandering con artist and storyteller who travels with his Servine companion Myx. Abandoned by his mother at age five. He uses stories and persuasion rather than violence.',
- 'proposed',
- 0.9,
- admin_id
+  'The Bell Tree',
+  'the-bell-tree',
+  'artifact',
+  'A mysterious manifestation that appeared suddenly in Drelmere''s town square. Resembles a cloaked figure carved in shadow with limbs hung with bells of all sizes. When rung in the correct sequence, it transformed into the Second Shard.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Myx',
- 'myx',
- 'character',
- 'A Servine—a creature with shifting eye colors that reflect emotion and state. Born in fighting pits, torn from his mother before his eyes opened. He refused to snarl even when tortured.',
- 'proposed',
- 0.9,
- admin_id
+  'The Second Shard',
+  'the-second-shard',
+  'artifact',
+  'A black shard, smooth and silent, revealed when the Bell Tree was rung in the correct sequence of 22 spirals. One of the thirteen Shards of the Pattern.',
+  'proposed',
+  0.95,
+  admin_id
+ );
+ 
+ --CREATURES/CONCEPTS
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Folders',
+  'folders',
+  'creature',
+  'Rare beings who have been "folded" across multiple time layers. They remember things that haven''t happened and forget things happening now. If a Folder leaves their grounding place, they risk becoming scattered.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Sera',
- 'sera',
- 'character',
- 'A young woman who discovered a cracked black tower and exploited its Fray-dampening effect to build power over a village. Though she became a tyrant, she was ultimately motivated by fear.',
- 'proposed',
- 0.85,
- admin_id
+  'The Triumvirate',
+  'the-triumvirate',
+  'concept',
+  'A philosophical or religious concept in the Broken World, represented by statues depicting Time, Memory, Flesh. The three fundamental aspects of existence that the Pattern attempts to hold stable.',
+  'proposed',
+  0.7,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Servine',
- 'servine',
- 'creature',
- 'A species of intelligent, telepathic creatures with fur and shifting eye colors. Servines hold emotions and truths, absorbing them into their eyes and bodies. Deeply loyal companions.',
- 'proposed',
- 0.85,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Black Tower of Sera',
- 'the-black-tower-of-sera',
- 'location',
- 'A lean, looming obsidian spire that appeared in a Fray-touched region. The tower repelled the Fray—the closer to it, the more stable reality became.',
- 'proposed',
- 0.8,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'The Fourth Shard',
- 'the-fourth-shard',
- 'artifact',
- 'A Shard obtained by Rook when he entered the Black Tower and pulled a miniature replica of the tower from its roots.',
- 'proposed',
- 0.9,
- admin_id
- );
- 
- INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
- VALUES (
- 'Everloop (Game)',
- 'everloop-game',
- 'concept',
- 'A game played with coins, referenced by Rook and Myx as something they played together to stay warm in their early days.',
- 'proposed',
- 0.7,
- admin_id
+  'The First Loop',
+  'the-first-loop',
+  'event',
+  'The original weave forged by the Architects to hold time still. Before the Pattern, there was only Drift. Then came the Architects who forged the First Loop.',
+  'proposed',
+  0.75,
+  admin_id
  );
 
---=====================================================
---STORY 4 ENTITIES: In Service of the Veykar
---=====================================================
+ --=====================================================
+ --STORY 2 ENTITIES: The Prince and the Drowning City
+ --=====================================================
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Nyra',
- 'nyra',
- 'character',
- 'A survivor who rose from conquered slave to personal cook of the Veykar, ultimately becoming his assassin. Taken at age five when her village was destroyed.',
- 'proposed',
- 0.9,
- admin_id
+  'Auren Thorne',
+  'auren-thorne',
+  'character',
+  'The young lord of House Thorne, also known as "The Lord of Luck." Despite being an exceptionally poor fighter, Auren possesses genuine compassion for his people. He dove into a Fray-corrupted sea to retrieve a Shard.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Veykar',
- 'the-veykar',
- 'character',
- 'A self-made conqueror who unified the eastern steppes through brutal efficiency. He had no bloodline worth boasting, only fire and will.',
- 'proposed',
- 0.9,
- admin_id
+  'Lord Thorne',
+  'lord-thorne',
+  'character',
+  'Father of Auren Thorne, Lord of House Thorne. A loving father who secretly planned to prevent Auren from traveling to Virelay.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Crippled Boy',
- 'the-crippled-boy',
- 'character',
- 'A young dreamer who arrived in the Veykar''s kitchens with a twisted leg and unbroken spirit. He spoke constantly of escape and freedom.',
- 'proposed',
- 0.85,
- admin_id
+  'Lady Thorne',
+  'lady-thorne',
+  'character',
+  'Mother of Auren Thorne. Together with Lord Thorne, she recognized both Auren''s generous heart and his complete lack of combat prowess.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'Morran',
- 'morran',
- 'character',
- 'The old master cook who served the Veykar before Nyra''s rise. His dishes were flawless but uninspired.',
- 'proposed',
- 0.8,
- admin_id
+  'Virelay',
+  'virelay',
+  'location',
+  'A coastal harbor town severely affected by the Fray. Buildings appear and disappear without warning, streets rearrange themselves, people vanish from memory only to return.',
+  'proposed',
+  0.75,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Draethan',
- 'the-draethan',
- 'faction',
- 'The Veykar''s sworn Brethren—his voice, ears, breath, and blood made flesh. Their oaths were tattooed from wrist to throat to jaw.',
- 'proposed',
- 0.85,
- admin_id
+  'House Thorne Manor',
+  'house-thorne-manor',
+  'location',
+  'The ancestral home of House Thorne, featuring the Winter Room where the hearth is always full and curtains never open.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Deyune Steppe',
- 'the-deyune-steppe',
- 'location',
- 'The vast eastern expanse of the world, beyond border stones and merchant routes. Also called the Barren Reach or the Long Wind.',
- 'proposed',
- 0.85,
- admin_id
+  'The Third Shard',
+  'the-third-shard',
+  'artifact',
+  'A Shard retrieved by Auren Thorne from beneath the waters of Virelay. Found in a drowned room at the bottom of a Well.',
+  'proposed',
+  0.9,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Wheel',
- 'the-wheel',
- 'location',
- 'The Veykar''s moving camp, a living machine organized in concentric rings. At the center: the Hall and the Veykar''s tent.',
- 'proposed',
- 0.85,
- admin_id
+  'The Well of Virelay',
+  'the-well-of-virelay',
+  'artifact',
+  'A perfect ring of ancient carved stone embedded in the seafloor beneath Virelay''s harbor. The Well was not a hole but a wound.',
+  'proposed',
+  0.85,
+  admin_id
  );
  
  INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
  VALUES (
- 'The Hall',
- 'the-hall',
- 'location',
- 'The vast kitchen pavilion at the heart of the Veykar''s Wheel—half sunken into rock, half built upon it. The engine of empire.',
- 'proposed',
- 0.85,
- admin_id
+  'The Scholars',
+  'the-scholars',
+  'faction',
+  'Those who study the Shards and the Pattern. They believe the Shards were safeguards—anchors placed by the First Architects.',
+  'proposed',
+  0.8,
+  admin_id
+ );
+
+ --=====================================================
+ --STORY 3 ENTITIES: The Ballad of Rook and Myx
+ --=====================================================
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Rook',
+  'rook',
+  'character',
+  'A wandering con artist and storyteller who travels with his Servine companion Myx. Abandoned by his mother at age five. He uses stories and persuasion rather than violence.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Myx',
+  'myx',
+  'character',
+  'A Servine—a creature with shifting eye colors that reflect emotion and state. Born in fighting pits, torn from his mother before his eyes opened. He refused to snarl even when tortured.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Sera',
+  'sera',
+  'character',
+  'A young woman who discovered a cracked black tower and exploited its Fray-dampening effect to build power over a village. Though she became a tyrant, she was ultimately motivated by fear.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Servine',
+  'servine',
+  'creature',
+  'A species of intelligent, telepathic creatures with fur and shifting eye colors. Servines hold emotions and truths, absorbing them into their eyes and bodies. Deeply loyal companions.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Black Tower of Sera',
+  'the-black-tower-of-sera',
+  'location',
+  'A lean, looming obsidian spire that appeared in a Fray-touched region. The tower repelled the Fray—the closer to it, the more stable reality became.',
+  'proposed',
+  0.8,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Fourth Shard',
+  'the-fourth-shard',
+  'artifact',
+  'A Shard obtained by Rook when he entered the Black Tower and pulled a miniature replica of the tower from its roots.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Everloop (Game)',
+  'everloop-game',
+  'concept',
+  'A game played with coins, referenced by Rook and Myx as something they played together to stay warm in their early days.',
+  'proposed',
+  0.7,
+  admin_id
+ );
+
+ --=====================================================
+ --STORY 4 ENTITIES: In Service of the Veykar
+ --=====================================================
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Nyra',
+  'nyra',
+  'character',
+  'A survivor who rose from conquered slave to personal cook of the Veykar, ultimately becoming his assassin. Taken at age five when her village was destroyed.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Veykar',
+  'the-veykar',
+  'character',
+  'A self-made conqueror who unified the eastern steppes through brutal efficiency. He had no bloodline worth boasting, only fire and will.',
+  'proposed',
+  0.9,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Crippled Boy',
+  'the-crippled-boy',
+  'character',
+  'A young dreamer who arrived in the Veykar''s kitchens with a twisted leg and unbroken spirit. He spoke constantly of escape and freedom.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'Morran',
+  'morran',
+  'character',
+  'The old master cook who served the Veykar before Nyra''s rise. His dishes were flawless but uninspired.',
+  'proposed',
+  0.8,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Draethan',
+  'the-draethan',
+  'faction',
+  'The Veykar''s sworn Brethren—his voice, ears, breath, and blood made flesh. Their oaths were tattooed from wrist to throat to jaw.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Deyune Steppe',
+  'the-deyune-steppe',
+  'location',
+  'The vast eastern expanse of the world, beyond border stones and merchant routes. Also called the Barren Reach or the Long Wind.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Wheel',
+  'the-wheel',
+  'location',
+  'The Veykar''s moving camp, a living machine organized in concentric rings. At the center: the Hall and the Veykar''s tent.',
+  'proposed',
+  0.85,
+  admin_id
+ );
+ 
+ INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
+ VALUES (
+  'The Hall',
+  'the-hall',
+  'location',
+  'The vast kitchen pavilion at the heart of the Veykar''s Wheel—half sunken into rock, half built upon it. The engine of empire.',
+  'proposed',
+  0.85,
+  admin_id
  );
 
 END $$;
@@ -619,23 +619,23 @@ DECLARE
 BEGIN
  SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
 
---The Bell Tree and The Broken World
+ --The Bell Tree and The Broken World
  INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
+  title,
+  slug,
+  summary,
+  content,
+  content_text,
+  word_count,
+  author_id,
+  canon_status,
+  is_published,
+  reading_time_minutes,
+  tags
  ) VALUES (
- 'The Bell Tree and The Broken World',
- 'the-bell-tree-and-the-broken-world',
- 'Rogue Architects tried to repair the weave, but only deepened the damage. 
+  'The Bell Tree and The Broken World',
+  'the-bell-tree-and-the-broken-world',
+  'Rogue Architects tried to repair the weave, but only deepened the damage. 
 Now, we live in the Fray. 
 The world no longer holds a single truth. Each region bears a different scar. Some lands are trapped in loops —
 an unending morning, a single grief. Others drift, unanchored and wild. 
@@ -645,8 +645,8 @@ The Everloop might be healed.
 Or unmade. 
 The Pattern is breaking. The threads are loosening. 
 And no one —not even the Vaultkeepers —knows what...',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Pattern and the Fray 
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
+  'Prologue: The Pattern and the Fray 
 Before there were names, before there were maps, before time dared to call itself time —there was only drift. 
 This was the Dawn, the age before shape. The world had no corners, no centers, no memory. Mountains walked 
 like beasts. Rivers unspooled into the sky. The wind forgot where it came from. In this primal dream roamed the 
@@ -1545,36 +1545,36 @@ Smooth.
 Silent. 
 
 The second of thirteen.',
- 9840,
- admin_id,
- 'submitted',
- false,
- 49,
- ARRAY['pending', 'needs-review']
+  9840,
+  admin_id,
+  'submitted',
+  false,
+  49,
+  ARRAY['pending', 'needs-review']
  );
 
---The Prince and the Drowning City
+ --The Prince and the Drowning City
  INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
+  title,
+  slug,
+  summary,
+  content,
+  content_text,
+  word_count,
+  author_id,
+  canon_status,
+  is_published,
+  reading_time_minutes,
+  tags
  ) VALUES (
- 'The Prince and the Drowning City',
- 'the-prince-and-the-drowning-city',
- 'The Fray spreads. The Shards awaken. The Everloop turns. 
+  'The Prince and the Drowning City',
+  'the-prince-and-the-drowning-city',
+  'The Fray spreads. The Shards awaken. The Everloop turns. 
 And somewhere deeper still, the world begins to ask: 
 If the Pattern was a prison... 
 …what was it meant to hold? ',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'PROLOGUE: THE EVERLOOP 
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
+  'PROLOGUE: THE EVERLOOP 
 The Pattern was never meant to break. 
 That is what the First Architects believed. What they carved into stone and bent into sky. 
 What they whispered as they shaped the rivers and flung the stars like seeds across the 
@@ -2188,39 +2188,39 @@ The wind shifted. Somewhere in the distance, a bell rang once —soft and low.
 Auren turned toward the town. 
 The tide had gone out. 
 And the way was clear.',
- 6035,
- admin_id,
- 'submitted',
- false,
- 30,
- ARRAY['pending', 'needs-review']
+  6035,
+  admin_id,
+  'submitted',
+  false,
+  30,
+  ARRAY['pending', 'needs-review']
  );
 
---The Ballad of Rook and Myx
+ --The Ballad of Rook and Myx
  INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
+  title,
+  slug,
+  summary,
+  content,
+  content_text,
+  word_count,
+  author_id,
+  canon_status,
+  is_published,
+  reading_time_minutes,
+  tags
  ) VALUES (
- 'The Ballad of Rook and Myx',
- 'the-ballad-of-rook-and-myx',
- 'CHAPTER 1 — Play the Game or Play the Player 
+  'The Ballad of Rook and Myx',
+  'the-ballad-of-rook-and-myx',
+  'CHAPTER 1 — Play the Game or Play the Player 
 Dusk rolled across the hills like a wolf deciding which sheep to kill first. 
 The town of Varnhalt —if you could call it a town —was little more than a cluster of stone 
 huts, wood planks, and stubborn people who hadn’t yet been burned, buried, or bought. It 
 sat hunched against the shoulder of a cliffside, where the wind howled like it had bad news 
 and nowhere to be. 
 Myx lay in the dirt outside the tavern, watching the day exhale. A rusted...',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Fold Beneath 
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
+  'Prologue: The Fold Beneath 
 The Pattern was not the first thing to exist. It was simply the first thing that stuck. 
 A moment of order bold enough to resist the drift. 
 But beneath every map is an erasure. And beneath every song, a silence that shaped it. 
@@ -3627,31 +3627,31 @@ cracked.
 The road was open. The world, broken and vast. 
 They had no destination. Just a reason to move. 
 And sometimes, that’s enough.',
- 11927,
- admin_id,
- 'submitted',
- false,
- 59,
- ARRAY['pending', 'needs-review']
+  11927,
+  admin_id,
+  'submitted',
+  false,
+  59,
+  ARRAY['pending', 'needs-review']
  );
 
---In Service of the Veykar
+ --In Service of the Veykar
  INSERT INTO public.stories (
- title,
- slug,
- summary,
- content,
- content_text,
- word_count,
- author_id,
- canon_status,
- is_published,
- reading_time_minutes,
- tags
+  title,
+  slug,
+  summary,
+  content,
+  content_text,
+  word_count,
+  author_id,
+  canon_status,
+  is_published,
+  reading_time_minutes,
+  tags
  ) VALUES (
- 'In Service of the Veykar',
- 'in-service-of-the-veykar',
- 'The Vaultkeepers have stopped keeping. 
+  'In Service of the Veykar',
+  'in-service-of-the-veykar',
+  'The Vaultkeepers have stopped keeping. 
 The Dreamers sleep uneasily. 
 And the Fold — 
 the Fold begins to shine through the seams. 
@@ -3663,8 +3663,8 @@ The Everloop thins.
 The Pattern forgets. 
 And beneath it all, the world begins to remember... 
 what it was before it was held. ',
- '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
- 'Prologue: The Hollow Thread 
+  '{"type": "doc", "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Full story content in content_text field."}]}]}'::jsonb,
+  'Prologue: The Hollow Thread 
 The Pattern was never seamless. 
 Even in the golden age of the Weave —when time curled obediently, when cities pulsed in rhythm with the 
 stars— 
@@ -4428,12 +4428,12 @@ She turned, slipped quietly out the back of the tent, and vanished into the nigh
 She was never seen again — 
 Not in that city, nor the steppes, 
 Nor the dreams of those who still whispered his name.',
- 8672,
- admin_id,
- 'submitted',
- false,
- 43,
- ARRAY['pending', 'needs-review']
+  8672,
+  admin_id,
+  'submitted',
+  false,
+  43,
+  ARRAY['pending', 'needs-review']
  );
 
 END $$;
