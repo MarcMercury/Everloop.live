@@ -292,9 +292,9 @@ function GoalsDialog({
             <Input
               id="daily"
               type="number"
-              min={0}
+              min={1}
               value={dailyGoal}
-              onChange={(e) => setDailyGoal(parseInt(e.target.value) || 0)}
+              onChange={(e) => setDailyGoal(Math.max(1, parseInt(e.target.value) || 1))}
             />
           </div>
           <div className="space-y-2">
@@ -302,9 +302,9 @@ function GoalsDialog({
             <Input
               id="weekly"
               type="number"
-              min={0}
+              min={1}
               value={weeklyGoal}
-              onChange={(e) => setWeeklyGoal(parseInt(e.target.value) || 0)}
+              onChange={(e) => setWeeklyGoal(Math.max(1, parseInt(e.target.value) || 1))}
             />
           </div>
           <div className="space-y-2">
@@ -312,9 +312,9 @@ function GoalsDialog({
             <Input
               id="monthly"
               type="number"
-              min={0}
+              min={1}
               value={monthlyGoal}
-              onChange={(e) => setMonthlyGoal(parseInt(e.target.value) || 0)}
+              onChange={(e) => setMonthlyGoal(Math.max(1, parseInt(e.target.value) || 1))}
             />
           </div>
         </div>

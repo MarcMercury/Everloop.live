@@ -51,6 +51,11 @@
     @apply border-border;
   }
 
+  html,
+  body {
+    @apply overflow-x-hidden;
+  }
+
   html {
     @apply scroll-smooth;
   }

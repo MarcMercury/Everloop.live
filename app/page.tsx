@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
+    <div className="min-h-[calc(100vh-60px)] flex flex-col relative overflow-hidden">
       {/* Decorative floating orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gold/5 rounded-full blur-3xl animate-pulse" />
