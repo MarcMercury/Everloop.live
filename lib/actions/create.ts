@@ -323,6 +323,8 @@ export async function submitEntityForCanon(entityId: string): Promise<{
 
 /**
  * Delete a user-created entity
+ * Users can delete their own draft or proposed entities
+ * Canonical entities can only be deleted by admins
  */
 export async function deleteEntity(entityId: string): Promise<{
   success: boolean
@@ -336,13 +338,14 @@ export async function deleteEntity(entityId: string): Promise<{
       return { success: false, error: 'You must be logged in to delete entities' }
     }
 
-    // Only allow deletion of entities the user created and that are drafts
+    // Only allow deletion of entities the user created that are NOT canonical
+    // Canonical entities can only be deleted by admins
     const { error } = await supabase
       .from('canon_entities')
       .delete()
       .eq('id', entityId)
       .eq('created_by', user.id)
-      .eq('status', 'draft')
+      .in('status', ['draft', 'proposed'])
 
     if (error) {
       console.error('Delete entity error:', error)
