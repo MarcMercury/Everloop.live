@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { ArrowRight, BookOpen, Feather, Download } from 'lucide-react'
+import { ArrowRight, BookOpen, Feather, ScrollText } from 'lucide-react'
 
 export const metadata = {
   title: 'Welcome to the Everloop',
@@ -34,18 +34,14 @@ export default function WelcomePage() {
             <div className="absolute inset-0 bg-gradient-to-t from-teal-deep via-transparent to-transparent" />
           </div>
           
-          {/* World Guide Download - Prominent placement */}
+          {/* World Guide Link */}
           <div className="text-center mb-16">
-            <a 
-              href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf" 
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link href="/guide">
               <Button variant="outline" size="lg" className="gap-2 border-gold/50 hover:border-gold hover:bg-gold/10">
-                <Download className="w-5 h-5" />
-                Download the World Guide (PDF)
+                <ScrollText className="w-5 h-5" />
+                Read the Complete World Guide
               </Button>
-            </a>
+            </Link>
           </div>
 
           {/* Lore Sections */}
