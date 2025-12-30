@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { getCanonEntities, getCanonEntityCounts } from '@/lib/data/canon'
 import { CanonCard, CanonCardSkeleton } from '@/components/canon-card'
-import { HydrateButton } from '@/components/hydrate-button'
 import type { CanonEntityType } from '@/types/database'
 import { cn } from '@/lib/utils'
 
@@ -120,11 +119,6 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
               <span className="text-gold font-semibold">{counts.location}</span>
               <span className="text-muted-foreground ml-1">Locations</span>
             </div>
-          </div>
-          
-          {/* Admin: Hydrate Embeddings Button */}
-          <div className="mt-6">
-            <HydrateButton />
           </div>
         </div>
 

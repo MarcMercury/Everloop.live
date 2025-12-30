@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, Zap, Check, AlertCircle } from 'lucide-react'
 
@@ -58,9 +58,9 @@ export function HydrateButton() {
   }
 
   // Check status on mount
-  useState(() => {
+  useEffect(() => {
     checkStatus()
-  })
+  }, [])
 
   return (
     <div className="inline-flex items-center gap-3">
