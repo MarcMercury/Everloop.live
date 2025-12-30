@@ -20,6 +20,7 @@ import {
   generateEntityDescription, 
   generateEntityImage, 
   saveEntity,
+  updateEntity,
   type EntityType 
 } from '@/lib/actions/create'
 
@@ -108,18 +109,28 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
   },
 }
 
-interface CreateEntityFormProps {
-  type: EntityType
+interface InitialData {
+  id: string
+  name: string
+  tagline: string
+  description: string
+  imageUrl: string | null
 }
 
-export function CreateEntityForm({ type }: CreateEntityFormProps) {
+interface CreateEntityFormProps {
+  type: EntityType
+  initialData?: InitialData
+  isEditMode?: boolean
+}
+
+export function CreateEntityForm({ type, initialData, isEditMode = false }: CreateEntityFormProps) {
   const config = typeConfigs[type]
   const router = useRouter()
   
-  const [name, setName] = useState('')
-  const [tagline, setTagline] = useState('')
-  const [description, setDescription] = useState('')
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [name, setName] = useState(initialData?.name || '')
+  const [tagline, setTagline] = useState(initialData?.tagline || '')
+  const [description, setDescription] = useState(initialData?.description || '')
+  const [imageUrl, setImageUrl] = useState<string | null>(initialData?.imageUrl || null)
   
   const [isGeneratingText, setIsGeneratingText] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
@@ -197,13 +208,27 @@ export function CreateEntityForm({ type }: CreateEntityFormProps) {
     setIsSaving(true)
     
     try {
-      const result = await saveEntity({
-        name,
-        tagline,
-        description,
-        type,
-        imageUrl: imageUrl || undefined,
-      })
+      let result: { success: boolean; error?: string }
+
+      if (isEditMode && initialData?.id) {
+        // Update existing entity
+        result = await updateEntity({
+          id: initialData.id,
+          name,
+          tagline,
+          description,
+          imageUrl: imageUrl || undefined,
+        })
+      } else {
+        // Create new entity
+        result = await saveEntity({
+          name,
+          tagline,
+          description,
+          type,
+          imageUrl: imageUrl || undefined,
+        })
+      }
       
       if (result.success) {
         router.push('/roster')
@@ -414,7 +439,7 @@ export function CreateEntityForm({ type }: CreateEntityFormProps) {
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              Save to Roster
+              {isEditMode ? 'Save Changes' : 'Save to Roster'}
             </Button>
           </div>
         </div>

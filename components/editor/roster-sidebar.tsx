@@ -2,9 +2,29 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { fetchRoster, type RosterCharacter } from '@/lib/actions/roster'
-import { X, User, Users, Loader2, Search, ChevronRight, Globe, Lock } from 'lucide-react'
+import { fetchRoster, type RosterEntity } from '@/lib/actions/roster'
+import { X, User, Users, Loader2, Search, ChevronRight, Globe, Lock, MapPin, Sparkles, Package, Shield, Brain, Calendar } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+
+const typeIcons: Record<string, typeof User> = {
+  character: User,
+  location: MapPin,
+  creature: Sparkles,
+  artifact: Package,
+  faction: Shield,
+  concept: Brain,
+  event: Calendar,
+}
+
+const typeColors: Record<string, string> = {
+  character: 'text-amber-400',
+  location: 'text-emerald-400',
+  creature: 'text-purple-400',
+  artifact: 'text-cyan-400',
+  faction: 'text-red-400',
+  concept: 'text-blue-400',
+  event: 'text-orange-400',
+}
 
 interface RosterSidebarProps {
   isOpen: boolean
@@ -17,14 +37,15 @@ export function RosterSidebar({
   onClose,
   onInsertCharacter,
 }: RosterSidebarProps) {
-  const [characters, setCharacters] = useState<RosterCharacter[]>([])
+  const [entities, setEntities] = useState<RosterEntity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<'all' | 'global' | 'private'>('all')
+  const [sourceFilter, setSourceFilter] = useState<'all' | 'global' | 'private'>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
 
   useEffect(() => {
-    if (isOpen && characters.length === 0) {
+    if (isOpen && entities.length === 0) {
       loadRoster()
     }
   }, [isOpen])
@@ -35,8 +56,8 @@ export function RosterSidebar({
     
     try {
       const result = await fetchRoster()
-      if (result.success && result.characters) {
-        setCharacters(result.characters)
+      if (result.success && result.entities) {
+        setEntities(result.entities)
       } else {
         setError(result.error || 'Failed to load roster')
       }
@@ -47,20 +68,24 @@ export function RosterSidebar({
     }
   }
 
-  const filteredCharacters = characters.filter(char => {
-    const matchesSearch = char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (char.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-    const matchesFilter = filter === 'all' || 
-                         (filter === 'global' && char.isGlobal) ||
-                         (filter === 'private' && !char.isGlobal)
-    return matchesSearch && matchesFilter
+  const filteredEntities = entities.filter(entity => {
+    const matchesSearch = entity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (entity.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+    const matchesSource = sourceFilter === 'all' || 
+                         (sourceFilter === 'global' && entity.isGlobal) ||
+                         (sourceFilter === 'private' && !entity.isGlobal)
+    const matchesType = typeFilter === 'all' || entity.type === typeFilter
+    return matchesSearch && matchesSource && matchesType
   })
 
-  const handleInsert = (char: RosterCharacter) => {
-    const desc = char.description 
-      ? char.description.slice(0, 150) + (char.description.length > 150 ? '...' : '')
+  // Get unique types for filter
+  const availableTypes = [...new Set(entities.map(e => e.type))]
+
+  const handleInsert = (entity: RosterEntity) => {
+    const desc = entity.description 
+      ? entity.description.slice(0, 150) + (entity.description.length > 150 ? '...' : '')
       : ''
-    onInsertCharacter(char.name, desc)
+    onInsertCharacter(entity.name, desc)
   }
 
   if (!isOpen) return null
@@ -82,8 +107,8 @@ export function RosterSidebar({
               <Users className="w-5 h-5 text-gold" />
             </div>
             <div>
-              <h2 className="font-serif text-lg text-foreground">Character Roster</h2>
-              <p className="text-sm text-muted-foreground">Insert characters into your story</p>
+              <h2 className="font-serif text-lg text-foreground">Roster</h2>
+              <p className="text-sm text-muted-foreground">Insert entities into your story</p>
             </div>
           </div>
           <button
@@ -100,7 +125,7 @@ export function RosterSidebar({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search characters..."
+              placeholder="Search entities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg bg-navy/50 border border-charcoal-700
@@ -109,37 +134,65 @@ export function RosterSidebar({
             />
           </div>
           
+          {/* Source Filter */}
           <div className="flex gap-2">
             <Button
-              variant={filter === 'all' ? 'default' : 'outline'}
+              variant={sourceFilter === 'all' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setFilter('all')}
-              className={filter === 'all' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
+              onClick={() => setSourceFilter('all')}
+              className={sourceFilter === 'all' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
             >
               All
             </Button>
             <Button
-              variant={filter === 'global' ? 'default' : 'outline'}
+              variant={sourceFilter === 'private' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setFilter('global')}
-              className={filter === 'global' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
+              onClick={() => setSourceFilter('private')}
+              className={sourceFilter === 'private' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
+            >
+              <Lock className="w-3 h-3 mr-1" />
+              My Roster
+            </Button>
+            <Button
+              variant={sourceFilter === 'global' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSourceFilter('global')}
+              className={sourceFilter === 'global' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
             >
               <Globe className="w-3 h-3 mr-1" />
               Canon
             </Button>
+          </div>
+
+          {/* Type Filter */}
+          <div className="flex gap-1 flex-wrap">
             <Button
-              variant={filter === 'private' ? 'default' : 'outline'}
+              variant={typeFilter === 'all' ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setFilter('private')}
-              className={filter === 'private' ? 'bg-gold text-charcoal hover:bg-gold/90' : ''}
+              onClick={() => setTypeFilter('all')}
+              className={`h-7 px-2 text-xs ${typeFilter === 'all' ? 'bg-gold/20 text-gold' : ''}`}
             >
-              <Lock className="w-3 h-3 mr-1" />
-              Private
+              All Types
             </Button>
+            {availableTypes.map((type) => {
+              const Icon = typeIcons[type] || Sparkles
+              return (
+                <Button
+                  key={type}
+                  variant={typeFilter === type ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setTypeFilter(type)}
+                  className={`h-7 px-2 text-xs capitalize ${typeFilter === type ? 'bg-gold/20 text-gold' : ''}`}
+                >
+                  <Icon className={`w-3 h-3 mr-1 ${typeColors[type] || ''}`} />
+                  {type}s
+                </Button>
+              )
+            })}
           </div>
         </div>
         
-        {/* Character List */}
+        {/* Entity List */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -154,57 +207,66 @@ export function RosterSidebar({
                 Retry
               </Button>
             </div>
-          ) : filteredCharacters.length === 0 ? (
+          ) : filteredEntities.length === 0 ? (
             <div className="p-8 text-center">
-              <User className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+              <Sparkles className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
               <p className="text-muted-foreground">
-                {searchQuery ? 'No characters match your search' : 'No characters available'}
+                {searchQuery ? 'No entities match your search' : 'No entities available'}
               </p>
+              {sourceFilter === 'private' && !searchQuery && (
+                <p className="text-muted-foreground/70 text-sm mt-2">
+                  Create entities in your Roster to see them here
+                </p>
+              )}
             </div>
           ) : (
             <div className="p-2">
-              {filteredCharacters.map((char) => (
-                <button
-                  key={char.id}
-                  onClick={() => handleInsert(char)}
-                  className="w-full p-3 rounded-lg text-left hover:bg-navy/50 transition-colors group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-foreground truncate">
-                          {char.name}
-                        </span>
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {char.isGlobal ? (
-                            <><Globe className="w-3 h-3 mr-1" />Canon</>
-                          ) : (
-                            <><Lock className="w-3 h-3 mr-1" />Private</>
-                          )}
-                        </Badge>
-                      </div>
-                      {char.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {char.description}
-                        </p>
-                      )}
-                      {char.tags.length > 0 && (
-                        <div className="flex gap-1 mt-2 flex-wrap">
-                          {char.tags.slice(0, 3).map((tag) => (
-                            <span 
-                              key={tag}
-                              className="px-1.5 py-0.5 text-xs rounded bg-charcoal-700 text-muted-foreground"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+              {filteredEntities.map((entity) => {
+                const Icon = typeIcons[entity.type] || Sparkles
+                return (
+                  <button
+                    key={entity.id}
+                    onClick={() => handleInsert(entity)}
+                    className="w-full p-3 rounded-lg text-left hover:bg-navy/50 transition-colors group"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Icon className={`w-4 h-4 ${typeColors[entity.type] || 'text-gold'}`} />
+                          <span className="font-medium text-foreground truncate">
+                            {entity.name}
+                          </span>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {entity.isGlobal ? (
+                              <><Globe className="w-3 h-3 mr-1" />Canon</>
+                            ) : (
+                              <><Lock className="w-3 h-3 mr-1" />{entity.status === 'draft' ? 'Draft' : 'Pending'}</>
+                            )}
+                          </Badge>
                         </div>
-                      )}
+                        {entity.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {entity.description}
+                          </p>
+                        )}
+                        {entity.tags.length > 0 && (
+                          <div className="flex gap-1 mt-2 flex-wrap">
+                            {entity.tags.slice(0, 3).map((tag) => (
+                              <span 
+                                key={tag}
+                                className="px-1.5 py-0.5 text-xs rounded bg-charcoal-700 text-muted-foreground"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -212,7 +274,7 @@ export function RosterSidebar({
         {/* Footer */}
         <div className="p-4 border-t border-charcoal-700">
           <p className="text-xs text-muted-foreground text-center">
-            Click a character to insert their name into your story
+            Click an entity to insert its name into your story
           </p>
         </div>
       </div>
