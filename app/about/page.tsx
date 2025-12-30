@@ -8,7 +8,7 @@ import {
   BookOpen,
   Brain,
   Heart,
-  Download
+  ScrollText
 } from 'lucide-react'
 
 export const metadata = {
@@ -35,17 +35,13 @@ export default function AboutPage() {
             world — guided by AI, grounded in canon.
           </p>
           
-          {/* Download World Guide - Prominent placement */}
-          <a 
-            href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          {/* World Guide Link */}
+          <Link href="/welcome">
             <Button variant="outline" size="lg" className="gap-2 border-gold/50 hover:border-gold hover:bg-gold/10">
-              <Download className="w-5 h-5" />
-              Download the World Guide (PDF)
+              <ScrollText className="w-5 h-5" />
+              Read the Complete World Guide
             </Button>
-          </a>
+          </Link>
         </div>
 
         {/* What is Everloop */}
@@ -166,17 +162,15 @@ export default function AboutPage() {
                 watching, waiting, remembering everything that ever was and will be again.
               </p>
               <div className="pt-4 border-t border-gold/10">
-                <a 
-                  href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link 
+                  href="/welcome"
                   className="inline-flex items-center gap-2 text-gold hover:text-gold/80 transition-colors"
                 >
-                  <Download className="w-4 h-4" />
-                  <span className="font-medium">Download: A Guide to the Broken World (PDF)</span>
-                </a>
+                  <ScrollText className="w-4 h-4" />
+                  <span className="font-medium">Read the Complete World Guide</span>
+                </Link>
                 <p className="text-xs text-parchment-muted mt-2">
-                  Complete lore guide with world history, factions, and writing guidelines
+                  Full lore with world history, factions, and glossary of terms
                 </p>
               </div>
             </CardContent>
@@ -209,16 +203,12 @@ export default function AboutPage() {
             <Link href="/guidelines">
               <Button variant="outline">Read Guidelines</Button>
             </Link>
-            <a 
-              href="/%F0%9F%8C%8C%20EVERLOOP%20-%20A%20Guide%20to%20the%20Broken%20World.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link href="/welcome">
               <Button variant="outline" className="gap-2">
-                <Download className="w-4 h-4" />
+                <ScrollText className="w-4 h-4" />
                 World Guide
               </Button>
-            </a>
+            </Link>
             <Link href="/login">
               <Button>Join Everloop</Button>
             </Link>
