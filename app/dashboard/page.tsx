@@ -196,7 +196,7 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
 
 function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'published' | 'rejected' }) {
   const messages = {
-    draft: { icon: FileText, title: 'No Drafts', message: 'Start writing your first story!' },
+    draft: { icon: FileText, title: 'No Drafts', message: 'Use the Write button in the navigation to start your first story!' },
     pending: { icon: Clock, title: 'Nothing Pending', message: 'Submit a story for review to see it here.' },
     published: { icon: Award, title: 'No Published Stories', message: 'Get your stories approved to become canon!' },
     rejected: { icon: CheckCircle, title: 'No Rejections', message: "Great news! None of your stories have been rejected." },
@@ -209,14 +209,6 @@ function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'published' | 
       <Icon className="w-12 h-12 mx-auto mb-4 text-parchment-muted/50" />
       <h3 className="font-serif text-lg text-parchment mb-2">{title}</h3>
       <p className="text-parchment-muted text-sm">{message}</p>
-      {variant === 'draft' && (
-        <Link href="/write" className="inline-block mt-4">
-          <Button className="gap-2">
-            <PenLine className="w-4 h-4" />
-            Start Writing
-          </Button>
-        </Link>
-      )}
     </div>
   )
 }
