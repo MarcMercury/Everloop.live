@@ -9,31 +9,44 @@ import {
   User, 
   MapPin, 
   Sparkles,
-  ImageIcon 
+  ImageIcon,
+  Clock
 } from 'lucide-react'
 import { DeleteEntityButton } from './delete-entity-button'
+import { SubmitToCanonButton } from './submit-to-canon-button'
 
-const typeIcons = {
+const typeIcons: Record<string, typeof User> = {
   character: User,
   location: MapPin,
   creature: Sparkles,
 }
 
-const typeColors = {
+const typeColors: Record<string, string> = {
   character: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
   location: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
   creature: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
 }
 
-async function getUserEntities(userId: string) {
+async function getUserEntities(userId: string, statusFilter?: 'draft' | 'proposed' | 'all') {
   const supabase = await createClient()
   
-  const { data, error } = await supabase
+  let query = supabase
     .from('canon_entities')
-    .select('id, name, slug, type, description, extended_lore, created_at')
+    .select('id, name, slug, type, status, description, extended_lore, created_at')
     .eq('created_by', userId)
-    .eq('status', 'draft')
     .order('created_at', { ascending: false })
+
+  // Filter by status
+  if (statusFilter === 'draft') {
+    query = query.eq('status', 'draft')
+  } else if (statusFilter === 'proposed') {
+    query = query.eq('status', 'proposed')
+  } else {
+    // 'all' - show both draft and proposed (not canonical, those are in explore)
+    query = query.in('status', ['draft', 'proposed'])
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching entities:', error)
@@ -45,6 +58,7 @@ async function getUserEntities(userId: string) {
     name: string
     slug: string
     type: 'character' | 'location' | 'creature'
+    status: 'draft' | 'proposed' | 'canonical'
     description: string | null
     extended_lore: {
       tagline?: string
@@ -54,7 +68,11 @@ async function getUserEntities(userId: string) {
   }>
 }
 
-export default async function RosterPage() {
+export default async function RosterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string; status?: string }>
+}) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
@@ -62,19 +80,40 @@ export default async function RosterPage() {
     redirect('/login?redirected=true')
   }
 
-  const entities = await getUserEntities(user.id)
+  const params = await searchParams
+  const typeFilter = params.type as 'character' | 'location' | 'creature' | undefined
+  const statusFilter = (params.status || 'all') as 'draft' | 'proposed' | 'all'
+
+  const allEntities = await getUserEntities(user.id, statusFilter)
+  const entities = typeFilter 
+    ? allEntities.filter(e => e.type === typeFilter)
+    : allEntities
+
+  // Count by type for badges
+  const typeCounts = {
+    all: allEntities.length,
+    character: allEntities.filter(e => e.type === 'character').length,
+    location: allEntities.filter(e => e.type === 'location').length,
+    creature: allEntities.filter(e => e.type === 'creature').length,
+  }
+
+  const statusCounts = {
+    all: allEntities.length,
+    draft: allEntities.filter(e => e.status === 'draft').length,
+    proposed: allEntities.filter(e => e.status === 'proposed').length,
+  }
 
   return (
     <div className="min-h-screen">
       <div className="container mx-auto px-6 py-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl md:text-4xl font-serif text-parchment mb-2">
               My <span className="text-gold">Roster</span>
             </h1>
             <p className="text-parchment-muted">
-              Your personal collection of characters, locations, and creatures.
+              Your private collection. Submit to Canon when ready for the world.
             </p>
           </div>
           <Link href="/create">
@@ -83,6 +122,81 @@ export default async function RosterPage() {
               Create New
             </Button>
           </Link>
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          {/* Type Filter */}
+          <div className="flex gap-2">
+            <Link href={`/roster?status=${statusFilter}`}>
+              <Button 
+                variant={!typeFilter ? "default" : "outline"} 
+                size="sm"
+                className={!typeFilter ? "" : "opacity-70"}
+              >
+                All Types ({typeCounts.all})
+              </Button>
+            </Link>
+            <Link href={`/roster?type=character&status=${statusFilter}`}>
+              <Button 
+                variant={typeFilter === 'character' ? "default" : "outline"} 
+                size="sm"
+                className={typeFilter === 'character' ? "" : "opacity-70"}
+              >
+                <User className="w-3 h-3 mr-1" />
+                Characters ({typeCounts.character})
+              </Button>
+            </Link>
+            <Link href={`/roster?type=location&status=${statusFilter}`}>
+              <Button 
+                variant={typeFilter === 'location' ? "default" : "outline"} 
+                size="sm"
+                className={typeFilter === 'location' ? "" : "opacity-70"}
+              >
+                <MapPin className="w-3 h-3 mr-1" />
+                Locations ({typeCounts.location})
+              </Button>
+            </Link>
+            <Link href={`/roster?type=creature&status=${statusFilter}`}>
+              <Button 
+                variant={typeFilter === 'creature' ? "default" : "outline"} 
+                size="sm"
+                className={typeFilter === 'creature' ? "" : "opacity-70"}
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                Creatures ({typeCounts.creature})
+              </Button>
+            </Link>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex gap-2 ml-auto">
+            <Link href={`/roster?${typeFilter ? `type=${typeFilter}&` : ''}status=all`}>
+              <Button 
+                variant={statusFilter === 'all' ? "default" : "ghost"} 
+                size="sm"
+              >
+                All ({statusCounts.all})
+              </Button>
+            </Link>
+            <Link href={`/roster?${typeFilter ? `type=${typeFilter}&` : ''}status=draft`}>
+              <Button 
+                variant={statusFilter === 'draft' ? "default" : "ghost"} 
+                size="sm"
+              >
+                <Clock className="w-3 h-3 mr-1" />
+                Drafts ({statusCounts.draft})
+              </Button>
+            </Link>
+            <Link href={`/roster?${typeFilter ? `type=${typeFilter}&` : ''}status=proposed`}>
+              <Button 
+                variant={statusFilter === 'proposed' ? "default" : "ghost"} 
+                size="sm"
+              >
+                Pending Review ({statusCounts.proposed})
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {entities.length === 0 ? (
@@ -137,6 +251,14 @@ export default async function RosterPage() {
                         <Icon className="w-3 h-3 mr-1" />
                         {entity.type}
                       </Badge>
+
+                      {/* Status Badge */}
+                      {entity.status === 'proposed' && (
+                        <Badge className="absolute top-3 right-3 bg-amber-500/20 text-amber-400 border-amber-500/30">
+                          <Clock className="w-3 h-3 mr-1" />
+                          Pending
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -151,13 +273,25 @@ export default async function RosterPage() {
                       )}
                       
                       {/* Actions */}
-                      <div className="flex gap-2 pt-2 border-t border-gold/10">
-                        <Link href={`/create/${entity.type}?edit=${entity.id}`} className="flex-1">
-                          <Button variant="outline" size="sm" className="w-full">
-                            Edit
-                          </Button>
-                        </Link>
-                        <DeleteEntityButton entityId={entity.id} entityName={entity.name} />
+                      <div className="flex flex-col gap-2 pt-2 border-t border-gold/10">
+                        {entity.status === 'draft' && (
+                          <SubmitToCanonButton entityId={entity.id} entityName={entity.name} />
+                        )}
+                        {entity.status === 'proposed' && (
+                          <p className="text-xs text-amber-400/70 text-center py-1">
+                            Awaiting admin review
+                          </p>
+                        )}
+                        <div className="flex gap-2">
+                          <Link href={`/create/${entity.type}?edit=${entity.id}`} className="flex-1">
+                            <Button variant="outline" size="sm" className="w-full">
+                              Edit
+                            </Button>
+                          </Link>
+                          {entity.status === 'draft' && (
+                            <DeleteEntityButton entityId={entity.id} entityName={entity.name} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
