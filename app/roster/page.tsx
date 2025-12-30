@@ -288,9 +288,7 @@ export default async function RosterPage({
                               Edit
                             </Button>
                           </Link>
-                          {entity.status === 'draft' && (
-                            <DeleteEntityButton entityId={entity.id} entityName={entity.name} />
-                          )}
+                          <DeleteEntityButton entityId={entity.id} entityName={entity.name} />
                         </div>
                       </div>
                     </div>
