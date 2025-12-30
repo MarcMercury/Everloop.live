@@ -1,6 +1,18 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient()
+  
+  // Fetch counts from database
+  const [profilesResult, storiesResult] = await Promise.all([
+    supabase.from('profiles').select('id', { count: 'exact', head: true }),
+    supabase.from('stories').select('id', { count: 'exact', head: true }).eq('canon_status', 'approved')
+  ])
+  
+  const profileCount = profilesResult.count ?? 0
+  const storyCount = storiesResult.count ?? 0
+
   return (
     <div className="min-h-[calc(100vh-60px)] flex flex-col relative overflow-hidden">
       {/* Decorative floating orbs */}
@@ -63,18 +75,18 @@ export default function Home() {
                           bg-teal-rich/50 border border-gold/10
                           shadow-lg shadow-black/20">
               <div className="text-center">
-                <div className="text-2xl font-serif text-gold">∞</div>
+                <div className="text-2xl font-serif text-gold">{storyCount || '∞'}</div>
                 <div className="text-xs text-parchment-muted tracking-wide">Stories</div>
+              </div>
+              <div className="w-px h-8 bg-gold/20" />
+              <div className="text-center">
+                <div className="text-2xl font-serif text-gold">{profileCount}</div>
+                <div className="text-xs text-parchment-muted tracking-wide">Writers</div>
               </div>
               <div className="w-px h-8 bg-gold/20" />
               <div className="text-center">
                 <div className="text-2xl font-serif text-gold">1</div>
                 <div className="text-xs text-parchment-muted tracking-wide">Universe</div>
-              </div>
-              <div className="w-px h-8 bg-gold/20" />
-              <div className="text-center">
-                <div className="text-2xl font-serif text-gold">You</div>
-                <div className="text-xs text-parchment-muted tracking-wide">Writer</div>
               </div>
             </div>
           </div>
