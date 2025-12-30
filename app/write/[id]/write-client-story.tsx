@@ -797,6 +797,9 @@ export function WriteClientWithStory({
           isOpen={showRosterSidebar}
           onClose={() => setShowRosterSidebar(false)}
           onInsertCharacter={handleInsertCharacter}
+          onWeaveEntity={handleInsertProse}
+          storyId={storyId}
+          getContextBefore={getText}
         />
         
         {/* Comments Sidebar */}

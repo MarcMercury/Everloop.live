@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { fetchRoster, type RosterEntity } from '@/lib/actions/roster'
-import { X, User, Users, Loader2, Search, ChevronRight, Globe, Lock, MapPin, Sparkles, Package, Shield, Brain, Calendar } from 'lucide-react'
+import { weaveEntityIntoStory } from '@/lib/actions/weave'
+import { X, User, Users, Loader2, Search, ChevronRight, Globe, Lock, MapPin, Sparkles, Package, Shield, Brain, Calendar, Wand2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const typeIcons: Record<string, typeof User> = {
@@ -30,15 +31,22 @@ interface RosterSidebarProps {
   isOpen: boolean
   onClose: () => void
   onInsertCharacter: (name: string, description: string) => void
+  onWeaveEntity?: (paragraph: string) => void
+  storyId?: string
+  getContextBefore?: () => string
 }
 
 export function RosterSidebar({
   isOpen,
   onClose,
   onInsertCharacter,
+  onWeaveEntity,
+  storyId,
+  getContextBefore,
 }: RosterSidebarProps) {
   const [entities, setEntities] = useState<RosterEntity[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isWeaving, setIsWeaving] = useState<string | null>(null) // Entity ID being woven
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'global' | 'private'>('all')
@@ -87,6 +95,42 @@ export function RosterSidebar({
       : ''
     onInsertCharacter(entity.name, desc)
   }
+
+  const handleWeave = async (entity: RosterEntity) => {
+    if (!storyId || !getContextBefore || !onWeaveEntity) return
+    
+    setIsWeaving(entity.id)
+    setError(null)
+    
+    try {
+      const contextBefore = getContextBefore()
+      
+      if (!contextBefore || contextBefore.trim().length < 50) {
+        setError('Write at least a paragraph first so the AI can match your style')
+        setIsWeaving(null)
+        return
+      }
+      
+      const result = await weaveEntityIntoStory({
+        entityId: entity.id,
+        storyId,
+        contextBefore,
+      })
+      
+      if (result.success && result.paragraph) {
+        onWeaveEntity(result.paragraph)
+        onClose()
+      } else {
+        setError(result.error || 'Failed to weave entity')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to weave entity')
+    } finally {
+      setIsWeaving(null)
+    }
+  }
+
+  const canWeave = !!storyId && !!getContextBefore && !!onWeaveEntity
 
   if (!isOpen) return null
 
@@ -261,8 +305,41 @@ export function RosterSidebar({
                             ))}
                           </div>
                         )}
+                        
+                        {/* Action buttons */}
+                        <div className="flex gap-2 mt-3 pt-2 border-t border-charcoal-700/50">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleInsert(entity)
+                            }}
+                            className="flex-1 h-7 text-xs"
+                          >
+                            Insert Name
+                          </Button>
+                          {canWeave && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleWeave(entity)
+                              }}
+                              disabled={isWeaving === entity.id}
+                              className="flex-1 h-7 text-xs bg-gold text-charcoal hover:bg-gold/90 gap-1"
+                            >
+                              {isWeaving === entity.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Wand2 className="w-3 h-3" />
+                              )}
+                              Weave In
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2" />
                     </div>
                   </button>
                 )
@@ -274,7 +351,10 @@ export function RosterSidebar({
         {/* Footer */}
         <div className="p-4 border-t border-charcoal-700">
           <p className="text-xs text-muted-foreground text-center">
-            Click an entity to insert its name into your story
+            {canWeave 
+              ? 'Insert name or Weave to have AI introduce the entity into your story'
+              : 'Click an entity to insert its name into your story'
+            }
           </p>
         </div>
       </div>
