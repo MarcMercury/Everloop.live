@@ -164,7 +164,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-gold/10 mt-16">
         <div className="container mx-auto flex items-center justify-between text-sm text-parchment-muted">
-          <p>© 2024 Everloop. All stories live forever.</p>
+          <p>&copy; {new Date().getFullYear()} Everloop. All stories live forever.</p>
           <Link href="/" className="hover:text-gold transition-colors">
             ← Back to Home
           </Link>

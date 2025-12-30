@@ -96,7 +96,7 @@ export default async function Home() {
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-gold/10 relative z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between text-sm text-parchment-muted">
-          <p>© 2024 Everloop. All stories live forever.</p>
+          <p>&copy; {new Date().getFullYear()} Everloop. All stories live forever.</p>
           <nav className="flex gap-6">
             <Link href="/about" className="hover:text-gold transition-colors">
               About
