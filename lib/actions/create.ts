@@ -238,7 +238,11 @@ export async function saveEntity(input: SaveEntityInput): Promise<{
 
     if (error) {
       console.error('Save entity error:', error)
-      return { success: false, error: 'Failed to save entity' }
+      // Common errors: permission denied = missing GRANT, 42501 = RLS policy violation
+      const errorMessage = error.code === '42501' 
+        ? 'Permission denied - please contact support'
+        : error.message || 'Failed to save entity'
+      return { success: false, error: errorMessage }
     }
 
     revalidatePath('/roster')
