@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Save, ArrowLeft, CheckCircle } from 'lucide-react'
+import { User, Save, ArrowLeft, CheckCircle, Upload, X, Image as ImageIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import type { ProfileUpdate } from '@/types/database'
 
 interface ProfileData {
   id: string
@@ -31,6 +32,8 @@ export default function ProfileSettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   useEffect(() => {
     async function loadProfile() {
@@ -66,6 +69,90 @@ export default function ProfileSettingsPage() {
     loadProfile()
   }, [router])
   
+  async function handleAvatarUpload(file: File) {
+    if (!profile) return
+    
+    setError(null)
+    setUploading(true)
+    
+    try {
+      const supabase = createClient()
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        setError('Please upload a JPG, PNG, GIF, or WebP image.')
+        setUploading(false)
+        return
+      }
+      
+      // Validate file size (max 2MB)
+      const maxSize = 2 * 1024 * 1024
+      if (file.size > maxSize) {
+        setError('Image must be less than 2MB.')
+        setUploading(false)
+        return
+      }
+      
+      // Generate unique filename
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png'
+      const fileName = `${profile.id}/avatar-${Date.now()}.${fileExt}`
+      
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, {
+          contentType: file.type,
+          upsert: true,
+        })
+      
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        // Try entity-images bucket as fallback
+        const { error: fallbackError } = await supabase.storage
+          .from('entity-images')
+          .upload(fileName, file, {
+            contentType: file.type,
+            upsert: true,
+          })
+        
+        if (fallbackError) {
+          setError('Failed to upload image. Please try using a URL instead.')
+          setUploading(false)
+          return
+        }
+        
+        // Get public URL from fallback bucket
+        const { data: { publicUrl } } = supabase.storage
+          .from('entity-images')
+          .getPublicUrl(fileName)
+        
+        setAvatarUrl(publicUrl)
+        setUploading(false)
+        return
+      }
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName)
+      
+      setAvatarUrl(publicUrl)
+      setUploading(false)
+    } catch (err) {
+      console.error('Avatar upload error:', err)
+      setError('Failed to upload image. Please try again.')
+      setUploading(false)
+    }
+  }
+  
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleAvatarUpload(file)
+    }
+  }
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -80,14 +167,16 @@ export default function ProfileSettingsPage() {
       return
     }
     
+    const updateData: ProfileUpdate = {
+      display_name: displayName.trim() || null,
+      bio: bio.trim() || null,
+      avatar_url: avatarUrl.trim() || null,
+      updated_at: new Date().toISOString(),
+    }
+    
     const { error } = await supabase
       .from('profiles')
-      .update({
-        display_name: displayName.trim() || null,
-        bio: bio.trim() || null,
-        avatar_url: avatarUrl.trim() || null,
-        updated_at: new Date().toISOString(),
-      } as never)
+      .update(updateData)
       .eq('id', profile.id)
     
     if (error) {
