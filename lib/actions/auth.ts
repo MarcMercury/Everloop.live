@@ -209,6 +209,34 @@ export async function signup(formData: FormData): Promise<AuthResult> {
   }
 }
 
+export async function signInWithGoogle(): Promise<void> {
+  const supabase = await createClient()
+  const headersList = await headers()
+  const origin = headersList.get('origin') || ''
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${origin}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  })
+  
+  if (error) {
+    console.error('Google OAuth error:', error)
+    redirect('/login?error=Could not authenticate with Google')
+  }
+  
+  if (data.url) {
+    redirect(data.url)
+  }
+  
+  redirect('/login?error=Could not initiate Google sign-in')
+}
+
 export async function signout(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
