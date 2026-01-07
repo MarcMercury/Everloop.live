@@ -212,10 +212,10 @@ export async function signup(formData: FormData): Promise<AuthResult> {
 export async function signInWithGoogle(): Promise<void> {
   const supabase = await createClient()
   
-  // Use NEXT_PUBLIC_SITE_URL or VERCEL_URL for production, fallback to localhost for dev
+  // Use NEXT_PUBLIC_SITE_URL, VERCEL_URL, or hardcoded production URL
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL 
     || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-    || 'http://localhost:3000'
+    || 'https://everloop.live'
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
