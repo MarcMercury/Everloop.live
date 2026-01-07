@@ -211,13 +211,16 @@ export async function signup(formData: FormData): Promise<AuthResult> {
 
 export async function signInWithGoogle(): Promise<void> {
   const supabase = await createClient()
-  const headersList = await headers()
-  const origin = headersList.get('origin') || ''
+  
+  // Use NEXT_PUBLIC_SITE_URL or VERCEL_URL for production, fallback to localhost for dev
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL 
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || 'http://localhost:3000'
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${siteUrl}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
