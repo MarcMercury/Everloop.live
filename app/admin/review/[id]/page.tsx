@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { ReviewClient } from './review-client'
 
@@ -34,7 +34,10 @@ interface StoryData {
 }
 
 async function getStory(id: string): Promise<StoryData | null> {
-  const supabase = await createClient()
+  // Use admin client to bypass RLS (admins need to read other users' stories for review)
+  const adminClient = createAdminClient()
+  const regularClient = await createClient()
+  const supabase = adminClient || regularClient
   
   const { data, error } = await supabase
     .from('stories')

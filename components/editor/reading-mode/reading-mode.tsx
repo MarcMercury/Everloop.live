@@ -427,7 +427,17 @@ export function ReadingMode({
   )
 }
 
-// Format plain text content with paragraph breaks
+// Escape HTML special characters to prevent XSS
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+// Format plain text content with paragraph breaks (XSS-safe)
 function formatContent(text: string, accentClass: string): string {
   if (!text) return ''
   
@@ -436,9 +446,10 @@ function formatContent(text: string, accentClass: string): string {
   
   // Format each paragraph
   return paragraphs.map((p, i) => {
-    let html = p.trim()
+    // Escape HTML first to prevent XSS, then apply safe formatting
+    let html = escapeHtml(p.trim())
       .replace(/\n/g, '<br />')
-      // Preserve emphasis if present
+      // Preserve emphasis if present (applied after escaping, safe patterns only)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
     

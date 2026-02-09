@@ -3,10 +3,21 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 /**
  * GET /api/debug/stories
- * Debug endpoint to test story fetching
+ * Debug endpoint to test story fetching (admin only)
  */
 export async function GET() {
   try {
+    // Auth + admin check
+    const authClient = await createClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const { data: isAdmin } = await authClient.rpc('is_admin_check')
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const results: Record<string, unknown> = {}
     
     // Test 1: Check environment variables
@@ -48,13 +59,10 @@ export async function GET() {
       stories: regularStories || []
     }
     
-    // Test 4: Check auth status with regular client
-    const { data: { user }, error: authError } = await regularClient.auth.getUser()
+    // Test 4: Check auth status with regular client (user already established above)
     results.auth = {
-      isLoggedIn: !!user,
+      isLoggedIn: true,
       userId: user?.id || null,
-      email: user?.email || null,
-      authError: authError?.message || null
     }
     
     // Test 5: Try entities too

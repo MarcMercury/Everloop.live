@@ -1,5 +1,6 @@
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
@@ -63,6 +64,13 @@ export async function analyzeVoiceTone(
   text: string
 ): Promise<{ success: boolean; analysis?: FullVoiceAnalysis; error?: string }> {
   try {
+    // Auth check — prevent unauthenticated OpenAI cost abuse
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'You must be logged in to analyze voice/tone.' }
+    }
+
     if (!text || text.trim().length < 100) {
       return { success: false, error: 'Text must be at least 100 characters for analysis' }
     }

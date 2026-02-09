@@ -479,7 +479,7 @@ export async function exportStory(options: ExportOptions): Promise<ExportResult>
   let chapters: Chapter[] = []
   if (story.scope === 'tome' && !options.chapterId) {
     const { data: chapterData } = await supabase
-      .from('chapters')
+      .from('story_chapters')
       .select('*')
       .eq('story_id', options.storyId)
       .order('chapter_order', { ascending: true })
@@ -609,40 +609,42 @@ export async function exportChapter(
   
   // Fetch the chapter with story info
   const { data: chapter, error: chapterError } = await supabase
-    .from('chapters')
+    .from('story_chapters')
     .select(`
       id,
       title,
       content,
-      story:stories!chapters_story_id_fkey(
-        id,
-        title,
-        author_id,
-        author:profiles!stories_author_id_fkey(username, display_name)
-      )
+      story_id
     `)
     .eq('id', chapterId)
     .eq('story_id', storyId)
+    .single()
+
+  if (chapterError || !chapter) {
+    return { success: false, error: 'Chapter not found' }
+  }
+
+  const chapterRow = chapter as { id: string; title: string | null; content: JSONContent | null; story_id: string }
+
+  // Fetch story info separately to avoid foreign key name issues
+  const { data: storyData } = await supabase
+    .from('stories')
+    .select('id, title, author_id, author:profiles!stories_author_id_fkey(username, display_name)')
+    .eq('id', chapterRow.story_id)
     .single() as {
       data: {
         id: string
         title: string | null
-        content: JSONContent | null
-        story: {
-          id: string
-          title: string | null
-          author_id: string
-          author: { username: string; display_name: string | null } | null
-        } | null
+        author_id: string
+        author: { username: string; display_name: string | null } | null
       } | null
-      error: Error | null
     }
-  
-  if (chapterError || !chapter || !chapter.story) {
-    return { success: false, error: 'Chapter not found' }
+
+  if (!storyData) {
+    return { success: false, error: 'Story not found' }
   }
-  
-  const story = chapter.story
+
+  const story = storyData
   
   // Check access
   if (story.author_id !== user.id) {
@@ -658,10 +660,10 @@ export async function exportChapter(
     }
   }
   
-  const chapterTitle = chapter.title || 'Untitled Chapter'
+  const chapterTitle = chapterRow.title || 'Untitled Chapter'
   const storyTitle = story.title || 'Untitled Story'
   const authorName = story.author?.display_name || story.author?.username || 'Unknown Author'
-  const content = chapter.content as JSONContent
+  const content = chapterRow.content as JSONContent
   
   let exportContent = ''
   let filename = ''

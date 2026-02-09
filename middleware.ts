@@ -56,6 +56,12 @@ export async function middleware(request: NextRequest) {
     '/welcome',    // Overview page
     '/login',      // Login page
     '/auth',       // Auth callback
+    '/explore',    // Public entity browser
+    '/stories',    // Public story library
+    '/about',      // About page
+    '/guide',      // World lore guide
+    '/guidelines', // Writing guidelines
+    '/profile',    // Public author profiles
   ]
   
   const isPublicRoute = publicRoutes.some(route => 

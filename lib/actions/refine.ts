@@ -1,5 +1,6 @@
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
@@ -12,6 +13,13 @@ export async function refineNotesSimple(roughNotes: string): Promise<{
   prose?: string
   error?: string
 }> {
+  // Auth check — prevent unauthenticated OpenAI cost abuse
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'You must be logged in to use AI refinement.' }
+  }
+
   if (!roughNotes || roughNotes.trim().length < 10) {
     return { success: false, error: 'Please provide at least a few words to refine.' }
   }

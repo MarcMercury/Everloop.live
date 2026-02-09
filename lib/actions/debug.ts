@@ -34,6 +34,17 @@ export async function getAdminQueueDebug(): Promise<DebugResult[]> {
     return results
   }
 
+  // Verify admin access
+  const { data: isAdmin } = await supabase.rpc('is_admin_check')
+  if (!isAdmin) {
+    results.push({
+      step: '2. STOPPED: Not an admin',
+      success: false,
+      error: 'Admin access required'
+    })
+    return results
+  }
+
   // Step 2: Check if user is admin in profiles
   const { data: profileData, error: profileError } = await supabase
     .from('profiles')
@@ -126,7 +137,7 @@ export async function getAdminQueueDebug(): Promise<DebugResult[]> {
   // Step 8: Fetch proposed entities
   const { data: proposedEntities, error: proposedError } = await supabase
     .from('canon_entities')
-    .select('id, name, entity_type, status')
+    .select('id, name, type, status')
     .eq('status', 'proposed')
     .limit(10)
 

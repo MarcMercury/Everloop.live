@@ -18,6 +18,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     .select('content_text')
     .eq('slug', slug)
     .eq('is_published', true)
+    .in('canon_status', ['approved', 'canonical'])
     .single()
 
   if (error || !story) {

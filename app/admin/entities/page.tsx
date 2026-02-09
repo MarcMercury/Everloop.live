@@ -16,7 +16,7 @@ interface CanonEntityData {
   stability_rating: number
   created_at: string
   updated_at: string
-  embedding: number[] | null
+  has_embedding: boolean
   created_by: string | null
   extended_lore: {
     tagline?: string
@@ -31,19 +31,22 @@ async function getEntities(): Promise<CanonEntityData[]> {
   const regularClient = await createClient()
   const client = adminClient || regularClient
   
-  console.log('[Entities Page] Using admin client:', !!adminClient)
-  
   const { data, error } = await client
     .from('canon_entities')
     .select('id, name, slug, type, description, status, stability_rating, created_at, updated_at, embedding, created_by, extended_lore')
-    .order('name') as { data: CanonEntityData[] | null; error: Error | null }
+    .order('name') as { data: Array<Omit<CanonEntityData, 'has_embedding'> & { embedding: number[] | null }> | null; error: Error | null }
   
   if (error) {
     console.error('Error fetching entities:', error)
     return []
   }
   
-  return data || []
+  // Convert embedding to boolean flag to avoid sending megabytes of vector data to client
+  return (data || []).map(entity => ({
+    ...entity,
+    has_embedding: entity.embedding !== null,
+    embedding: undefined,
+  })) as unknown as CanonEntityData[]
 }
 
 export default async function EntitiesPage() {

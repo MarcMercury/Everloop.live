@@ -379,6 +379,28 @@ export async function deleteRevision(revisionId: string): Promise<{ success: boo
     return { success: false, error: 'You must be logged in.' }
   }
   
+  // Verify ownership: fetch revision -> story -> check author
+  const { data: revision } = await supabase
+    .from('story_revisions' as never)
+    .select('id, story_id')
+    .eq('id', revisionId)
+    .single()
+  
+  if (!revision) {
+    return { success: false, error: 'Revision not found.' }
+  }
+
+  const revData = revision as unknown as { id: string; story_id: string }
+  const { data: story } = await supabase
+    .from('stories')
+    .select('author_id')
+    .eq('id', revData.story_id)
+    .single()
+
+  if (!story || (story as { author_id: string }).author_id !== user.id) {
+    return { success: false, error: 'Not authorized to delete this revision.' }
+  }
+  
   const { error } = await supabase
     .from('story_revisions' as never)
     .delete()
@@ -408,6 +430,17 @@ export async function cleanupOldRevisions(
     return { success: false, error: 'You must be logged in.' }
   }
   
+  // Verify ownership
+  const { data: story } = await supabase
+    .from('stories')
+    .select('author_id')
+    .eq('id', storyId)
+    .single()
+
+  if (!story || (story as { author_id: string }).author_id !== user.id) {
+    return { success: false, error: 'Not authorized.' }
+  }
+
   // Get all auto revisions sorted by age
   const { data: revisions, error: fetchError } = await supabase
     .from('story_revisions' as never)
@@ -462,6 +495,17 @@ export async function restoreRevision(
   }
   
   const revision = revisionResult.revision
+  
+  // Verify ownership
+  const { data: story } = await supabase
+    .from('stories')
+    .select('author_id')
+    .eq('id', revision.story_id)
+    .single()
+
+  if (!story || (story as { author_id: string }).author_id !== user.id) {
+    return { success: false, error: 'Not authorized to restore this revision.' }
+  }
   
   // Update the story with the revision content
   if (revision.chapter_id) {

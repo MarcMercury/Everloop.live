@@ -241,6 +241,7 @@ export async function updateComment(
     .from('story_comments')
     .update(updates as unknown as never)
     .eq('id', commentId)
+    .eq('user_id', user.id)
     .select()
     .single()
 
@@ -290,6 +291,7 @@ export async function deleteComment(commentId: string): Promise<CommentResult> {
     .from('story_comments')
     .delete()
     .eq('id', commentId)
+    .eq('user_id', user.id)
 
   if (error) {
     console.error('Error deleting comment:', error)

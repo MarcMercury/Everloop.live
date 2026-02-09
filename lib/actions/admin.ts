@@ -59,6 +59,8 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
   } as never)
   
   revalidatePath('/admin')
+  revalidatePath('/stories')
+  revalidatePath('/explore')
   return { success: true }
 }
 
@@ -101,6 +103,8 @@ export async function rejectStory(storyId: string, reason: string) {
   } as never)
   
   revalidatePath('/admin')
+  revalidatePath('/stories')
+  revalidatePath('/explore')
   return { success: true }
 }
 

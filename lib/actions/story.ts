@@ -3,9 +3,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { type Json, type StoryInsert, type StoryScope } from '@/types/database'
 
-// Helper type for the Supabase client return with explicit any to bypass type issues
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>
-
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -341,11 +338,16 @@ export async function deleteStory(storyId: string): Promise<{ success: boolean; 
     return { success: false, error: 'You can only delete drafts or rejected stories.' }
   }
   
-  // Delete associated reviews first (if any)
-  await supabase
-    .from('story_reviews')
-    .delete()
-    .eq('story_id', storyId)
+  // Delete associated records first (order matters for foreign key constraints)
+  // These tables may not exist yet or have no data, so we ignore errors
+  await Promise.all([
+    supabase.from('story_reviews').delete().eq('story_id', storyId),
+    supabase.from('story_comments').delete().eq('story_id', storyId),
+    supabase.from('story_chapters').delete().eq('story_id', storyId),
+    supabase.from('story_revisions' as never).delete().eq('story_id', storyId),
+    supabase.from('story_collaborators' as never).delete().eq('story_id', storyId),
+    supabase.from('writing_sessions' as unknown as never).delete().eq('story_id', storyId),
+  ])
   
   // Delete the story
   const { error: deleteError } = await supabase

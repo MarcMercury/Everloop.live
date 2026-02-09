@@ -186,6 +186,10 @@ export async function markAchievementsNotified(achievementIds: string[]): Promis
   if (!user) {
     return { success: false, error: 'Not authenticated' }
   }
+
+  if (achievementIds.length === 0) {
+    return { success: true, error: null }
+  }
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)

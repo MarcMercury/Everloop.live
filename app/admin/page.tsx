@@ -25,19 +25,18 @@ interface StorySubmission {
 }
 
 async function getSubmissions(): Promise<StorySubmission[]> {
-  console.log('[Admin Page] getSubmissions called')
-  
   // Try admin client first, fall back to regular client
   const adminClient = createAdminClient()
   const regularClient = await createClient()
   const client = adminClient || regularClient
   
-  console.log('[Admin Page] Using admin client:', !!adminClient)
-  
-  // Simplified query without joins to avoid PGRST201 errors
+  // Fetch submissions with author info
   const { data, error } = await client
     .from('stories')
-    .select('id, title, created_at, canon_status, word_count, author_id')
+    .select(`
+      id, title, created_at, canon_status, word_count, author_id,
+      author:profiles!stories_author_id_fkey(username)
+    `)
     .in('canon_status', ['submitted', 'under_review'])
     .order('created_at', { ascending: false }) as {
       data: Array<{
@@ -47,17 +46,15 @@ async function getSubmissions(): Promise<StorySubmission[]> {
         canon_status: string
         word_count: number | null
         author_id: string | null
+        author: { username: string } | null
       }> | null
       error: Error | null
     }
   
   if (error) {
     console.error('[Admin Page] Error fetching submissions:', error)
-    console.error('[Admin Page] Error details:', JSON.stringify(error, null, 2))
     return []
   }
-  
-  console.log('[Admin Page] Stories fetched:', data?.length || 0, 'items')
   
   // Map to expected format
   return (data || []).map(story => ({
@@ -66,7 +63,7 @@ async function getSubmissions(): Promise<StorySubmission[]> {
     created_at: story.created_at,
     canon_status: story.canon_status,
     word_count: story.word_count,
-    author: null,
+    author: story.author || null,
     reviews: []
   }))
 }
