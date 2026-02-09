@@ -7,18 +7,20 @@ export async function GET() {
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    if (authError) {
-      return NextResponse.json({ 
-        status: 'auth_error', 
-        error: authError.message 
-      })
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
     }
-    
-    if (!user) {
-      return NextResponse.json({ 
-        status: 'not_authenticated',
-        user: null 
-      })
+
+    // Require admin for debug endpoints
+    const { data: isAdmin } = await supabase.rpc('is_admin_check')
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
     }
     
     // Fetch profile

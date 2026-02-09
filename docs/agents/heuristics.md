@@ -61,3 +61,14 @@
 | Entity form uses `extended_lore` JSONB for tagline, image_url - not separate columns | 2024-12-30 |
 | Story scope (tome/tale/scene) determines if chapters table is used | 2024-12-30 |
 | Always verify edit button links have corresponding handler code - edit params need to be read | 2024-12-30 |
+| Table name is `story_chapters` NOT `chapters` - always verify `.from()` table names against schema | 2025-01 |
+| Entity column name is `type` NOT `entity_type` - verify column names against schema.sql | 2025-01 |
+| All AI endpoints (analyze, refine, voice) MUST have auth checks to prevent OpenAI cost abuse | 2025-01 |
+| Mutation actions need ownership checks: fetch resource → verify author_id/user_id === user.id | 2025-01 |
+| `deleteStory` must cascade-delete all related tables (chapters, comments, revisions, collaborators, sessions, reviews) | 2025-01 |
+| `useSearchParams()` must be wrapped in a `<Suspense>` boundary (Next.js App Router requirement) | 2025-01 |
+| Never send embedding arrays (1536 floats) to the browser - convert to boolean flags | 2025-01 |
+| Use `createAdminClient()` when admin pages need to read other users' RLS-protected data | 2025-01 |
+| Admin pages that approve/reject must `revalidatePath` on public-facing pages (/stories, /explore) | 2025-01 |
+| Hardcoded tokens in scripts must use env vars ($SUPABASE_MANAGEMENT_TOKEN) even if gitignored | 2025-01 |
+| `dangerouslySetInnerHTML` must always escape user content before applying formatting | 2025-01 |

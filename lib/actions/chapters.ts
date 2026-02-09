@@ -148,6 +148,28 @@ export async function updateChapter(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Verify user owns the story this chapter belongs to
+  const { data: chapter, error: chapterFetchError } = await supabase
+    .from('story_chapters')
+    .select('id, story_id')
+    .eq('id', chapterId)
+    .single()
+
+  if (chapterFetchError || !chapter) {
+    return { success: false, error: 'Chapter not found' }
+  }
+
+  const chapterData = chapter as { id: string; story_id: string }
+  const { data: story } = await supabase
+    .from('stories')
+    .select('author_id')
+    .eq('id', chapterData.story_id)
+    .single()
+
+  if (!story || (story as { author_id: string }).author_id !== user.id) {
+    return { success: false, error: 'Not authorized to edit this chapter' }
+  }
+
   const { data, error } = await supabase
     .from('story_chapters')
     .update({
@@ -224,6 +246,28 @@ export async function deleteChapter(chapterId: string): Promise<{ success: boole
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     return { success: false, error: 'Not authenticated' }
+  }
+
+  // Verify user owns the story this chapter belongs to
+  const { data: chapter } = await supabase
+    .from('story_chapters')
+    .select('id, story_id')
+    .eq('id', chapterId)
+    .single()
+
+  if (!chapter) {
+    return { success: false, error: 'Chapter not found' }
+  }
+
+  const chapterData = chapter as { id: string; story_id: string }
+  const { data: story } = await supabase
+    .from('stories')
+    .select('author_id')
+    .eq('id', chapterData.story_id)
+    .single()
+
+  if (!story || (story as { author_id: string }).author_id !== user.id) {
+    return { success: false, error: 'Not authorized to delete this chapter' }
   }
 
   const { error } = await supabase

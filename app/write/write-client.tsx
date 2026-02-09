@@ -25,6 +25,7 @@ export function WriteClient() {
   const [content, setContent] = useState<JSONContent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [wordCount, setWordCount] = useState(0)
+  const [savedStoryId, setSavedStoryId] = useState<string | null>(null)
   
   // Canon analysis state
   const [canonAnalysis, setCanonAnalysis] = useState<CanonAnalysisResult | null>(null)
@@ -155,8 +156,8 @@ export function WriteClient() {
         return
       }
       
-      // Redirect to explore on success (dashboard will be built later)
-      router.push('/explore')
+      // Redirect to dashboard on success
+      router.push('/dashboard')
     })
   }
   
@@ -165,10 +166,13 @@ export function WriteClient() {
     setIsSaving(true)
     
     try {
-      const result = await saveDraft(title, content as Json)
+      const result = await saveDraft(title, content as Json, savedStoryId ?? undefined)
       
       if (!result.success) {
         setError(result.error || 'Failed to save draft')
+      } else if (result.storyId && !savedStoryId) {
+        // Track the newly created story ID for future saves
+        setSavedStoryId(result.storyId)
       }
     } finally {
       setIsSaving(false)

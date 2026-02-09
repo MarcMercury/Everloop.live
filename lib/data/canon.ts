@@ -49,11 +49,8 @@ export async function getCanonEntities(options?: {
 
   if (error) {
     console.error('Error fetching canon entities:', error)
-    console.error('Error details:', JSON.stringify(error, null, 2))
     return []
   }
-
-  console.log('Canon entities fetched:', data?.length || 0, 'items')
   
   return data || []
 }
@@ -108,8 +105,6 @@ export async function getCanonEntityCounts(): Promise<Record<CanonEntityType, nu
     console.error('Error fetching entity counts:', error)
     return defaultCounts
   }
-  
-  console.log('Entity count raw data:', data?.length, 'rows', data)
 
   if (!data) {
     return defaultCounts

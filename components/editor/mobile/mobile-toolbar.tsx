@@ -61,11 +61,11 @@ export function MobileToolbar({
   }, [editor])
   
   const toggleHeading1 = useCallback(() => {
-    editor?.chain().focus().toggleHeading({ level: 1 }).run()
+    editor?.chain().focus().toggleHeading({ level: 2 }).run()
   }, [editor])
   
   const toggleHeading2 = useCallback(() => {
-    editor?.chain().focus().toggleHeading({ level: 2 }).run()
+    editor?.chain().focus().toggleHeading({ level: 3 }).run()
   }, [editor])
   
   const toggleBulletList = useCallback(() => {

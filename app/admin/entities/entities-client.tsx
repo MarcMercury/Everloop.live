@@ -31,7 +31,7 @@ interface CanonEntity {
   stability_rating: number
   created_at: string
   updated_at: string
-  embedding: number[] | null
+  has_embedding: boolean
   created_by: string | null
   extended_lore: {
     tagline?: string
@@ -220,7 +220,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
   }
   
   const handleHydrateAll = async () => {
-    const needsHydration = currentEntities.filter(e => !e.embedding)
+    const needsHydration = currentEntities.filter(e => !e.has_embedding)
     if (needsHydration.length === 0) {
       alert('All entities are already hydrated!')
       return
@@ -393,7 +393,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    {entity.embedding ? (
+                    {entity.has_embedding ? (
                       <div className="flex items-center gap-1 text-green-500">
                         <Zap className="w-4 h-4" />
                         <span className="text-xs">Ready</span>
@@ -408,7 +408,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       {/* Hydrate button - show if no embedding */}
-                      {!entity.embedding && (
+                      {!entity.has_embedding && (
                         <Button
                           variant="ghost"
                           size="sm"

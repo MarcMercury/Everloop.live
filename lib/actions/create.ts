@@ -340,6 +340,19 @@ export async function deleteEntity(entityId: string): Promise<{
 
     // Only allow deletion of entities the user created that are NOT canonical
     // Canonical entities can only be deleted by admins
+    // First verify the entity exists and belongs to this user
+    const { data: entity } = await supabase
+      .from('canon_entities')
+      .select('id')
+      .eq('id', entityId)
+      .eq('created_by', user.id)
+      .in('status', ['draft', 'proposed'])
+      .single()
+
+    if (!entity) {
+      return { success: false, error: 'Entity not found or cannot be deleted' }
+    }
+
     const { error } = await supabase
       .from('canon_entities')
       .delete()

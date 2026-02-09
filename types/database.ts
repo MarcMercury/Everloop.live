@@ -714,6 +714,10 @@ export interface Database {
           similarity: number
         }[]
       }
+      is_admin_check: {
+        Args: Record<string, never>
+        Returns: boolean
+      }
     }
     Enums: {
       canon_entity_type: CanonEntityType

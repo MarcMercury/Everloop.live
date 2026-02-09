@@ -100,6 +100,13 @@ export async function analyzeStoryCanon(storyContent: string, storyTitle: string
   error?: string
 }> {
   try {
+    // Auth check — prevent unauthenticated OpenAI cost abuse
+    const authClient = await createClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (!user) {
+      return { success: false, error: 'You must be logged in to analyze stories.' }
+    }
+
     // Step 1: Generate embedding for the story
     const fullText = `${storyTitle}\n\n${storyContent}`
     const embedding = await generateEmbedding(fullText)

@@ -4,14 +4,19 @@ import { createClient } from '@/lib/supabase/server'
 export default async function Home() {
   const supabase = await createClient()
   
-  // Fetch counts from database
-  const [profilesResult, storiesResult] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact', head: true }),
-    supabase.from('stories').select('id', { count: 'exact', head: true }).eq('canon_status', 'approved')
-  ])
-  
-  const profileCount = profilesResult.count ?? 0
-  const storyCount = storiesResult.count ?? 0
+  // Fetch counts from database with error handling
+  let profileCount = 0
+  let storyCount = 0
+  try {
+    const [profilesResult, storiesResult] = await Promise.all([
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('stories').select('id', { count: 'exact', head: true }).in('canon_status', ['approved', 'canonical'])
+    ])
+    profileCount = profilesResult.count ?? 0
+    storyCount = storiesResult.count ?? 0
+  } catch (e) {
+    console.error('Error fetching homepage counts:', e)
+  }
 
   return (
     <div className="min-h-[calc(100vh-60px)] flex flex-col relative overflow-hidden">

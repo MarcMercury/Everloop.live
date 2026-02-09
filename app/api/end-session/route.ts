@@ -8,6 +8,10 @@ export async function POST(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
+
+    if (wordCount !== undefined && (typeof wordCount !== 'number' || wordCount < 0)) {
+      return NextResponse.json({ error: 'Invalid word count' }, { status: 400 })
+    }
     
     const supabase = await createClient()
     
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
     const wordsWritten = Math.max(0, (wordCount || 0) - typedSession.words_at_start)
     
     // Update the session
-    await supabase
+    const { error: updateError } = await supabase
       .from('writing_sessions' as unknown as never)
       .update({
         ended_at: now.toISOString(),
@@ -50,6 +54,11 @@ export async function POST(request: NextRequest) {
       } as unknown as never)
       .eq('id', sessionId)
       .eq('user_id', user.id)
+    
+    if (updateError) {
+      console.error('Error updating session:', updateError)
+      return NextResponse.json({ error: 'Failed to end session' }, { status: 500 })
+    }
     
     return NextResponse.json({ success: true })
   } catch (error) {

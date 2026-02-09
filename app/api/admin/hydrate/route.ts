@@ -38,8 +38,6 @@ export async function POST() {
     // Check if user is authenticated (but don't require admin)
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
-    console.log('Hydrate API - User:', user?.id, user?.email)
-    
     if (authError || !user) {
       console.log('Hydrate API - Auth error:', authError)
       return NextResponse.json(
@@ -48,14 +46,19 @@ export async function POST() {
       )
     }
     
-    // Log admin status but don't block (admin check removed for testing)
+    // Require admin access
     const { data: profile } = await adminClient
       .from('profiles')
       .select('is_admin')
       .eq('id', user.id)
       .single() as { data: { is_admin: boolean } | null; error: Error | null }
     
-    console.log('Hydrate API - User is_admin:', profile?.is_admin)
+    if (!profile?.is_admin) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      )
+    }
     
     // Use admin client to fetch and update entities (bypasses RLS)
     const { data: entities, error: fetchError } = await adminClient
