@@ -58,6 +58,7 @@ export async function middleware(request: NextRequest) {
     '/auth',       // Auth callback
     '/explore',    // Public entity browser
     '/stories',    // Public story library
+    '/map',        // 3D world map
     '/about',      // About page
     '/guide',      // World lore guide
     '/guidelines', // Writing guidelines

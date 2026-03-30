@@ -4,7 +4,7 @@ import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { WriteButton } from '@/components/write-button'
 import { NavDropdown } from '@/components/nav-dropdown'
-import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2 } from 'lucide-react'
+import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -55,6 +55,14 @@ export async function Navbar() {
             >
               <Sparkles className="w-4 h-4" />
               <span className="hidden sm:inline">Overview</span>
+            </Link>
+
+            <Link 
+              href="/map"
+              className="flex items-center gap-2 text-sm text-gold/80 hover:text-gold transition-colors"
+            >
+              <Map className="w-4 h-4" />
+              <span className="hidden sm:inline">Explore the Everloop</span>
             </Link>
             
             {user ? (
