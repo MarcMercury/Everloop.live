@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation'
 import { joinQuest, leaveQuest } from '@/lib/actions/quests'
 import { Button } from '@/components/ui/button'
 import { Play, LogOut, Sword } from 'lucide-react'
+import Link from 'next/link'
 
 interface Props {
   questId: string
+  questSlug: string
   questStatus: string
   maxParticipants: number
   currentParticipants: number
@@ -19,6 +21,7 @@ interface Props {
 
 export default function QuestDetailClient({
   questId,
+  questSlug,
   questStatus,
   maxParticipants,
   currentParticipants,
@@ -82,6 +85,12 @@ export default function QuestDetailClient({
             <p className="text-sm text-parchment-muted mt-1">Currently on Act {myParticipation.current_act}</p>
           </div>
           <div className="flex items-center gap-3">
+            <Link href={`/quests/${questSlug}/play`}>
+              <Button className="btn-fantasy flex items-center gap-2">
+                <Play className="w-4 h-4" />
+                Enter Quest
+              </Button>
+            </Link>
             <Button onClick={handleLeave} disabled={loading} variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10">
               <LogOut className="w-4 h-4 mr-2" />
               Leave
