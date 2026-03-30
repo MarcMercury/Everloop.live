@@ -166,6 +166,7 @@ export default async function QuestDetailPage({ params }: { params: Promise<{ sl
       {/* Join / Play Controls (Client Component) */}
       <QuestDetailClient
         questId={quest.id}
+        questSlug={slug}
         questStatus={quest.status}
         maxParticipants={quest.max_participants}
         currentParticipants={participants.filter(p => p.status === 'active').length}

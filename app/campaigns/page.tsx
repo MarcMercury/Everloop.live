@@ -15,7 +15,7 @@ export default async function CampaignsPage() {
     .from('campaigns')
     .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('is_public', true)
-    .in('status', ['recruiting', 'in_progress'])
+    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
     .order('updated_at', { ascending: false })
 
   const campaigns = (campaignsData ?? []) as unknown as CampaignRow[]
@@ -69,12 +69,18 @@ export default async function CampaignsPage() {
 
   const statusBadge = (status: string) => {
     switch (status) {
-      case 'recruiting':
-        return <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Recruiting</span>
-      case 'in_progress':
-        return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">In Progress</span>
-      case 'completed':
-        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Completed</span>
+      case 'lobby': case 'recruiting':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Open Lobby</span>
+      case 'ready':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Ready</span>
+      case 'active': case 'in_progress':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Active</span>
+      case 'paused':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Paused</span>
+      case 'complete': case 'completed':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Complete</span>
+      case 'archived':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-500 border border-gray-500/20">Archived</span>
       case 'draft':
         return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Draft</span>
       default:

@@ -219,7 +219,7 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
 
   if (!campaign) return { success: false, error: 'Campaign not found' }
   if (campaign.dm_id === user.id) return { success: false, error: 'You are the DM of this campaign' }
-  if (campaign.status !== 'recruiting') return { success: false, error: 'Campaign is not recruiting' }
+  if (!['lobby', 'recruiting'].includes(campaign.status)) return { success: false, error: 'Campaign is not accepting players' }
 
   // Check player count
   const { count } = await supabase

@@ -8,7 +8,7 @@ import { CampaignLobbyClient } from './campaign-lobby-client'
 
 // Row shapes for Supabase type assertions
 interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
-interface PlayerRow { id: string; campaign_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string } | null; [key: string]: unknown }
+interface PlayerRow { id: string; campaign_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; approval_state?: string; readiness_state?: string; party_role?: string; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null; [key: string]: unknown }
 interface SceneRow { id: string; title: string; scene_type: string; mood: string; status: string; scene_order: number; [key: string]: unknown }
 interface SessionRow { id: string; session_number: number; title: string | null; status: string; active_scene_id: string | null; summary: string | null; [key: string]: unknown }
 
@@ -37,7 +37,7 @@ export default async function CampaignPage({ params }: PageProps) {
     .select(`
       *,
       user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
-      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
+      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color, everloop_traits, passive_perception)
     `)
     .eq('campaign_id', campaign.id)
     .order('joined_at', { ascending: true })
@@ -302,29 +302,56 @@ export default async function CampaignPage({ params }: PageProps) {
               <div className="space-y-3">
                 {acceptedPlayers.map(player => {
                   const pUser = player.user as { username: string; display_name: string | null; avatar_url: string | null } | null
-                  const char = player.character as { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string } | null
+                  const char = player.character as { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null
                   return (
-                    <div key={player.id} className="flex items-center gap-3 p-2 rounded-lg bg-teal-rich/30">
-                      {pUser?.avatar_url ? (
-                        <img src={pUser.avatar_url} alt="" className="w-8 h-8 rounded-full border border-gold/20" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-teal-mid flex items-center justify-center text-xs text-parchment-muted">
-                          {(pUser?.display_name ?? pUser?.username ?? '?')[0].toUpperCase()}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm text-parchment truncate">{pUser?.display_name ?? pUser?.username}</div>
-                        {char ? (
-                          <div className="text-xs text-parchment-muted">
-                            {char.name} · Lvl {char.level} {char.class}
-                          </div>
+                    <div key={player.id} className="p-3 rounded-lg bg-teal-rich/30 space-y-2">
+                      <div className="flex items-center gap-3">
+                        {pUser?.avatar_url ? (
+                          <img src={pUser.avatar_url} alt="" className="w-8 h-8 rounded-full border border-gold/20" />
                         ) : (
-                          <div className="text-xs text-parchment-muted/50 italic">No character selected</div>
+                          <div className="w-8 h-8 rounded-full bg-teal-mid flex items-center justify-center text-xs text-parchment-muted">
+                            {(pUser?.display_name ?? pUser?.username ?? '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-parchment truncate">{pUser?.display_name ?? pUser?.username}</div>
+                          {char ? (
+                            <div className="text-xs text-parchment-muted">
+                              {char.name} · Lvl {char.level} {char.race} {char.class}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-parchment-muted/50 italic">No character selected</div>
+                          )}
+                        </div>
+                        {char && (
+                          <div className="text-right text-xs">
+                            <div className="text-parchment-muted">
+                              {char.current_hp}/{char.max_hp} HP
+                            </div>
+                            {char.armor_class && (
+                              <div className="text-parchment-muted/70">AC {char.armor_class}</div>
+                            )}
+                          </div>
                         )}
                       </div>
-                      {char && (
-                        <div className="text-xs text-parchment-muted">
-                          {char.current_hp}/{char.max_hp} HP
+                      {/* Everloop Traits */}
+                      {char?.everloop_traits && char.everloop_traits.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pl-11">
+                          {char.everloop_traits.map(trait => (
+                            <span key={trait} className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300">
+                              ✦ {trait}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {/* Readiness / Approval state */}
+                      {player.readiness_state && player.readiness_state !== 'not_ready' && (
+                        <div className="pl-11">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                            player.readiness_state === 'ready' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                          }`}>
+                            {player.readiness_state === 'ready' ? '✓ Ready' : player.readiness_state}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -374,18 +401,20 @@ export default async function CampaignPage({ params }: PageProps) {
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
-    case 'recruiting':
-      return <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Recruiting</span>
+    case 'lobby': case 'recruiting':
+      return <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Open Lobby</span>
+    case 'ready':
+      return <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Ready</span>
     case 'in_progress': case 'active':
       return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Active</span>
-    case 'completed':
-      return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Completed</span>
+    case 'complete': case 'completed':
+      return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Complete</span>
     case 'paused':
       return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Paused</span>
+    case 'archived':
+      return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-500 border border-gray-500/20">Archived</span>
     case 'draft':
       return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Draft</span>
-    case 'scheduled':
-      return <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/20 text-purple-400 border border-purple-500/30">Scheduled</span>
     default:
       return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400">{status}</span>
   }
