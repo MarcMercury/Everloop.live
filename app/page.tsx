@@ -98,45 +98,155 @@ export default async function Home() {
         </div>
       </main>
 
-      {/* Campaign Engine Feature Section */}
-      <section className="relative z-10 py-24 px-6 border-t border-gold/10">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          <div className="flex items-center justify-center gap-2 text-sm tracking-[0.2em] text-gold/60 uppercase">
-            <span>🔥</span>
-            <span>Live Campaign Engine</span>
-            <span>🔥</span>
-          </div>
-          <h2 className="text-4xl md:text-5xl font-serif text-parchment">
-            Play the Canon
+      {/* What is Everloop — Intro Section */}
+      <section className="relative z-10 py-20 px-6 border-t border-gold/10">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <h2 className="text-3xl md:text-4xl font-serif text-parchment">
+            A Collaborative Canon Engine
           </h2>
-          <p className="text-lg text-parchment-dark max-w-2xl mx-auto">
-            Run live D&amp;D-style campaigns set in the Everloop universe. Scene-based storytelling, 
-            Narrative Idols, AI co-DM, and the Fray itself—all in your browser.
+          <p className="text-lg text-parchment-dark max-w-3xl mx-auto leading-relaxed">
+            Everloop is a writing platform and living universe. Every story you write, every 
+            character you create, every location you name becomes part of a shared canon that 
+            other writers and players build upon. There are two ways to enter the Everloop.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">🎭</div>
-              <h3 className="font-serif text-parchment text-lg">5 Game Modes</h3>
-              <p className="text-sm text-parchment-muted mt-2">Classic, One-Shot, Survivor, Mystery, Social Deception</p>
+        </div>
+      </section>
+
+      {/* Two Paths Section */}
+      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+            {/* Path 1 — Build the Universe */}
+            <div className="story-card p-8 text-left relative overflow-hidden group hover:border-gold/40 transition-all">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center text-xl">
+                    📜
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-[0.15em] text-gold/60 uppercase">Path One</p>
+                    <h3 className="text-2xl font-serif text-parchment">Build the Universe</h3>
+                  </div>
+                </div>
+                <p className="text-parchment-dark text-sm leading-relaxed mb-6">
+                  Write stories and add them to the Everloop universe canon. Create locations, 
+                  NPCs, factions, and artifacts that other writers reference and that players 
+                  encounter in campaigns. Every creation expands the shared world.
+                </p>
+                <div className="space-y-2.5 text-sm text-parchment-muted mb-8">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gold">✦</span>
+                    <span><span className="text-parchment">Library</span> — Read the canonical stories</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gold">✦</span>
+                    <span><span className="text-parchment">Archive</span> — Browse all canonical entities</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gold">✦</span>
+                    <span><span className="text-parchment">Create</span> — Build characters, locations & creatures</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gold">✦</span>
+                    <span><span className="text-parchment">My Roster</span> — Manage and submit your creations</span>
+                  </div>
+                </div>
+                <Link
+                  href="/create"
+                  className="btn-fantasy text-sm inline-flex"
+                >
+                  ✦ Start Creating
+                </Link>
+              </div>
             </div>
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">✨</div>
-              <h3 className="font-serif text-parchment text-lg">Narrative Idols</h3>
-              <p className="text-sm text-parchment-muted mt-2">Earn powerful story tokens that bend the rules of reality</p>
+
+            {/* Path 2 — Play the Canon */}
+            <div className="story-card p-8 text-left relative overflow-hidden group hover:border-purple-500/40 transition-all">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl">
+                    ⚔️
+                  </div>
+                  <div>
+                    <p className="text-xs tracking-[0.15em] text-purple-400/60 uppercase">Path Two</p>
+                    <h3 className="text-2xl font-serif text-parchment">Play the Canon</h3>
+                  </div>
+                </div>
+                <p className="text-parchment-dark text-sm leading-relaxed mb-6">
+                  Step into the world as a player. Run campaigns as a Dungeon Master, 
+                  embark on guided quests solo or with friends, and build persistent 
+                  characters that carry their story across every adventure.
+                </p>
+                <div className="space-y-2.5 text-sm text-parchment-muted mb-8">
+                  <div className="flex items-center gap-2">
+                    <span className="text-purple-400">✦</span>
+                    <span><span className="text-parchment">Campaigns</span> — Run or join live campaign sessions</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-purple-400">✦</span>
+                    <span><span className="text-parchment">Quests</span> — Solo, party & AI-guided adventures</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-purple-400">✦</span>
+                    <span><span className="text-parchment">Player Deck</span> — Build & manage your characters</span>
+                  </div>
+                </div>
+                <Link
+                  href="/campaigns"
+                  className="btn-outline-fantasy text-sm inline-flex"
+                >
+                  Enter the Fray →
+                </Link>
+              </div>
             </div>
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">🤖</div>
-              <h3 className="font-serif text-parchment text-lg">AI Co-DM</h3>
-              <p className="text-sm text-parchment-muted mt-2">The Fray responds to your choices with dynamic narration</p>
-            </div>
+
           </div>
+        </div>
+      </section>
+
+      {/* Library Preview */}
+      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
+        <div className="max-w-5xl mx-auto text-center space-y-6">
+          <h2 className="text-2xl md:text-3xl font-serif text-parchment">
+            From the Library
+          </h2>
+          <p className="text-sm text-parchment-muted max-w-2xl mx-auto">
+            Stories written by the community that have been approved as canon. 
+            Every story shapes what comes next.
+          </p>
           <div className="pt-4">
             <Link
-              href="/campaigns"
-              className="btn-fantasy text-lg"
+              href="/stories"
+              className="inline-flex items-center gap-2 text-gold hover:text-gold/80 transition-colors text-sm font-medium"
             >
-              🔥 Browse Campaigns
+              Browse the Full Library →
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Row */}
+      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">📜</div>
+              <h3 className="font-serif text-parchment text-lg">Write &amp; Publish</h3>
+              <p className="text-sm text-parchment-muted mt-2">Draft stories with AI analysis, then submit to canon review</p>
+            </div>
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">⚔️</div>
+              <h3 className="font-serif text-parchment text-lg">Campaign &amp; Quest Engine</h3>
+              <p className="text-sm text-parchment-muted mt-2">5 game modes, live sessions, AI co-DM, and the Fray engine</p>
+            </div>
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">🌀</div>
+              <h3 className="font-serif text-parchment text-lg">Shared Canon</h3>
+              <p className="text-sm text-parchment-muted mt-2">Every creation feeds back into the world — writers and players build together</p>
+            </div>
           </div>
         </div>
       </section>
