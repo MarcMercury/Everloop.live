@@ -98,6 +98,49 @@ export default async function Home() {
         </div>
       </main>
 
+      {/* Campaign Engine Feature Section */}
+      <section className="relative z-10 py-24 px-6 border-t border-gold/10">
+        <div className="max-w-5xl mx-auto text-center space-y-8">
+          <div className="flex items-center justify-center gap-2 text-sm tracking-[0.2em] text-gold/60 uppercase">
+            <span>🔥</span>
+            <span>Live Campaign Engine</span>
+            <span>🔥</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-serif text-parchment">
+            Play the Canon
+          </h2>
+          <p className="text-lg text-parchment-dark max-w-2xl mx-auto">
+            Run live D&amp;D-style campaigns set in the Everloop universe. Scene-based storytelling, 
+            Narrative Idols, AI co-DM, and the Fray itself—all in your browser.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">🎭</div>
+              <h3 className="font-serif text-parchment text-lg">5 Game Modes</h3>
+              <p className="text-sm text-parchment-muted mt-2">Classic, One-Shot, Survivor, Mystery, Social Deception</p>
+            </div>
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">✨</div>
+              <h3 className="font-serif text-parchment text-lg">Narrative Idols</h3>
+              <p className="text-sm text-parchment-muted mt-2">Earn powerful story tokens that bend the rules of reality</p>
+            </div>
+            <div className="story-card text-center">
+              <div className="text-3xl mb-3">🤖</div>
+              <h3 className="font-serif text-parchment text-lg">AI Co-DM</h3>
+              <p className="text-sm text-parchment-muted mt-2">The Fray responds to your choices with dynamic narration</p>
+            </div>
+          </div>
+          <div className="pt-4">
+            <Link
+              href="/campaigns"
+              className="btn-fantasy text-lg"
+            >
+              🔥 Browse Campaigns
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-gold/10 relative z-10">
         <div className="max-w-4xl mx-auto flex items-center justify-between text-sm text-parchment-muted">
