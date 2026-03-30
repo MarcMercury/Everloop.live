@@ -42,6 +42,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not a participant' }, { status: 403 })
   }
 
+  // Verify participation belongs to the requested quest
+  const participationRow = participation as { id: string; quest_id: string; user_id: string }
+  if (participationRow.quest_id !== questId) {
+    return NextResponse.json({ error: 'Participation does not match quest' }, { status: 403 })
+  }
+
   // Build narrator style
   const style = config?.style ?? 'atmospheric'
   const pacing = config?.pacing ?? 'moderate'

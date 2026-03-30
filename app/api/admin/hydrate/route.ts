@@ -5,7 +5,7 @@ import OpenAI from 'openai'
 /**
  * POST /api/admin/hydrate
  * Generates embeddings for all canon_entities with NULL embeddings
- * Requires authentication (admin check removed for easier testing)
+ * Requires authentication and admin access
  */
 export async function POST() {
   try {

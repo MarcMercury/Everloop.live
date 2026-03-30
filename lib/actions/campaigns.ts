@@ -185,6 +185,29 @@ export async function getCampaignPlayers(campaignId: string): Promise<{
 }> {
   const supabase = await createClient()
 
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Verify user is DM or player in this campaign
+  const { data: campaign } = await supabase
+    .from('campaigns')
+    .select('id, dm_id')
+    .eq('id', campaignId)
+    .single()
+
+  if (!campaign) return { success: false, error: 'Campaign not found' }
+
+  const campaignRow = campaign as { id: string; dm_id: string }
+  if (campaignRow.dm_id !== user.id) {
+    const { data: player } = await supabase
+      .from('campaign_players')
+      .select('id')
+      .eq('campaign_id', campaignId)
+      .eq('user_id', user.id)
+      .single()
+    if (!player) return { success: false, error: 'Access denied' }
+  }
+
   const { data, error } = await supabase
     .from('campaign_players')
     .select(`

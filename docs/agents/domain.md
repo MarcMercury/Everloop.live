@@ -60,7 +60,12 @@ The `canon_entities` table supports these types:
 
 ## Glossary
 
-- **The Fray**: A temporal anomaly that resets time in unstable zones
-- **Shard**: Mystical artifacts that influence narrative outcomes
-- **Anchor**: A person or place that stabilizes the Fray
+- **The Pattern**: The vast lattice of luminous threads binding time, space, and thought into continuity — woven by the First Architects. It is the fabric of reality itself. Where it thins, Hollows spread.
+- **The Fray**: The unraveling edge of reality where the Pattern frays and loops collapse — time stutters, memory bleeds, and the world forgets itself
+- **Shard**: Broken remnants of the Anchors — each still hums with the intent that once held the world together
+- **Anchor**: Great pillars of intent driven into the Pattern by the First Architects to hold it firm
+- **The Fold**: The intermediary plane of thought, design, and intent — the mind of creation
+- **The Drift**: The primordial sea of chaos from which the First Architects drew substance
 - **Canon**: Officially approved lore that becomes immutable history
+
+Note: "Weaving" is an action (the First Architects *wove* the Pattern), not a standalone concept. The Pattern is the central artifact of creation.

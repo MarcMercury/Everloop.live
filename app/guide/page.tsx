@@ -61,7 +61,7 @@ export default function GuidePage() {
                 <div>
                   <h3 className="text-xl font-serif text-parchment mb-3">The First Architects</h3>
                   <p className="text-lg leading-relaxed">
-                    Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and began the Weaving. They drove the Anchors into the Pattern to hold reality firm. Some claim they were absorbed into the Fold itself.
+                    Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and from it wove the Pattern — the vast lattice of reality. They drove the Anchors into the Pattern to hold it firm. Some claim they were absorbed into the Fold itself.
                   </p>
                 </div>
               </div>
@@ -84,21 +84,21 @@ export default function GuidePage() {
                 <div>
                   <h3 className="text-xl font-serif text-parchment mb-3">The First Map</h3>
                   <p className="text-lg leading-relaxed">
-                    The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they began the Weaving.
+                    The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they wove the Pattern.
                   </p>
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-serif text-parchment mb-3">The Weaving</h3>
+                  <h3 className="text-xl font-serif text-parchment mb-3">The Pattern</h3>
                   <p className="text-lg leading-relaxed">
-                    The vast lattice of luminous threads binding time, space, and thought into continuity. The act of creation by which the Pattern was made. Within the Pattern once stood the Anchors, pillars that pinned the Weaving to the Fold. The Weaving grows thin, and Hollows spread.
+                    The vast lattice of luminous threads binding time, space, and thought into continuity — woven by the First Architects from the design of the First Map. Within it stand the Anchors, great pillars that pin reality to the Fold. The Pattern is all that holds existence together. Where it thins, the Hollows spread.
                   </p>
                 </div>
 
                 <div>
                   <h3 className="text-xl font-serif text-parchment mb-3">The Anchors</h3>
                   <p className="text-lg leading-relaxed">
-                    Great pillars of intent and memory driven into the Pattern by the First Architects to hold the Weaving firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.
+                    Great pillars of intent and memory driven into the Pattern by the First Architects to hold it firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.
                   </p>
                 </div>
 
@@ -128,7 +128,7 @@ export default function GuidePage() {
                 <div>
                   <h3 className="text-xl font-serif text-parchment mb-3">The Rogue Architects</h3>
                   <p className="text-lg leading-relaxed">
-                    A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could weave anew as their ancestors once had. But they misjudged the balance. In their attempt to mend the Weaving, they shattered the Anchors — creating the Shards and the Fray.
+                    A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could mend the Pattern as their ancestors once had. But they misjudged the balance. In their attempt to repair it, they shattered the Anchors — creating the Shards and the Fray.
                   </p>
                 </div>
 

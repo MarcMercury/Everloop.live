@@ -39,10 +39,10 @@ BEGIN
     -- CONCEPTS
     INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by)
     VALUES (
-        'The Weaving',
-        'the-weaving',
+        'The Pattern',
+        'the-pattern',
         'concept',
-        'The vast lattice of luminous threads binding time, space, and thought into continuity. The act of creation by which the Pattern was made. Within the Pattern once stood the Anchors, pillars that pinned the Weaving to the Fold. The Weaving grows thin, and Hollows spread.',
+        'The vast lattice of luminous threads binding time, space, and thought into continuity — woven by the First Architects from the design of the First Map. Within it stand the Anchors, great pillars that pin reality to the Fold. The Pattern is all that holds existence together. Where it thins, the Hollows spread.',
         'canonical',
         0.90,
         admin_id
@@ -64,7 +64,7 @@ BEGIN
         'The First Map',
         'the-first-map',
         'concept',
-        'The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they began the Weaving.',
+        'The original design drawn by the First Architects — lines of pure concept drawn across the unanchored dark. The map was not creation, but containment — a way to keep the world from slipping back into oblivion. From its contours they wove the Pattern.',
         'canonical',
         0.95,
         admin_id
@@ -75,7 +75,7 @@ BEGIN
         'The Anchors',
         'the-anchors',
         'concept',
-        'Great pillars of intent and memory driven into the Pattern by the First Architects to hold the Weaving firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.',
+        'Great pillars of intent and memory driven into the Pattern by the First Architects to hold it firm. Around the Anchors, reality crystallized. Mountains learned to stay still. Rivers remembered their beds. Their shattering by the Rogue Architects created the Shards and the Fray.',
         'canonical',
         0.90,
         admin_id
@@ -120,7 +120,7 @@ BEGIN
         'The First Architects',
         'the-first-architects',
         'faction',
-        'Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and began the Weaving. They drove the Anchors into the Pattern to hold reality firm. Some claim they were absorbed into the Fold itself. Their fate is unknown.',
+        'Beings who arose from the outer haze of the Drift, seeking form within the formless. They built the Fold, inscribed the First Map, and from it wove the Pattern — the vast lattice of reality. They drove the Anchors into the Pattern to hold it firm. Some claim they were absorbed into the Fold itself. Their fate is unknown.',
         'canonical',
         0.95,
         admin_id
@@ -131,7 +131,7 @@ BEGIN
         'The Rogue Architects',
         'the-rogue-architects',
         'faction',
-        'A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could weave anew as their ancestors once had. But they misjudged the balance. In their attempt to mend the Weaving, they shattered the Anchors — creating the Shards and the Fray.',
+        'A circle of Vaultkeepers and Dreamers who sought to repair the failing Pattern when the Hollows widened. They believed they could mend the Pattern as their ancestors once had. But they misjudged the balance. In their attempt to repair it, they shattered the Anchors — creating the Shards and the Fray.',
         'canonical',
         0.85,
         admin_id

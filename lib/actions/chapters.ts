@@ -29,6 +29,36 @@ export async function getChapters(storyId: string): Promise<ChapterResult> {
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Verify user has access to this story (owner, collaborator, or published)
+  const { data: story } = await supabase
+    .from('stories')
+    .select('id, author_id, canon_status')
+    .eq('id', storyId)
+    .single()
+
+  if (!story) {
+    return { success: false, error: 'Story not found' }
+  }
+
+  const storyRow = story as { id: string; author_id: string; canon_status: string }
+  const isOwner = storyRow.author_id === user.id
+  const isPublished = storyRow.canon_status === 'canonical'
+
+  if (!isOwner && !isPublished) {
+    // Check if user is a collaborator
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied' }
+    }
+  }
+
   const { data, error } = await supabase
     .from('story_chapters')
     .select('*')
@@ -65,7 +95,38 @@ export async function getChapter(chapterId: string): Promise<ChapterResult> {
     return { success: false, error: 'Failed to fetch chapter' }
   }
 
-  return { success: true, chapter: data as unknown as Chapter }
+  const chapterData = data as unknown as Chapter
+
+  // Verify user has access to the parent story
+  const { data: story } = await supabase
+    .from('stories')
+    .select('id, author_id, canon_status')
+    .eq('id', chapterData.story_id)
+    .single()
+
+  if (!story) {
+    return { success: false, error: 'Story not found' }
+  }
+
+  const storyRow = story as { id: string; author_id: string; canon_status: string }
+  const isOwner = storyRow.author_id === user.id
+  const isPublished = storyRow.canon_status === 'canonical'
+
+  if (!isOwner && !isPublished) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', chapterData.story_id)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied' }
+    }
+  }
+
+  return { success: true, chapter: chapterData }
 }
 
 /**

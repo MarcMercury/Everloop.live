@@ -47,10 +47,10 @@ export default function WelcomePage() {
           {/* Lore Sections */}
           <div className="space-y-12 text-parchment-muted">
             
-            {/* The Weaving of the World */}
+            {/* The Pattern of the World */}
             <div className="glass-subtle p-8 rounded-lg border border-gold/10">
               <h2 className="text-2xl md:text-3xl font-serif text-gold mb-4">
-                The Weaving of the World
+                The Pattern of the World
               </h2>
               <p className="text-lg leading-relaxed">
                 Long ago, before memory began, there was only the <span className="text-parchment font-medium">Drift</span>—a chaotic sea of unformed matter. From this void rose the <span className="text-parchment font-medium">First Architects</span>, beings who sought to impose order upon the chaos. They built a realm of pure intent called <span className="text-gold">The Fold</span> and, within it, drafted the <span className="text-parchment font-medium">First Map</span>. To make this map real, they wove the <span className="text-gold">Pattern</span>—a vast lattice of reality pinned in place by great <span className="text-parchment font-medium">Anchors</span>. Upon this stable surface, life flourished in a cycle known as the <span className="canon-text font-semibold">Everloop</span>.
@@ -63,7 +63,7 @@ export default function WelcomePage() {
                 The Breaking
               </h2>
               <p className="text-lg leading-relaxed">
-                But nothing made can remain perfect forever. As the Pattern began to thin, a group known as the <span className="text-parchment font-medium">Rogue Architects</span> attempted to repair the weaving. They failed. Instead of mending the world, they shattered the Anchors, creating <span className="text-gold">Shards</span> of unstable power and tearing a wound in reality known as <span className="text-red-400 font-medium">The Fray</span>.
+                But nothing made can remain perfect forever. As the Pattern began to thin, a group known as the <span className="text-parchment font-medium">Rogue Architects</span> attempted to repair it. They failed. Instead of mending the world, they shattered the Anchors, creating <span className="text-gold">Shards</span> of unstable power and tearing a wound in reality known as <span className="text-red-400 font-medium">The Fray</span>.
               </p>
             </div>
 

@@ -54,6 +54,32 @@ export async function getStoryComments(
     return { success: false, error: 'Not authenticated' }
   }
 
+  // Verify user has access to this story (owner or collaborator)
+  const { data: story } = await supabase
+    .from('stories')
+    .select('id, author_id')
+    .eq('id', storyId)
+    .single()
+
+  if (!story) {
+    return { success: false, error: 'Story not found' }
+  }
+
+  const storyRow = story as { id: string; author_id: string }
+  if (storyRow.author_id !== user.id) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied' }
+    }
+  }
+
   let query = supabase
     .from('story_comments')
     .select('*')
