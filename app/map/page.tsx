@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { Navbar } from '@/components/navbar'
 import MapPageClient from './map-client'
 
 export const metadata = {
@@ -24,13 +23,10 @@ function MapSkeleton() {
 
 export default function MapPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-charcoal">
-      <Navbar />
-      <main className="flex-1 relative">
-        <Suspense fallback={<MapSkeleton />}>
-          <MapPageClient />
-        </Suspense>
-      </main>
-    </div>
+    <main className="flex-1 relative">
+      <Suspense fallback={<MapSkeleton />}>
+        <MapPageClient />
+      </Suspense>
+    </main>
   )
 }
