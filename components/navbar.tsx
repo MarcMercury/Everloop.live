@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { WriteButton } from '@/components/write-button'
-import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass } from 'lucide-react'
+import { NavDropdown } from '@/components/nav-dropdown'
+import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2 } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -58,69 +59,35 @@ export async function Navbar() {
             
             {user ? (
               <>
-                {/* Authenticated User Navigation */}
-                <Link 
-                  href="/explore"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span className="hidden sm:inline">Archive</span>
-                </Link>
-                
-                <Link 
-                  href="/stories"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <Library className="w-4 h-4" />
-                  <span className="hidden sm:inline">Library</span>
-                </Link>
-                
+                {/* Universe — Writing, Reading & Worldbuilding */}
+                <NavDropdown
+                  label="Universe"
+                  icon={<Globe className="w-4 h-4" />}
+                  items={[
+                    { href: '/stories', label: 'Library', icon: <Library className="w-4 h-4" />, description: 'Read canonical stories' },
+                    { href: '/explore', label: 'Archive', icon: <BookOpen className="w-4 h-4" />, description: 'Browse canonical entities' },
+                    { href: '/create', label: 'Create', icon: <Palette className="w-4 h-4" />, description: 'Build characters, locations & more' },
+                    { href: '/roster', label: 'My Roster', icon: <User className="w-4 h-4" />, description: 'Manage your creations' },
+                  ]}
+                />
+
+                {/* Play — Campaigns, Quests & Characters */}
+                <NavDropdown
+                  label="Play"
+                  icon={<Gamepad2 className="w-4 h-4" />}
+                  items={[
+                    { href: '/campaigns', label: 'Campaigns', icon: <Flame className="w-4 h-4" />, description: 'Run or join live campaigns' },
+                    { href: '/quests', label: 'Quests', icon: <Compass className="w-4 h-4" />, description: 'Solo & party adventures' },
+                    { href: '/player-deck', label: 'Player Deck', icon: <Swords className="w-4 h-4" />, description: 'Your playable characters' },
+                  ]}
+                />
+
                 <Link 
                   href="/dashboard"
                   className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
-                </Link>
-                
-                <Link 
-                  href="/campaigns"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <Flame className="w-4 h-4" />
-                  <span className="hidden sm:inline">Campaigns</span>
-                </Link>
-                
-                <Link 
-                  href="/quests"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <Compass className="w-4 h-4" />
-                  <span className="hidden sm:inline">Quests</span>
-                </Link>
-                
-                <Link 
-                  href="/create"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <Palette className="w-4 h-4" />
-                  <span className="hidden sm:inline">Create</span>
-                </Link>
-                
-                <Link 
-                  href="/roster"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">My Roster</span>
-                </Link>
-                
-                <Link 
-                  href="/player-deck"
-                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
-                >
-                  <Swords className="w-4 h-4" />
-                  <span className="hidden sm:inline">Player Deck</span>
                 </Link>
                 
                 <WriteButton />
