@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Session ID required' }, { status: 400 })
     }
 
-    if (wordCount !== undefined && (typeof wordCount !== 'number' || wordCount < 0)) {
+    if (wordCount !== undefined && (typeof wordCount !== 'number' || wordCount < 0 || wordCount > 500000)) {
       return NextResponse.json({ error: 'Invalid word count' }, { status: 400 })
     }
     

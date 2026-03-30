@@ -137,6 +137,32 @@ export async function getRevisions(
     return { success: false, error: 'You must be logged in.' }
   }
   
+  // Verify user has access to this story
+  const { data: storyCheck } = await supabase
+    .from('stories')
+    .select('id, author_id')
+    .eq('id', storyId)
+    .single()
+  
+  if (!storyCheck) {
+    return { success: false, error: 'Story not found.' }
+  }
+
+  const storyRow = storyCheck as { id: string; author_id: string }
+  if (storyRow.author_id !== user.id) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied.' }
+    }
+  }
+
   let query = supabase
     .from('story_revisions' as never)
     .select('*')
@@ -192,8 +218,35 @@ export async function getRevision(revisionId: string): Promise<RevisionResult> {
     console.error('Error fetching revision:', error)
     return { success: false, error: 'Revision not found.' }
   }
+
+  // Verify user has access to the parent story
+  const revision = data as unknown as StoryRevision
+  const { data: storyCheck } = await supabase
+    .from('stories')
+    .select('id, author_id')
+    .eq('id', revision.story_id)
+    .single()
   
-  return { success: true, revision: data as unknown as StoryRevision }
+  if (!storyCheck) {
+    return { success: false, error: 'Story not found.' }
+  }
+
+  const storyRow = storyCheck as { id: string; author_id: string }
+  if (storyRow.author_id !== user.id) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', revision.story_id)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied.' }
+    }
+  }
+  
+  return { success: true, revision }
 }
 
 // ============================================================================
@@ -212,6 +265,32 @@ export async function getLatestRevision(
     return { success: false, error: 'You must be logged in.' }
   }
   
+  // Verify user has access to this story
+  const { data: storyCheck } = await supabase
+    .from('stories')
+    .select('id, author_id')
+    .eq('id', storyId)
+    .single()
+  
+  if (!storyCheck) {
+    return { success: false, error: 'Story not found.' }
+  }
+
+  const storyRow = storyCheck as { id: string; author_id: string }
+  if (storyRow.author_id !== user.id) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied.' }
+    }
+  }
+
   let query = supabase
     .from('story_revisions' as never)
     .select('*')

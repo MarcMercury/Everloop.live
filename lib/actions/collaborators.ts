@@ -128,6 +128,32 @@ export async function getCollaborators(storyId: string): Promise<CollaboratorsLi
     return { success: false, error: 'You must be logged in.' }
   }
   
+  // Verify user is the story owner or a collaborator themselves
+  const { data: story } = await supabase
+    .from('stories')
+    .select('id, author_id')
+    .eq('id', storyId)
+    .single()
+
+  if (!story) {
+    return { success: false, error: 'Story not found.' }
+  }
+
+  const storyRow = story as { id: string; author_id: string }
+  if (storyRow.author_id !== user.id) {
+    const { data: collab } = await supabase
+      .from('story_collaborators' as never)
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .not('accepted_at', 'is', null)
+      .single()
+    if (!collab) {
+      return { success: false, error: 'Access denied.' }
+    }
+  }
+  
   const { data, error } = await supabase
     .from('story_collaborators' as never)
     .select(`
