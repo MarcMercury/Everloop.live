@@ -635,6 +635,450 @@ export interface Database {
           chapter_order?: number
         }
       }
+      campaigns: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          description: string | null
+          cover_image_url: string | null
+          dm_id: string
+          game_mode: string
+          status: string
+          max_players: number
+          is_public: boolean
+          allow_spectators: boolean
+          world_era: string
+          fray_intensity: number
+          referenced_entities: string[]
+          referenced_shards: string[]
+          settings: Json
+          session_count: number
+          total_play_time_minutes: number
+          tags: string[]
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug: string
+          description?: string | null
+          cover_image_url?: string | null
+          dm_id: string
+          game_mode?: string
+          status?: string
+          max_players?: number
+          is_public?: boolean
+          allow_spectators?: boolean
+          world_era?: string
+          fray_intensity?: number
+          referenced_entities?: string[]
+          referenced_shards?: string[]
+          settings?: Json
+          session_count?: number
+          total_play_time_minutes?: number
+          tags?: string[]
+          metadata?: Json
+        }
+        Update: {
+          title?: string
+          slug?: string
+          description?: string | null
+          cover_image_url?: string | null
+          dm_id?: string
+          game_mode?: string
+          status?: string
+          max_players?: number
+          is_public?: boolean
+          allow_spectators?: boolean
+          world_era?: string
+          fray_intensity?: number
+          referenced_entities?: string[]
+          referenced_shards?: string[]
+          settings?: Json
+          session_count?: number
+          total_play_time_minutes?: number
+          tags?: string[]
+          metadata?: Json
+        }
+      }
+      campaign_players: {
+        Row: {
+          id: string
+          campaign_id: string
+          user_id: string
+          character_id: string | null
+          role: string
+          status: string
+          idols_held: number
+          hidden_objectives: Json
+          secret_info: Json
+          sessions_attended: number
+          total_rolls: number
+          critical_hits: number
+          critical_fails: number
+          joined_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          user_id: string
+          character_id?: string | null
+          role?: string
+          status?: string
+          idols_held?: number
+          hidden_objectives?: Json
+          secret_info?: Json
+          sessions_attended?: number
+          total_rolls?: number
+          critical_hits?: number
+          critical_fails?: number
+          joined_at?: string | null
+        }
+        Update: {
+          character_id?: string | null
+          role?: string
+          status?: string
+          idols_held?: number
+          hidden_objectives?: Json
+          secret_info?: Json
+          sessions_attended?: number
+          total_rolls?: number
+          critical_hits?: number
+          critical_fails?: number
+          joined_at?: string | null
+        }
+      }
+      campaign_scenes: {
+        Row: {
+          id: string
+          campaign_id: string
+          title: string
+          description: string | null
+          scene_order: number
+          scene_type: string
+          mood: string
+          atmosphere: Json
+          map_url: string | null
+          map_data: Json
+          fog_of_war: Json
+          triggers: Json
+          npcs: Json
+          dm_notes: string | null
+          narration: string | null
+          status: string
+          linked_entities: string[]
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          title: string
+          description?: string | null
+          scene_order?: number
+          scene_type?: string
+          mood?: string
+          atmosphere?: Json
+          map_url?: string | null
+          map_data?: Json
+          fog_of_war?: Json
+          triggers?: Json
+          npcs?: Json
+          dm_notes?: string | null
+          narration?: string | null
+          status?: string
+          linked_entities?: string[]
+          metadata?: Json
+        }
+        Update: {
+          title?: string
+          description?: string | null
+          scene_order?: number
+          scene_type?: string
+          mood?: string
+          atmosphere?: Json
+          map_url?: string | null
+          map_data?: Json
+          fog_of_war?: Json
+          triggers?: Json
+          npcs?: Json
+          dm_notes?: string | null
+          narration?: string | null
+          status?: string
+          linked_entities?: string[]
+          metadata?: Json
+        }
+      }
+      campaign_sessions: {
+        Row: {
+          id: string
+          campaign_id: string
+          session_number: number
+          title: string | null
+          status: string
+          active_scene_id: string | null
+          initiative_order: Json
+          current_turn_index: number
+          round_number: number
+          is_combat: boolean
+          fray_intensity: number
+          started_at: string | null
+          ended_at: string | null
+          duration_minutes: number
+          summary: string | null
+          highlights: Json
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          session_number?: number
+          title?: string | null
+          status?: string
+          active_scene_id?: string | null
+          initiative_order?: Json
+          current_turn_index?: number
+          round_number?: number
+          is_combat?: boolean
+          fray_intensity?: number
+          started_at?: string | null
+          ended_at?: string | null
+          duration_minutes?: number
+          summary?: string | null
+          highlights?: Json
+          metadata?: Json
+        }
+        Update: {
+          session_number?: number
+          title?: string | null
+          status?: string
+          active_scene_id?: string | null
+          initiative_order?: Json
+          current_turn_index?: number
+          round_number?: number
+          is_combat?: boolean
+          fray_intensity?: number
+          started_at?: string | null
+          ended_at?: string | null
+          duration_minutes?: number
+          summary?: string | null
+          highlights?: Json
+          metadata?: Json
+        }
+      }
+      campaign_messages: {
+        Row: {
+          id: string
+          session_id: string
+          campaign_id: string
+          sender_id: string | null
+          message_type: string
+          content: string
+          visible_to: string[]
+          roll_data: Json | null
+          reference_data: Json | null
+          character_name: string | null
+          is_hidden: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          campaign_id: string
+          sender_id?: string | null
+          message_type?: string
+          content: string
+          visible_to?: string[]
+          roll_data?: Json | null
+          reference_data?: Json | null
+          character_name?: string | null
+          is_hidden?: boolean
+        }
+        Update: {
+          message_type?: string
+          content?: string
+          visible_to?: string[]
+          roll_data?: Json | null
+          reference_data?: Json | null
+          character_name?: string | null
+          is_hidden?: boolean
+        }
+      }
+      campaign_dice_rolls: {
+        Row: {
+          id: string
+          session_id: string
+          campaign_id: string
+          player_id: string | null
+          character_name: string | null
+          roll_type: string
+          dice_formula: string
+          dice_results: number[]
+          modifier: number
+          total: number
+          ability: string | null
+          skill: string | null
+          dc: number | null
+          is_critical_hit: boolean
+          is_critical_fail: boolean
+          is_success: boolean | null
+          is_secret: boolean
+          advantage_type: string
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          campaign_id: string
+          player_id?: string | null
+          character_name?: string | null
+          roll_type?: string
+          dice_formula: string
+          dice_results?: number[]
+          modifier?: number
+          total: number
+          ability?: string | null
+          skill?: string | null
+          dc?: number | null
+          is_critical_hit?: boolean
+          is_critical_fail?: boolean
+          is_success?: boolean | null
+          is_secret?: boolean
+          advantage_type?: string
+          metadata?: Json
+        }
+        Update: {
+          roll_type?: string
+          dice_formula?: string
+          dice_results?: number[]
+          modifier?: number
+          total?: number
+          ability?: string | null
+          skill?: string | null
+          dc?: number | null
+          is_critical_hit?: boolean
+          is_critical_fail?: boolean
+          is_success?: boolean | null
+          is_secret?: boolean
+          advantage_type?: string
+          metadata?: Json
+        }
+      }
+      narrative_idols: {
+        Row: {
+          id: string
+          campaign_id: string
+          holder_id: string | null
+          name: string
+          description: string | null
+          visual: string | null
+          idol_type: string
+          power: string
+          status: string
+          earned_by: string | null
+          earned_in_session: string | null
+          used_in_session: string | null
+          earned_reason: string | null
+          used_effect: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          holder_id?: string | null
+          name: string
+          description?: string | null
+          visual?: string | null
+          idol_type?: string
+          power: string
+          status?: string
+          earned_by?: string | null
+          earned_in_session?: string | null
+          used_in_session?: string | null
+          earned_reason?: string | null
+          used_effect?: string | null
+        }
+        Update: {
+          holder_id?: string | null
+          name?: string
+          description?: string | null
+          visual?: string | null
+          idol_type?: string
+          power?: string
+          status?: string
+          earned_by?: string | null
+          earned_in_session?: string | null
+          used_in_session?: string | null
+          earned_reason?: string | null
+          used_effect?: string | null
+        }
+      }
+      campaign_npcs: {
+        Row: {
+          id: string
+          campaign_id: string
+          canon_entity_id: string | null
+          name: string
+          description: string | null
+          portrait_url: string | null
+          npc_type: string
+          stats: Json
+          personality: string | null
+          voice_style: string | null
+          motivations: string | null
+          secrets: string | null
+          is_alive: boolean
+          is_visible: boolean
+          current_scene_id: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          canon_entity_id?: string | null
+          name: string
+          description?: string | null
+          portrait_url?: string | null
+          npc_type?: string
+          stats?: Json
+          personality?: string | null
+          voice_style?: string | null
+          motivations?: string | null
+          secrets?: string | null
+          is_alive?: boolean
+          is_visible?: boolean
+          current_scene_id?: string | null
+          metadata?: Json
+        }
+        Update: {
+          canon_entity_id?: string | null
+          name?: string
+          description?: string | null
+          portrait_url?: string | null
+          npc_type?: string
+          stats?: Json
+          personality?: string | null
+          voice_style?: string | null
+          motivations?: string | null
+          secrets?: string | null
+          is_alive?: boolean
+          is_visible?: boolean
+          current_scene_id?: string | null
+          metadata?: Json
+        }
+      }
       story_comments: {
         Row: {
           id: string

@@ -492,4 +492,161 @@
     -webkit-user-select: none;
     user-select: none;
   }
+
+  /* ─── Player Deck ─────────────────────────────── */
+
+  /* Character tile card with fantasy border glow */
+  .character-tile {
+    @apply rounded-lg transition-all duration-300;
+    background: linear-gradient(135deg,
+      rgba(26, 48, 48, 0.6) 0%,
+      rgba(20, 40, 40, 0.8) 100%
+    );
+    border: 1px solid rgba(212, 168, 75, 0.15);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .character-tile:hover {
+    border-color: rgba(212, 168, 75, 0.4);
+    transform: translateY(-3px);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 24px rgba(212, 168, 75, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .character-tile:active {
+    transform: translateY(0);
+  }
+
+  /* Touch-friendly targets for tablet play */
+  .touch-target-lg {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Dice result pop animation */
+  .dice-result-animate {
+    animation: dice-pop 0.4s cubic-bezier(0.17, 0.67, 0.3, 1.33);
+  }
+
+  @keyframes dice-pop {
+    0%   { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  /* NAT 20 celebration burst */
+  .nat20-burst {
+    animation: nat20 0.6s ease-out;
+  }
+
+  @keyframes nat20 {
+    0%   { text-shadow: 0 0 0 rgba(212, 168, 75, 0); }
+    50%  { text-shadow: 0 0 30px rgba(212, 168, 75, 0.9), 0 0 60px rgba(212, 168, 75, 0.5); }
+    100% { text-shadow: 0 0 12px rgba(212, 168, 75, 0.4); }
+  }
+
+  /* NAT 1 fumble shake */
+  .nat1-shake {
+    animation: fumble-shake 0.5s ease-out;
+  }
+
+  @keyframes fumble-shake {
+    0%, 100% { transform: translateX(0); }
+    15%  { transform: translateX(-6px); }
+    30%  { transform: translateX(5px); }
+    45%  { transform: translateX(-4px); }
+    60%  { transform: translateX(3px); }
+    75%  { transform: translateX(-2px); }
+  }
+
+  /* Celestial advisor response glow */
+  .celestial-response {
+    @apply rounded-lg p-4;
+    background: linear-gradient(135deg,
+      rgba(100, 130, 200, 0.08) 0%,
+      rgba(80, 110, 180, 0.04) 100%
+    );
+    border-left: 2px solid rgba(150, 180, 255, 0.35);
+  }
+
+  .celestial-response p {
+    @apply leading-relaxed;
+    color: #c8d8f0;
+  }
+
+  /* Spell slot bubble (filled vs empty) */
+  .spell-slot {
+    @apply rounded-full transition-all duration-200 cursor-pointer;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(212, 168, 75, 0.5);
+    background: transparent;
+  }
+
+  .spell-slot.filled {
+    background: radial-gradient(circle, #d4a84b 30%, #b8922a 100%);
+    box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+  }
+
+  .spell-slot:hover {
+    border-color: rgba(212, 168, 75, 0.8);
+    transform: scale(1.15);
+  }
+
+  /* HP bar colour transitions */
+  .hp-bar-healthy { background: linear-gradient(90deg, #22c55e, #16a34a); }
+  .hp-bar-wounded { background: linear-gradient(90deg, #eab308, #ca8a04); }
+  .hp-bar-critical {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+    animation: hp-pulse 1.2s ease-in-out infinite;
+  }
+
+  @keyframes hp-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Condition badge glow */
+  .condition-active {
+    @apply transition-all duration-200;
+    box-shadow: 0 0 8px rgba(212, 168, 75, 0.3);
+  }
+
+  /* Tablet-optimised grid for Player Deck */
+  @media (min-width: 768px) and (max-width: 1024px) {
+    .deck-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .character-sheet-layout {
+      font-size: 0.95rem;
+    }
+    .touch-target-lg {
+      min-height: 52px;
+      min-width: 52px;
+    }
+  }
+
+  /* Floating panel (dice roller / celestial advisor) */
+  .floating-panel {
+    @apply rounded-xl;
+    background: rgba(13, 26, 26, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(212, 168, 75, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Slide-up entrance for floating panels */
+  .animate-slide-up {
+    animation: slide-up 0.25s ease-out;
+  }
+
+  @keyframes slide-up {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
 }

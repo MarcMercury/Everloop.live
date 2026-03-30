@@ -50,3 +50,7 @@ supabase/.temp
 *.log
 .cache/
 scripts/
+
+# Large binary files
+public/DandDStuff/*.png
+public/DandDStuff/MarekAzurePact_*.pdf

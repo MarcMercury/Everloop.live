@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { WriteButton } from '@/components/write-button'
-import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles } from 'lucide-react'
+import { PenLine, User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -84,6 +84,22 @@ export async function Navbar() {
                 </Link>
                 
                 <Link 
+                  href="/campaigns"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <Flame className="w-4 h-4" />
+                  <span className="hidden sm:inline">Campaigns</span>
+                </Link>
+                
+                <Link 
+                  href="/quests"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span className="hidden sm:inline">Quests</span>
+                </Link>
+                
+                <Link 
                   href="/create"
                   className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
                 >
@@ -97,6 +113,14 @@ export async function Navbar() {
                 >
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">My Roster</span>
+                </Link>
+                
+                <Link 
+                  href="/player-deck"
+                  className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  <Swords className="w-4 h-4" />
+                  <span className="hidden sm:inline">Player Deck</span>
                 </Link>
                 
                 <WriteButton />

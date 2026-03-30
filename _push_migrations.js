@@ -1,0 +1,85 @@
+/**
+ * Push SQL migrations to Supabase using the Management API (sbp_ token)
+ * Reads credentials from .env.local: SUPABASE_PROJECT_ID and SUPABASE_ACCESS_TOKEN
+ */
+const fs = require('fs');
+const https = require('https');
+
+// Load from .env.local
+const envFile = fs.readFileSync('.env.local', 'utf8');
+const env = Object.fromEntries(
+  envFile.split('\n')
+    .filter(l => l.includes('=') && !l.startsWith('#'))
+    .map(l => { const [k, ...v] = l.split('='); return [k.trim(), v.join('=').trim()]; })
+);
+const PROJECT_REF = env.SUPABASE_PROJECT_ID;
+const SBP_TOKEN = env.SUPABASE_ACCESS_TOKEN;
+
+if (!PROJECT_REF || !SBP_TOKEN) {
+  console.error('Missing SUPABASE_PROJECT_ID or SUPABASE_ACCESS_TOKEN in .env.local');
+  process.exit(1);
+}
+
+const migrations = [
+  'supabase/migrations/20260330_001_create_player_characters.sql',
+  'supabase/migrations/20260330_002_create_campaign_engine.sql',
+];
+
+function executeSql(sql) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ query: sql });
+    const options = {
+      hostname: 'api.supabase.com',
+      path: `/v1/projects/${PROJECT_REF}/database/query`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SBP_TOKEN}`,
+        'Content-Length': Buffer.byteLength(body),
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve({ status: res.statusCode, body: data });
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 500)}`));
+        }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function main() {
+  // Test connectivity first
+  console.log('Testing API connectivity...');
+  try {
+    const test = await executeSql('SELECT current_database(), current_user');
+    console.log('Connected:', test.body.substring(0, 200));
+  } catch (err) {
+    console.error('Connection failed:', err.message);
+    process.exit(1);
+  }
+
+  for (const file of migrations) {
+    const sql = fs.readFileSync(file, 'utf8');
+    console.log(`\nRunning: ${file} (${sql.length} chars)...`);
+    try {
+      const result = await executeSql(sql);
+      console.log(`Success (HTTP ${result.status})`);
+      const preview = result.body.substring(0, 300);
+      if (preview) console.log('Response:', preview);
+    } catch (err) {
+      console.error(`Failed: ${err.message}`);
+    }
+  }
+  console.log('\nDone.');
+}
+
+main().catch(console.error);
