@@ -145,14 +145,18 @@ function riverFactor(wx: number, wz: number): number {
   let closest = Infinity
   let riverWidth = 1.8
   for (const r of rivers) {
-    for (let t = -75; t <= 75; t += 1.2) {
+    // Rough bounding check — skip rivers far from this point
+    const approxDx = wx - r.ox; const approxDz = wz - r.oz
+    if (approxDx * approxDx + approxDz * approxDz > 14000) continue
+    for (let t = -60; t <= 60; t += 3) {
       const rx = r.ox + r.dx * t + Math.sin(t * r.freq) * r.amp + Math.sin(t * r.freq * 2.3 + 1) * r.amp * 0.3
       const rz = r.oz + r.dz * t + Math.cos(t * r.freq * 0.8) * r.amp * 0.6 + Math.cos(t * r.freq * 1.7 + 2) * r.amp * 0.2
       const dx = wx - rx; const dz = wz - rz
-      const dist = Math.sqrt(dx * dx + dz * dz)
-      if (dist < closest) { closest = dist; riverWidth = r.width }
+      const distSq = dx * dx + dz * dz
+      if (distSq < closest) { closest = distSq; riverWidth = r.width }
     }
   }
+  closest = Math.sqrt(closest)
   return Math.max(0, 1 - closest / riverWidth)
 }
 
@@ -167,19 +171,18 @@ function isSteppesRegion(wx: number, wz: number): number {
   return f * f * (3 - 2 * f)
 }
 
-function getTerrainHeight(wx: number, wz: number): number {
+// Overload: pass pre-computed values to avoid redundant calls in the surface mesh loop
+function getTerrainHeight(wx: number, wz: number, precomputed?: { land: number; rv: number }): number {
   const dist = Math.sqrt(wx * wx + wz * wz)
   // Directional edge fade: land extending east/NE/south doesn't fade
   const angle = Math.atan2(wz, wx)
-  // Extend land on east side (angle ~0), NE (angle ~0.7), and parts of south (angle ~-1.5)
-  const eastFactor = Math.max(0, Math.cos(angle)) // 1 at east, 0 at north/south, negative at west
-  const northFactor = Math.max(0, Math.sin(angle) * 0.5) // partial north extension
+  const eastFactor = Math.max(0, Math.cos(angle))
+  const northFactor = Math.max(0, Math.sin(angle) * 0.5)
   const extendFactor = Math.max(eastFactor, northFactor)
-  // Blend between tight fade (ocean edges) and loose fade (land-extending edges)
   const tightFade = Math.max(0, 1 - Math.pow(dist / WORLD_RADIUS, 2.5))
   const looseFade = Math.max(0, 1 - Math.pow(dist / (WORLD_RADIUS * 1.3), 4))
   const edgeFade = tightFade + (looseFade - tightFade) * extendFactor
-  const land = continentMask(wx, wz)
+  const land = precomputed ? precomputed.land : continentMask(wx, wz)
 
   if (land < 0.08) {
     // Ocean floor with varying depth
@@ -239,7 +242,7 @@ function getTerrainHeight(wx: number, wz: number): number {
   }
 
   // Carve rivers into terrain
-  const rv = riverFactor(wx, wz)
+  const rv = precomputed ? precomputed.rv : riverFactor(wx, wz)
   h -= rv * rv * 4.5
 
   // Apply shore blend and edge fade
@@ -717,9 +720,9 @@ function biomeColor(h: number, wx: number, wz: number, land: number, rv: number)
 
 function TheSurface() {
   const geometry = useMemo(() => {
-    // High-res plane clipped to disc
+    // Terrain plane clipped to disc
     const size = WORLD_RADIUS * 2
-    const segments = 600
+    const segments = 350
     const geo = new THREE.PlaneGeometry(size, size, segments, segments)
     const positions = geo.attributes.position
     const colors = new Float32Array(positions.count * 3)
@@ -752,11 +755,12 @@ function TheSurface() {
 
       const px = positions.getX(i)
       const pz = positions.getY(i)
-      const h = getTerrainHeight(px, pz)
-      positions.setZ(i, h)
-
+      // Compute expensive functions once per vertex
       const land = continentMask(px, pz)
       const rv = riverFactor(px, pz)
+      const h = getTerrainHeight(px, pz, { land, rv })
+      positions.setZ(i, h)
+
       const [r, g, b] = biomeColor(h, px, pz, land, rv)
       colors[i * 3] = r; colors[i * 3 + 1] = g; colors[i * 3 + 2] = b
     }
