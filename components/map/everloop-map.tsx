@@ -33,8 +33,7 @@ const SURFACE_Y = 30      // Living world height
 const PATTERN_Y = 12      // Pattern lattice height
 const FOLD_Y = -2         // Fold platform height
 const DRIFT_Y = -20       // Drift base
-const WORLD_RADIUS = 55   // Disc radius
-const FRAY_HEIGHT = 50    // How tall the Fray column reaches
+const WORLD_RADIUS = 120  // Disc radius — large for epic scale
 
 function getTypeColor(type: string): string {
   switch (type) {
@@ -91,20 +90,20 @@ function continentMask(wx: number, wz: number): number {
   // Main continent — large irregular mass through center-north
   const blobs: [number, number, number, number, number][] = [
     // [x, z, radiusX, radiusZ, strength]
-    [8, 5, 28, 24, 1.0],      // Central landmass core
-    [22, 14, 16, 14, 0.95],   // NE extension
-    [-10, -2, 18, 16, 0.92],  // Western lobe
-    [5, -18, 15, 20, 0.88],   // Southern peninsula
-    [-6, 20, 14, 10, 0.85],   // Northern cape
-    [32, -8, 10, 12, 0.7],    // Eastern peninsula
-    [-28, -10, 12, 14, 0.65], // Far-west large island
-    [-22, 12, 8, 10, 0.6],    // NW island
-    [18, -28, 10, 8, 0.55],   // SE island
-    [35, 10, 7, 9, 0.5],      // Eastern archipelago
-    [-32, -26, 6, 7, 0.45],   // SW islet
-    [0, 30, 9, 6, 0.5],       // Northern isle
-    [-15, -30, 7, 5, 0.4],    // Southern islet
-    [28, 25, 6, 8, 0.42],     // NE islet
+    [15, 10, 60, 52, 1.0],       // Central landmass core
+    [48, 30, 35, 30, 0.95],      // NE extension
+    [-22, -5, 40, 35, 0.92],     // Western lobe
+    [10, -40, 32, 44, 0.88],     // Southern peninsula
+    [-14, 44, 30, 22, 0.85],     // Northern cape
+    [70, -18, 22, 26, 0.7],      // Eastern peninsula
+    [-62, -22, 26, 30, 0.65],    // Far-west large island
+    [-48, 26, 18, 22, 0.6],      // NW island
+    [40, -62, 22, 18, 0.55],     // SE island
+    [78, 22, 16, 20, 0.5],       // Eastern archipelago
+    [-70, -58, 14, 16, 0.45],    // SW islet
+    [0, 66, 20, 14, 0.5],        // Northern isle
+    [-33, -66, 16, 12, 0.4],     // Southern islet
+    [62, 55, 14, 18, 0.42],      // NE islet
   ]
   let v = 0
   for (const [bx, bz, brx, brz, strength] of blobs) {
@@ -127,17 +126,19 @@ function continentMask(wx: number, wz: number): number {
 // ─── River paths: carved valleys between terrain ────────────
 function riverFactor(wx: number, wz: number): number {
   const rivers: { ox: number; oz: number; dx: number; dz: number; freq: number; amp: number; width: number }[] = [
-    { ox: 12, oz: 25, dx: 0.1, dz: -1, freq: 0.13, amp: 7, width: 2.0 },    // Great North-South river
-    { ox: -10, oz: 10, dx: 0.8, dz: -0.6, freq: 0.10, amp: 5.5, width: 1.6 }, // Western river
-    { ox: 5, oz: -5, dx: 1, dz: 0.2, freq: 0.16, amp: 4, width: 1.4 },       // East-flowing river
-    { ox: 20, oz: 15, dx: -0.3, dz: -1, freq: 0.18, amp: 3.5, width: 1.2 },  // Eastern tributary
-    { ox: -5, oz: -15, dx: 0.6, dz: 0.8, freq: 0.14, amp: 3, width: 1.0 },   // Southern stream
-    { ox: 25, oz: 0, dx: -1, dz: 0.3, freq: 0.20, amp: 4, width: 1.3 },      // SE river delta
+    { ox: 26, oz: 55, dx: 0.1, dz: -1, freq: 0.06, amp: 15, width: 2.8 },      // Great North-South river
+    { ox: -22, oz: 22, dx: 0.8, dz: -0.6, freq: 0.05, amp: 12, width: 2.2 },    // Western river
+    { ox: 10, oz: -10, dx: 1, dz: 0.2, freq: 0.07, amp: 9, width: 2.0 },        // East-flowing river
+    { ox: 44, oz: 33, dx: -0.3, dz: -1, freq: 0.08, amp: 8, width: 1.8 },       // Eastern tributary
+    { ox: -10, oz: -33, dx: 0.6, dz: 0.8, freq: 0.06, amp: 7, width: 1.5 },     // Southern stream
+    { ox: 55, oz: 0, dx: -1, dz: 0.3, freq: 0.09, amp: 9, width: 2.0 },         // SE river delta
+    { ox: -40, oz: -5, dx: 0.5, dz: -0.85, freq: 0.055, amp: 10, width: 1.8 },  // Far-west river
+    { ox: 30, oz: -50, dx: -0.7, dz: 0.7, freq: 0.07, amp: 8, width: 1.6 },     // Southern branch
   ]
   let closest = Infinity
   let riverWidth = 1.8
   for (const r of rivers) {
-    for (let t = -35; t <= 35; t += 0.8) {
+    for (let t = -75; t <= 75; t += 1.2) {
       const rx = r.ox + r.dx * t + Math.sin(t * r.freq) * r.amp + Math.sin(t * r.freq * 2.3 + 1) * r.amp * 0.3
       const rz = r.oz + r.dz * t + Math.cos(t * r.freq * 0.8) * r.amp * 0.6 + Math.cos(t * r.freq * 1.7 + 2) * r.amp * 0.2
       const dx = wx - rx; const dz = wz - rz
@@ -181,10 +182,12 @@ function getTerrainHeight(wx: number, wz: number): number {
 
   // Volcanic peaks — sharp isolated mountains
   const peaks: [number, number, number, number][] = [
-    [18, 8, 4, 14],   // Main peak
-    [-15, -12, 3.5, 11], // Western peak
-    [30, -5, 3, 9],   // Eastern peak
-    [-5, 22, 2.5, 7], // Northern peak
+    [40, 18, 8, 16],      // Main peak
+    [-33, -26, 7, 13],    // Western peak
+    [66, -10, 6, 11],     // Eastern peak
+    [-10, 48, 5, 9],      // Northern peak
+    [55, 40, 5.5, 10],    // NE peak
+    [-55, 5, 6, 12],      // Far-west peak
   ]
   for (const [px, pz, radius, height] of peaks) {
     const pd = Math.sqrt((wx - px) ** 2 + (wz - pz) ** 2)
@@ -202,10 +205,6 @@ function getTerrainHeight(wx: number, wz: number): number {
   const rv = riverFactor(wx, wz)
   h -= rv * rv * 4.5
 
-  // Fray crater at center
-  const centerDist = dist / WORLD_RADIUS
-  if (centerDist < 0.08) h -= (0.08 - centerDist) * 30
-
   // Apply shore blend and edge fade
   h *= shoreBlend
   return Math.max(h, -1.5) * edgeFade
@@ -221,9 +220,9 @@ function TheDrift() {
     const colors = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2
-      const r = Math.random() * 80
+      const r = Math.random() * 170
       positions[i * 3] = Math.cos(theta) * r
-      positions[i * 3 + 1] = DRIFT_Y + (Math.random() - 0.5) * 20
+      positions[i * 3 + 1] = DRIFT_Y + (Math.random() - 0.5) * 25
       positions[i * 3 + 2] = Math.sin(theta) * r
       // Dark purples, deep blues, occasional white
       const t = Math.random()
@@ -260,13 +259,13 @@ function TheDrift() {
       <primitive object={particlesObj} />
       {/* Dark void sphere at bottom */}
       <mesh position={[0, DRIFT_Y - 5, 0]}>
-        <sphereGeometry args={[80, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[170, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
         <meshStandardMaterial color="#050510" side={THREE.BackSide} transparent opacity={0.9} />
       </mesh>
       {/* Swirling nebula rings */}
       {[0, 1, 2].map(i => (
         <mesh key={i} position={[0, DRIFT_Y - 3 + i * 3, 0]} rotation={[Math.PI / 2, 0, i * 0.7]}>
-          <torusGeometry args={[40 + i * 15, 8, 8, 64]} />
+          <torusGeometry args={[80 + i * 30, 15, 8, 64]} />
           <meshStandardMaterial
             color={i === 0 ? '#1a0a2e' : i === 1 ? '#0a1030' : '#150820'}
             transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false}
@@ -295,7 +294,7 @@ function TheFold() {
     <group>
       {/* Semi-transparent platform — glass-like */}
       <mesh ref={ref} position={[0, FOLD_Y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[65, 64]} />
+        <circleGeometry args={[140, 96]} />
         <meshStandardMaterial
           color="#a0c0e0" transparent opacity={0.1} roughness={0.05} metalness={0.8}
           side={THREE.DoubleSide} depthWrite={false}
@@ -313,15 +312,15 @@ function FoldGrid() {
   const obj = useMemo(() => {
     const mat = new THREE.LineBasicMaterial({ color: '#4060a0', transparent: true, opacity: 0.08, depthWrite: false })
     const group = new THREE.Group()
-    for (let i = -60; i <= 60; i += 10) {
+    for (let i = -130; i <= 130; i += 15) {
       const geoX = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, FOLD_Y + 0.1, -60),
-        new THREE.Vector3(i, FOLD_Y + 0.1, 60),
+        new THREE.Vector3(i, FOLD_Y + 0.1, -130),
+        new THREE.Vector3(i, FOLD_Y + 0.1, 130),
       ])
       group.add(new THREE.Line(geoX, mat))
       const geoZ = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-60, FOLD_Y + 0.1, i),
-        new THREE.Vector3(60, FOLD_Y + 0.1, i),
+        new THREE.Vector3(-130, FOLD_Y + 0.1, i),
+        new THREE.Vector3(130, FOLD_Y + 0.1, i),
       ])
       group.add(new THREE.Line(geoZ, mat))
     }
@@ -339,8 +338,8 @@ function ThePattern() {
   // Build lattice grid
   const latticeObj = useMemo(() => {
     const group = new THREE.Group()
-    const spacing = 8
-    const range = 48
+    const spacing = 16
+    const range = 105
     const nodeMat = new THREE.MeshStandardMaterial({
       color: '#40a0ff', emissive: '#2080dd', emissiveIntensity: 0.8,
       transparent: true, opacity: 0.9, roughness: 0.2,
@@ -410,7 +409,7 @@ function Anchors() {
     const count = 8
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2
-      const r = 42
+      const r = 95
       positions.push([Math.cos(angle) * r, Math.sin(angle) * r])
     }
     return positions
@@ -464,12 +463,12 @@ function Anchor({ x, z, index }: { x: number; z: number; index: number }) {
 }
 
 // ─── Shards: Smaller crystals scattered on the Pattern ─────
-function Shards() {
+function PatternShards() {
   const shardPositions = useMemo(() => {
     const positions: [number, number, number][] = []
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2 + 0.3
-      const r = 18 + Math.sin(i * 2.7) * 10
+    for (let i = 0; i < 18; i++) {
+      const angle = (i / 18) * Math.PI * 2 + 0.3
+      const r = 35 + Math.sin(i * 2.7) * 20
       positions.push([Math.cos(angle) * r, PATTERN_Y + 1.5, Math.sin(angle) * r])
     }
     return positions
@@ -487,6 +486,66 @@ function Shards() {
             />
           </mesh>
         </Float>
+      ))}
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SURFACE SHARDS — Crystalline markers where Shards were found
+// ═══════════════════════════════════════════════════════════════
+const SHARD_SITES: [number, number][] = [
+  [12, 8], [-22, 5], [35, -18], [-10, -25], [45, 15],
+  [-38, -12], [8, 38], [28, -35], [-45, 18], [18, -8],
+  [-28, 35], [52, -5], [-5, -45], [40, 28], [-50, -20],
+  [22, 48], [-35, -40], [55, 10], [-18, 52], [32, -50],
+]
+
+function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) {
+  const ref = useRef<THREE.Mesh>(null)
+  const land = continentMask(x, z)
+  const terrainH = land > 0.08 ? Math.max(getTerrainHeight(x, z), 0) : -0.5
+
+  useFrame(({ clock }) => {
+    if (ref.current) {
+      ref.current.rotation.y = clock.elapsedTime * 0.4 + index
+      const mat = ref.current.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 1.2 + index * 0.9) * 0.3
+    }
+  })
+
+  const y = SURFACE_Y + terrainH + 1.2
+  const size = 0.5 + seededRandom(index * 73 + 11) * 0.5
+
+  return (
+    <group position={[x, y, z]}>
+      <Float speed={1} rotationIntensity={0.2} floatIntensity={0.3}>
+        <mesh ref={ref}>
+          <octahedronGeometry args={[size, 0]} />
+          <meshStandardMaterial
+            color="#60d0ff" emissive="#40a8ee" emissiveIntensity={0.8}
+            roughness={0.05} metalness={0.8} transparent opacity={0.85}
+          />
+        </mesh>
+      </Float>
+      {/* Label */}
+      <Html position={[0, size + 1.2, 0]} center distanceFactor={25} style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <div className="text-center select-none">
+          <div className="text-[9px] font-serif text-cyan-300 drop-shadow-lg" style={{ textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
+            Shard Site
+          </div>
+        </div>
+      </Html>
+      <pointLight color="#40a0ee" intensity={1} distance={size * 10} decay={2} />
+    </group>
+  )
+}
+
+function SurfaceShards() {
+  return (
+    <group>
+      {SHARD_SITES.map(([x, z], i) => (
+        <SurfaceShard key={i} x={x} z={z} index={i} />
       ))}
     </group>
   )
@@ -615,7 +674,7 @@ function TheSurface() {
   const geometry = useMemo(() => {
     // High-res plane clipped to disc
     const size = WORLD_RADIUS * 2
-    const segments = 500
+    const segments = 600
     const geo = new THREE.PlaneGeometry(size, size, segments, segments)
     const positions = geo.attributes.position
     const colors = new Float32Array(positions.count * 3)
@@ -671,13 +730,13 @@ function TheSurface() {
       {/* Ocean water plane */}
       <Water />
       {/* Disc edge — rock rim */}
-      <mesh position={[0, -1, 0]}>
-        <cylinderGeometry args={[WORLD_RADIUS, WORLD_RADIUS + 2, 4, 64, 1, true]} />
+      <mesh position={[0, -1.5, 0]}>
+        <cylinderGeometry args={[WORLD_RADIUS, WORLD_RADIUS + 3, 6, 96, 1, true]} />
         <meshStandardMaterial color="#2a2218" roughness={0.9} metalness={0.1} side={THREE.DoubleSide} />
       </mesh>
       {/* Underside glow */}
-      <mesh position={[0, -3, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[WORLD_RADIUS - 2, 64]} />
+      <mesh position={[0, -4, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[WORLD_RADIUS - 2, 96]} />
         <meshStandardMaterial
           color="#1a3040" emissive="#2060a0" emissiveIntensity={0.3}
           transparent opacity={0.4} side={THREE.DoubleSide} depthWrite={false}
@@ -694,62 +753,85 @@ function Water() {
   })
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
-      <circleGeometry args={[WORLD_RADIUS - 0.5, 64]} />
+      <circleGeometry args={[WORLD_RADIUS - 0.5, 96]} />
       <meshStandardMaterial color="#0a3050" transparent opacity={0.8} roughness={0.05} metalness={0.6} />
     </mesh>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════
-// THE FRAY — Wound between realities (purple energy column)
+// THE FRAY — Scattered rifts on the surface where reality tears
 // ═══════════════════════════════════════════════════════════════
-function TheFray() {
+
+// Deterministic Fray rift positions scattered across the land
+const FRAY_RIFTS: [number, number][] = [
+  [25, 15], [-18, 8], [40, -20], [-35, -15], [10, -35],
+  [-8, 30], [50, 5], [-42, 22], [15, 45], [-25, -38],
+  [38, 32], [-50, -5], [8, -48], [55, -35], [-15, 50],
+  [-48, -30], [30, -45], [48, 20], [-30, 42], [20, -15],
+  [-55, 10], [42, -10], [-20, -50], [5, 55], [60, -25],
+]
+
+function FrayRift({ x, z, index }: { x: number; z: number; index: number }) {
   const ref = useRef<THREE.Group>(null)
+  const land = continentMask(x, z)
+  const terrainH = land > 0.08 ? Math.max(getTerrainHeight(x, z), 0) : 0
+  const onLand = land > 0.08
 
   useFrame(({ clock }) => {
     if (ref.current) {
-      ref.current.rotation.y = clock.elapsedTime * 0.15
       ref.current.children.forEach((child, i) => {
         if (child instanceof THREE.Mesh) {
           const mat = child.material as THREE.MeshStandardMaterial
-          mat.emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 2 + i) * 0.3
-          mat.opacity = 0.15 + Math.sin(clock.elapsedTime * 1.5 + i * 0.5) * 0.05
+          mat.emissiveIntensity = 0.8 + Math.sin(clock.elapsedTime * 2.5 + index * 1.3 + i) * 0.5
+          mat.opacity = 0.25 + Math.sin(clock.elapsedTime * 1.8 + index * 0.7) * 0.1
         }
       })
     }
   })
 
+  if (!onLand) return null
+
+  const y = SURFACE_Y + terrainH + 0.3
+  const size = 0.6 + seededRandom(index * 47) * 0.8
+
   return (
-    <group ref={ref} position={[0, DRIFT_Y, 0]}>
-      {/* Main column */}
-      <mesh position={[0, FRAY_HEIGHT / 2 + 10, 0]}>
-        <cylinderGeometry args={[1.5, 3, FRAY_HEIGHT + 20, 8, 1, true]} />
+    <group ref={ref} position={[x, y, z]}>
+      {/* Rift glow disc */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[size * 2, 16]} />
         <meshStandardMaterial
-          color="#8030c0" emissive="#6020a0" emissiveIntensity={0.8}
-          transparent opacity={0.18} side={THREE.DoubleSide} depthWrite={false}
+          color="#6020a0" emissive="#8040c0" emissiveIntensity={1}
+          transparent opacity={0.3} depthWrite={false} side={THREE.DoubleSide}
         />
       </mesh>
       {/* Inner bright core */}
-      <mesh position={[0, FRAY_HEIGHT / 2 + 10, 0]}>
-        <cylinderGeometry args={[0.4, 0.8, FRAY_HEIGHT + 20, 6, 1, true]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[size * 0.6, 12]} />
         <meshStandardMaterial
-          color="#c060ff" emissive="#a040dd" emissiveIntensity={1.2}
-          transparent opacity={0.25} side={THREE.DoubleSide} depthWrite={false}
+          color="#c060ff" emissive="#b050ee" emissiveIntensity={1.5}
+          transparent opacity={0.5} depthWrite={false} side={THREE.DoubleSide}
         />
       </mesh>
-      {/* Swirling outer wisps */}
-      {[0, 1, 2, 3].map(i => (
-        <mesh key={i} position={[0, FRAY_HEIGHT / 2 + 5, 0]} rotation={[0, i * Math.PI / 2, 0.2]}>
-          <cylinderGeometry args={[3 + i, 4 + i * 0.5, FRAY_HEIGHT, 6, 1, true]} />
-          <meshStandardMaterial
-            color="#5020a0" emissive="#4010a0" emissiveIntensity={0.3}
-            transparent opacity={0.04} side={THREE.DoubleSide} depthWrite={false}
-          />
-        </mesh>
+      {/* Vertical wisp */}
+      <mesh position={[0, size * 1.5, 0]}>
+        <cylinderGeometry args={[size * 0.15, size * 0.4, size * 3, 6, 1, true]} />
+        <meshStandardMaterial
+          color="#8040c0" emissive="#6030a0" emissiveIntensity={0.8}
+          transparent opacity={0.15} depthWrite={false} side={THREE.DoubleSide}
+        />
+      </mesh>
+      <pointLight color="#8040c0" intensity={1.5} distance={size * 8} decay={2} />
+    </group>
+  )
+}
+
+function FrayRifts() {
+  return (
+    <group>
+      {FRAY_RIFTS.map(([x, z], i) => (
+        <FrayRift key={i} x={x} z={z} index={i} />
       ))}
-      {/* Fray light */}
-      <pointLight position={[0, SURFACE_Y + 5, 0]} intensity={2} color="#8040c0" distance={40} decay={2} />
-      <pointLight position={[0, PATTERN_Y, 0]} intensity={1.5} color="#6030a0" distance={30} decay={2} />
     </group>
   )
 }
@@ -762,7 +844,7 @@ function Hollows() {
     const pts: [number, number][] = []
     for (let i = 0; i < 5; i++) {
       const angle = (i / 5) * Math.PI * 2 + 1
-      const r = 15 + Math.sin(i * 3) * 8
+      const r = 30 + Math.sin(i * 3) * 18
       pts.push([Math.cos(angle) * r, Math.sin(angle) * r])
     }
     return pts
@@ -853,13 +935,13 @@ function LocationBeacon({
 // ═══════════════════════════════════════════════════════════════
 function SurfaceParticles() {
   const obj = useMemo(() => {
-    const count = 1500
+    const count = 2500
     const positions = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2
-      const r = Math.random() * WORLD_RADIUS * 0.9
+      const r = Math.random() * WORLD_RADIUS * 0.95
       positions[i * 3] = Math.cos(angle) * r
-      positions[i * 3 + 1] = SURFACE_Y + 2 + Math.random() * 15
+      positions[i * 3 + 1] = SURFACE_Y + 2 + Math.random() * 20
       positions[i * 3 + 2] = Math.sin(angle) * r
     }
     const geo = new THREE.BufferGeometry()
@@ -896,7 +978,7 @@ function LayerLabels() {
   return (
     <group>
       {labels.map((label) => (
-        <Html key={label.text} position={[-68, label.y, 0]} style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+        <Html key={label.text} position={[-145, label.y, 0]} style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
           <div className="select-none">
             <div className="text-sm font-serif font-bold tracking-wider" style={{ color: label.color, textShadow: '0 0 12px rgba(0,0,0,0.9)' }}>
               {label.text}
@@ -929,25 +1011,26 @@ function Scene({
       {/* Global lighting — bright enough to see vivid terrain */}
       <ambientLight intensity={0.35} color="#e8e0d0" />
       <directionalLight
-        position={[60, 80, 40]} intensity={1.2} color="#fff4e0" castShadow
-        shadow-mapSize={[2048, 2048]} shadow-camera-far={200}
-        shadow-camera-left={-80} shadow-camera-right={80}
-        shadow-camera-top={80} shadow-camera-bottom={-80}
+        position={[100, 120, 60]} intensity={1.2} color="#fff4e0" castShadow
+        shadow-mapSize={[2048, 2048]} shadow-camera-far={400}
+        shadow-camera-left={-160} shadow-camera-right={160}
+        shadow-camera-top={160} shadow-camera-bottom={-160}
       />
-      <directionalLight position={[-40, 60, -30]} intensity={0.3} color="#8090cc" />
+      <directionalLight position={[-80, 100, -50]} intensity={0.3} color="#8090cc" />
       <hemisphereLight args={['#c0d0e0', '#1a1a30', 0.4]} />
 
       {/* Stars behind everything */}
-      <Stars radius={200} depth={100} count={8000} factor={5} saturation={0.3} fade speed={0.3} />
+      <Stars radius={400} depth={200} count={10000} factor={6} saturation={0.3} fade speed={0.3} />
 
       {/* === THE FOUR LAYERS === */}
       <TheDrift />
       <TheFold />
       <ThePattern />
       <Anchors />
-      <Shards />
+      <PatternShards />
       <TheSurface />
-      <TheFray />
+      <FrayRifts />
+      <SurfaceShards />
       <Hollows />
 
       {/* Surface elements */}
@@ -967,12 +1050,12 @@ function Scene({
       {/* Camera — user has full control, no auto-animation */}
       <OrbitControls
         makeDefault enableDamping dampingFactor={0.05}
-        minDistance={10} maxDistance={250}
+        minDistance={15} maxDistance={500}
         target={ORBIT_TARGET}
         enablePan
       />
 
-      <fog attach="fog" args={['#05050a', 120, 250]} />
+      <fog attach="fog" args={['#05050a', 250, 550]} />
     </>
   )
 }
@@ -1039,7 +1122,6 @@ function MapLegend() {
             { color: '#40a0ff', label: 'The Pattern', sub: 'Fabric of Reality' },
             { color: '#6080b0', label: 'The Fold', sub: "Architects' Realm" },
             { color: '#6030a0', label: 'The Drift', sub: 'Sea of Origins' },
-            { color: '#8040c0', label: 'The Fray', sub: 'Wound Between Realities' },
           ].map(({ color, label, sub }) => (
             <div key={label} className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}80` }} />
@@ -1049,6 +1131,24 @@ function MapLegend() {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-2 pt-2 border-t border-gold/10">
+          <h4 className="text-xs font-serif text-parchment mb-1.5 uppercase tracking-wider">Surface Markers</h4>
+          <div className="space-y-1.5">
+            {[
+              { color: '#d4a84b', label: 'Locations', sub: 'Canon Places', shape: 'circle' as const },
+              { color: '#60d0ff', label: 'Shard Sites', sub: 'Crystal Fragments', shape: 'diamond' as const },
+              { color: '#8040c0', label: 'Fray Rifts', sub: 'Reality Tears', shape: 'circle' as const },
+            ].map(({ color, label, sub, shape }) => (
+              <div key={label} className="flex items-center gap-2">
+                <div className={`w-2.5 h-2.5 ${shape === 'diamond' ? 'rotate-45' : 'rounded-full'}`} style={{ background: color, boxShadow: `0 0 6px ${color}80` }} />
+                <div>
+                  <span className="text-xs text-parchment">{label}</span>
+                  <span className="text-[9px] text-parchment-muted ml-1.5">{sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gold/10">
           <p className="text-[9px] text-parchment-muted italic leading-tight">
@@ -1088,8 +1188,8 @@ export default function EverloopMap({ locations }: EverloopMapProps) {
     <div className="relative w-full h-full">
       <Canvas
         shadows
-        camera={{ position: [80, 40, 80], fov: 50, near: 0.1, far: 500 }}
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
+        camera={{ position: [160, 70, 160], fov: 40, near: 0.1, far: 1000 }}
+        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.2 }}
         style={{ background: '#030308' }}
         onClick={() => setSelectedLocation(null)}
       >
