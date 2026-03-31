@@ -87,7 +87,7 @@ function fbm(x: number, z: number, octaves: number = 6): number {
 
 // ─── Continental mask: defines land vs ocean ───────────────
 function continentMask(wx: number, wz: number): number {
-  // Main continent — large irregular mass through center-north
+  // Main continent — extends to disc edges on east and north sides
   const blobs: [number, number, number, number, number][] = [
     // [x, z, radiusX, radiusZ, strength]
     [15, 10, 60, 52, 1.0],       // Central landmass core
@@ -104,6 +104,13 @@ function continentMask(wx: number, wz: number): number {
     [0, 66, 20, 14, 0.5],        // Northern isle
     [-33, -66, 16, 12, 0.4],     // Southern islet
     [62, 55, 14, 18, 0.42],      // NE islet
+    // === Land extending to disc edges ===
+    [100, -15, 65, 80, 1.0],     // Eastern mega-blob — Veykar/Deyune steppes, extends past edge
+    [85, 20, 50, 55, 0.95],      // NE land bridge to edge
+    [70, -55, 50, 45, 0.9],      // SE land extension
+    [15, 70, 40, 65, 0.88],      // Northern land extending to edge
+    [55, 60, 35, 50, 0.85],      // NE land to edge
+    [-10, -75, 45, 50, 0.8],     // Southern land extension
   ]
   let v = 0
   for (const [bx, bz, brx, brz, strength] of blobs) {
@@ -149,9 +156,29 @@ function riverFactor(wx: number, wz: number): number {
   return Math.max(0, 1 - closest / riverWidth)
 }
 
+// Check if a point is in the steppes region (Veykar / Deyune)
+function isSteppesRegion(wx: number, wz: number): number {
+  // Eastern steppes — wide open plains
+  const cx = 85, cz = -10, rx = 55, rz = 60
+  const dx = (wx - cx) / rx, dz = (wz - cz) / rz
+  const d = Math.sqrt(dx * dx + dz * dz)
+  if (d >= 1) return 0
+  const f = 1 - d
+  return f * f * (3 - 2 * f)
+}
+
 function getTerrainHeight(wx: number, wz: number): number {
   const dist = Math.sqrt(wx * wx + wz * wz)
-  const edgeFade = Math.max(0, 1 - Math.pow(dist / WORLD_RADIUS, 2.5))
+  // Directional edge fade: land extending east/NE/south doesn't fade
+  const angle = Math.atan2(wz, wx)
+  // Extend land on east side (angle ~0), NE (angle ~0.7), and parts of south (angle ~-1.5)
+  const eastFactor = Math.max(0, Math.cos(angle)) // 1 at east, 0 at north/south, negative at west
+  const northFactor = Math.max(0, Math.sin(angle) * 0.5) // partial north extension
+  const extendFactor = Math.max(eastFactor, northFactor)
+  // Blend between tight fade (ocean edges) and loose fade (land-extending edges)
+  const tightFade = Math.max(0, 1 - Math.pow(dist / WORLD_RADIUS, 2.5))
+  const looseFade = Math.max(0, 1 - Math.pow(dist / (WORLD_RADIUS * 1.3), 4))
+  const edgeFade = tightFade + (looseFade - tightFade) * extendFactor
   const land = continentMask(wx, wz)
 
   if (land < 0.08) {
@@ -174,11 +201,14 @@ function getTerrainHeight(wx: number, wz: number): number {
   h += fbm(wx * 1.5 + 70, wz * 1.5 + 70, 4) * 2.5
 
   // Mountain ranges: ridged noise concentrated in zones
+  // Suppress mountains in the steppes region (Veykar/Deyune)
+  const steppesFlat = isSteppesRegion(wx, wz)
+  const mountainSuppress = 1 - steppesFlat * 0.92
   const ridge1 = Math.abs(fbm(wx * 0.6 + 300, wz * 0.6 + 300, 5) - 0.5) * 2
   const ridge2 = Math.abs(fbm(wx * 0.45 + 500, wz * 0.45 - 200, 4) - 0.5) * 2
   const mountainZone1 = Math.max(0, fbm(wx * 0.2, wz * 0.2, 3) - 0.32) * 3.5
   const mountainZone2 = Math.max(0, fbm(wx * 0.18 + 100, wz * 0.18 + 100, 3) - 0.38) * 2.5
-  h += ridge1 * mountainZone1 * 12 + ridge2 * mountainZone2 * 8
+  h += (ridge1 * mountainZone1 * 12 + ridge2 * mountainZone2 * 8) * mountainSuppress
 
   // Volcanic peaks — sharp isolated mountains
   const peaks: [number, number, number, number][] = [
@@ -199,7 +229,14 @@ function getTerrainHeight(wx: number, wz: number): number {
 
   // Valley systems — low areas between mountain ranges
   const valley = Math.max(0, 0.4 - fbm(wx * 0.35 + 600, wz * 0.35 + 600, 4)) * 6
-  h -= valley
+  h -= valley * mountainSuppress
+
+  // Steppes: flatten to gentle rolling grassland
+  if (steppesFlat > 0) {
+    const gentleRoll = fbm(wx * 0.8 + 700, wz * 0.8 + 700, 3) * 2.0
+    const steppesH = land * 1.8 + gentleRoll
+    h = h * (1 - steppesFlat) + steppesH * steppesFlat
+  }
 
   // Carve rivers into terrain
   const rv = riverFactor(wx, wz)
@@ -614,6 +651,14 @@ function biomeColor(h: number, wx: number, wz: number, land: number, rv: number)
       return [0.30 + micro, 0.55 + micro, 0.20]
     }
     // Dry grassland / savanna
+    // Distinct steppes coloring for Veykar/Deyune region
+    const steppe = isSteppesRegion(wx, wz)
+    if (steppe > 0.3) {
+      const steppeGold: [number, number, number] = [0.58 + micro, 0.52 + micro, 0.28]
+      const steppeTan: [number, number, number] = [0.55 + micro, 0.48 + micro, 0.25]
+      const base = lerpColor(steppeTan, steppeGold, fbm(wx * 2 + 300, wz * 2 + 300, 2))
+      return base
+    }
     return [0.50 + micro, 0.55 + micro, 0.28]
   }
 
@@ -875,7 +920,9 @@ function LocationBeacon({
 }) {
   const beaconRef = useRef<THREE.Group>(null)
   const ringRef = useRef<THREE.Mesh>(null)
+  const [hovered, setHovered] = useState(false)
   const color = getTypeColor(location.type)
+  const icon = getTypeIcon(location.type)
 
   const terrainH = useMemo(
     () => Math.max(getTerrainHeight(location.x, location.z), 0),
@@ -892,14 +939,20 @@ function LocationBeacon({
     }
   })
 
+  const truncatedDesc = location.description
+    ? location.description.length > 120
+      ? location.description.slice(0, 120) + '…'
+      : location.description
+    : null
+
   return (
     <group
       ref={beaconRef}
       position={[location.x, SURFACE_Y + terrainH + location.elevation, location.z]}
-      scale={isSelected ? 1.4 : 1}
+      scale={isSelected ? 1.4 : hovered ? 1.2 : 1}
       onClick={(e) => { e.stopPropagation(); onSelect(location) }}
-      onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { document.body.style.cursor = 'default' }}
+      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer' }}
+      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default' }}
     >
       {/* Pillar */}
       <mesh position={[0, -location.elevation / 2, 0]}>
@@ -925,7 +978,39 @@ function LocationBeacon({
           </div>
         </div>
       </Html>
-      <pointLight color={color} intensity={isSelected ? 3 : 1} distance={10} decay={2} />
+      {/* Hover info tooltip */}
+      {hovered && (
+        <Html position={[0, 3, 0]} center distanceFactor={14} style={{ pointerEvents: 'auto', whiteSpace: 'normal' }}>
+          <div
+            className="select-none rounded-lg p-3 backdrop-blur-xl border"
+            style={{
+              width: '220px',
+              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.95), rgba(15, 30, 35, 0.92))',
+              borderColor: `${color}50`,
+              boxShadow: `0 0 20px ${color}30, 0 8px 30px rgba(0,0,0,0.6)`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-base">{icon}</span>
+              <span className="text-sm font-serif font-bold" style={{ color }}>{location.name}</span>
+            </div>
+            {truncatedDesc && (
+              <p className="text-[11px] leading-snug mb-2" style={{ color: 'rgba(210, 200, 180, 0.8)' }}>
+                {truncatedDesc}
+              </p>
+            )}
+            <a
+              href={`/explore/${location.slug}`}
+              className="block text-center px-2 py-1 rounded text-[11px] font-medium transition-all hover:brightness-125"
+              style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              View in Archive →
+            </a>
+          </div>
+        </Html>
+      )}
+      <pointLight color={color} intensity={isSelected ? 3 : hovered ? 2 : 1} distance={10} decay={2} />
     </group>
   )
 }
@@ -1152,7 +1237,7 @@ function MapLegend() {
         </div>
         <div className="mt-2 pt-2 border-t border-gold/10">
           <p className="text-[9px] text-parchment-muted italic leading-tight">
-            Scroll to zoom · Drag to orbit<br />Click beacons on the surface for info
+            Scroll to zoom · Drag to orbit<br />Hover beacons for info · Click for details
           </p>
         </div>
       </div>
