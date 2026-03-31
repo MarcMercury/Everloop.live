@@ -511,32 +511,32 @@ function biomeColor(h: number, wx: number, wz: number, land: number, rv: number)
   // Deep ocean
   if (land < 0.08 || h < -2) {
     const depth = Math.min(1, Math.max(0, (-h - 1) / 4))
-    const deep: [number, number, number] = [0.01, 0.03, 0.10]
-    const mid: [number, number, number] = [0.02, 0.06, 0.15]
+    const deep: [number, number, number] = [0.04, 0.10, 0.28]
+    const mid: [number, number, number] = [0.06, 0.18, 0.38]
     return lerpColor(mid, deep, depth)
   }
   // Shallow water
   if (h < -0.3) {
     const t = Math.min(1, (-h - 0.3) / 1.7)
-    return lerpColor([0.06, 0.16, 0.22], [0.03, 0.08, 0.16], t)
+    return lerpColor([0.10, 0.32, 0.50], [0.06, 0.20, 0.40], t)
   }
   // Coastal shallows
   if (h < 0) {
-    return [0.07 + micro, 0.18 + micro, 0.24]
+    return [0.12 + micro, 0.36 + micro, 0.52]
   }
   // Sandy beach
   if (h < 0.4 && land < 0.22) {
-    return [0.58 + micro, 0.52 + micro, 0.36 + micro]
+    return [0.78 + micro, 0.72 + micro, 0.52 + micro]
   }
   // River water
   if (rv > 0.6) {
     const blend = Math.min(1, (rv - 0.6) * 3.5)
-    return lerpColor([0.12, 0.28, 0.10], [0.04, 0.12, 0.18], blend)
+    return lerpColor([0.22, 0.48, 0.22], [0.08, 0.28, 0.45], blend)
   }
   // River bank mud
   if (rv > 0.3) {
     const blend = (rv - 0.3) / 0.3
-    return lerpColor([0.15, 0.25, 0.10], [0.10, 0.18, 0.08], blend)
+    return lerpColor([0.28, 0.42, 0.20], [0.18, 0.32, 0.16], blend)
   }
 
   // === Land biomes by height + moisture + temperature ===
@@ -546,27 +546,27 @@ function biomeColor(h: number, wx: number, wz: number, land: number, rv: number)
     const t = h / 2
     if (moisture > 0.55) {
       // Marsh / lush wetland
-      const wet: [number, number, number] = [0.06 + micro, 0.20 + micro, 0.06]
-      const meadow: [number, number, number] = [0.12 + micro, 0.30 + micro, 0.08]
+      const wet: [number, number, number] = [0.14 + micro, 0.40 + micro, 0.12]
+      const meadow: [number, number, number] = [0.25 + micro, 0.55 + micro, 0.18]
       return lerpColor(wet, meadow, t)
     }
     if (moisture > 0.38) {
       // Green grassland
-      return [0.16 + micro, 0.32 + micro, 0.10]
+      return [0.30 + micro, 0.55 + micro, 0.20]
     }
     // Dry grassland / savanna
-    return [0.30 + micro, 0.35 + micro, 0.16]
+    return [0.50 + micro, 0.55 + micro, 0.28]
   }
 
   // Rolling hills and light forest (2-4.5)
   if (h < 4.5) {
     const t = (h - 2) / 2.5
     if (moisture > 0.48) {
-      const grass: [number, number, number] = [0.11, 0.28, 0.08]
-      const forest: [number, number, number] = [0.05, 0.19, 0.04]
+      const grass: [number, number, number] = [0.22, 0.50, 0.16]
+      const forest: [number, number, number] = [0.10, 0.38, 0.10]
       return lerpColor(grass, forest, t * 0.7 + micro * 3)
     }
-    return [0.14 + micro, 0.26 + micro, 0.09]
+    return [0.28 + micro, 0.48 + micro, 0.18]
   }
 
   // Dense forest (4.5-7)
@@ -574,41 +574,41 @@ function biomeColor(h: number, wx: number, wz: number, land: number, rv: number)
     const t = (h - 4.5) / 2.5
     if (temp > 0.5) {
       // Temperate deciduous
-      const light: [number, number, number] = [0.05 + micro, 0.18, 0.04]
-      const dark: [number, number, number] = [0.03, 0.13, 0.03]
+      const light: [number, number, number] = [0.12 + micro, 0.36, 0.10]
+      const dark: [number, number, number] = [0.06, 0.26, 0.06]
       return lerpColor(light, dark, t)
     }
     // Coniferous
-    return [0.03 + micro, 0.11 + micro * 2, 0.05]
+    return [0.06 + micro, 0.24 + micro * 2, 0.10]
   }
 
   // Upland / scrubland (7-10)
   if (h < 10) {
     const t = (h - 7) / 3
-    const scrub: [number, number, number] = [0.10, 0.18, 0.07]
-    const rock: [number, number, number] = [0.20, 0.17, 0.13]
+    const scrub: [number, number, number] = [0.22, 0.35, 0.15]
+    const rock: [number, number, number] = [0.42, 0.38, 0.30]
     return lerpColor(scrub, rock, t + micro * 2)
   }
 
   // Highland / rocky (10-14)
   if (h < 14) {
     const t = (h - 10) / 4
-    const rockLow: [number, number, number] = [0.22 + micro, 0.19 + micro, 0.14]
-    const rockHigh: [number, number, number] = [0.30 + micro, 0.27 + micro, 0.22]
+    const rockLow: [number, number, number] = [0.44 + micro, 0.40 + micro, 0.32]
+    const rockHigh: [number, number, number] = [0.55 + micro, 0.50 + micro, 0.42]
     return lerpColor(rockLow, rockHigh, t)
   }
 
   // Alpine / snow transition (14-18)
   if (h < 18) {
     const t = (h - 14) / 4
-    const alpine: [number, number, number] = [0.32, 0.28, 0.24]
-    const snow: [number, number, number] = [0.75, 0.74, 0.72]
-    return lerpColor(alpine, snow, t * t) // Quadratic for gradual snowline
+    const alpine: [number, number, number] = [0.55, 0.50, 0.44]
+    const snow: [number, number, number] = [0.88, 0.87, 0.85]
+    return lerpColor(alpine, snow, t * t)
   }
 
   // Snow caps
   const snowAmount = Math.min(1, (h - 18) / 3)
-  return lerpColor([0.75, 0.74, 0.72], [0.90, 0.89, 0.88], snowAmount)
+  return lerpColor([0.88, 0.87, 0.85], [0.95, 0.95, 0.94], snowAmount)
 }
 
 function TheSurface() {
@@ -666,7 +666,7 @@ function TheSurface() {
     <group position={[0, SURFACE_Y, 0]}>
       {/* Terrain disc */}
       <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors roughness={0.85} metalness={0.02} side={THREE.DoubleSide} />
+        <meshStandardMaterial vertexColors roughness={0.7} metalness={0.02} side={THREE.DoubleSide} />
       </mesh>
       {/* Ocean water plane */}
       <Water />
@@ -695,7 +695,7 @@ function Water() {
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
       <circleGeometry args={[WORLD_RADIUS - 0.5, 64]} />
-      <meshStandardMaterial color="#061828" transparent opacity={0.75} roughness={0.05} metalness={0.7} />
+      <meshStandardMaterial color="#0a3050" transparent opacity={0.8} roughness={0.05} metalness={0.6} />
     </mesh>
   )
 }
@@ -926,16 +926,16 @@ function Scene({
 }) {
   return (
     <>
-      {/* Global lighting */}
-      <ambientLight intensity={0.08} color="#303050" />
+      {/* Global lighting — bright enough to see vivid terrain */}
+      <ambientLight intensity={0.35} color="#e8e0d0" />
       <directionalLight
-        position={[60, 80, 40]} intensity={0.5} color="#ffe8c0" castShadow
+        position={[60, 80, 40]} intensity={1.2} color="#fff4e0" castShadow
         shadow-mapSize={[2048, 2048]} shadow-camera-far={200}
         shadow-camera-left={-80} shadow-camera-right={80}
         shadow-camera-top={80} shadow-camera-bottom={-80}
       />
-      <directionalLight position={[-40, 60, -30]} intensity={0.12} color="#6688aa" />
-      <hemisphereLight args={['#1a2040', '#0a0a15', 0.2]} />
+      <directionalLight position={[-40, 60, -30]} intensity={0.3} color="#8090cc" />
+      <hemisphereLight args={['#c0d0e0', '#1a1a30', 0.4]} />
 
       {/* Stars behind everything */}
       <Stars radius={200} depth={100} count={8000} factor={5} saturation={0.3} fade speed={0.3} />
@@ -952,7 +952,7 @@ function Scene({
 
       {/* Surface elements */}
       <SurfaceParticles />
-      {locations.map((loc) => (
+      {locations.filter(loc => loc.type === 'location').map((loc) => (
         <LocationBeacon
           key={loc.id}
           location={loc}
