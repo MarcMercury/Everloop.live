@@ -128,3 +128,21 @@ export function isSpellAvailable(spellName: string, className: string): boolean 
   if (!classSpells) return false
   return Object.values(classSpells).some(spells => spells.includes(spellName))
 }
+
+/** Get a deduplicated, sorted list of ALL cantrips from every class */
+export function getAllCantrips(): string[] {
+  const set = new Set<string>()
+  for (const classSpells of Object.values(CLASS_SPELLS)) {
+    for (const name of classSpells[0] ?? []) set.add(name)
+  }
+  return Array.from(set).sort()
+}
+
+/** Get ALL spells from every class at a specific spell level (deduplicated, sorted) */
+export function getAllSpellsAtLevel(spellLevel: number): string[] {
+  const set = new Set<string>()
+  for (const classSpells of Object.values(CLASS_SPELLS)) {
+    for (const name of classSpells[spellLevel] ?? []) set.add(name)
+  }
+  return Array.from(set).sort()
+}

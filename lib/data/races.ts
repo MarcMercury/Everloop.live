@@ -547,3 +547,86 @@ export function getRaceAbilityBonuses(raceName: string, subraceName?: string): P
   }
   return bonuses
 }
+
+// ── RACIAL SPELLCASTING LOOKUP ──
+
+export interface RacialSpellEntry {
+  spell: string
+  spellLevel: number // 0 = cantrip
+  level: number // character level required
+  note?: string
+}
+
+/** Racial spellcasting for races that have innate spells */
+export const RACIAL_SPELLCASTING: Record<string, RacialSpellEntry[]> = {
+  Tiefling: [
+    { spell: 'Thaumaturgy', spellLevel: 0, level: 1 },
+    { spell: 'Hellish Rebuke', spellLevel: 1, level: 3, note: '1/long rest, 2nd-level' },
+    { spell: 'Darkness', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+  Aasimar: [
+    { spell: 'Light', spellLevel: 0, level: 1 },
+  ],
+  Drow: [
+    { spell: 'Dancing Lights', spellLevel: 0, level: 1 },
+    { spell: 'Faerie Fire', spellLevel: 1, level: 3, note: '1/long rest' },
+    { spell: 'Darkness', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+  'Forest Gnome': [
+    { spell: 'Minor Illusion', spellLevel: 0, level: 1 },
+  ],
+  'High Elf': [
+    { spell: '(Choose one Wizard cantrip)', spellLevel: 0, level: 1 },
+  ],
+  'Fire Genasi': [
+    { spell: 'Produce Flame', spellLevel: 0, level: 1 },
+    { spell: 'Burning Hands', spellLevel: 1, level: 3, note: '1/long rest' },
+  ],
+  'Water Genasi': [
+    { spell: 'Shape Water', spellLevel: 0, level: 1 },
+    { spell: 'Create or Destroy Water', spellLevel: 1, level: 3, note: '1/long rest' },
+  ],
+  'Earth Genasi': [
+    { spell: 'Blade Ward', spellLevel: 0, level: 1 },
+    { spell: 'Pass without Trace', spellLevel: 2, level: 3, note: '1/long rest' },
+  ],
+  'Air Genasi': [
+    { spell: 'Shocking Grasp', spellLevel: 0, level: 1 },
+    { spell: 'Feather Fall', spellLevel: 1, level: 3, note: '1/long rest' },
+  ],
+  Fairy: [
+    { spell: 'Druidcraft', spellLevel: 0, level: 1 },
+    { spell: 'Faerie Fire', spellLevel: 1, level: 3, note: '1/long rest' },
+    { spell: 'Enlarge/Reduce', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+  Firbolg: [
+    { spell: 'Detect Magic', spellLevel: 1, level: 1, note: '1/long rest' },
+    { spell: 'Disguise Self', spellLevel: 1, level: 1, note: '1/long rest' },
+  ],
+  Triton: [
+    { spell: 'Fog Cloud', spellLevel: 1, level: 1, note: '1/long rest' },
+    { spell: 'Gust of Wind', spellLevel: 2, level: 3, note: '1/long rest' },
+    { spell: 'Wall of Water', spellLevel: 3, level: 5, note: '1/long rest' },
+  ],
+  'Yuan-Ti': [
+    { spell: 'Poison Spray', spellLevel: 0, level: 1 },
+    { spell: 'Animal Friendship', spellLevel: 1, level: 3, note: '1/long rest, snakes only' },
+    { spell: 'Suggestion', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+  Githyanki: [
+    { spell: 'Mage Hand', spellLevel: 0, level: 1 },
+    { spell: 'Jump', spellLevel: 1, level: 3, note: '1/long rest' },
+    { spell: 'Misty Step', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+  Githzerai: [
+    { spell: 'Mage Hand', spellLevel: 0, level: 1 },
+    { spell: 'Shield', spellLevel: 1, level: 3, note: '1/long rest' },
+    { spell: 'Detect Thoughts', spellLevel: 2, level: 5, note: '1/long rest' },
+  ],
+}
+
+/** Get racial spells for a given race (checks subraces too) */
+export function getRacialSpells(raceName: string, level: number): RacialSpellEntry[] {
+  const spells = RACIAL_SPELLCASTING[raceName] ?? []
+  return spells.filter(s => s.level <= level)
+}
