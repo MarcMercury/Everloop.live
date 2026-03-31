@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useRef, useMemo, useState, useCallback } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Float, Stars, Html } from '@react-three/drei'
 import * as THREE from 'three'
 
@@ -25,8 +25,6 @@ export interface MapLocation {
 interface EverloopMapProps {
   locations: MapLocation[]
 }
-
-type ActiveLayer = 'all' | 'drift' | 'fold' | 'pattern' | 'surface'
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS & HELPERS
@@ -88,20 +86,129 @@ function fbm(x: number, z: number, octaves: number = 6): number {
   return v
 }
 
-function getTerrainHeight(wx: number, wz: number): number {
-  // Distance from center for disc falloff
-  const dist = Math.sqrt(wx * wx + wz * wz)
-  const edgeFade = Math.max(0, 1 - Math.pow(dist / WORLD_RADIUS, 3))
+// ─── Continental mask: defines land vs ocean ───────────────
+function continentMask(wx: number, wz: number): number {
+  // Main continent — large irregular mass through center-north
+  const blobs: [number, number, number, number, number][] = [
+    // [x, z, radiusX, radiusZ, strength]
+    [8, 5, 28, 24, 1.0],      // Central landmass core
+    [22, 14, 16, 14, 0.95],   // NE extension
+    [-10, -2, 18, 16, 0.92],  // Western lobe
+    [5, -18, 15, 20, 0.88],   // Southern peninsula
+    [-6, 20, 14, 10, 0.85],   // Northern cape
+    [32, -8, 10, 12, 0.7],    // Eastern peninsula
+    [-28, -10, 12, 14, 0.65], // Far-west large island
+    [-22, 12, 8, 10, 0.6],    // NW island
+    [18, -28, 10, 8, 0.55],   // SE island
+    [35, 10, 7, 9, 0.5],      // Eastern archipelago
+    [-32, -26, 6, 7, 0.45],   // SW islet
+    [0, 30, 9, 6, 0.5],       // Northern isle
+    [-15, -30, 7, 5, 0.4],    // Southern islet
+    [28, 25, 6, 8, 0.42],     // NE islet
+  ]
+  let v = 0
+  for (const [bx, bz, brx, brz, strength] of blobs) {
+    const dx = (wx - bx) / brx; const dz = (wz - bz) / brz
+    const d = Math.sqrt(dx * dx + dz * dz)
+    if (d < 1) {
+      const f = 1 - d
+      v = Math.max(v, strength * f * f * (3 - 2 * f)) // smoothstep falloff
+    }
+  }
+  // Fractal coastline distortion — multiple octaves for jagged coasts
+  const coast1 = fbm(wx * 1.5 + 50, wz * 1.5 + 50, 6) - 0.42
+  const coast2 = fbm(wx * 2.8 + 150, wz * 2.8 + 150, 4) - 0.45
+  v += coast1 * 0.35 + coast2 * 0.15
+  // Peninsulas and inlets via directional noise
+  v += Math.sin(wx * 0.08 + wz * 0.06) * fbm(wx * 0.9 + 80, wz * 0.9 + 80, 3) * 0.12
+  return v
+}
 
-  let h = fbm(wx + 100, wz + 100, 6) * 10
-  h += Math.sin(wx * 0.02) * Math.cos(wz * 0.015) * 4
-  // Mountain ridges at edges
-  const ridgeDist = Math.max(0, dist / WORLD_RADIUS - 0.5) * 2
-  h += ridgeDist * fbm(wx * 0.8, wz * 0.8, 4) * 18
-  // Valley near center
+// ─── River paths: carved valleys between terrain ────────────
+function riverFactor(wx: number, wz: number): number {
+  const rivers: { ox: number; oz: number; dx: number; dz: number; freq: number; amp: number; width: number }[] = [
+    { ox: 12, oz: 25, dx: 0.1, dz: -1, freq: 0.13, amp: 7, width: 2.0 },    // Great North-South river
+    { ox: -10, oz: 10, dx: 0.8, dz: -0.6, freq: 0.10, amp: 5.5, width: 1.6 }, // Western river
+    { ox: 5, oz: -5, dx: 1, dz: 0.2, freq: 0.16, amp: 4, width: 1.4 },       // East-flowing river
+    { ox: 20, oz: 15, dx: -0.3, dz: -1, freq: 0.18, amp: 3.5, width: 1.2 },  // Eastern tributary
+    { ox: -5, oz: -15, dx: 0.6, dz: 0.8, freq: 0.14, amp: 3, width: 1.0 },   // Southern stream
+    { ox: 25, oz: 0, dx: -1, dz: 0.3, freq: 0.20, amp: 4, width: 1.3 },      // SE river delta
+  ]
+  let closest = Infinity
+  let riverWidth = 1.8
+  for (const r of rivers) {
+    for (let t = -35; t <= 35; t += 0.8) {
+      const rx = r.ox + r.dx * t + Math.sin(t * r.freq) * r.amp + Math.sin(t * r.freq * 2.3 + 1) * r.amp * 0.3
+      const rz = r.oz + r.dz * t + Math.cos(t * r.freq * 0.8) * r.amp * 0.6 + Math.cos(t * r.freq * 1.7 + 2) * r.amp * 0.2
+      const dx = wx - rx; const dz = wz - rz
+      const dist = Math.sqrt(dx * dx + dz * dz)
+      if (dist < closest) { closest = dist; riverWidth = r.width }
+    }
+  }
+  return Math.max(0, 1 - closest / riverWidth)
+}
+
+function getTerrainHeight(wx: number, wz: number): number {
+  const dist = Math.sqrt(wx * wx + wz * wz)
+  const edgeFade = Math.max(0, 1 - Math.pow(dist / WORLD_RADIUS, 2.5))
+  const land = continentMask(wx, wz)
+
+  if (land < 0.08) {
+    // Ocean floor with varying depth
+    const oceanDepth = fbm(wx * 0.4 + 200, wz * 0.4 + 200, 4)
+    const trench = Math.max(0, fbm(wx * 0.15 + 400, wz * 0.15 + 400, 3) - 0.6) * 8
+    return (-1.8 - oceanDepth * 2.5 - trench) * edgeFade
+  }
+
+  // Shore band
+  const shoreBlend = land < 0.2 ? (land - 0.08) / 0.12 : 1
+
+  // Base terrain — continental elevation
+  let h = land * 2.5
+
+  // Low-frequency rolling terrain
+  h += fbm(wx + 100, wz + 100, 6) * 5
+
+  // Medium-frequency hills
+  h += fbm(wx * 1.5 + 70, wz * 1.5 + 70, 4) * 2.5
+
+  // Mountain ranges: ridged noise concentrated in zones
+  const ridge1 = Math.abs(fbm(wx * 0.6 + 300, wz * 0.6 + 300, 5) - 0.5) * 2
+  const ridge2 = Math.abs(fbm(wx * 0.45 + 500, wz * 0.45 - 200, 4) - 0.5) * 2
+  const mountainZone1 = Math.max(0, fbm(wx * 0.2, wz * 0.2, 3) - 0.32) * 3.5
+  const mountainZone2 = Math.max(0, fbm(wx * 0.18 + 100, wz * 0.18 + 100, 3) - 0.38) * 2.5
+  h += ridge1 * mountainZone1 * 12 + ridge2 * mountainZone2 * 8
+
+  // Volcanic peaks — sharp isolated mountains
+  const peaks: [number, number, number, number][] = [
+    [18, 8, 4, 14],   // Main peak
+    [-15, -12, 3.5, 11], // Western peak
+    [30, -5, 3, 9],   // Eastern peak
+    [-5, 22, 2.5, 7], // Northern peak
+  ]
+  for (const [px, pz, radius, height] of peaks) {
+    const pd = Math.sqrt((wx - px) ** 2 + (wz - pz) ** 2)
+    if (pd < radius * 3) {
+      const f = Math.max(0, 1 - pd / (radius * 2.5))
+      h += f * f * height
+    }
+  }
+
+  // Valley systems — low areas between mountain ranges
+  const valley = Math.max(0, 0.4 - fbm(wx * 0.35 + 600, wz * 0.35 + 600, 4)) * 6
+  h -= valley
+
+  // Carve rivers into terrain
+  const rv = riverFactor(wx, wz)
+  h -= rv * rv * 4.5
+
+  // Fray crater at center
   const centerDist = dist / WORLD_RADIUS
-  if (centerDist < 0.15) h -= (0.15 - centerDist) * 20 // Fray crater
-  return h * edgeFade
+  if (centerDist < 0.08) h -= (0.08 - centerDist) * 30
+
+  // Apply shore blend and edge fade
+  h *= shoreBlend
+  return Math.max(h, -1.5) * edgeFade
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -388,73 +495,180 @@ function Shards() {
 // ═══════════════════════════════════════════════════════════════
 // LAYER 4 — THE EVERLOOP (Living Surface World)
 // ═══════════════════════════════════════════════════════════════
-function TheSurface({ locations }: { locations: MapLocation[] }) {
+// ─── Biome colour from height + moisture ────────────────────
+function lerpColor(a: [number, number, number], b: [number, number, number], t: number): [number, number, number] {
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+}
+
+function biomeColor(h: number, wx: number, wz: number, land: number, rv: number): [number, number, number] {
+  // Moisture map — varies spatially
+  const moisture = fbm(wx * 0.4 + 500, wz * 0.4 + 500, 5)
+  // Temperature gradient — cooler further from center, higher elevation
+  const temp = 0.6 + fbm(wx * 0.15 + 800, wz * 0.15 + 800, 3) * 0.4 - h * 0.02
+  // Micro-variation for texture
+  const micro = fbm(wx * 4 + 900, wz * 4 + 900, 2) * 0.06
+
+  // Deep ocean
+  if (land < 0.08 || h < -2) {
+    const depth = Math.min(1, Math.max(0, (-h - 1) / 4))
+    const deep: [number, number, number] = [0.01, 0.03, 0.10]
+    const mid: [number, number, number] = [0.02, 0.06, 0.15]
+    return lerpColor(mid, deep, depth)
+  }
+  // Shallow water
+  if (h < -0.3) {
+    const t = Math.min(1, (-h - 0.3) / 1.7)
+    return lerpColor([0.06, 0.16, 0.22], [0.03, 0.08, 0.16], t)
+  }
+  // Coastal shallows
+  if (h < 0) {
+    return [0.07 + micro, 0.18 + micro, 0.24]
+  }
+  // Sandy beach
+  if (h < 0.4 && land < 0.22) {
+    return [0.58 + micro, 0.52 + micro, 0.36 + micro]
+  }
+  // River water
+  if (rv > 0.6) {
+    const blend = Math.min(1, (rv - 0.6) * 3.5)
+    return lerpColor([0.12, 0.28, 0.10], [0.04, 0.12, 0.18], blend)
+  }
+  // River bank mud
+  if (rv > 0.3) {
+    const blend = (rv - 0.3) / 0.3
+    return lerpColor([0.15, 0.25, 0.10], [0.10, 0.18, 0.08], blend)
+  }
+
+  // === Land biomes by height + moisture + temperature ===
+
+  // Lowland (0-2)
+  if (h < 2) {
+    const t = h / 2
+    if (moisture > 0.55) {
+      // Marsh / lush wetland
+      const wet: [number, number, number] = [0.06 + micro, 0.20 + micro, 0.06]
+      const meadow: [number, number, number] = [0.12 + micro, 0.30 + micro, 0.08]
+      return lerpColor(wet, meadow, t)
+    }
+    if (moisture > 0.38) {
+      // Green grassland
+      return [0.16 + micro, 0.32 + micro, 0.10]
+    }
+    // Dry grassland / savanna
+    return [0.30 + micro, 0.35 + micro, 0.16]
+  }
+
+  // Rolling hills and light forest (2-4.5)
+  if (h < 4.5) {
+    const t = (h - 2) / 2.5
+    if (moisture > 0.48) {
+      const grass: [number, number, number] = [0.11, 0.28, 0.08]
+      const forest: [number, number, number] = [0.05, 0.19, 0.04]
+      return lerpColor(grass, forest, t * 0.7 + micro * 3)
+    }
+    return [0.14 + micro, 0.26 + micro, 0.09]
+  }
+
+  // Dense forest (4.5-7)
+  if (h < 7) {
+    const t = (h - 4.5) / 2.5
+    if (temp > 0.5) {
+      // Temperate deciduous
+      const light: [number, number, number] = [0.05 + micro, 0.18, 0.04]
+      const dark: [number, number, number] = [0.03, 0.13, 0.03]
+      return lerpColor(light, dark, t)
+    }
+    // Coniferous
+    return [0.03 + micro, 0.11 + micro * 2, 0.05]
+  }
+
+  // Upland / scrubland (7-10)
+  if (h < 10) {
+    const t = (h - 7) / 3
+    const scrub: [number, number, number] = [0.10, 0.18, 0.07]
+    const rock: [number, number, number] = [0.20, 0.17, 0.13]
+    return lerpColor(scrub, rock, t + micro * 2)
+  }
+
+  // Highland / rocky (10-14)
+  if (h < 14) {
+    const t = (h - 10) / 4
+    const rockLow: [number, number, number] = [0.22 + micro, 0.19 + micro, 0.14]
+    const rockHigh: [number, number, number] = [0.30 + micro, 0.27 + micro, 0.22]
+    return lerpColor(rockLow, rockHigh, t)
+  }
+
+  // Alpine / snow transition (14-18)
+  if (h < 18) {
+    const t = (h - 14) / 4
+    const alpine: [number, number, number] = [0.32, 0.28, 0.24]
+    const snow: [number, number, number] = [0.75, 0.74, 0.72]
+    return lerpColor(alpine, snow, t * t) // Quadratic for gradual snowline
+  }
+
+  // Snow caps
+  const snowAmount = Math.min(1, (h - 18) / 3)
+  return lerpColor([0.75, 0.74, 0.72], [0.90, 0.89, 0.88], snowAmount)
+}
+
+function TheSurface() {
   const geometry = useMemo(() => {
-    const segments = 200
-    const geo = new THREE.CircleGeometry(WORLD_RADIUS, segments)
+    // High-res plane clipped to disc
+    const size = WORLD_RADIUS * 2
+    const segments = 500
+    const geo = new THREE.PlaneGeometry(size, size, segments, segments)
     const positions = geo.attributes.position
     const colors = new Float32Array(positions.count * 3)
+    const indices: number[] = []
+    const indexArr = geo.index!
 
-    const revealZones = locations.map(loc => ({
-      x: loc.x, z: loc.z, radius: 8 + loc.stability * 6,
-    }))
+    // Discard triangles entirely outside the disc
+    for (let i = 0; i < indexArr.count; i += 3) {
+      const ia = indexArr.getX(i), ib = indexArr.getX(i + 1), ic = indexArr.getX(i + 2)
+      let allOut = true
+      for (const idx of [ia, ib, ic]) {
+        const vx = positions.getX(idx); const vz = positions.getY(idx)
+        if (Math.sqrt(vx * vx + vz * vz) <= WORLD_RADIUS + 2) { allOut = false; break }
+      }
+      if (!allOut) { indices.push(ia, ib, ic) }
+    }
+    geo.setIndex(indices)
 
     for (let i = 0; i < positions.count; i++) {
       const x = positions.getX(i)
-      const z = positions.getY(i) // CircleGeometry is in XY plane
-      const h = getTerrainHeight(x, z)
-      positions.setZ(i, h) // Set as Z since we rotate later
+      const z = positions.getY(i) // Plane is XY, we rotate to XZ
+      const dist = Math.sqrt(x * x + z * z)
 
-      // Fog of war
-      const closestDist = revealZones.length > 0
-        ? revealZones.reduce((min, zone) => {
-            const dx = x - zone.x; const dz = z - zone.z
-            return Math.min(min, Math.sqrt(dx * dx + dz * dz) / zone.radius)
-          }, Infinity)
-        : Infinity
-      const revealed = Math.max(0, 1 - closestDist)
-      const fogFactor = 1 - Math.pow(Math.max(0, Math.min(1, revealed)), 2)
-
-      // Terrain colours
-      const distFromCenter = Math.sqrt(x * x + z * z) / WORLD_RADIUS
-      let r: number, g: number, b: number
-      if (h < -1) { r = 0.06; g = 0.15; b = 0.2 }             // Deep water
-      else if (h < 0.5) { r = 0.08; g = 0.2; b = 0.18 }       // Shore/marsh
-      else if (h < 3) { r = 0.15; g = 0.3; b = 0.12 }          // Grassland
-      else if (h < 5) { r = 0.1; g = 0.25; b = 0.08 }          // Forest
-      else if (h < 8) { r = 0.12; g = 0.22; b = 0.1 }          // Deep forest
-      else if (h < 12) { r = 0.2; g = 0.18; b = 0.14 }         // Highland
-      else {                                                       // Mountains/snow
-        const snow = Math.min(1, (h - 12) / 6)
-        r = 0.2 + snow * 0.55; g = 0.18 + snow * 0.55; b = 0.14 + snow * 0.55
+      // Clip vertices outside disc radius to edge
+      if (dist > WORLD_RADIUS) {
+        const scale = WORLD_RADIUS / dist
+        positions.setX(i, x * scale)
+        positions.setY(i, z * scale)
       }
 
-      // Edge mountains are rockier
-      if (distFromCenter > 0.6) {
-        const edgeBlend = (distFromCenter - 0.6) / 0.4
-        r = r * (1 - edgeBlend) + 0.25 * edgeBlend
-        g = g * (1 - edgeBlend) + 0.22 * edgeBlend
-        b = b * (1 - edgeBlend) + 0.2 * edgeBlend
-      }
+      const px = positions.getX(i)
+      const pz = positions.getY(i)
+      const h = getTerrainHeight(px, pz)
+      positions.setZ(i, h)
 
-      // Apply fog
-      colors[i * 3]     = r * (1 - fogFactor * 0.7) + 0.05 * fogFactor * 0.7
-      colors[i * 3 + 1] = g * (1 - fogFactor * 0.7) + 0.07 * fogFactor * 0.7
-      colors[i * 3 + 2] = b * (1 - fogFactor * 0.7) + 0.08 * fogFactor * 0.7
+      const land = continentMask(px, pz)
+      const rv = riverFactor(px, pz)
+      const [r, g, b] = biomeColor(h, px, pz, land, rv)
+      colors[i * 3] = r; colors[i * 3 + 1] = g; colors[i * 3 + 2] = b
     }
 
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
     geo.computeVertexNormals()
     return geo
-  }, [locations])
+  }, [])
 
   return (
     <group position={[0, SURFACE_Y, 0]}>
       {/* Terrain disc */}
       <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
-        <meshStandardMaterial vertexColors roughness={0.8} metalness={0.05} side={THREE.DoubleSide} />
+        <meshStandardMaterial vertexColors roughness={0.85} metalness={0.02} side={THREE.DoubleSide} />
       </mesh>
-      {/* Water layer */}
+      {/* Ocean water plane */}
       <Water />
       {/* Disc edge — rock rim */}
       <mesh position={[0, -1, 0]}>
@@ -476,12 +690,12 @@ function TheSurface({ locations }: { locations: MapLocation[] }) {
 function Water() {
   const ref = useRef<THREE.Mesh>(null)
   useFrame(({ clock }) => {
-    if (ref.current) ref.current.position.y = -0.3 + Math.sin(clock.elapsedTime * 0.3) * 0.1
+    if (ref.current) ref.current.position.y = -0.5 + Math.sin(clock.elapsedTime * 0.25) * 0.08
   })
   return (
-    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.3, 0]}>
-      <circleGeometry args={[WORLD_RADIUS - 1, 64]} />
-      <meshStandardMaterial color="#0a2530" transparent opacity={0.65} roughness={0.1} metalness={0.6} />
+    <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
+      <circleGeometry args={[WORLD_RADIUS - 0.5, 64]} />
+      <meshStandardMaterial color="#061828" transparent opacity={0.75} roughness={0.05} metalness={0.7} />
     </mesh>
   )
 }
@@ -697,28 +911,8 @@ function LayerLabels() {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════
-// CAMERA
-// ═══════════════════════════════════════════════════════════════
-function CameraAnimator({ target }: { target: MapLocation | null }) {
-  const { camera } = useThree()
-  const targetPos = useRef(new THREE.Vector3(80, 40, 80))
-
-  useEffect(() => {
-    if (target) {
-      const h = Math.max(getTerrainHeight(target.x, target.z), 0)
-      targetPos.current.set(target.x + 15, SURFACE_Y + h + 12, target.z + 15)
-    } else {
-      targetPos.current.set(80, 40, 80)
-    }
-  }, [target])
-
-  useFrame(() => {
-    camera.position.lerp(targetPos.current, 0.02)
-  })
-
-  return null
-}
+// Stable orbit target — avoids re-creating Vector3 each render
+const ORBIT_TARGET = new THREE.Vector3(0, 15, 0)
 
 // ═══════════════════════════════════════════════════════════════
 // SCENE
@@ -752,7 +946,7 @@ function Scene({
       <ThePattern />
       <Anchors />
       <Shards />
-      <TheSurface locations={locations} />
+      <TheSurface />
       <TheFray />
       <Hollows />
 
@@ -770,12 +964,12 @@ function Scene({
       {/* Layer labels */}
       <LayerLabels />
 
-      {/* Camera */}
-      <CameraAnimator target={selectedLocation} />
+      {/* Camera — user has full control, no auto-animation */}
       <OrbitControls
         makeDefault enableDamping dampingFactor={0.05}
-        minDistance={15} maxDistance={200}
-        target={[0, 15, 0]}
+        minDistance={10} maxDistance={250}
+        target={ORBIT_TARGET}
+        enablePan
       />
 
       <fog attach="fog" args={['#05050a', 120, 250]} />

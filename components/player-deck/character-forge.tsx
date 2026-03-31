@@ -25,6 +25,15 @@ import {
   defaultSpellcasting, defaultProficiencies, defaultInventory
 } from '@/types/player-character'
 import { createPlayerCharacter } from '@/lib/actions/player-characters'
+import {
+  getRace, getRaceNames, getRaceAbilityBonuses,
+  getClass, getClassNames, getClassFeaturesAtLevel, isSpellcaster,
+  getSpellSlots, getMaxSpellLevel,
+  getAvailableSpells, getCantrips,
+  getBackground, getBackgroundNames,
+  BACKGROUNDS,
+} from '@/lib/data'
+import type { RaceData, ClassData, BackgroundData } from '@/lib/data'
 
 // ── CONSTANTS ──────────────────────────────────────────
 
@@ -137,8 +146,10 @@ export function CharacterForge() {
   // ── Derived Values ──
   const classInfo = CLASS_INFO[charClass]
   const raceInfo = RACE_INFO[race]
-  const hitDieNum = classInfo ? HIT_DIE_MAP[classInfo.hitDie] || 10 : 10
-  const speed = raceInfo?.speed || 30
+  const classData = getClass(charClass)
+  const raceData = getRace(race)
+  const hitDieNum = classData?.hitDie || (classInfo ? HIT_DIE_MAP[classInfo.hitDie] || 10 : 10)
+  const speed = raceData?.speed || raceInfo?.speed || 30
 
   const finalAbilities = useMemo(() => {
     if (abilityMethod === 'standard') {
@@ -212,6 +223,62 @@ export function CharacterForge() {
     const profBonus = level <= 4 ? 2 : level <= 8 ? 3 : level <= 12 ? 4 : level <= 16 ? 5 : 6
     const initBonus = abilityModifier(finalAbilities[1])
 
+    // Auto-populate proficiencies from class + background data
+    const profData = defaultProficiencies()
+    if (classData) {
+      profData.armor_proficiencies = classData.armorProfs
+      profData.weapon_proficiencies = classData.weaponProfs
+      profData.tool_proficiencies = classData.toolProfs
+      profData.saving_throws = classData.savingThrows
+    }
+    const bgData = getBackground(background)
+    if (bgData) {
+      // Add background skill proficiencies
+      for (const skill of bgData.skillProfs) {
+        const key = skill.toLowerCase().replace(/ /g, '_') as import('@/types/player-character').SkillName
+        profData.skills[key] = 'proficient'
+      }
+      profData.tool_proficiencies = [...profData.tool_proficiencies, ...bgData.toolProfs]
+    }
+
+    // Auto-populate features from class data
+    const featureList: FeatureEntry[] = classData
+      ? getClassFeaturesAtLevel(charClass, level).map(f => ({
+          name: f.name,
+          source: charClass,
+          description: f.desc,
+          uses_max: f.uses,
+          uses_remaining: f.uses,
+        }))
+      : []
+
+    // Auto-populate spellcasting from class data
+    const spellData = defaultSpellcasting()
+    if (classData?.spellcasting) {
+      spellData.spellcasting_ability = classData.spellcasting.ability
+      const slots = getSpellSlots(charClass, level, subclass || undefined)
+      if (slots.length > 0) {
+        const slotEntries: Record<string, { max: number; used: number }> = {}
+        slots.forEach((s, i) => {
+          if (s > 0) slotEntries[String(i + 1)] = { max: s, used: 0 }
+        })
+        spellData.spell_slots = slotEntries
+      }
+    }
+
+    // Apply racial ability bonuses
+    const racialBonuses = getRaceAbilityBonuses(race, subrace || undefined)
+    const adjustedAbilities = [...finalAbilities]
+    const abilityMap: Record<string, number> = { strength: 0, dexterity: 1, constitution: 2, intelligence: 3, wisdom: 4, charisma: 5 }
+    if (racialBonuses) {
+      for (const [key, bonus] of Object.entries(racialBonuses)) {
+        if (key in abilityMap && bonus !== undefined) adjustedAbilities[abilityMap[key]] += bonus
+      }
+    }
+
+    const finalConMod = abilityModifier(adjustedAbilities[2])
+    const finalMaxHp = hitDieNum + finalConMod
+
     const data: Omit<PlayerCharacterInsert, 'user_id'> = {
       name: name.trim(),
       race,
@@ -226,19 +293,19 @@ export function CharacterForge() {
       campaign_name: campaignName || null,
       dm_name: dmName || null,
       is_active: true,
-      strength: finalAbilities[0],
-      dexterity: finalAbilities[1],
-      constitution: finalAbilities[2],
-      intelligence: finalAbilities[3],
-      wisdom: finalAbilities[4],
-      charisma: finalAbilities[5],
-      max_hp: maxHp,
-      current_hp: maxHp,
+      strength: adjustedAbilities[0],
+      dexterity: adjustedAbilities[1],
+      constitution: adjustedAbilities[2],
+      intelligence: adjustedAbilities[3],
+      wisdom: adjustedAbilities[4],
+      charisma: adjustedAbilities[5],
+      max_hp: finalMaxHp,
+      current_hp: finalMaxHp,
       armor_class: baseAC,
       initiative_bonus: initBonus,
       speed,
-      hit_dice_total: `${level}${classInfo?.hitDie || 'd10'}`,
-      hit_dice_remaining: `${level}${classInfo?.hitDie || 'd10'}`,
+      hit_dice_total: `${level}d${hitDieNum}`,
+      hit_dice_remaining: `${level}d${hitDieNum}`,
       proficiency_bonus: profBonus,
       personality_traits: personality || null,
       ideals: ideals || null,
@@ -246,9 +313,9 @@ export function CharacterForge() {
       flaws: flaws || null,
       backstory: backstory || null,
       appearance: appearance || null,
-      spellcasting: JSON.parse(JSON.stringify(defaultSpellcasting())),
-      proficiencies: JSON.parse(JSON.stringify(defaultProficiencies())),
-      features: JSON.parse(JSON.stringify([])),
+      spellcasting: JSON.parse(JSON.stringify(spellData)),
+      proficiencies: JSON.parse(JSON.stringify(profData)),
+      features: JSON.parse(JSON.stringify(featureList)),
       inventory: JSON.parse(JSON.stringify({
         weapons,
         armor: armorName ? { name: armorName, base_ac: armorAC, type: 'medium' } : null,
@@ -470,14 +537,18 @@ function StepRace({
   race: string; setRace: (v: string) => void
   subrace: string; setSubrace: (v: string) => void
 }) {
+  const raceData = getRace(race)
+  const raceInfo = RACE_INFO[race]
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Race selection grid */}
       <div className="space-y-4 md:col-span-2">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {DND_RACES.map(r => {
+            const rd = getRace(r)
             const info = RACE_INFO[r]
             const isSelected = race === r
+            const displayTrait = rd ? `+${Object.entries(rd.abilityBonuses).map(([k,v]) => `${v} ${k.slice(0,3).toUpperCase()}`).join(', ')}` : info?.traits[0]
             return (
               <button
                 key={r}
@@ -491,9 +562,9 @@ function StepRace({
                 <div className={`text-sm font-serif ${isSelected ? 'text-gold-500' : 'text-parchment'}`}>
                   {r}
                 </div>
-                {info && (
+                {displayTrait && (
                   <div className="text-[10px] text-parchment-muted mt-0.5 line-clamp-2">
-                    {info.traits[0]}
+                    {displayTrait}
                   </div>
                 )}
               </button>
@@ -503,33 +574,77 @@ function StepRace({
       </div>
 
       {/* Race Info Panel */}
-      {RACE_INFO[race] && (
+      {(raceData || raceInfo) && (
         <Card className="md:col-span-2 p-5 bg-teal-rich/60 border-gold-500/15">
           <h3 className="font-serif text-lg text-parchment mb-2">{race}</h3>
-          <p className="text-sm text-parchment-muted mb-4">{RACE_INFO[race].description}</p>
+          <p className="text-sm text-parchment-muted mb-4">{raceData?.desc || raceInfo?.description}</p>
           <div className="space-y-2">
             <h4 className="text-xs text-gold-500 uppercase tracking-wider font-medium">Racial Traits</h4>
             <div className="flex flex-wrap gap-2">
-              {RACE_INFO[race].traits.map((trait, i) => (
+              {raceData ? (
+                <>
+                  {Object.entries(raceData.abilityBonuses).map(([key, val]) => (
+                    <Badge key={key} variant="outline" className="border-emerald-500/30 text-emerald-400">
+                      +{val} {key.charAt(0).toUpperCase() + key.slice(1)}
+                    </Badge>
+                  ))}
+                  {raceData.traits.map((trait, i) => (
+                    <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted" title={trait.desc}>
+                      {trait.name}
+                    </Badge>
+                  ))}
+                </>
+              ) : raceInfo?.traits.map((trait, i) => (
                 <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted">
                   {trait}
                 </Badge>
               ))}
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-parchment-muted">
-              <span>Speed: <strong className="text-parchment">{RACE_INFO[race].speed} ft</strong></span>
+              <span>Speed: <strong className="text-parchment">{raceData?.speed || raceInfo?.speed || 30} ft</strong></span>
+              <span>Size: <strong className="text-parchment">{raceData?.size || 'Medium'}</strong></span>
+              {raceData && raceData.darkvision > 0 && (
+                <span>Darkvision: <strong className="text-parchment">{raceData.darkvision} ft</strong></span>
+              )}
             </div>
           </div>
 
-          {/* Subrace input */}
+          {/* Subrace dropdown or input */}
           <div className="mt-4 pt-4 border-t border-gold-500/10">
-            <Label className="text-parchment-muted text-xs">Subrace (optional)</Label>
-            <Input
-              value={subrace}
-              onChange={e => setSubrace(e.target.value)}
-              placeholder="e.g. High Elf, Hill Dwarf, Lightfoot..."
-              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
-            />
+            <Label className="text-parchment-muted text-xs">Subrace</Label>
+            {raceData?.subraces && raceData.subraces.length > 0 ? (
+              <select
+                value={subrace}
+                onChange={e => setSubrace(e.target.value)}
+                className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+              >
+                <option value="">None</option>
+                {raceData.subraces.map(sr => (
+                  <option key={sr.name} value={sr.name}>{sr.name}</option>
+                ))}
+              </select>
+            ) : (
+              <Input
+                value={subrace}
+                onChange={e => setSubrace(e.target.value)}
+                placeholder="e.g. High Elf, Hill Dwarf, Lightfoot..."
+                className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+              />
+            )}
+            {subrace && raceData?.subraces?.find(sr => sr.name === subrace) && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {Object.entries(raceData.subraces.find(sr => sr.name === subrace)!.abilityBonuses).map(([key, val]) => (
+                  <Badge key={key} variant="outline" className="border-emerald-500/30 text-emerald-400 text-[10px]">
+                    +{val} {key.charAt(0).toUpperCase() + key.slice(1)}
+                  </Badge>
+                ))}
+                {raceData.subraces.find(sr => sr.name === subrace)!.traits.map((t, i) => (
+                  <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted text-[10px]" title={t.desc}>
+                    {t.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
       )}
@@ -546,12 +661,14 @@ function StepClass({
   subclass: string; setSubclass: (v: string) => void
   level: number; setLevel: (v: number) => void
 }) {
+  const cd = getClass(charClass)
   return (
     <div className="space-y-6">
       {/* Class grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {DND_CLASSES.map(c => {
           const info = CLASS_INFO[c]
+          const cData = getClass(c)
           const color = CLASS_COLORS[c] || '#d4a84b'
           const isSelected = charClass === c
           return (
@@ -570,47 +687,66 @@ function StepClass({
                   {c}
                 </span>
               </div>
-              {info && (
-                <div className="text-[10px] text-parchment-muted mt-0.5">
-                  Hit Die: {info.hitDie} | {info.primaryAbility}
-                </div>
-              )}
+              <div className="text-[10px] text-parchment-muted mt-0.5">
+                Hit Die: d{cData?.hitDie || info?.hitDie || '?'} | {cData?.primaryAbility || info?.primaryAbility || '?'}
+              </div>
             </button>
           )
         })}
       </div>
 
       {/* Class Info Panel */}
-      {CLASS_INFO[charClass] && (
+      {(cd || CLASS_INFO[charClass]) && (
         <Card className="p-5 bg-teal-rich/60 border-gold-500/15">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-serif text-lg text-parchment">{charClass}</h3>
-              <p className="text-sm text-parchment-muted mt-1">{CLASS_INFO[charClass].description}</p>
+              <p className="text-sm text-parchment-muted mt-1">{cd?.desc || CLASS_INFO[charClass]?.description}</p>
             </div>
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
               style={{ backgroundColor: `${CLASS_COLORS[charClass]}20`, color: CLASS_COLORS[charClass] }}
             >
-              {CLASS_INFO[charClass].hitDie}
+              d{cd?.hitDie || '?'}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <span className="text-xs text-gold-500 uppercase tracking-wider">Primary Ability</span>
-              <p className="text-sm text-parchment mt-0.5">{CLASS_INFO[charClass].primaryAbility}</p>
+              <p className="text-sm text-parchment mt-0.5">{cd?.primaryAbility || CLASS_INFO[charClass]?.primaryAbility}</p>
             </div>
             <div>
               <span className="text-xs text-gold-500 uppercase tracking-wider">Saving Throws</span>
-              <p className="text-sm text-parchment mt-0.5">{CLASS_INFO[charClass].saves}</p>
+              <p className="text-sm text-parchment mt-0.5">{cd?.savingThrows.join(', ') || CLASS_INFO[charClass]?.saves}</p>
             </div>
           </div>
+
+          {/* Proficiencies */}
+          {cd && (
+            <div className="mt-4">
+              <span className="text-xs text-gold-500 uppercase tracking-wider">Proficiencies</span>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {cd.armorProfs.map(p => (
+                  <Badge key={p} variant="outline" className="border-blue-500/20 text-blue-300 text-[10px]">{p} Armor</Badge>
+                ))}
+                {cd.weaponProfs.map(p => (
+                  <Badge key={p} variant="outline" className="border-red-500/20 text-red-300 text-[10px]">{p} Weapons</Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-4">
             <span className="text-xs text-gold-500 uppercase tracking-wider">Key Features</span>
             <div className="flex flex-wrap gap-2 mt-1">
-              {CLASS_INFO[charClass].features.map((f, i) => (
+              {cd ? (
+                getClassFeaturesAtLevel(charClass, Math.max(level, 3)).slice(0, 5).map((f, i) => (
+                  <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted" title={f.desc}>
+                    {f.name} {f.level > 1 ? `(Lv${f.level})` : ''}
+                  </Badge>
+                ))
+              ) : CLASS_INFO[charClass]?.features.map((f, i) => (
                 <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted">
                   {f}
                 </Badge>
@@ -618,16 +754,46 @@ function StepClass({
             </div>
           </div>
 
+          {/* Spellcasting badge */}
+          {cd?.spellcasting && (
+            <div className="mt-3 flex items-center gap-2">
+              <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                <Sparkles className="w-3 h-3 mr-1" /> Spellcaster — {cd.spellcasting.ability.charAt(0).toUpperCase() + cd.spellcasting.ability.slice(1)}
+              </Badge>
+              <span className="text-[10px] text-parchment-muted">
+                {cd.spellcasting.type === 'prepared' ? 'Prepares spells daily' : cd.spellcasting.type === 'known' ? 'Learns fixed spells' : 'Pact Magic'}
+              </span>
+            </div>
+          )}
+
           {/* Subclass + Level */}
           <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gold-500/10">
             <div>
-              <Label className="text-parchment-muted text-xs">Subclass (optional)</Label>
-              <Input
-                value={subclass}
-                onChange={e => setSubclass(e.target.value)}
-                placeholder="e.g. Battle Master, Evocation..."
-                className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
-              />
+              <Label className="text-parchment-muted text-xs">{cd?.subclassName || 'Subclass'} {cd ? `(at Lv${cd.subclassLevel})` : ''}</Label>
+              {cd && cd.subclasses.length > 0 ? (
+                <select
+                  value={subclass}
+                  onChange={e => setSubclass(e.target.value)}
+                  className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+                >
+                  <option value="">Select {cd.subclassName}...</option>
+                  {cd.subclasses.map(sc => (
+                    <option key={sc.name} value={sc.name}>{sc.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  value={subclass}
+                  onChange={e => setSubclass(e.target.value)}
+                  placeholder="e.g. Battle Master, Evocation..."
+                  className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+                />
+              )}
+              {subclass && cd?.subclasses.find(sc => sc.name === subclass) && (
+                <p className="text-[10px] text-parchment-muted mt-1">
+                  {cd.subclasses.find(sc => sc.name === subclass)!.desc}
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-parchment-muted text-xs">Starting Level</Label>
@@ -851,6 +1017,20 @@ function StepDescription({
               <option value="">Select background...</option>
               {DND_BACKGROUNDS.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
+            {background && (() => {
+              const bg = getBackground(background)
+              return bg ? (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {bg.skillProfs.map(s => (
+                    <Badge key={s} variant="outline" className="border-emerald-500/20 text-emerald-400 text-[10px]">{s}</Badge>
+                  ))}
+                  {bg.toolProfs.map(t => (
+                    <Badge key={t} variant="outline" className="border-blue-500/20 text-blue-300 text-[10px]">{t}</Badge>
+                  ))}
+                  <Badge variant="outline" className="border-gold-500/20 text-gold-500 text-[10px]">{bg.feature}</Badge>
+                </div>
+              ) : null
+            })()}
           </div>
           <div>
             <Label className="text-parchment-muted text-xs">Alignment</Label>
