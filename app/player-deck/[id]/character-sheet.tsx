@@ -20,6 +20,7 @@ import type {
 import { 
   abilityModifier, formatModifier, hpPercentage, hpColor,
   CLASS_COLORS, DND_CONDITIONS, SKILL_ABILITY_MAP,
+  CONDITION_EFFECTS, conditionAttackModifier,
 } from '@/types/player-character'
 import {
   updateCharacterHP, updateCharacterStatus, updateSpellSlots,
@@ -38,6 +39,9 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   
   const classColor = CLASS_COLORS[char.class] || '#d4a84b'
   const hp = hpPercentage(char.current_hp, char.max_hp)
+  const activeConditions = char.status?.conditions || []
+  const attackAdvantage = conditionAttackModifier(activeConditions)
+  const cantAct = activeConditions.some(c => CONDITION_EFFECTS[c]?.cantAct)
   
   // HP modification
   function adjustHP(amount: number) {
@@ -494,10 +498,17 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                       <div className="text-[10px] text-parchment-muted">{weapon.properties?.join(', ')}</div>
                     </div>
                     <button
-                      onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus)}
+                      onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus, attackAdvantage)}
                       className="flex flex-col items-center px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors touch-target-lg cursor-pointer"
                     >
-                      <span className="text-amber-400 font-mono font-bold text-sm">{formatModifier(weapon.attack_bonus)}</span>
+                      <span className="text-amber-400 font-mono font-bold text-sm">
+                        {formatModifier(weapon.attack_bonus)}
+                        {attackAdvantage && (
+                          <span className={`ml-0.5 ${attackAdvantage === 'advantage' ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {attackAdvantage === 'advantage' ? '▲' : '▼'}
+                          </span>
+                        )}
+                      </span>
                       <span className="text-[9px] text-amber-400/60">HIT</span>
                     </button>
                     <button
@@ -527,7 +538,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                       key={i}
                       onClick={() => {
                         if (cantrip.damage) quickDamageRoll(cantrip.name, cantrip.damage)
-                        else quickRoll(`${cantrip.name} Spell Attack`, char.spellcasting.spell_attack_bonus || 0)
+                        else quickRoll(`${cantrip.name} Spell Attack`, char.spellcasting.spell_attack_bonus || 0, attackAdvantage)
                       }}
                       className="flex items-center justify-between p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 hover:border-emerald-500/30 transition-all text-left"
                     >
@@ -727,6 +738,32 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                   Exhaustion Level: {char.status.exhaustion_level}/6
                 </div>
               )}
+
+              {/* Active Condition Effects */}
+              {activeConditions.length > 0 && (
+                <div className="mt-3 space-y-1.5 border-t border-gold-500/10 pt-3">
+                  {activeConditions.map(condition => (
+                    <div key={condition} className="flex items-start gap-2 text-xs">
+                      <span className="font-medium text-red-300 capitalize min-w-[90px]">{condition}:</span>
+                      <span className="text-parchment-muted">{CONDITION_EFFECTS[condition].description}</span>
+                    </div>
+                  ))}
+                  {attackAdvantage && (
+                    <div className={`mt-2 text-xs font-medium px-2 py-1 rounded inline-block ${
+                      attackAdvantage === 'advantage'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      Attack rolls: {attackAdvantage === 'advantage' ? '▲ Advantage' : '▼ Disadvantage'}
+                    </div>
+                  )}
+                  {cantAct && (
+                    <div className="mt-2 text-xs font-medium px-2 py-1 rounded inline-block bg-red-500/10 text-red-400 border border-red-500/20 ml-1">
+                      ⚠ Incapacitated — can&apos;t take actions
+                    </div>
+                  )}
+                </div>
+              )}
             </Card>
 
             {/* Weapons */}
@@ -744,10 +781,15 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus)}
+                          onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus, attackAdvantage)}
                           className="text-amber-400 font-mono px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer"
                         >
                           {formatModifier(weapon.attack_bonus)} to hit
+                          {attackAdvantage && (
+                            <span className={`ml-1 text-[10px] ${attackAdvantage === 'advantage' ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {attackAdvantage === 'advantage' ? '▲' : '▼'}
+                            </span>
+                          )}
                         </button>
                         <button
                           onClick={() => quickDamageRoll(weapon.name, weapon.damage)}
@@ -1142,8 +1184,59 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                   <span className="text-parchment-muted text-xs">XP</span>
                   <p className="text-parchment">{char.experience_points.toLocaleString()}</p>
                 </div>
+                {char.faith && (
+                  <div>
+                    <span className="text-parchment-muted text-xs">Faith / Deity</span>
+                    <p className="text-parchment">{char.faith}</p>
+                  </div>
+                )}
               </div>
             </Card>
+
+            {/* Physical Characteristics */}
+            {(char.age || char.height || char.weight || char.eyes || char.hair || char.skin) && (
+              <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
+                <h3 className="text-sm font-serif text-parchment mb-3">Physical Characteristics</h3>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  {char.age && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Age</span>
+                      <p className="text-parchment">{char.age}</p>
+                    </div>
+                  )}
+                  {char.height && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Height</span>
+                      <p className="text-parchment">{char.height}</p>
+                    </div>
+                  )}
+                  {char.weight && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Weight</span>
+                      <p className="text-parchment">{char.weight}</p>
+                    </div>
+                  )}
+                  {char.eyes && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Eyes</span>
+                      <p className="text-parchment">{char.eyes}</p>
+                    </div>
+                  )}
+                  {char.hair && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Hair</span>
+                      <p className="text-parchment">{char.hair}</p>
+                    </div>
+                  )}
+                  {char.skin && (
+                    <div>
+                      <span className="text-parchment-muted text-xs">Skin</span>
+                      <p className="text-parchment">{char.skin}</p>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
             
             {(char.personality_traits || char.ideals || char.bonds || char.flaws) && (
               <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">

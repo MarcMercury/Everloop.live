@@ -71,6 +71,13 @@ export function CharacterForm({ character }: Props) {
   const [flaws, setFlaws] = useState(character?.flaws || '')
   const [backstory, setBackstory] = useState(character?.backstory || '')
   const [appearance, setAppearance] = useState(character?.appearance || '')
+  const [height, setHeight] = useState(character?.height || '')
+  const [weight, setWeight] = useState(character?.weight || '')
+  const [age, setAge] = useState(character?.age || '')
+  const [eyes, setEyes] = useState(character?.eyes || '')
+  const [hair, setHair] = useState(character?.hair || '')
+  const [skin, setSkin] = useState(character?.skin || '')
+  const [faith, setFaith] = useState(character?.faith || '')
   
   // Spellcasting
   const [spellcasting, setSpellcasting] = useState<SpellcastingData>(
@@ -130,6 +137,13 @@ export function CharacterForm({ character }: Props) {
       flaws: flaws || null,
       backstory: backstory || null,
       appearance: appearance || null,
+      height: height || null,
+      weight: weight || null,
+      age: age || null,
+      eyes: eyes || null,
+      hair: hair || null,
+      skin: skin || null,
+      faith: faith || null,
       spellcasting: JSON.parse(JSON.stringify(spellcasting)),
       proficiencies: JSON.parse(JSON.stringify(proficiencies)),
       features: JSON.parse(JSON.stringify(features)),
@@ -451,6 +465,36 @@ export function CharacterForm({ character }: Props) {
               <div>
                 <Label className="text-parchment-muted">Appearance</Label>
                 <textarea value={appearance} onChange={e => setAppearance(e.target.value)} rows={3} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-parchment-muted">Age</Label>
+                  <Input value={age} onChange={e => setAge(e.target.value)} placeholder="e.g. 25" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Height</Label>
+                  <Input value={height} onChange={e => setHeight(e.target.value)} placeholder={`e.g. 5'10"`} className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Weight</Label>
+                  <Input value={weight} onChange={e => setWeight(e.target.value)} placeholder="e.g. 175 lbs" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Eyes</Label>
+                  <Input value={eyes} onChange={e => setEyes(e.target.value)} placeholder="e.g. Green" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Hair</Label>
+                  <Input value={hair} onChange={e => setHair(e.target.value)} placeholder="e.g. Black, long" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Skin</Label>
+                  <Input value={skin} onChange={e => setSkin(e.target.value)} placeholder="e.g. Pale" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Faith / Deity</Label>
+                <Input value={faith} onChange={e => setFaith(e.target.value)} placeholder="e.g. Tymora, Goddess of Luck" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
               </div>
             </div>
           </Card>

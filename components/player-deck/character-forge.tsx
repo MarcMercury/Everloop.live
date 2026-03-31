@@ -12,7 +12,7 @@ import {
   ChevronRight, ChevronLeft, Check, Loader2,
   Swords, Shield, Heart, Sparkles, User,
   BookOpen, Backpack, Scroll, Star, Flame,
-  Dices, Plus, Minus, RotateCcw, Zap, Wand2, X
+  Dices, Plus, Minus, RotateCcw, Zap, Wand2, X, Ruler
 } from 'lucide-react'
 import type {
   PlayerCharacterInsert,
@@ -141,6 +141,13 @@ export function CharacterForge() {
   const [flaws, setFlaws] = useState('')
   const [backstory, setBackstory] = useState('')
   const [appearance, setAppearance] = useState('')
+  const [height, setHeight] = useState('')
+  const [weight, setWeight] = useState('')
+  const [age, setAge] = useState('')
+  const [eyes, setEyes] = useState('')
+  const [hair, setHair] = useState('')
+  const [skin, setSkin] = useState('')
+  const [faith, setFaith] = useState('')
 
   // Equipment
   const [weapons, setWeapons] = useState<WeaponEntry[]>([])
@@ -453,6 +460,13 @@ export function CharacterForge() {
       flaws: flaws || null,
       backstory: backstory || null,
       appearance: appearance || null,
+      height: height || null,
+      weight: weight || null,
+      age: age || null,
+      eyes: eyes || null,
+      hair: hair || null,
+      skin: skin || null,
+      faith: faith || null,
       spellcasting: JSON.parse(JSON.stringify(spellData)),
       proficiencies: JSON.parse(JSON.stringify(profData)),
       features: JSON.parse(JSON.stringify(featureList)),
@@ -581,6 +595,13 @@ export function CharacterForge() {
             flaws={flaws} setFlaws={setFlaws}
             backstory={backstory} setBackstory={setBackstory}
             appearance={appearance} setAppearance={setAppearance}
+            height={height} setHeight={setHeight}
+            weight={weight} setWeight={setWeight}
+            age={age} setAge={setAge}
+            eyes={eyes} setEyes={setEyes}
+            hair={hair} setHair={setHair}
+            skin={skin} setSkin={setSkin}
+            faith={faith} setFaith={setFaith}
             campaignName={campaignName} setCampaignName={setCampaignName}
             dmName={dmName} setDmName={setDmName}
           />
@@ -1259,6 +1280,8 @@ function StepDescription({
   portraitUrl, setPortraitUrl,
   personality, setPersonality, ideals, setIdeals, bonds, setBonds, flaws, setFlaws,
   backstory, setBackstory, appearance, setAppearance,
+  height, setHeight, weight, setWeight, age, setAge,
+  eyes, setEyes, hair, setHair, skin, setSkin, faith, setFaith,
   campaignName, setCampaignName, dmName, setDmName,
 }: {
   name: string; setName: (v: string) => void
@@ -1271,6 +1294,13 @@ function StepDescription({
   flaws: string; setFlaws: (v: string) => void
   backstory: string; setBackstory: (v: string) => void
   appearance: string; setAppearance: (v: string) => void
+  height: string; setHeight: (v: string) => void
+  weight: string; setWeight: (v: string) => void
+  age: string; setAge: (v: string) => void
+  eyes: string; setEyes: (v: string) => void
+  hair: string; setHair: (v: string) => void
+  skin: string; setSkin: (v: string) => void
+  faith: string; setFaith: (v: string) => void
   campaignName: string; setCampaignName: (v: string) => void
   dmName: string; setDmName: (v: string) => void
 }) {
@@ -1333,6 +1363,78 @@ function StepDescription({
               value={portraitUrl}
               onChange={e => setPortraitUrl(e.target.value)}
               placeholder="https://..."
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Physical Characteristics */}
+      <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
+        <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
+          <Ruler className="w-4 h-4" /> Physical Characteristics
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div>
+            <Label className="text-parchment-muted text-xs">Age</Label>
+            <Input
+              value={age}
+              onChange={e => setAge(e.target.value)}
+              placeholder="e.g. 25"
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Height</Label>
+            <Input
+              value={height}
+              onChange={e => setHeight(e.target.value)}
+              placeholder={`e.g. 5'10"`}
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Weight</Label>
+            <Input
+              value={weight}
+              onChange={e => setWeight(e.target.value)}
+              placeholder="e.g. 175 lbs"
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Eyes</Label>
+            <Input
+              value={eyes}
+              onChange={e => setEyes(e.target.value)}
+              placeholder="e.g. Green"
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Hair</Label>
+            <Input
+              value={hair}
+              onChange={e => setHair(e.target.value)}
+              placeholder="e.g. Black, long"
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Skin</Label>
+            <Input
+              value={skin}
+              onChange={e => setSkin(e.target.value)}
+              placeholder="e.g. Pale"
+              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
+            />
+          </div>
+          <div className="col-span-2 md:col-span-3">
+            <Label className="text-parchment-muted text-xs">Faith / Deity</Label>
+            <Input
+              value={faith}
+              onChange={e => setFaith(e.target.value)}
+              placeholder="e.g. Tymora, Goddess of Luck"
               className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
             />
           </div>
