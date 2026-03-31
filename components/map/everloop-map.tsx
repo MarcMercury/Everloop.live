@@ -569,7 +569,7 @@ function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) 
         </mesh>
       </Float>
       {/* Label */}
-      <Html position={[0, size + 1.2, 0]} center distanceFactor={25} style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+      <Html position={[0, size + 1.2, 0]} center style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
         <div className="text-center select-none">
           <div className="text-[9px] font-serif text-cyan-300 drop-shadow-lg" style={{ textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
             Shard Site
@@ -974,17 +974,17 @@ function LocationBeacon({
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} transparent opacity={0.7} />
         </mesh>
       </Float>
-      {/* Label */}
-      <Html position={[0, 1.5, 0]} center distanceFactor={18} style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+      {/* Label — fixed screen size so it's readable when zoomed out */}
+      <Html position={[0, 1.5, 0]} center style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
         <div className="text-center select-none">
           <div className="text-xs font-serif font-bold drop-shadow-lg" style={{ color, textShadow: '0 0 8px rgba(0,0,0,0.9)' }}>
             {location.name}
           </div>
         </div>
       </Html>
-      {/* Hover info tooltip */}
+      {/* Hover info tooltip — fixed screen size */}
       {hovered && (
-        <Html position={[0, 3, 0]} center distanceFactor={14} style={{ pointerEvents: 'auto', whiteSpace: 'normal' }}>
+        <Html position={[0, 3, 0]} center style={{ pointerEvents: 'auto', whiteSpace: 'normal' }}>
           <div
             className="select-none rounded-lg p-3 backdrop-blur-xl border"
             style={{
