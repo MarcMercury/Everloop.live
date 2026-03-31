@@ -12,7 +12,7 @@ import {
   ChevronRight, ChevronLeft, Check, Loader2,
   Swords, Shield, Heart, Sparkles, User,
   BookOpen, Backpack, Scroll, Star, Flame,
-  Dices, Plus, Minus, RotateCcw, Zap
+  Dices, Plus, Minus, RotateCcw, Zap, Wand2, X
 } from 'lucide-react'
 import type {
   PlayerCharacterInsert,
@@ -29,11 +29,13 @@ import {
   getRace, getRaceNames, getRaceAbilityBonuses,
   getClass, getClassNames, getClassFeaturesAtLevel, isSpellcaster,
   getSpellSlots, getMaxSpellLevel,
-  getAvailableSpells, getCantrips,
+  getAvailableSpells, getCantrips, getSpellsAtLevel,
   getBackground, getBackgroundNames,
   BACKGROUNDS,
+  WEAPONS as DND_WEAPONS, ARMOR as DND_ARMOR,
+  EQUIPMENT_PACKS as DND_EQUIPMENT_PACKS,
 } from '@/lib/data'
-import type { RaceData, ClassData, BackgroundData } from '@/lib/data'
+import type { RaceData, ClassData, BackgroundData, WeaponData, ArmorData } from '@/lib/data'
 
 // ── CONSTANTS ──────────────────────────────────────────
 
@@ -43,6 +45,7 @@ const STEPS = [
   { id: 'abilities', label: 'Abilities', icon: Dices, description: 'Set your scores' },
   { id: 'description', label: 'Description', icon: BookOpen, description: 'Shape your story' },
   { id: 'equipment', label: 'Equipment', icon: Backpack, description: 'Arm yourself' },
+  { id: 'spells', label: 'Spells', icon: Wand2, description: 'Choose your magic' },
   { id: 'review', label: 'Review', icon: Check, description: 'Finalize' },
 ] as const
 
@@ -143,6 +146,10 @@ export function CharacterForge() {
   const [startingGold, setStartingGold] = useState(0)
   const [items, setItems] = useState<{ name: string; quantity: number }[]>([])
 
+  // Spells
+  const [selectedCantrips, setSelectedCantrips] = useState<string[]>([])
+  const [selectedSpells, setSelectedSpells] = useState<Record<number, string[]>>({}) // level → spell names
+
   // ── Derived Values ──
   const classInfo = CLASS_INFO[charClass]
   const raceInfo = RACE_INFO[race]
@@ -185,6 +192,7 @@ export function CharacterForge() {
       }
       case 'description': return !!name.trim()
       case 'equipment': return true
+      case 'spells': return true
       case 'review': return !!name.trim() && !!race && !!charClass
       default: return true
     }
@@ -264,6 +272,38 @@ export function CharacterForge() {
         })
         spellData.spell_slots = slotEntries
       }
+
+      // Wire selected cantrips
+      spellData.cantrips = selectedCantrips.map(name => ({
+        name,
+        school: '',
+        casting_time: '1 action',
+        range: '',
+        components: '',
+        duration: '',
+        description: '',
+      }))
+
+      // Wire selected spells
+      const allSpells: import('@/types/player-character').SpellEntry[] = []
+      for (const [lvlStr, spellNames] of Object.entries(selectedSpells)) {
+        for (const spellName of spellNames) {
+          allSpells.push({
+            name: spellName,
+            level: parseInt(lvlStr),
+            school: '',
+            casting_time: '1 action',
+            range: '',
+            components: '',
+            duration: '',
+            description: '',
+            prepared: classData.spellcasting.type === 'prepared',
+            concentration: false,
+            ritual: false,
+          })
+        }
+      }
+      spellData.spells_known = allSpells
     }
 
     // Apply racial ability bonuses
@@ -450,6 +490,16 @@ export function CharacterForge() {
             charClass={charClass}
           />
         )}
+        {currentStep.id === 'spells' && (
+          <StepSpells
+            charClass={charClass}
+            level={level}
+            selectedCantrips={selectedCantrips}
+            setSelectedCantrips={setSelectedCantrips}
+            selectedSpells={selectedSpells}
+            setSelectedSpells={setSelectedSpells}
+          />
+        )}
         {currentStep.id === 'review' && (
           <StepReview
             name={name} race={race} subrace={subrace}
@@ -524,6 +574,7 @@ function stepSubtitle(id: StepId): string {
     case 'abilities': return 'Ability scores shape everything your character can do.'
     case 'description': return 'Name your character and define their personality and story.'
     case 'equipment': return 'Choose your starting weapons, armor, and gear.'
+    case 'spells': return 'Select your cantrips and spells from your class list.'
     case 'review': return 'Review your character before forging them into existence.'
     default: return ''
   }
@@ -1149,6 +1200,32 @@ function StepDescription({
 
 // ── STEP: EQUIPMENT ────────────────────────────────────
 
+// Collect all unique item names from equipment packs for the items dropdown
+const ALL_GEAR_ITEMS = Array.from(new Set(
+  Object.values(DND_EQUIPMENT_PACKS).flatMap(p => p.items)
+)).sort().concat([
+  'Arcane Focus', 'Component Pouch', 'Druidic Focus', 'Holy Symbol',
+  'Spellbook', "Thieves' Tools", 'Healer\'s Kit', 'Poisoner\'s Kit',
+  'Herbalism Kit', 'Navigator\'s Tools', 'Disguise Kit', 'Forgery Kit',
+  'Gaming Set', 'Musical Instrument', 'Smith\'s Tools', 'Brewer\'s Supplies',
+  'Calligrapher\'s Supplies', 'Carpenter\'s Tools', 'Cartographer\'s Tools',
+  'Cobbler\'s Tools', 'Cook\'s Utensils', 'Glassblower\'s Tools',
+  'Jeweler\'s Tools', 'Leatherworker\'s Tools', 'Mason\'s Tools',
+  'Painter\'s Supplies', 'Potter\'s Tools', 'Tinker\'s Tools',
+  'Weaver\'s Tools', 'Woodcarver\'s Tools',
+  'Arrows (20)', 'Crossbow Bolts (20)', 'Sling Bullets (20)',
+  'Blowgun Needles (50)', 'Torch', 'Rope, Hempen (50 ft)',
+  'Rope, Silk (50 ft)', 'Chain (10 ft)', 'Grappling Hook',
+  'Manacles', 'Mirror, Steel', 'Oil Flask', 'Potion of Healing',
+  'Rations (1 day)', 'Waterskin', 'Bedroll', 'Tent',
+  'Lamp', 'Lantern, Hooded', 'Lantern, Bullseye', 'Candle',
+  'Tinderbox', 'Holy Water', 'Alchemist\'s Fire', 'Acid Vial',
+  'Antitoxin', 'Ball Bearings (bag of 1000)', 'Caltrops (bag of 20)',
+  'Climber\'s Kit', 'Crowbar', 'Hammer', 'Piton',
+  'Shovel', 'Mess Kit', 'Backpack', 'Chest',
+  'Quiver', 'Spyglass', 'Signet Ring',
+]).sort()
+
 function StepEquipment({
   weapons, setWeapons, armorName, setArmorName, armorAC, setArmorAC,
   shieldEquipped, setShieldEquipped, startingGold, setStartingGold,
@@ -1162,26 +1239,55 @@ function StepEquipment({
   items: { name: string; quantity: number }[]; setItems: (v: { name: string; quantity: number }[]) => void
   charClass: string
 }) {
-  function addWeapon() {
-    setWeapons([...weapons, { name: '', attack_bonus: 0, damage: '', properties: [], equipped: true }])
-  }
-  function updateWeapon(i: number, updates: Partial<WeaponEntry>) {
-    setWeapons(weapons.map((w, j) => j === i ? { ...w, ...updates } : w))
+  function selectWeapon(weaponName: string) {
+    const wpn = DND_WEAPONS.find(w => w.name === weaponName)
+    if (!wpn) return
+    setWeapons([...weapons, {
+      name: wpn.name,
+      attack_bonus: 0,
+      damage: wpn.damage,
+      properties: wpn.properties,
+      equipped: true,
+    }])
   }
   function removeWeapon(i: number) {
     setWeapons(weapons.filter((_, j) => j !== i))
   }
-  function addItem() {
-    setItems([...items, { name: '', quantity: 1 }])
+  function selectArmor(armorNameVal: string) {
+    const arm = DND_ARMOR.find(a => a.name === armorNameVal)
+    if (!arm) {
+      setArmorName('')
+      setArmorAC(10)
+      return
+    }
+    setArmorName(arm.name)
+    // For numeric AC, use directly; for string formula, extract first number
+    if (typeof arm.ac === 'number') {
+      setArmorAC(arm.ac)
+    } else {
+      const match = arm.ac.match(/(\d+)/)
+      setArmorAC(match ? parseInt(match[1]) : 10)
+    }
+  }
+  function addItem(itemName: string) {
+    if (!itemName) return
+    const existing = items.findIndex(it => it.name === itemName)
+    if (existing >= 0) {
+      const next = [...items]
+      next[existing] = { ...next[existing], quantity: next[existing].quantity + 1 }
+      setItems(next)
+    } else {
+      setItems([...items, { name: itemName, quantity: 1 }])
+    }
   }
   function removeItem(i: number) {
     setItems(items.filter((_, j) => j !== i))
   }
 
-  // D&D Beyond-style starter packs
-  const EQUIPMENT_PACKS: Record<string, { 
-    label: string; weapons: WeaponEntry[]; armor: string; armorAC: number; 
-    shield: boolean; gold: number; items: { name: string; quantity: number }[] 
+  // D&D Beyond-style starter packs (unchanged)
+  const EQUIPMENT_PACKS: Record<string, {
+    label: string; weapons: WeaponEntry[]; armor: string; armorAC: number;
+    shield: boolean; gold: number; items: { name: string; quantity: number }[]
   }> = {
     fighter_melee: {
       label: '⚔️ Fighter (Melee)',
@@ -1190,10 +1296,7 @@ function StepEquipment({
         { name: 'Handaxe', attack_bonus: 0, damage: '1d6', properties: ['Light', 'Thrown (20/60)'], equipped: true },
       ],
       armor: 'Chain Mail', armorAC: 16, shield: true, gold: 10,
-      items: [
-        { name: 'Explorer\'s Pack', quantity: 1 },
-        { name: 'Javelin', quantity: 4 },
-      ],
+      items: [{ name: 'Explorer\'s Pack', quantity: 1 }, { name: 'Javelin', quantity: 4 }],
     },
     fighter_ranged: {
       label: '🏹 Fighter (Ranged)',
@@ -1202,10 +1305,7 @@ function StepEquipment({
         { name: 'Shortsword', attack_bonus: 0, damage: '1d6', properties: ['Finesse', 'Light'], equipped: true },
       ],
       armor: 'Leather', armorAC: 11, shield: false, gold: 10,
-      items: [
-        { name: 'Explorer\'s Pack', quantity: 1 },
-        { name: 'Arrows', quantity: 20 },
-      ],
+      items: [{ name: 'Explorer\'s Pack', quantity: 1 }, { name: 'Arrows (20)', quantity: 1 }],
     },
     rogue: {
       label: '🗡️ Rogue',
@@ -1215,11 +1315,7 @@ function StepEquipment({
         { name: 'Dagger', attack_bonus: 0, damage: '1d4', properties: ['Finesse', 'Light', 'Thrown (20/60)'], equipped: true },
       ],
       armor: 'Leather', armorAC: 11, shield: false, gold: 15,
-      items: [
-        { name: 'Burglar\'s Pack', quantity: 1 },
-        { name: 'Thieves\' Tools', quantity: 1 },
-        { name: 'Arrows', quantity: 20 },
-      ],
+      items: [{ name: 'Burglar\'s Pack', quantity: 1 }, { name: "Thieves' Tools", quantity: 1 }, { name: 'Arrows (20)', quantity: 1 }],
     },
     wizard: {
       label: '🔮 Wizard',
@@ -1227,12 +1323,7 @@ function StepEquipment({
         { name: 'Quarterstaff', attack_bonus: 0, damage: '1d6', properties: ['Versatile (1d8)'], equipped: true },
       ],
       armor: 'None', armorAC: 10, shield: false, gold: 10,
-      items: [
-        { name: 'Scholar\'s Pack', quantity: 1 },
-        { name: 'Spellbook', quantity: 1 },
-        { name: 'Component Pouch', quantity: 1 },
-        { name: 'Arcane Focus', quantity: 1 },
-      ],
+      items: [{ name: 'Scholar\'s Pack', quantity: 1 }, { name: 'Spellbook', quantity: 1 }, { name: 'Component Pouch', quantity: 1 }, { name: 'Arcane Focus', quantity: 1 }],
     },
     cleric: {
       label: '✝️ Cleric',
@@ -1241,11 +1332,7 @@ function StepEquipment({
         { name: 'Light Crossbow', attack_bonus: 0, damage: '1d8', properties: ['Ammunition (80/320)', 'Loading', 'Two-Handed'], equipped: true },
       ],
       armor: 'Scale Mail', armorAC: 14, shield: true, gold: 10,
-      items: [
-        { name: 'Priest\'s Pack', quantity: 1 },
-        { name: 'Holy Symbol', quantity: 1 },
-        { name: 'Crossbow Bolts', quantity: 20 },
-      ],
+      items: [{ name: 'Priest\'s Pack', quantity: 1 }, { name: 'Holy Symbol', quantity: 1 }, { name: 'Crossbow Bolts (20)', quantity: 1 }],
     },
     ranger: {
       label: '🌿 Ranger',
@@ -1255,10 +1342,7 @@ function StepEquipment({
         { name: 'Shortsword', attack_bonus: 0, damage: '1d6', properties: ['Finesse', 'Light'], equipped: true },
       ],
       armor: 'Scale Mail', armorAC: 14, shield: false, gold: 10,
-      items: [
-        { name: 'Explorer\'s Pack', quantity: 1 },
-        { name: 'Arrows', quantity: 20 },
-      ],
+      items: [{ name: 'Explorer\'s Pack', quantity: 1 }, { name: 'Arrows (20)', quantity: 1 }],
     },
     barbarian: {
       label: '🪓 Barbarian',
@@ -1267,10 +1351,7 @@ function StepEquipment({
         { name: 'Javelin', attack_bonus: 0, damage: '1d6', properties: ['Thrown (30/120)'], equipped: true },
       ],
       armor: 'None (Unarmored Defense)', armorAC: 10, shield: false, gold: 10,
-      items: [
-        { name: 'Explorer\'s Pack', quantity: 1 },
-        { name: 'Javelin', quantity: 4 },
-      ],
+      items: [{ name: 'Explorer\'s Pack', quantity: 1 }, { name: 'Javelin', quantity: 4 }],
     },
     bard: {
       label: '🎵 Bard',
@@ -1279,10 +1360,7 @@ function StepEquipment({
         { name: 'Dagger', attack_bonus: 0, damage: '1d4', properties: ['Finesse', 'Light', 'Thrown (20/60)'], equipped: true },
       ],
       armor: 'Leather', armorAC: 11, shield: false, gold: 15,
-      items: [
-        { name: 'Entertainer\'s Pack', quantity: 1 },
-        { name: 'Lute', quantity: 1 },
-      ],
+      items: [{ name: 'Entertainer\'s Pack', quantity: 1 }, { name: 'Musical Instrument', quantity: 1 }],
     },
     paladin: {
       label: '⚜️ Paladin',
@@ -1291,11 +1369,7 @@ function StepEquipment({
         { name: 'Javelin', attack_bonus: 0, damage: '1d6', properties: ['Thrown (30/120)'], equipped: true },
       ],
       armor: 'Chain Mail', armorAC: 16, shield: true, gold: 10,
-      items: [
-        { name: 'Priest\'s Pack', quantity: 1 },
-        { name: 'Holy Symbol', quantity: 1 },
-        { name: 'Javelin', quantity: 5 },
-      ],
+      items: [{ name: 'Priest\'s Pack', quantity: 1 }, { name: 'Holy Symbol', quantity: 1 }, { name: 'Javelin', quantity: 5 }],
     },
   }
 
@@ -1309,6 +1383,9 @@ function StepEquipment({
     setStartingGold(pack.gold)
     setItems(pack.items)
   }
+
+  const weaponCategories = ['Simple Melee', 'Simple Ranged', 'Martial Melee', 'Martial Ranged'] as const
+  const armorTypes = ['Light', 'Medium', 'Heavy'] as const
 
   return (
     <div className="space-y-6">
@@ -1335,88 +1412,94 @@ function StepEquipment({
           ))}
         </div>
       </Card>
+
+      {/* Weapons — dropdown selector */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
             <Swords className="w-4 h-4" /> Weapons
           </h3>
-          <Button variant="ghost" size="sm" onClick={addWeapon} className="text-gold-500 gap-1 text-xs">
-            <Plus className="w-3 h-3" /> Add Weapon
-          </Button>
+        </div>
+        <div>
+          <Label className="text-parchment-muted text-xs">Add Weapon</Label>
+          <select
+            value=""
+            onChange={e => { if (e.target.value) selectWeapon(e.target.value) }}
+            className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+          >
+            <option value="">Select a weapon...</option>
+            {weaponCategories.map(cat => (
+              <optgroup key={cat} label={cat}>
+                {DND_WEAPONS.filter(w => w.category === cat).map(w => (
+                  <option key={w.name} value={w.name}>
+                    {w.name} — {w.damage} {w.damageType} ({w.cost})
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </div>
         {weapons.length === 0 && (
-          <p className="text-sm text-parchment-muted italic">No weapons added yet. Click &quot;Add Weapon&quot; to equip your character.</p>
+          <p className="text-sm text-parchment-muted italic">No weapons added. Select from the dropdown above.</p>
         )}
-        {weapons.map((w, i) => (
-          <div key={i} className="grid grid-cols-12 gap-2 items-end">
-            <div className="col-span-4">
-              <Label className="text-parchment-muted text-[10px]">Name</Label>
-              <Input
-                value={w.name}
-                onChange={e => updateWeapon(i, { name: e.target.value })}
-                placeholder="Longsword"
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm"
-              />
-            </div>
-            <div className="col-span-2">
-              <Label className="text-parchment-muted text-[10px]">Attack</Label>
-              <Input
-                type="number"
-                value={w.attack_bonus}
-                onChange={e => updateWeapon(i, { attack_bonus: parseInt(e.target.value) || 0 })}
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm text-center"
-              />
-            </div>
-            <div className="col-span-3">
-              <Label className="text-parchment-muted text-[10px]">Damage</Label>
-              <Input
-                value={w.damage}
-                onChange={e => updateWeapon(i, { damage: e.target.value })}
-                placeholder="1d8+3"
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm"
-              />
-            </div>
-            <div className="col-span-2">
-              <Label className="text-parchment-muted text-[10px]">Props</Label>
-              <Input
-                value={w.properties?.join(', ') || ''}
-                onChange={e => updateWeapon(i, { properties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                placeholder="Versatile"
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm"
-              />
-            </div>
-            <div className="col-span-1 flex justify-center">
-              <Button variant="ghost" size="sm" onClick={() => removeWeapon(i)} className="text-red-400 h-9 w-9 p-0">
-                <Minus className="w-3.5 h-3.5" />
+        {weapons.map((w, i) => {
+          const wpnData = DND_WEAPONS.find(dw => dw.name === w.name)
+          return (
+            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-charcoal-900/50 border border-gold-500/10">
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-parchment font-medium">{w.name}</div>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  <span className="text-xs text-red-300 font-mono">{w.damage} {wpnData?.damageType || ''}</span>
+                  {w.properties.map((p, pi) => (
+                    <Badge key={pi} variant="outline" className="border-gold-500/15 text-parchment-muted text-[10px]">{p}</Badge>
+                  ))}
+                  {wpnData && <span className="text-[10px] text-parchment-muted/50">{wpnData.cost} · {wpnData.weight} lb</span>}
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => removeWeapon(i)} className="text-red-400 h-8 w-8 p-0 flex-shrink-0">
+                <X className="w-3.5 h-3.5" />
               </Button>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </Card>
 
-      {/* Armor */}
+      {/* Armor — dropdown selector */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
         <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
           <Shield className="w-4 h-4" /> Armor & Defense
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+          <div className="md:col-span-2">
             <Label className="text-parchment-muted text-xs">Armor</Label>
-            <Input
+            <select
               value={armorName}
-              onChange={e => setArmorName(e.target.value)}
-              placeholder="Chain Mail"
-              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment"
-            />
-          </div>
-          <div>
-            <Label className="text-parchment-muted text-xs">Base AC</Label>
-            <Input
-              type="number" min={10} max={22}
-              value={armorAC}
-              onChange={e => setArmorAC(parseInt(e.target.value) || 10)}
-              className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment text-center"
-            />
+              onChange={e => selectArmor(e.target.value)}
+              className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+            >
+              <option value="">None (AC 10 + DEX)</option>
+              {armorTypes.map(type => (
+                <optgroup key={type} label={`${type} Armor`}>
+                  {DND_ARMOR.filter(a => a.type === type).map(a => (
+                    <option key={a.name} value={a.name}>
+                      {a.name} — AC {a.ac}{a.stealthDisadv ? ' (Stealth Disadv.)' : ''} ({a.cost})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            {armorName && (() => {
+              const arm = DND_ARMOR.find(a => a.name === armorName)
+              return arm ? (
+                <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                  <Badge variant="outline" className="border-blue-500/20 text-blue-300">AC {arm.ac}</Badge>
+                  <Badge variant="outline" className="border-gold-500/15 text-parchment-muted">{arm.type}</Badge>
+                  {arm.minStr && <Badge variant="outline" className="border-red-500/20 text-red-300">STR {arm.minStr}+</Badge>}
+                  {arm.stealthDisadv && <Badge variant="outline" className="border-amber-500/20 text-amber-300">Stealth Disadv.</Badge>}
+                  <span className="text-parchment-muted/50">{arm.cost} · {arm.weight} lb</span>
+                </div>
+              ) : null
+            })()}
           </div>
           <div className="flex items-end">
             <button
@@ -1434,15 +1517,47 @@ function StepEquipment({
         </div>
       </Card>
 
-      {/* Gold & Items */}
+      {/* Gear & Gold — dropdown selector */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
             <Backpack className="w-4 h-4" /> Gear & Gold
           </h3>
-          <Button variant="ghost" size="sm" onClick={addItem} className="text-gold-500 gap-1 text-xs">
-            <Plus className="w-3 h-3" /> Add Item
-          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label className="text-parchment-muted text-xs">Add Equipment Pack</Label>
+            <select
+              value=""
+              onChange={e => {
+                if (!e.target.value) return
+                const pack = DND_EQUIPMENT_PACKS[e.target.value]
+                if (pack) {
+                  const newItems = pack.items.map(name => ({ name, quantity: 1 }))
+                  setItems([...items, ...newItems])
+                }
+              }}
+              className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+            >
+              <option value="">Select a pack...</option>
+              {Object.entries(DND_EQUIPMENT_PACKS).map(([key, pack]) => (
+                <option key={key} value={key}>{pack.name} ({pack.items.length} items)</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className="text-parchment-muted text-xs">Add Individual Item</Label>
+            <select
+              value=""
+              onChange={e => { if (e.target.value) addItem(e.target.value) }}
+              className="w-full h-10 mt-1 bg-charcoal-950 border border-gold-500/10 rounded-md text-parchment text-sm px-3"
+            >
+              <option value="">Select an item...</option>
+              {ALL_GEAR_ITEMS.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="w-32">
           <Label className="text-parchment-muted text-xs">Starting Gold (GP)</Label>
@@ -1453,38 +1568,219 @@ function StepEquipment({
             className="mt-1 bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono"
           />
         </div>
-        {items.map((item, i) => (
-          <div key={i} className="flex gap-2 items-end">
-            <div className="flex-1">
-              <Input
-                value={item.name}
-                onChange={e => {
-                  const next = [...items]
-                  next[i] = { ...next[i], name: e.target.value }
-                  setItems(next)
-                }}
-                placeholder="Item name..."
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm"
-              />
-            </div>
-            <div className="w-16">
-              <Input
-                type="number" min={1}
-                value={item.quantity}
-                onChange={e => {
-                  const next = [...items]
-                  next[i] = { ...next[i], quantity: parseInt(e.target.value) || 1 }
-                  setItems(next)
-                }}
-                className="bg-charcoal-950 border-gold-500/10 text-parchment text-sm text-center"
-              />
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => removeItem(i)} className="text-red-400 h-9 w-9 p-0">
-              <Minus className="w-3.5 h-3.5" />
-            </Button>
+        {items.length > 0 && (
+          <div className="space-y-1">
+            {items.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 p-2 rounded bg-charcoal-900/40 border border-gold-500/5">
+                <span className="flex-1 text-sm text-parchment">{item.name}</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const next = [...items]
+                      next[i] = { ...next[i], quantity: Math.max(1, next[i].quantity - 1) }
+                      setItems(next)
+                    }}
+                    className="w-6 h-6 flex items-center justify-center text-parchment-muted hover:text-parchment rounded"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <span className="text-xs text-parchment font-mono w-6 text-center">{item.quantity}</span>
+                  <button
+                    onClick={() => {
+                      const next = [...items]
+                      next[i] = { ...next[i], quantity: next[i].quantity + 1 }
+                      setItems(next)
+                    }}
+                    className="w-6 h-6 flex items-center justify-center text-parchment-muted hover:text-parchment rounded"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => removeItem(i)} className="text-red-400 h-7 w-7 p-0">
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </Card>
+    </div>
+  )
+}
+
+// ── STEP: SPELLS ───────────────────────────────────────
+
+function StepSpells({
+  charClass, level,
+  selectedCantrips, setSelectedCantrips,
+  selectedSpells, setSelectedSpells,
+}: {
+  charClass: string
+  level: number
+  selectedCantrips: string[]
+  setSelectedCantrips: (v: string[]) => void
+  selectedSpells: Record<number, string[]>
+  setSelectedSpells: (v: Record<number, string[]>) => void
+}) {
+  const classData = getClass(charClass)
+  const isCaster = isSpellcaster(charClass)
+  const maxSpellLevel = isCaster ? getMaxSpellLevel(charClass, level) : 0
+  const cantrips = isCaster ? getCantrips(charClass) : []
+  const maxCantrips = classData?.spellcasting?.cantripsKnown[level - 1] ?? 0
+  const maxSpellsKnown = classData?.spellcasting?.spellsKnown?.[level - 1]
+  const casterType = classData?.spellcasting?.type || 'prepared'
+
+  const totalSelectedSpells = Object.values(selectedSpells).reduce((sum, arr) => sum + arr.length, 0)
+
+  function toggleCantrip(name: string) {
+    if (selectedCantrips.includes(name)) {
+      setSelectedCantrips(selectedCantrips.filter(c => c !== name))
+    } else if (selectedCantrips.length < maxCantrips) {
+      setSelectedCantrips([...selectedCantrips, name])
+    }
+  }
+
+  function toggleSpell(spellLevel: number, name: string) {
+    const current = selectedSpells[spellLevel] || []
+    if (current.includes(name)) {
+      setSelectedSpells({
+        ...selectedSpells,
+        [spellLevel]: current.filter(s => s !== name),
+      })
+    } else {
+      // For 'known' and 'pact' casters, enforce max spells
+      if ((casterType === 'known' || casterType === 'pact') && maxSpellsKnown !== undefined && totalSelectedSpells >= maxSpellsKnown) {
+        return // Can't add more
+      }
+      setSelectedSpells({
+        ...selectedSpells,
+        [spellLevel]: [...current, name],
+      })
+    }
+  }
+
+  if (!isCaster) {
+    return (
+      <div className="space-y-6">
+        <Card className="p-8 bg-teal-rich/60 border-gold-500/15 text-center">
+          <Swords className="w-12 h-12 text-parchment-muted/30 mx-auto mb-4" />
+          <h3 className="text-lg font-serif text-parchment mb-2">No Spellcasting</h3>
+          <p className="text-sm text-parchment-muted">
+            {charClass}s don&apos;t use spells. Your power comes from martial prowess!
+          </p>
+          <p className="text-xs text-parchment-muted/60 mt-2">
+            Click Continue to proceed to the review step.
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Spellcasting Summary */}
+      <Card className="p-4 bg-purple-500/10 border-purple-500/20">
+        <div className="flex items-center gap-3 flex-wrap">
+          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+            <Wand2 className="w-3 h-3 mr-1" /> {charClass} — {classData?.spellcasting?.ability}
+          </Badge>
+          <span className="text-xs text-parchment-muted">
+            {casterType === 'prepared' ? 'Prepares spells daily from full list' : casterType === 'known' ? 'Learns a fixed number of spells' : 'Pact Magic'}
+          </span>
+        </div>
+        <div className="flex gap-4 mt-3 text-xs text-parchment-muted">
+          <span>Cantrips: <strong className="text-parchment">{selectedCantrips.length}/{maxCantrips}</strong></span>
+          {maxSpellsKnown !== undefined && (
+            <span>Spells Known: <strong className="text-parchment">{totalSelectedSpells}/{maxSpellsKnown}</strong></span>
+          )}
+          <span>Max Spell Level: <strong className="text-parchment">{maxSpellLevel > 0 ? maxSpellLevel : '—'}</strong></span>
+        </div>
+      </Card>
+
+      {/* Cantrips */}
+      {maxCantrips > 0 && cantrips.length > 0 && (
+        <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
+              <Star className="w-4 h-4" /> Cantrips
+            </h3>
+            <span className="text-xs text-parchment-muted">
+              {selectedCantrips.length} / {maxCantrips} selected
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {cantrips.map(name => {
+              const isSelected = selectedCantrips.includes(name)
+              const isDisabled = !isSelected && selectedCantrips.length >= maxCantrips
+              return (
+                <button
+                  key={name}
+                  onClick={() => toggleCantrip(name)}
+                  disabled={isDisabled}
+                  className={`p-2.5 rounded-lg border text-left text-sm transition-all ${
+                    isSelected
+                      ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
+                      : isDisabled
+                      ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                      : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5">
+                    {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                    {name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Spells by Level */}
+      {Array.from({ length: maxSpellLevel }, (_, i) => i + 1).map(spellLevel => {
+        const spellsAtLevel = getSpellsAtLevel(charClass, spellLevel)
+        if (spellsAtLevel.length === 0) return null
+        const selected = selectedSpells[spellLevel] || []
+        const atLimit = (casterType === 'known' || casterType === 'pact') && maxSpellsKnown !== undefined && totalSelectedSpells >= maxSpellsKnown
+
+        return (
+          <Card key={spellLevel} className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
+                <Wand2 className="w-4 h-4" /> Level {spellLevel} Spells
+              </h3>
+              <span className="text-xs text-parchment-muted">
+                {selected.length} selected
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {spellsAtLevel.map(name => {
+                const isSelected = selected.includes(name)
+                const isDisabled = !isSelected && atLimit
+                return (
+                  <button
+                    key={name}
+                    onClick={() => toggleSpell(spellLevel, name)}
+                    disabled={isDisabled}
+                    className={`p-2.5 rounded-lg border text-left text-sm transition-all ${
+                      isSelected
+                        ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
+                        : isDisabled
+                        ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                        : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                      {name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </Card>
+        )
+      })}
     </div>
   )
 }
