@@ -105,12 +105,14 @@ function continentMask(wx: number, wz: number): number {
     [-33, -66, 16, 12, 0.4],     // Southern islet
     [62, 55, 14, 18, 0.42],      // NE islet
     // === Land extending to disc edges ===
-    [100, -15, 65, 80, 1.0],     // Eastern mega-blob — Veykar/Deyune steppes, extends past edge
+    [100, -15, 65, 80, 1.0],     // Eastern mega-blob, extends past edge
     [85, 20, 50, 55, 0.95],      // NE land bridge to edge
     [70, -55, 50, 45, 0.9],      // SE land extension
     [15, 70, 40, 65, 0.88],      // Northern land extending to edge
     [55, 60, 35, 50, 0.85],      // NE land to edge
     [-10, -75, 45, 50, 0.8],     // Southern land extension
+    [80, 65, 55, 55, 0.95],      // SE steppes — Veykar/Deyune, extends to edge
+    [60, 85, 40, 40, 0.88],      // SE steppes extension past disc edge
   ]
   let v = 0
   for (const [bx, bz, brx, brz, strength] of blobs) {
@@ -162,8 +164,8 @@ function riverFactor(wx: number, wz: number): number {
 
 // Check if a point is in the steppes region (Veykar / Deyune)
 function isSteppesRegion(wx: number, wz: number): number {
-  // Eastern steppes — wide open plains
-  const cx = 85, cz = -10, rx = 55, rz = 60
+  // Southeast steppes — wide open plains in the SE of the continent
+  const cx = 75, cz = 55, rx = 55, rz = 50
   const dx = (wx - cx) / rx, dz = (wz - cz) / rz
   const d = Math.sqrt(dx * dx + dz * dz)
   if (d >= 1) return 0
