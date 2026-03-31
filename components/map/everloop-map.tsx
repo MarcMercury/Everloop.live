@@ -85,34 +85,94 @@ function fbm(x: number, z: number, octaves: number = 6): number {
   return v
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 8 REGIONS OF THE EVERLOOP
+// ═══════════════════════════════════════════════════════════════
+//
+// Layout (on the disc, viewed from above):
+//
+//   NW: Luminous Fold       N: Bellroot Vale      NE: Ashen Spine
+//   W:  Drowned Reach       C: (shared borders)   E:  Glass Expanse
+//   SW: Virelay Coastlands  S: Varnhalt Frontier  SE: Deyune Steps
+//
+
+type RegionId = 'deyune' | 'virelay' | 'bellroot' | 'ashen' | 'glass' | 'varnhalt' | 'luminous' | 'drowned'
+
+interface RegionDef {
+  id: RegionId
+  cx: number; cz: number   // Center
+  rx: number; rz: number   // Radii
+  strength: number
+}
+
+const REGIONS: RegionDef[] = [
+  { id: 'deyune',   cx: 55,  cz: -50, rx: 48, rz: 45, strength: 1.0 },   // SE — nomadic vastlands
+  { id: 'virelay',  cx: -50, cz: -35, rx: 42, rz: 40, strength: 1.0 },   // SW — fractured coast
+  { id: 'bellroot', cx: 0,   cz: 45,  rx: 40, rz: 38, strength: 1.0 },   // N  — memory vale
+  { id: 'ashen',    cx: 55,  cz: 40,  rx: 42, rz: 38, strength: 1.0 },   // NE — volcanic spine
+  { id: 'glass',    cx: 65,  cz: -5,  rx: 40, rz: 38, strength: 1.0 },   // E  — crystal desert
+  { id: 'varnhalt', cx: 0,   cz: -50, rx: 42, rz: 40, strength: 1.0 },   // S  — rough frontier
+  { id: 'luminous', cx: -55, cz: 35,  rx: 42, rz: 38, strength: 1.0 },   // NW — over-stabilized
+  { id: 'drowned',  cx: -55, cz: -5,  rx: 38, rz: 35, strength: 1.0 },   // W  — submerged ruins
+]
+
+/** Returns blend weights for each region at a world point (0-1 each, can overlap at borders) */
+function getRegionWeights(wx: number, wz: number): Map<RegionId, number> {
+  const weights = new Map<RegionId, number>()
+  for (const r of REGIONS) {
+    const dx = (wx - r.cx) / r.rx
+    const dz = (wz - r.cz) / r.rz
+    const d = Math.sqrt(dx * dx + dz * dz)
+    if (d >= 1.3) continue
+    const f = Math.max(0, 1 - d)
+    const w = f * f * (3 - 2 * f) * r.strength
+    if (w > 0.001) weights.set(r.id, w)
+  }
+  return weights
+}
+
+/** Returns the dominant region at a point */
+function getDominantRegion(wx: number, wz: number): RegionId | null {
+  const w = getRegionWeights(wx, wz)
+  let best: RegionId | null = null
+  let bestW = 0
+  for (const [id, val] of w) {
+    if (val > bestW) { bestW = val; best = id }
+  }
+  return best
+}
+
 // ─── Continental mask: defines land vs ocean ───────────────
 function continentMask(wx: number, wz: number): number {
-  // Main continent — extends to disc edges on east and north sides
   const blobs: [number, number, number, number, number][] = [
-    // [x, z, radiusX, radiusZ, strength]
-    [15, 10, 60, 52, 1.0],       // Central landmass core
-    [48, 30, 35, 30, 0.95],      // NE extension
-    [-22, -5, 40, 35, 0.92],     // Western lobe
-    [10, -40, 32, 44, 0.88],     // Southern peninsula
-    [-14, 44, 30, 22, 0.85],     // Northern cape
-    [70, -18, 22, 26, 0.7],      // Eastern peninsula
-    [-62, -22, 26, 30, 0.65],    // Far-west large island
-    [-48, 26, 18, 22, 0.6],      // NW island
-    [40, -62, 22, 18, 0.55],     // SE island
-    [78, 22, 16, 20, 0.5],       // Eastern archipelago
-    [-70, -58, 14, 16, 0.45],    // SW islet
-    [0, 66, 20, 14, 0.5],        // Northern isle
-    [-33, -66, 16, 12, 0.4],     // Southern islet
-    [62, 55, 14, 18, 0.42],      // NE islet
-    // === Land extending to disc edges ===
-    [100, -15, 65, 80, 1.0],     // Eastern mega-blob, extends past edge
-    [85, 20, 50, 55, 0.95],      // NE land bridge to edge
-    [70, -55, 50, 45, 0.9],      // SE land extension
-    [15, 70, 40, 65, 0.88],      // Northern land extending to edge
-    [55, 60, 35, 50, 0.85],      // NE land to edge
-    [-10, -75, 45, 50, 0.8],     // Southern land extension
-    [80, 65, 55, 55, 0.95],      // SE steppes — Veykar/Deyune, extends to edge
-    [60, 85, 40, 40, 0.88],      // SE steppes extension past disc edge
+    // Core continent — large interconnected landmass
+    [5, 0, 65, 60, 1.0],         // Central core
+    [40, 25, 40, 35, 0.95],      // NE extension (Ashen Spine)
+    [-35, 20, 38, 32, 0.92],     // NW extension (Luminous Fold)
+    [-35, -25, 38, 35, 0.90],    // SW lobe (Virelay Coast)
+    [35, -35, 40, 38, 0.88],     // SE lobe (Deyune Steps)
+    [0, -45, 35, 40, 0.86],      // Southern peninsula (Varnhalt)
+    [0, 40, 35, 30, 0.85],       // Northern cape (Bellroot Vale)
+    [-50, 0, 32, 28, 0.82],      // Far-west (Drowned Reach)
+    [60, 0, 35, 30, 0.80],       // Eastern reach (Glass Expanse)
+    // Islands and extensions
+    [55, -55, 22, 18, 0.65],     // Deyune outer island
+    [-58, -45, 18, 16, 0.60],    // Virelay offshore
+    [65, 45, 16, 20, 0.55],      // Ashen volcanic isle
+    [-62, 40, 14, 18, 0.50],     // Luminous isle
+    [0, 58, 18, 14, 0.50],       // Bellroot northern isle
+    [-68, -15, 20, 22, 0.55],    // Drowned outer ruins
+    [80, -20, 18, 22, 0.50],     // Glass Expanse outer
+    // Small islets
+    [-72, -55, 12, 10, 0.40],    // SW islet
+    [72, -48, 12, 10, 0.38],     // SE islet
+    [75, 30, 10, 14, 0.35],      // E islet
+    [-15, 62, 12, 10, 0.35],     // N islet
+    // Edge extensions for disc fill
+    [85, -10, 50, 60, 0.70],     // Eastern edge fill
+    [-80, 10, 45, 50, 0.60],     // Western edge fill
+    [20, 70, 35, 45, 0.65],      // Northern edge
+    [20, -70, 40, 45, 0.62],     // Southern edge
   ]
   let v = 0
   for (const [bx, bz, brx, brz, strength] of blobs) {
@@ -120,34 +180,45 @@ function continentMask(wx: number, wz: number): number {
     const d = Math.sqrt(dx * dx + dz * dz)
     if (d < 1) {
       const f = 1 - d
-      v = Math.max(v, strength * f * f * (3 - 2 * f)) // smoothstep falloff
+      v = Math.max(v, strength * f * f * (3 - 2 * f))
     }
   }
-  // Fractal coastline distortion — multiple octaves for jagged coasts
+  // Fractal coastline — region-aware distortion
   const coast1 = fbm(wx * 1.5 + 50, wz * 1.5 + 50, 6) - 0.42
   const coast2 = fbm(wx * 2.8 + 150, wz * 2.8 + 150, 4) - 0.45
-  v += coast1 * 0.35 + coast2 * 0.15
-  // Peninsulas and inlets via directional noise
-  v += Math.sin(wx * 0.08 + wz * 0.06) * fbm(wx * 0.9 + 80, wz * 0.9 + 80, 3) * 0.12
+  v += coast1 * 0.30 + coast2 * 0.12
+
+  // Virelay gets extra inlet/fjord fracturing
+  const dom = getDominantRegion(wx, wz)
+  if (dom === 'virelay') {
+    v += (fbm(wx * 3.5 + 200, wz * 3.5 + 200, 3) - 0.50) * 0.25
+  }
+  // Drowned Reach: carve submerged sections
+  if (dom === 'drowned') {
+    const sink = fbm(wx * 1.2 + 600, wz * 1.2 + 600, 4)
+    if (sink > 0.55) v -= (sink - 0.55) * 1.5
+  }
+
+  v += Math.sin(wx * 0.08 + wz * 0.06) * fbm(wx * 0.9 + 80, wz * 0.9 + 80, 3) * 0.10
   return v
 }
 
 // ─── River paths: carved valleys between terrain ────────────
 function riverFactor(wx: number, wz: number): number {
   const rivers: { ox: number; oz: number; dx: number; dz: number; freq: number; amp: number; width: number }[] = [
-    { ox: 26, oz: 55, dx: 0.1, dz: -1, freq: 0.06, amp: 15, width: 2.8 },      // Great North-South river
-    { ox: -22, oz: 22, dx: 0.8, dz: -0.6, freq: 0.05, amp: 12, width: 2.2 },    // Western river
-    { ox: 10, oz: -10, dx: 1, dz: 0.2, freq: 0.07, amp: 9, width: 2.0 },        // East-flowing river
-    { ox: 44, oz: 33, dx: -0.3, dz: -1, freq: 0.08, amp: 8, width: 1.8 },       // Eastern tributary
-    { ox: -10, oz: -33, dx: 0.6, dz: 0.8, freq: 0.06, amp: 7, width: 1.5 },     // Southern stream
-    { ox: 55, oz: 0, dx: -1, dz: 0.3, freq: 0.09, amp: 9, width: 2.0 },         // SE river delta
-    { ox: -40, oz: -5, dx: 0.5, dz: -0.85, freq: 0.055, amp: 10, width: 1.8 },  // Far-west river
-    { ox: 30, oz: -50, dx: -0.7, dz: 0.7, freq: 0.07, amp: 8, width: 1.6 },     // Southern branch
+    { ox: 15,  oz: 45,  dx: 0.1, dz: -1,   freq: 0.06, amp: 14, width: 2.8 },   // Great river through Bellroot → Varnhalt
+    { ox: -35, oz: 15,  dx: 0.8, dz: -0.6,  freq: 0.05, amp: 11, width: 2.4 },   // Drowned Reach → Virelay
+    { ox: 10,  oz: -10, dx: 1,   dz: 0.2,   freq: 0.07, amp: 9,  width: 2.0 },   // Central → Glass Expanse
+    { ox: 40,  oz: 30,  dx: -0.3, dz: -1,   freq: 0.08, amp: 8,  width: 1.8 },   // Ashen Spine drainage
+    { ox: -10, oz: -33, dx: 0.6,  dz: 0.8,  freq: 0.06, amp: 7,  width: 1.5 },   // Varnhalt stream
+    { ox: 50,  oz: 0,   dx: -1,   dz: 0.3,  freq: 0.09, amp: 9,  width: 2.0 },   // Glass → center delta
+    { ox: -40, oz: -5,  dx: 0.5,  dz: -0.85, freq: 0.055, amp: 10, width: 1.8 }, // Drowned Reach river
+    { ox: 25,  oz: -45, dx: -0.7, dz: 0.7,  freq: 0.07, amp: 8,  width: 1.6 },   // Deyune → Varnhalt
+    { ox: -30, oz: 30,  dx: 0.3,  dz: -0.9, freq: 0.06, amp: 8,  width: 2.0 },   // Luminous → Drowned
   ]
   let closest = Infinity
   let riverWidth = 1.8
   for (const r of rivers) {
-    // Rough bounding check — skip rivers far from this point
     const approxDx = wx - r.ox; const approxDz = wz - r.oz
     if (approxDx * approxDx + approxDz * approxDz > 14000) continue
     for (let t = -60; t <= 60; t += 3) {
@@ -162,21 +233,9 @@ function riverFactor(wx: number, wz: number): number {
   return Math.max(0, 1 - closest / riverWidth)
 }
 
-// Check if a point is in the steppes region (Veykar / Deyune)
-function isSteppesRegion(wx: number, wz: number): number {
-  // Southeast steppes — wide open plains in the SE of the continent
-  const cx = 75, cz = 55, rx = 55, rz = 50
-  const dx = (wx - cx) / rx, dz = (wz - cz) / rz
-  const d = Math.sqrt(dx * dx + dz * dz)
-  if (d >= 1) return 0
-  const f = 1 - d
-  return f * f * (3 - 2 * f)
-}
-
-// Overload: pass pre-computed values to avoid redundant calls in the surface mesh loop
+// ─── Per-region terrain height shaping ──────────────────────
 function getTerrainHeight(wx: number, wz: number, precomputed?: { land: number; rv: number }): number {
   const dist = Math.sqrt(wx * wx + wz * wz)
-  // Directional edge fade: land extending east/NE/south doesn't fade
   const angle = Math.atan2(wz, wx)
   const eastFactor = Math.max(0, Math.cos(angle))
   const northFactor = Math.max(0, Math.sin(angle) * 0.5)
@@ -187,67 +246,120 @@ function getTerrainHeight(wx: number, wz: number, precomputed?: { land: number; 
   const land = precomputed ? precomputed.land : continentMask(wx, wz)
 
   if (land < 0.08) {
-    // Ocean floor with varying depth
     const oceanDepth = fbm(wx * 0.4 + 200, wz * 0.4 + 200, 4)
     const trench = Math.max(0, fbm(wx * 0.15 + 400, wz * 0.15 + 400, 3) - 0.6) * 8
     return (-1.8 - oceanDepth * 2.5 - trench) * edgeFade
   }
 
-  // Shore band
   const shoreBlend = land < 0.2 ? (land - 0.08) / 0.12 : 1
+  const weights = getRegionWeights(wx, wz)
 
-  // Base terrain — continental elevation
+  // Base terrain
   let h = land * 2.5
+  h += fbm(wx + 100, wz + 100, 6) * 4.5
+  h += fbm(wx * 1.5 + 70, wz * 1.5 + 70, 4) * 2.0
 
-  // Low-frequency rolling terrain
-  h += fbm(wx + 100, wz + 100, 6) * 5
+  // === Per-region terrain modifiers ===
 
-  // Medium-frequency hills
-  h += fbm(wx * 1.5 + 70, wz * 1.5 + 70, 4) * 2.5
+  // Deyune Steps: flat rolling grassland, windswept
+  const deyW = weights.get('deyune') ?? 0
+  if (deyW > 0) {
+    const gentleRoll = fbm(wx * 0.6 + 700, wz * 0.6 + 700, 3) * 2.5
+    const flatH = land * 1.5 + gentleRoll
+    h = h * (1 - deyW * 0.9) + flatH * deyW * 0.9
+  }
 
-  // Mountain ranges: ridged noise concentrated in zones
-  // Suppress mountains in the steppes region (Veykar/Deyune)
-  const steppesFlat = isSteppesRegion(wx, wz)
-  const mountainSuppress = 1 - steppesFlat * 0.92
-  const ridge1 = Math.abs(fbm(wx * 0.6 + 300, wz * 0.6 + 300, 5) - 0.5) * 2
-  const ridge2 = Math.abs(fbm(wx * 0.45 + 500, wz * 0.45 - 200, 4) - 0.5) * 2
-  const mountainZone1 = Math.max(0, fbm(wx * 0.2, wz * 0.2, 3) - 0.32) * 3.5
-  const mountainZone2 = Math.max(0, fbm(wx * 0.18 + 100, wz * 0.18 + 100, 3) - 0.38) * 2.5
-  h += (ridge1 * mountainZone1 * 12 + ridge2 * mountainZone2 * 8) * mountainSuppress
+  // Virelay Coastlands: erratic, jagged coastline terrain
+  const virW = weights.get('virelay') ?? 0
+  if (virW > 0) {
+    const erratic = fbm(wx * 2.5 + 400, wz * 2.5 + 400, 5) * 3
+    const coastal = Math.max(0, 1 - land * 3) * 2 // lower near coasts
+    h += (erratic - coastal * 2) * virW * 0.7
+  }
 
-  // Volcanic peaks — sharp isolated mountains
-  const peaks: [number, number, number, number][] = [
-    [40, 18, 8, 16],      // Main peak
-    [-33, -26, 7, 13],    // Western peak
-    [66, -10, 6, 11],     // Eastern peak
-    [-10, 48, 5, 9],      // Northern peak
-    [55, 40, 5.5, 10],    // NE peak
-    [-55, 5, 6, 12],      // Far-west peak
-  ]
-  for (const [px, pz, radius, height] of peaks) {
-    const pd = Math.sqrt((wx - px) ** 2 + (wz - pz) ** 2)
-    if (pd < radius * 3) {
-      const f = Math.max(0, 1 - pd / (radius * 2.5))
-      h += f * f * height
+  // Bellroot Vale: gentle valley with a central depression
+  const belW = weights.get('bellroot') ?? 0
+  if (belW > 0) {
+    const valeDist = Math.sqrt((wx - 0) ** 2 + (wz - 45) ** 2) / 30
+    const valeDip = Math.max(0, 1 - valeDist) * 4 // central bowl
+    const valeRoll = fbm(wx * 0.8 + 800, wz * 0.8 + 800, 4) * 2
+    const valeH = land * 2 + valeRoll - valeDip
+    h = h * (1 - belW * 0.8) + valeH * belW * 0.8
+  }
+
+  // Ashen Spine: volcanic mountain chain with sharp ridges
+  const ashW = weights.get('ashen') ?? 0
+  if (ashW > 0) {
+    const ridge = Math.abs(fbm(wx * 0.7 + 300, wz * 0.7 + 300, 5) - 0.5) * 2
+    const spine = Math.abs(fbm(wx * 0.5 + 500, wz * 0.5 - 200, 4) - 0.5) * 2
+    const volcanoZone = Math.max(0, fbm(wx * 0.2, wz * 0.2, 3) - 0.25) * 4
+    h += (ridge * volcanoZone * 14 + spine * 6) * ashW
+    // Volcanic peaks
+    const ashPeaks: [number, number, number, number][] = [
+      [50, 45, 7, 18], [60, 35, 6, 15], [45, 50, 5, 12], [65, 48, 5, 10],
+    ]
+    for (const [px, pz, radius, ht] of ashPeaks) {
+      const pd = Math.sqrt((wx - px) ** 2 + (wz - pz) ** 2)
+      if (pd < radius * 3) {
+        const f = Math.max(0, 1 - pd / (radius * 2.5))
+        h += f * f * ht * ashW
+      }
     }
   }
 
-  // Valley systems — low areas between mountain ranges
-  const valley = Math.max(0, 0.4 - fbm(wx * 0.35 + 600, wz * 0.35 + 600, 4)) * 6
-  h -= valley * mountainSuppress
-
-  // Steppes: flatten to gentle rolling grassland
-  if (steppesFlat > 0) {
-    const gentleRoll = fbm(wx * 0.8 + 700, wz * 0.8 + 700, 3) * 2.0
-    const steppesH = land * 1.8 + gentleRoll
-    h = h * (1 - steppesFlat) + steppesH * steppesFlat
+  // Glass Expanse: flat desert with subtle dune waves
+  const glaW = weights.get('glass') ?? 0
+  if (glaW > 0) {
+    const dunes = Math.sin(wx * 0.15 + wz * 0.08) * Math.sin(wx * 0.08 - wz * 0.12) * 2.5
+    const flatDesert = land * 1.8 + dunes + fbm(wx * 1.2 + 900, wz * 1.2 + 900, 3) * 1.5
+    h = h * (1 - glaW * 0.85) + flatDesert * glaW * 0.85
   }
 
-  // Carve rivers into terrain
+  // Varnhalt Frontier: rugged hilly terrain, uneven
+  const varW = weights.get('varnhalt') ?? 0
+  if (varW > 0) {
+    const rugged = fbm(wx * 1.8 + 550, wz * 1.8 + 550, 5) * 4
+    const gullies = Math.max(0, 0.45 - fbm(wx * 0.5 + 650, wz * 0.5 + 650, 4)) * 5
+    h += (rugged - gullies) * varW * 0.6
+  }
+
+  // Luminous Fold: unnaturally smooth, terraced
+  const lumW = weights.get('luminous') ?? 0
+  if (lumW > 0) {
+    const smooth = land * 2.2 + fbm(wx * 0.4 + 1000, wz * 0.4 + 1000, 3) * 3
+    // Terracing effect
+    const terraced = Math.round(smooth * 1.5) / 1.5
+    const lumH = terraced + fbm(wx * 0.8 + 1100, wz * 0.8 + 1100, 2) * 0.5
+    h = h * (1 - lumW * 0.85) + lumH * lumW * 0.85
+  }
+
+  // Drowned Reach: low, waterlogged, partially submerged
+  const droW = weights.get('drowned') ?? 0
+  if (droW > 0) {
+    const sunken = fbm(wx * 0.9 + 600, wz * 0.9 + 600, 4)
+    const drownedH = land * 1.2 + fbm(wx * 0.5 + 700, wz * 0.5 + 700, 3) * 1.5
+    // Sink portions below waterline
+    const sinkFactor = sunken > 0.5 ? (sunken - 0.5) * 4 : 0
+    h = h * (1 - droW * 0.85) + (drownedH - sinkFactor * 2) * droW * 0.85
+  }
+
+  // General mountain ridges (reduced in flattened regions)
+  const flatRegions = Math.max(deyW, glaW, lumW, droW)
+  const mountainSuppress = 1 - flatRegions * 0.9
+  const ridge1 = Math.abs(fbm(wx * 0.6 + 300, wz * 0.6 + 300, 5) - 0.5) * 2
+  const ridge2 = Math.abs(fbm(wx * 0.45 + 500, wz * 0.45 - 200, 4) - 0.5) * 2
+  const mz1 = Math.max(0, fbm(wx * 0.2, wz * 0.2, 3) - 0.35) * 3
+  const mz2 = Math.max(0, fbm(wx * 0.18 + 100, wz * 0.18 + 100, 3) - 0.40) * 2.5
+  h += (ridge1 * mz1 * 8 + ridge2 * mz2 * 5) * mountainSuppress
+
+  // Valley systems
+  const valley = Math.max(0, 0.4 - fbm(wx * 0.35 + 600, wz * 0.35 + 600, 4)) * 5
+  h -= valley * mountainSuppress
+
+  // Carve rivers
   const rv = precomputed ? precomputed.rv : riverFactor(wx, wz)
   h -= rv * rv * 4.5
 
-  // Apply shore blend and edge fade
   h *= shoreBlend
   return Math.max(h, -1.5) * edgeFade
 }
@@ -534,19 +646,62 @@ function PatternShards() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SURFACE SHARDS — Crystalline markers where Shards were found
+// SURFACE SHARDS — Region-assigned crystalline markers
 // ═══════════════════════════════════════════════════════════════
-const SHARD_SITES: [number, number][] = [
-  [12, 8], [-22, 5], [35, -18], [-10, -25], [45, 15],
-  [-38, -12], [8, 38], [28, -35], [-45, 18], [18, -8],
-  [-28, 35], [52, -5], [-5, -45], [40, 28], [-50, -20],
-  [22, 48], [-35, -40], [55, 10], [-18, 52], [32, -50],
+// Each region has shards with lore significance tied to its core force.
+// Shard color tints by region to show the local Pattern influence.
+interface ShardSite { x: number; z: number; region: RegionId }
+
+const SHARD_SITES: ShardSite[] = [
+  // Deyune Steps (Pattern flow) — wind-exposed, migration path markers
+  { x: 50, z: -55, region: 'deyune' },
+  { x: 60, z: -45, region: 'deyune' },
+  { x: 45, z: -40, region: 'deyune' },
+  // Virelay Coastlands (Fray onset) — coastal anomalies, tidal deposits
+  { x: -48, z: -40, region: 'virelay' },
+  { x: -55, z: -28, region: 'virelay' },
+  { x: -42, z: -48, region: 'virelay' },
+  // Bellroot Vale (Resonance) — near root networks, memory anchors
+  { x: -5, z: 48, region: 'bellroot' },
+  { x: 8, z: 40, region: 'bellroot' },
+  { x: -10, z: 38, region: 'bellroot' },
+  // Ashen Spine (Anchor damage) — buried in volcanic rock, unearthed by quakes
+  { x: 52, z: 45, region: 'ashen' },
+  { x: 60, z: 38, region: 'ashen' },
+  { x: 48, z: 35, region: 'ashen' },
+  // Glass Expanse (Pattern divergence) — fused into crystallized ground
+  { x: 68, z: -8, region: 'glass' },
+  { x: 60, z: 2, region: 'glass' },
+  { x: 72, z: 5, region: 'glass' },
+  // Varnhalt Frontier (denial/survival) — dismissed as curiosities
+  { x: 5, z: -48, region: 'varnhalt' },
+  { x: -8, z: -55, region: 'varnhalt' },
+  // Luminous Fold (over-stabilization) — locked in perfect display pedestals
+  { x: -52, z: 38, region: 'luminous' },
+  { x: -58, z: 30, region: 'luminous' },
+  // Drowned Reach (collapsed Pattern) — submerged, barely visible
+  { x: -55, z: -8, region: 'drowned' },
+  { x: -50, z: 2, region: 'drowned' },
 ]
 
-function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) {
+function getShardColor(region: RegionId): { color: string; emissive: string } {
+  switch (region) {
+    case 'deyune':   return { color: '#e0c060', emissive: '#c0a040' }  // golden flow
+    case 'virelay':  return { color: '#9070c0', emissive: '#7050a0' }  // unstable violet
+    case 'bellroot': return { color: '#40e080', emissive: '#30b060' }  // resonant green
+    case 'ashen':    return { color: '#ff6040', emissive: '#cc4030' }  // ruptured red
+    case 'glass':    return { color: '#c0e0ff', emissive: '#90c0ee' }  // prismatic white-blue
+    case 'varnhalt': return { color: '#60d0ff', emissive: '#40a8ee' }  // standard cyan
+    case 'luminous': return { color: '#f0e8a0', emissive: '#d0c880' }  // locked gold
+    case 'drowned':  return { color: '#50a8a0', emissive: '#308880' }  // deep teal
+  }
+}
+
+function SurfaceShard({ site, index }: { site: ShardSite; index: number }) {
   const ref = useRef<THREE.Mesh>(null)
-  const land = continentMask(x, z)
-  const terrainH = land > 0.08 ? Math.max(getTerrainHeight(x, z), 0) : -0.5
+  const land = continentMask(site.x, site.z)
+  const terrainH = land > 0.08 ? Math.max(getTerrainHeight(site.x, site.z), 0) : -0.5
+  const { color, emissive } = getShardColor(site.region)
 
   useFrame(({ clock }) => {
     if (ref.current) {
@@ -560,12 +715,12 @@ function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) 
   const size = 0.5 + seededRandom(index * 73 + 11) * 0.5
 
   return (
-    <group position={[x, y, z]}>
+    <group position={[site.x, y, site.z]}>
       <Float speed={1} rotationIntensity={0.2} floatIntensity={0.3}>
         <mesh ref={ref}>
           <octahedronGeometry args={[size, 0]} />
           <meshStandardMaterial
-            color="#60d0ff" emissive="#40a8ee" emissiveIntensity={0.8}
+            color={color} emissive={emissive} emissiveIntensity={0.8}
             roughness={0.05} metalness={0.8} transparent opacity={0.85}
           />
         </mesh>
@@ -573,12 +728,12 @@ function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) 
       {/* Label */}
       <Html position={[0, size + 1.2, 0]} center style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
         <div className="text-center select-none">
-          <div className="text-[9px] font-serif text-cyan-300 drop-shadow-lg" style={{ textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
+          <div className="text-[9px] font-serif drop-shadow-lg" style={{ color, textShadow: '0 0 6px rgba(0,0,0,0.9)' }}>
             Shard Site
           </div>
         </div>
       </Html>
-      <pointLight color="#40a0ee" intensity={1} distance={size * 10} decay={2} />
+      <pointLight color={emissive} intensity={1} distance={size * 10} decay={2} />
     </group>
   )
 }
@@ -586,8 +741,336 @@ function SurfaceShard({ x, z, index }: { x: number; z: number; index: number }) 
 function SurfaceShards() {
   return (
     <group>
-      {SHARD_SITES.map(([x, z], i) => (
-        <SurfaceShard key={i} x={x} z={z} index={i} />
+      {SHARD_SITES.map((site, i) => (
+        <SurfaceShard key={i} site={site} index={i} />
+      ))}
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TRAVEL ROUTES — Visible paths connecting regions
+// ═══════════════════════════════════════════════════════════════
+// Routes are the canonical safe(ish) travel corridors. Each one has
+// narrative weight — controlling a route is controlling trade, information, and escape.
+interface TravelRoute {
+  from: RegionId
+  to: RegionId
+  name: string
+  waypoints: [number, number][]  // x,z waypoints on the surface
+  color: string
+  dashed?: boolean               // dashed = dangerous / unreliable
+}
+
+const TRAVEL_ROUTES: TravelRoute[] = [
+  // === Major trade roads ===
+  {
+    from: 'varnhalt', to: 'bellroot', name: 'The Spine Road',
+    waypoints: [[0, -42], [2, -28], [5, -12], [3, 5], [0, 20], [-2, 35], [0, 42]],
+    color: '#d4a84b',
+  },
+  {
+    from: 'virelay', to: 'drowned', name: 'Fog Coast Trail',
+    waypoints: [[-45, -30], [-48, -22], [-52, -15], [-54, -8], [-53, 0]],
+    color: '#8888aa',
+  },
+  {
+    from: 'drowned', to: 'luminous', name: 'Sunken Way',
+    waypoints: [[-53, 0], [-55, 8], [-56, 18], [-55, 28], [-54, 35]],
+    color: '#509088', dashed: true,
+  },
+  {
+    from: 'luminous', to: 'bellroot', name: 'Archway Pass',
+    waypoints: [[-50, 35], [-40, 38], [-28, 40], [-15, 42], [-5, 44]],
+    color: '#e0d890',
+  },
+  {
+    from: 'bellroot', to: 'ashen', name: 'Ember Trail',
+    waypoints: [[5, 44], [18, 43], [30, 42], [40, 41], [48, 40]],
+    color: '#cc5533', dashed: true,
+  },
+  {
+    from: 'ashen', to: 'glass', name: 'Cinder Descent',
+    waypoints: [[52, 35], [55, 25], [58, 15], [62, 5], [64, -2]],
+    color: '#c0c8d0',
+  },
+  {
+    from: 'glass', to: 'deyune', name: 'Mirage Crossing',
+    waypoints: [[64, -8], [62, -18], [60, -28], [58, -38], [55, -45]],
+    color: '#d4a84b', dashed: true,
+  },
+  {
+    from: 'deyune', to: 'varnhalt', name: 'Windwalker Path',
+    waypoints: [[48, -48], [38, -50], [25, -50], [15, -50], [5, -48]],
+    color: '#a08050',
+  },
+  // === Cross-continent routes ===
+  {
+    from: 'virelay', to: 'varnhalt', name: 'Smuggler\'s Run',
+    waypoints: [[-40, -38], [-30, -42], [-18, -45], [-8, -47]],
+    color: '#8888aa', dashed: true,
+  },
+  {
+    from: 'drowned', to: 'varnhalt', name: 'Ruin March',
+    waypoints: [[-48, -5], [-38, -12], [-25, -22], [-15, -32], [-5, -42]],
+    color: '#509088',
+  },
+  {
+    from: 'luminous', to: 'drowned', name: 'Fading Bridge',
+    waypoints: [[-54, 30], [-55, 18], [-55, 8], [-54, -2]],
+    color: '#e0d890',
+  },
+]
+
+function TravelRouteLine({ route }: { route: TravelRoute }) {
+  const lineObj = useMemo(() => {
+    const points: THREE.Vector3[] = []
+    // Generate smooth path from waypoints with terrain following
+    for (let wi = 0; wi < route.waypoints.length - 1; wi++) {
+      const [ax, az] = route.waypoints[wi]
+      const [bx, bz] = route.waypoints[wi + 1]
+      const steps = 12
+      for (let s = 0; s <= steps; s++) {
+        const t = s / steps
+        const x = ax + (bx - ax) * t
+        const z = az + (bz - az) * t
+        const land = continentMask(x, z)
+        const h = land > 0.08 ? Math.max(getTerrainHeight(x, z), 0) : 0
+        points.push(new THREE.Vector3(x, SURFACE_Y + h + 0.4, z))
+      }
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(points)
+    return geo
+  }, [route])
+
+  const lineRef = useMemo(() => {
+    const mat = new THREE.LineBasicMaterial({
+      color: route.color,
+      transparent: true,
+      opacity: route.dashed ? 0.35 : 0.55,
+      depthWrite: false,
+    })
+    const line = new THREE.Line(lineObj, mat)
+    return line
+  }, [lineObj, route])
+
+  return (
+    <group>
+      <primitive object={lineRef} />
+      {/* Route name at midpoint */}
+      {(() => {
+        const mid = route.waypoints[Math.floor(route.waypoints.length / 2)]
+        const land = continentMask(mid[0], mid[1])
+        const h = land > 0.08 ? Math.max(getTerrainHeight(mid[0], mid[1]), 0) : 0
+        return (
+          <Html
+            position={[mid[0], SURFACE_Y + h + 3, mid[1]]}
+            center
+            style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
+          >
+            <div className="text-center select-none">
+              <div
+                className="text-[8px] font-serif italic tracking-wide"
+                style={{ color: route.color, textShadow: '0 0 8px rgba(0,0,0,0.9)', opacity: 0.7 }}
+              >
+                {route.name}
+              </div>
+            </div>
+          </Html>
+        )
+      })()}
+    </group>
+  )
+}
+
+function TravelRoutes() {
+  return (
+    <group>
+      {TRAVEL_ROUTES.map((route, i) => (
+        <TravelRouteLine key={i} route={route} />
+      ))}
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REGION BARRIERS — Natural/supernatural obstacles between regions
+// ═══════════════════════════════════════════════════════════════
+// Barriers enforce storytelling constraints — you can't just walk
+// from one region to the next without consequence. Each barrier type
+// is visually distinct so players immediately understand the cost.
+interface RegionBarrier {
+  name: string
+  type: 'fray_wall' | 'volcanic_ridge' | 'drowned_channel' | 'glass_edge' | 'pattern_fence' | 'mist_bank'
+  points: [number, number][]   // chain of x,z points defining the barrier line
+  color: string
+  emissive: string
+  intensity: number
+}
+
+const REGION_BARRIERS: RegionBarrier[] = [
+  // Fray Scar — between Virelay (instability) and Drowned Reach (loss)
+  // A persistent tear in reality; crossing risks temporal displacement
+  {
+    name: 'The Fray Scar',
+    type: 'fray_wall',
+    points: [[-50, -18], [-48, -14], [-52, -10], [-50, -6], [-48, -2]],
+    color: '#8040c0', emissive: '#6030a0', intensity: 1.2,
+  },
+  // Ashen Ridgeline — between Ashen Spine and Bellroot Vale
+  // Volcanic barrier; only Ember Trail passes through safely
+  {
+    name: 'The Smolder Line',
+    type: 'volcanic_ridge',
+    points: [[35, 42], [38, 40], [42, 43], [46, 41], [50, 43]],
+    color: '#cc4422', emissive: '#aa3311', intensity: 0.9,
+  },
+  // Submerged Channel — between Drowned Reach and Luminous Fold
+  // Flooded terrain; the Sunken Way is the only viable crossing
+  {
+    name: 'The Drowned Channel',
+    type: 'drowned_channel',
+    points: [[-58, 15], [-55, 18], [-52, 15], [-50, 18], [-48, 15]],
+    color: '#205858', emissive: '#104040', intensity: 0.7,
+  },
+  // Glass Edge — between Glass Expanse and Ashen Spine
+  // Crystallized reality boundary; reflections disorient travelers
+  {
+    name: 'The Mirror Wall',
+    type: 'glass_edge',
+    points: [[55, 28], [58, 24], [60, 20], [62, 16], [64, 12]],
+    color: '#c0d0e0', emissive: '#a0b8d0', intensity: 0.8,
+  },
+  // Pattern Fence — between Luminous Fold and the rest of the world
+  // Artificially maintained; the Fold doesn't want outsiders
+  {
+    name: 'The Lattice Perimeter',
+    type: 'pattern_fence',
+    points: [[-42, 36], [-38, 32], [-32, 35], [-26, 32], [-20, 36]],
+    color: '#e0d070', emissive: '#c0b050', intensity: 1.0,
+  },
+  // Mist Bank — between Virelay and Varnhalt
+  // Thick disorienting fog; smugglers know the paths, others get lost
+  {
+    name: 'The Grey Veil',
+    type: 'mist_bank',
+    points: [[-32, -38], [-26, -42], [-20, -38], [-14, -42], [-8, -38]],
+    color: '#667788', emissive: '#445566', intensity: 0.6,
+  },
+  // Windwall — between Deyune Steps and Glass Expanse
+  // Perpetual gale; Mirage Crossing is the only navigable route
+  {
+    name: 'The Windwall',
+    type: 'fray_wall',
+    points: [[62, -15], [60, -20], [63, -25], [60, -30], [62, -35]],
+    color: '#d4a84b', emissive: '#b08830', intensity: 0.8,
+  },
+]
+
+function BarrierSegment({ barrier }: { barrier: RegionBarrier }) {
+  const groupRef = useRef<THREE.Group>(null)
+
+  const meshData = useMemo(() => {
+    const segments: { pos: THREE.Vector3; rotation: number; length: number }[] = []
+    for (let i = 0; i < barrier.points.length - 1; i++) {
+      const [ax, az] = barrier.points[i]
+      const [bx, bz] = barrier.points[i + 1]
+      const mx = (ax + bx) / 2
+      const mz = (az + bz) / 2
+      const land = continentMask(mx, mz)
+      const h = land > 0.08 ? Math.max(getTerrainHeight(mx, mz), 0) : 0
+      const length = Math.sqrt((bx - ax) ** 2 + (bz - az) ** 2)
+      const angle = Math.atan2(bx - ax, bz - az)
+      segments.push({
+        pos: new THREE.Vector3(mx, SURFACE_Y + h + 1.5, mz),
+        rotation: angle,
+        length,
+      })
+    }
+    return segments
+  }, [barrier])
+
+  useFrame(({ clock }) => {
+    if (groupRef.current) {
+      groupRef.current.children.forEach((child, i) => {
+        if (child instanceof THREE.Mesh) {
+          const mat = child.material as THREE.MeshStandardMaterial
+          mat.emissiveIntensity = barrier.intensity + Math.sin(clock.elapsedTime * 1.5 + i * 1.2) * 0.3
+          mat.opacity = 0.25 + Math.sin(clock.elapsedTime * 0.8 + i) * 0.08
+        }
+      })
+    }
+  })
+
+  const wallHeight = barrier.type === 'volcanic_ridge' ? 5 :
+                     barrier.type === 'fray_wall' ? 6 :
+                     barrier.type === 'glass_edge' ? 4 :
+                     barrier.type === 'pattern_fence' ? 3.5 :
+                     barrier.type === 'mist_bank' ? 4 : 3
+
+  return (
+    <group ref={groupRef}>
+      {meshData.map((seg, i) => (
+        <group key={i} position={seg.pos} rotation={[0, seg.rotation, 0]}>
+          {/* Wall panel */}
+          <mesh>
+            <boxGeometry args={[0.5, wallHeight, seg.length + 0.5]} />
+            <meshStandardMaterial
+              color={barrier.color} emissive={barrier.emissive}
+              emissiveIntensity={barrier.intensity}
+              transparent opacity={0.25} depthWrite={false}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          {/* Glow plane (wider, softer) */}
+          <mesh>
+            <boxGeometry args={[2.5, wallHeight * 0.6, seg.length + 2]} />
+            <meshStandardMaterial
+              color={barrier.color} emissive={barrier.emissive}
+              emissiveIntensity={barrier.intensity * 0.4}
+              transparent opacity={0.08} depthWrite={false}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+          <pointLight
+            color={barrier.emissive}
+            intensity={barrier.intensity * 0.8}
+            distance={12}
+            decay={2}
+          />
+        </group>
+      ))}
+      {/* Barrier label at midpoint */}
+      {(() => {
+        const mid = barrier.points[Math.floor(barrier.points.length / 2)]
+        const land = continentMask(mid[0], mid[1])
+        const h = land > 0.08 ? Math.max(getTerrainHeight(mid[0], mid[1]), 0) : 0
+        return (
+          <Html
+            position={[mid[0], SURFACE_Y + h + wallHeight + 2, mid[1]]}
+            center
+            style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
+          >
+            <div className="text-center select-none">
+              <div
+                className="text-[8px] font-serif font-bold tracking-wide"
+                style={{ color: barrier.color, textShadow: '0 0 8px rgba(0,0,0,0.9)', opacity: 0.8 }}
+              >
+                ⚠ {barrier.name}
+              </div>
+            </div>
+          </Html>
+        )
+      })()}
+    </group>
+  )
+}
+
+function RegionBarriers() {
+  return (
+    <group>
+      {REGION_BARRIERS.map((barrier, i) => (
+        <BarrierSegment key={i} barrier={barrier} />
       ))}
     </group>
   )
@@ -602,120 +1085,221 @@ function lerpColor(a: [number, number, number], b: [number, number, number], t: 
 }
 
 function biomeColor(h: number, wx: number, wz: number, land: number, rv: number): [number, number, number] {
-  // Moisture map — varies spatially
   const moisture = fbm(wx * 0.4 + 500, wz * 0.4 + 500, 5)
-  // Temperature gradient — cooler further from center, higher elevation
   const temp = 0.6 + fbm(wx * 0.15 + 800, wz * 0.15 + 800, 3) * 0.4 - h * 0.02
-  // Micro-variation for texture
   const micro = fbm(wx * 4 + 900, wz * 4 + 900, 2) * 0.06
+  const weights = getRegionWeights(wx, wz)
 
-  // Deep ocean
+  // === Water (shared across all regions) ===
   if (land < 0.08 || h < -2) {
     const depth = Math.min(1, Math.max(0, (-h - 1) / 4))
+    // Drowned Reach: teal-tinged deep water
+    const droW = weights.get('drowned') ?? 0
+    if (droW > 0.3) {
+      const deep: [number, number, number] = [0.04, 0.14, 0.25]
+      const mid: [number, number, number] = [0.06, 0.22, 0.35]
+      return lerpColor(mid, deep, depth)
+    }
+    // Virelay: grey-violet unsettled water
+    const virW = weights.get('virelay') ?? 0
+    if (virW > 0.3) {
+      const deep: [number, number, number] = [0.08, 0.08, 0.22]
+      const mid: [number, number, number] = [0.10, 0.14, 0.30]
+      return lerpColor(mid, deep, depth)
+    }
     const deep: [number, number, number] = [0.04, 0.10, 0.28]
     const mid: [number, number, number] = [0.06, 0.18, 0.38]
     return lerpColor(mid, deep, depth)
   }
-  // Shallow water
   if (h < -0.3) {
     const t = Math.min(1, (-h - 0.3) / 1.7)
     return lerpColor([0.10, 0.32, 0.50], [0.06, 0.20, 0.40], t)
   }
-  // Coastal shallows
-  if (h < 0) {
-    return [0.12 + micro, 0.36 + micro, 0.52]
-  }
-  // Sandy beach
-  if (h < 0.4 && land < 0.22) {
-    return [0.78 + micro, 0.72 + micro, 0.52 + micro]
-  }
-  // River water
+  if (h < 0) return [0.12 + micro, 0.36 + micro, 0.52]
+  if (h < 0.4 && land < 0.22) return [0.78 + micro, 0.72 + micro, 0.52 + micro]
   if (rv > 0.6) {
     const blend = Math.min(1, (rv - 0.6) * 3.5)
     return lerpColor([0.22, 0.48, 0.22], [0.08, 0.28, 0.45], blend)
   }
-  // River bank mud
   if (rv > 0.3) {
     const blend = (rv - 0.3) / 0.3
     return lerpColor([0.28, 0.42, 0.20], [0.18, 0.32, 0.16], blend)
   }
 
-  // === Land biomes by height + moisture + temperature ===
+  // === Per-region land coloring ===
+  const dom = getDominantRegion(wx, wz)
 
-  // Lowland (0-2)
-  if (h < 2) {
-    const t = h / 2
-    if (moisture > 0.55) {
-      // Marsh / lush wetland
-      const wet: [number, number, number] = [0.14 + micro, 0.40 + micro, 0.12]
-      const meadow: [number, number, number] = [0.25 + micro, 0.55 + micro, 0.18]
-      return lerpColor(wet, meadow, t)
+  // 1. Deyune Steps — golden-amber windswept grassland
+  if (dom === 'deyune') {
+    const wind = fbm(wx * 1.5 + 300, wz * 1.5 + 300, 3)
+    if (h < 3) {
+      const gold: [number, number, number] = [0.62 + micro, 0.54 + micro, 0.28]
+      const amber: [number, number, number] = [0.55 + micro, 0.46 + micro, 0.22]
+      const tan: [number, number, number] = [0.50 + micro, 0.42 + micro, 0.20]
+      const base = lerpColor(amber, gold, wind)
+      return lerpColor(base, tan, h / 3 * 0.3)
     }
-    if (moisture > 0.38) {
-      // Green grassland
-      return [0.30 + micro, 0.55 + micro, 0.20]
+    if (h < 6) return [0.48 + micro, 0.44 + micro, 0.28]
+    return [0.52 + micro, 0.48 + micro, 0.38]
+  }
+
+  // 2. Virelay Coastlands — muted grey-green fog, bruised purples
+  if (dom === 'virelay') {
+    const shift = fbm(wx * 2 + 400, wz * 2 + 400, 3) * 0.08
+    if (h < 2) {
+      const fogGreen: [number, number, number] = [0.28 + shift, 0.34 + shift, 0.28]
+      const bruised: [number, number, number] = [0.32 + shift, 0.28 + shift, 0.34]
+      return lerpColor(fogGreen, bruised, moisture)
     }
-    // Dry grassland / savanna
-    // Distinct steppes coloring for Veykar/Deyune region
-    const steppe = isSteppesRegion(wx, wz)
-    if (steppe > 0.3) {
-      const steppeGold: [number, number, number] = [0.58 + micro, 0.52 + micro, 0.28]
-      const steppeTan: [number, number, number] = [0.55 + micro, 0.48 + micro, 0.25]
-      const base = lerpColor(steppeTan, steppeGold, fbm(wx * 2 + 300, wz * 2 + 300, 2))
+    if (h < 5) {
+      const muted: [number, number, number] = [0.24 + micro, 0.30 + micro, 0.24]
+      const dark: [number, number, number] = [0.18 + micro, 0.22 + micro, 0.20]
+      return lerpColor(muted, dark, (h - 2) / 3)
+    }
+    return [0.30 + micro, 0.28 + micro, 0.32]
+  }
+
+  // 3. Bellroot Vale — deep emerald, violet undertones, sacred
+  if (dom === 'bellroot') {
+    const resonance = fbm(wx * 0.8 + 800, wz * 0.8 + 800, 3) * 0.05
+    if (h < 2) {
+      const lush: [number, number, number] = [0.10 + resonance, 0.38 + resonance, 0.14]
+      const deep: [number, number, number] = [0.08 + resonance, 0.30 + resonance, 0.18]
+      return lerpColor(lush, deep, moisture)
+    }
+    if (h < 5) {
+      const canopy: [number, number, number] = [0.06 + micro, 0.28 + micro, 0.12]
+      const floor: [number, number, number] = [0.10 + micro, 0.22 + micro, 0.16]
+      return lerpColor(canopy, floor, (h - 2) / 3)
+    }
+    if (h < 8) return [0.14 + micro, 0.24 + micro, 0.18]
+    return [0.35 + micro, 0.32 + micro, 0.28]
+  }
+
+  // 4. Ashen Spine — dark volcanic rock, obsidian, lava-tint
+  if (dom === 'ashen') {
+    const heat = fbm(wx * 1.2 + 500, wz * 1.2 + 500, 3)
+    if (h < 2) {
+      const ash: [number, number, number] = [0.22 + micro, 0.20 + micro, 0.18]
+      const char: [number, number, number] = [0.18 + micro, 0.15 + micro, 0.13]
+      return lerpColor(ash, char, heat)
+    }
+    if (h < 6) {
+      const obsidian: [number, number, number] = [0.15 + micro, 0.12 + micro, 0.12]
+      const rock: [number, number, number] = [0.25 + micro, 0.22 + micro, 0.20]
+      return lerpColor(obsidian, rock, (h - 2) / 4)
+    }
+    if (h < 12) {
+      const darkRock: [number, number, number] = [0.28 + micro, 0.24 + micro, 0.22]
+      const lava: [number, number, number] = [0.40, 0.15, 0.08]
+      return lerpColor(darkRock, lava, Math.max(0, heat - 0.55) * 3)
+    }
+    if (h < 18) {
+      const t = (h - 12) / 6
+      return lerpColor([0.30, 0.26, 0.24], [0.45, 0.42, 0.40], t)
+    }
+    return [0.50 + micro, 0.48 + micro, 0.46]
+  }
+
+  // 5. Glass Expanse — pale crystalline sand, iridescent shimmer
+  if (dom === 'glass') {
+    const shimmer = fbm(wx * 3 + 600, wz * 3 + 600, 2) * 0.08
+    if (h < 3) {
+      const crystal: [number, number, number] = [0.72 + shimmer, 0.70 + shimmer, 0.65]
+      const sand: [number, number, number] = [0.65 + shimmer, 0.62 + shimmer, 0.55]
+      const blueShift: [number, number, number] = [0.60 + shimmer, 0.65 + shimmer, 0.72]
+      const base = lerpColor(sand, crystal, fbm(wx * 2 + 200, wz * 2 + 200, 2))
+      // Iridescent patches
+      const iri = fbm(wx * 4 + 700, wz * 4 + 700, 2)
+      if (iri > 0.55) return lerpColor(base, blueShift, (iri - 0.55) * 4)
       return base
     }
+    if (h < 6) return [0.58 + micro, 0.56 + micro, 0.52]
+    return [0.50 + micro, 0.48 + micro, 0.45]
+  }
+
+  // 6. Varnhalt Frontier — earthy browns, muddy greens, rugged
+  if (dom === 'varnhalt') {
+    if (h < 2) {
+      const mud: [number, number, number] = [0.35 + micro, 0.32 + micro, 0.20]
+      const grass: [number, number, number] = [0.30 + micro, 0.40 + micro, 0.18]
+      return lerpColor(mud, grass, moisture)
+    }
+    if (h < 5) {
+      const scrub: [number, number, number] = [0.28 + micro, 0.35 + micro, 0.16]
+      const rock: [number, number, number] = [0.38 + micro, 0.34 + micro, 0.26]
+      return lerpColor(scrub, rock, (h - 2) / 3)
+    }
+    if (h < 8) return [0.40 + micro, 0.36 + micro, 0.28]
+    return [0.46 + micro, 0.42 + micro, 0.34]
+  }
+
+  // 7. Luminous Fold — ethereal white-gold, pristine, too-perfect greens
+  if (dom === 'luminous') {
+    const glow = fbm(wx * 0.6 + 1000, wz * 0.6 + 1000, 3) * 0.06
+    if (h < 2) {
+      const pristine: [number, number, number] = [0.45 + glow, 0.58 + glow, 0.35]
+      const manicured: [number, number, number] = [0.40 + glow, 0.55 + glow, 0.30]
+      return lerpColor(manicured, pristine, moisture)
+    }
+    if (h < 5) {
+      const ordered: [number, number, number] = [0.38 + micro, 0.52 + micro, 0.32]
+      const white: [number, number, number] = [0.70 + micro, 0.68 + micro, 0.60]
+      return lerpColor(ordered, white, (h - 2) / 3 * 0.5)
+    }
+    if (h < 8) return [0.60 + micro, 0.58 + micro, 0.52]
+    return [0.75 + micro, 0.73 + micro, 0.68]
+  }
+
+  // 8. Drowned Reach — waterlogged dark blue-green, mossy ruins
+  if (dom === 'drowned') {
+    const waterlog = fbm(wx * 0.9 + 600, wz * 0.9 + 600, 4)
+    if (h < 1.5) {
+      const swamp: [number, number, number] = [0.12 + micro, 0.25 + micro, 0.20]
+      const moss: [number, number, number] = [0.15 + micro, 0.30 + micro, 0.18]
+      const submerged: [number, number, number] = [0.08, 0.18, 0.25]
+      const base = lerpColor(swamp, moss, moisture)
+      // Partially submerged patches
+      if (waterlog > 0.52) return lerpColor(base, submerged, (waterlog - 0.52) * 4)
+      return base
+    }
+    if (h < 4) {
+      const wet: [number, number, number] = [0.16 + micro, 0.28 + micro, 0.18]
+      const dry: [number, number, number] = [0.22 + micro, 0.32 + micro, 0.22]
+      return lerpColor(wet, dry, (h - 1.5) / 2.5)
+    }
+    return [0.28 + micro, 0.30 + micro, 0.26]
+  }
+
+  // === Default biome (borders / unassigned areas) ===
+  if (h < 2) {
+    const t = h / 2
+    if (moisture > 0.55) return lerpColor([0.14 + micro, 0.40 + micro, 0.12], [0.25 + micro, 0.55 + micro, 0.18], t)
+    if (moisture > 0.38) return [0.30 + micro, 0.55 + micro, 0.20]
     return [0.50 + micro, 0.55 + micro, 0.28]
   }
-
-  // Rolling hills and light forest (2-4.5)
   if (h < 4.5) {
     const t = (h - 2) / 2.5
-    if (moisture > 0.48) {
-      const grass: [number, number, number] = [0.22, 0.50, 0.16]
-      const forest: [number, number, number] = [0.10, 0.38, 0.10]
-      return lerpColor(grass, forest, t * 0.7 + micro * 3)
-    }
+    if (moisture > 0.48) return lerpColor([0.22, 0.50, 0.16], [0.10, 0.38, 0.10], t * 0.7 + micro * 3)
     return [0.28 + micro, 0.48 + micro, 0.18]
   }
-
-  // Dense forest (4.5-7)
   if (h < 7) {
     const t = (h - 4.5) / 2.5
-    if (temp > 0.5) {
-      // Temperate deciduous
-      const light: [number, number, number] = [0.12 + micro, 0.36, 0.10]
-      const dark: [number, number, number] = [0.06, 0.26, 0.06]
-      return lerpColor(light, dark, t)
-    }
-    // Coniferous
+    if (temp > 0.5) return lerpColor([0.12 + micro, 0.36, 0.10], [0.06, 0.26, 0.06], t)
     return [0.06 + micro, 0.24 + micro * 2, 0.10]
   }
-
-  // Upland / scrubland (7-10)
   if (h < 10) {
     const t = (h - 7) / 3
-    const scrub: [number, number, number] = [0.22, 0.35, 0.15]
-    const rock: [number, number, number] = [0.42, 0.38, 0.30]
-    return lerpColor(scrub, rock, t + micro * 2)
+    return lerpColor([0.22, 0.35, 0.15], [0.42, 0.38, 0.30], t + micro * 2)
   }
-
-  // Highland / rocky (10-14)
   if (h < 14) {
     const t = (h - 10) / 4
-    const rockLow: [number, number, number] = [0.44 + micro, 0.40 + micro, 0.32]
-    const rockHigh: [number, number, number] = [0.55 + micro, 0.50 + micro, 0.42]
-    return lerpColor(rockLow, rockHigh, t)
+    return lerpColor([0.44 + micro, 0.40 + micro, 0.32], [0.55 + micro, 0.50 + micro, 0.42], t)
   }
-
-  // Alpine / snow transition (14-18)
   if (h < 18) {
     const t = (h - 14) / 4
-    const alpine: [number, number, number] = [0.55, 0.50, 0.44]
-    const snow: [number, number, number] = [0.88, 0.87, 0.85]
-    return lerpColor(alpine, snow, t * t)
+    return lerpColor([0.55, 0.50, 0.44], [0.88, 0.87, 0.85], t * t)
   }
-
-  // Snow caps
   const snowAmount = Math.min(1, (h - 18) / 3)
   return lerpColor([0.88, 0.87, 0.85], [0.95, 0.95, 0.94], snowAmount)
 }
@@ -1088,6 +1672,50 @@ function LayerLabels() {
 const ORBIT_TARGET = new THREE.Vector3(0, 15, 0)
 
 // ═══════════════════════════════════════════════════════════════
+// REGION LABELS (floating above terrain in each region)
+// ═══════════════════════════════════════════════════════════════
+const REGION_LABEL_DATA: { id: RegionId; name: string; sub: string; x: number; z: number; color: string }[] = [
+  { id: 'deyune',   name: 'The Deyune Steps',     sub: 'Nomadic Vastlands',     x: 55,  z: -50, color: '#d4a84b' },
+  { id: 'virelay',  name: 'Virelay Coastlands',    sub: 'Fractured Shore',       x: -50, z: -35, color: '#8888aa' },
+  { id: 'bellroot', name: 'The Bellroot Vale',     sub: 'Memory Nexus',          x: 0,   z: 45,  color: '#50c070' },
+  { id: 'ashen',    name: 'The Ashen Spine',       sub: 'Volcanic Chain',        x: 55,  z: 40,  color: '#cc5533' },
+  { id: 'glass',    name: 'The Glass Expanse',     sub: 'Crystal Desert',        x: 65,  z: -5,  color: '#c0c8d0' },
+  { id: 'varnhalt', name: 'Varnhalt Frontier',     sub: 'Rough Feudal Edge',     x: 0,   z: -50, color: '#a08050' },
+  { id: 'luminous', name: 'The Luminous Fold',     sub: 'Over-Stabilized Zone',  x: -55, z: 35,  color: '#e0d890' },
+  { id: 'drowned',  name: 'The Drowned Reach',     sub: 'Submerged Ruins',       x: -55, z: -5,  color: '#509088' },
+]
+
+function RegionLabels() {
+  return (
+    <group>
+      {REGION_LABEL_DATA.map((r) => {
+        const terrainH = Math.max(getTerrainHeight(r.x, r.z), 0)
+        return (
+          <Html
+            key={r.id}
+            position={[r.x, SURFACE_Y + terrainH + 8, r.z]}
+            center
+            style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
+          >
+            <div className="text-center select-none">
+              <div
+                className="text-sm font-serif font-bold tracking-wide"
+                style={{ color: r.color, textShadow: '0 0 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6)' }}
+              >
+                {r.name}
+              </div>
+              <div className="text-[9px] italic opacity-50" style={{ color: r.color }}>
+                {r.sub}
+              </div>
+            </div>
+          </Html>
+        )
+      })}
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SCENE
 // ═══════════════════════════════════════════════════════════════
 function Scene({
@@ -1122,6 +1750,8 @@ function Scene({
       <TheSurface />
       <FrayRifts />
       <SurfaceShards />
+      <TravelRoutes />
+      <RegionBarriers />
       <Hollows />
 
       {/* Surface elements */}
@@ -1137,6 +1767,8 @@ function Scene({
 
       {/* Layer labels */}
       <LayerLabels />
+      {/* Region labels */}
+      <RegionLabels />
 
       {/* Camera — user has full control, no auto-animation */}
       <OrbitControls
@@ -1230,9 +1862,11 @@ function MapLegend() {
               { color: '#d4a84b', label: 'Locations', sub: 'Canon Places', shape: 'circle' as const },
               { color: '#60d0ff', label: 'Shard Sites', sub: 'Crystal Fragments', shape: 'diamond' as const },
               { color: '#8040c0', label: 'Fray Rifts', sub: 'Reality Tears', shape: 'circle' as const },
+              { color: '#d4a84b', label: 'Travel Routes', sub: 'Safe Corridors', shape: 'line' as const },
+              { color: '#cc4422', label: 'Barriers', sub: 'Region Boundaries', shape: 'line-danger' as const },
             ].map(({ color, label, sub, shape }) => (
               <div key={label} className="flex items-center gap-2">
-                <div className={`w-2.5 h-2.5 ${shape === 'diamond' ? 'rotate-45' : 'rounded-full'}`} style={{ background: color, boxShadow: `0 0 6px ${color}80` }} />
+                <div className={`w-2.5 h-2.5 ${shape === 'diamond' ? 'rotate-45' : shape.startsWith('line') ? 'h-0.5 w-4 rounded' : 'rounded-full'}`} style={{ background: color, boxShadow: `0 0 6px ${color}80`, ...(shape === 'line-danger' ? { background: `repeating-linear-gradient(90deg, ${color} 0px, ${color} 3px, transparent 3px, transparent 6px)` } : {}) }} />
                 <div>
                   <span className="text-xs text-parchment">{label}</span>
                   <span className="text-[9px] text-parchment-muted ml-1.5">{sub}</span>

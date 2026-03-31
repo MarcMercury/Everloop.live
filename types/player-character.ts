@@ -185,6 +185,13 @@ export interface PlayerCharacter {
   portrait_url: string | null
   token_url: string | null
   appearance: string | null
+  height: string | null
+  weight: string | null
+  age: string | null
+  eyes: string | null
+  hair: string | null
+  skin: string | null
+  faith: string | null
   personality_traits: string | null
   ideals: string | null
   bonds: string | null
@@ -238,6 +245,13 @@ export interface PlayerCharacterInsert {
   portrait_url?: string | null
   token_url?: string | null
   appearance?: string | null
+  height?: string | null
+  weight?: string | null
+  age?: string | null
+  eyes?: string | null
+  hair?: string | null
+  skin?: string | null
+  faith?: string | null
   personality_traits?: string | null
   ideals?: string | null
   bonds?: string | null
@@ -286,6 +300,13 @@ export interface PlayerCharacterUpdate {
   portrait_url?: string | null
   token_url?: string | null
   appearance?: string | null
+  height?: string | null
+  weight?: string | null
+  age?: string | null
+  eyes?: string | null
+  hair?: string | null
+  skin?: string | null
+  faith?: string | null
   personality_traits?: string | null
   ideals?: string | null
   bonds?: string | null
@@ -358,6 +379,93 @@ export const DND_CONDITIONS: DndCondition[] = [
   'paralyzed', 'petrified', 'poisoned', 'prone',
   'restrained', 'stunned', 'unconscious'
 ]
+
+export interface ConditionEffect {
+  description: string
+  attackModifier?: 'advantage' | 'disadvantage'
+  cantAct?: boolean
+  speedZero?: boolean
+}
+
+export const CONDITION_EFFECTS: Record<DndCondition, ConditionEffect> = {
+  blinded: {
+    description: 'Disadvantage on attack rolls. Attacks against you have advantage.',
+    attackModifier: 'disadvantage',
+  },
+  charmed: {
+    description: 'Can\'t attack the charmer. Charmer has advantage on social checks against you.',
+  },
+  deafened: {
+    description: 'Can\'t hear. Auto-fail any check that requires hearing.',
+  },
+  exhaustion: {
+    description: 'Cumulative effects based on exhaustion level (see level tracker).',
+  },
+  frightened: {
+    description: 'Disadvantage on ability checks and attack rolls while source of fear is in sight.',
+    attackModifier: 'disadvantage',
+  },
+  grappled: {
+    description: 'Speed becomes 0. Can\'t benefit from speed bonuses.',
+    speedZero: true,
+  },
+  incapacitated: {
+    description: 'Can\'t take actions or reactions.',
+    cantAct: true,
+  },
+  invisible: {
+    description: 'Advantage on attack rolls. Attacks against you have disadvantage.',
+    attackModifier: 'advantage',
+  },
+  paralyzed: {
+    description: 'Incapacitated. Auto-fail STR/DEX saves. Attacks against you have advantage, melee hits auto-crit.',
+    cantAct: true,
+  },
+  petrified: {
+    description: 'Incapacitated. Auto-fail STR/DEX saves. Resistance to all damage.',
+    cantAct: true,
+  },
+  poisoned: {
+    description: 'Disadvantage on attack rolls and ability checks.',
+    attackModifier: 'disadvantage',
+  },
+  prone: {
+    description: 'Disadvantage on attack rolls. Melee attacks against you have advantage, ranged have disadvantage.',
+    attackModifier: 'disadvantage',
+  },
+  restrained: {
+    description: 'Speed 0. Disadvantage on attack rolls and DEX saves. Attacks against you have advantage.',
+    attackModifier: 'disadvantage',
+    speedZero: true,
+  },
+  stunned: {
+    description: 'Incapacitated. Auto-fail STR/DEX saves. Attacks against you have advantage.',
+    cantAct: true,
+  },
+  unconscious: {
+    description: 'Incapacitated. Drop held items. Auto-fail STR/DEX saves. Attacks have advantage, melee auto-crit.',
+    cantAct: true,
+  },
+}
+
+// Compute net attack roll modifier from active conditions
+// Returns 'advantage', 'disadvantage', or undefined (normal)
+export function conditionAttackModifier(
+  conditions: DndCondition[]
+): 'advantage' | 'disadvantage' | undefined {
+  let hasAdv = false
+  let hasDisadv = false
+  for (const c of conditions) {
+    const effect = CONDITION_EFFECTS[c]
+    if (effect.attackModifier === 'advantage') hasAdv = true
+    if (effect.attackModifier === 'disadvantage') hasDisadv = true
+  }
+  // D&D 5e: any number of advantages + any number of disadvantages cancel out
+  if (hasAdv && hasDisadv) return undefined
+  if (hasAdv) return 'advantage'
+  if (hasDisadv) return 'disadvantage'
+  return undefined
+}
 
 export const SKILL_ABILITY_MAP: Record<SkillName, AbilityScore> = {
   acrobatics: 'dexterity',
