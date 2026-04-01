@@ -2,9 +2,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
-import { WriteButton } from '@/components/write-button'
 import { NavDropdown } from '@/components/nav-dropdown'
-import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map } from 'lucide-react'
+import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map, PenLine, Search, Users } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -57,36 +56,38 @@ export async function Navbar() {
               <span className="hidden sm:inline">Overview</span>
             </Link>
 
-            <Link 
-              href="/map"
-              className="flex items-center gap-2 text-sm text-gold/80 hover:text-gold transition-colors"
-            >
-              <Map className="w-4 h-4" />
-              <span className="hidden sm:inline">Explore the Everloop</span>
-            </Link>
-            
             {user ? (
               <>
-                {/* Universe — Writing, Reading & Worldbuilding */}
+                {/* Explore — Map, Library & Archive */}
                 <NavDropdown
-                  label="Universe"
-                  icon={<Globe className="w-4 h-4" />}
+                  label="Explore"
+                  icon={<Search className="w-4 h-4" />}
                   items={[
+                    { href: '/map', label: 'Interactive Map', icon: <Map className="w-4 h-4" />, description: 'Explore the Everloop world' },
                     { href: '/stories', label: 'Library', icon: <Library className="w-4 h-4" />, description: 'Read canonical stories' },
                     { href: '/explore', label: 'Archive', icon: <BookOpen className="w-4 h-4" />, description: 'Browse canonical entities' },
-                    { href: '/create', label: 'Create', icon: <Palette className="w-4 h-4" />, description: 'Build characters, locations & more' },
-                    { href: '/roster', label: 'My Roster', icon: <User className="w-4 h-4" />, description: 'Manage your creations' },
                   ]}
                 />
 
-                {/* Play — Campaigns, Quests & Characters */}
+                {/* Write — Create, Roster & Write */}
+                <NavDropdown
+                  label="Write"
+                  icon={<PenLine className="w-4 h-4" />}
+                  items={[
+                    { href: '/create', label: 'Create', icon: <Palette className="w-4 h-4" />, description: 'Build characters, locations & more' },
+                    { href: '/roster', label: 'Roster', icon: <Users className="w-4 h-4" />, description: 'Manage your creations' },
+                    { href: '/write', label: 'Write', icon: <PenLine className="w-4 h-4" />, description: 'Draft stories & chapters' },
+                  ]}
+                />
+
+                {/* Play — Player Deck, Campaigns & Quests */}
                 <NavDropdown
                   label="Play"
                   icon={<Gamepad2 className="w-4 h-4" />}
                   items={[
+                    { href: '/player-deck', label: 'Player Deck', icon: <Swords className="w-4 h-4" />, description: 'Your playable characters' },
                     { href: '/campaigns', label: 'Campaigns', icon: <Flame className="w-4 h-4" />, description: 'Run or join live campaigns' },
                     { href: '/quests', label: 'Quests', icon: <Compass className="w-4 h-4" />, description: 'Solo & party adventures' },
-                    { href: '/player-deck', label: 'Player Deck', icon: <Swords className="w-4 h-4" />, description: 'Your playable characters' },
                   ]}
                 />
 
@@ -97,8 +98,6 @@ export async function Navbar() {
                   <LayoutDashboard className="w-4 h-4" />
                   <span className="hidden sm:inline">Dashboard</span>
                 </Link>
-                
-                <WriteButton />
                 
                 {/* Admin Link - only for admins/lorekeepers */}
                 {isAdmin && (
