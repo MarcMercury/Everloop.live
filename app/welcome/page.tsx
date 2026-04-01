@@ -31,7 +31,7 @@ export default function WelcomePage() {
               <span className="text-gold font-serif font-semibold">Write</span> – Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
             </p>
             <p>
-              <span className="text-gold font-serif font-semibold">Play</span> – Build and experience: craft characters, quests, and campaigns—whether grounded in canon or wild one-shots in a reality unraveling.
+              <span className="text-gold font-serif font-semibold">Play</span> – Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
             </p>
           </div>
 
