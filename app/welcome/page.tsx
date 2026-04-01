@@ -22,6 +22,19 @@ export default function WelcomePage() {
             </h1>
           </div>
 
+          {/* Pillar Descriptions */}
+          <div className="space-y-4 mb-12 max-w-3xl mx-auto text-lg leading-relaxed text-parchment-muted">
+            <p>
+              <span className="text-gold font-serif font-semibold">Explore</span> – Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
+            </p>
+            <p>
+              <span className="text-gold font-serif font-semibold">Write</span> – Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
+            </p>
+            <p>
+              <span className="text-gold font-serif font-semibold">Play</span> – Build and experience: craft characters, quests, and campaigns—whether grounded in canon or wild one-shots in a reality unraveling.
+            </p>
+          </div>
+
           {/* Hero Image */}
           <div className="relative w-full aspect-[16/9] mb-8 rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
             <Image
