@@ -140,7 +140,7 @@ export default async function Home() {
                 <h3 className="text-xl font-serif text-parchment">Play</h3>
               </div>
               <p className="text-sm text-parchment-dark leading-relaxed">
-                Build and experience: craft characters, quests, and campaigns—whether grounded in canon or wild one-shots in a reality unraveling.
+                Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
               </p>
             </div>
           </div>
