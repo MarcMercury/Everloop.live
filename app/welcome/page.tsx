@@ -23,16 +23,37 @@ export default function WelcomePage() {
           </div>
 
           {/* Pillar Descriptions */}
-          <div className="space-y-4 mb-12 max-w-3xl mx-auto text-lg leading-relaxed text-parchment-muted">
-            <p>
-              <span className="text-gold font-serif font-semibold">Explore</span> – Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
-            </p>
-            <p>
-              <span className="text-gold font-serif font-semibold">Write</span> – Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
-            </p>
-            <p>
-              <span className="text-gold font-serif font-semibold">Play</span> – Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
-            </p>
+          <div className="space-y-6 mb-12 max-w-3xl mx-auto text-lg leading-relaxed text-parchment-muted">
+            <div>
+              <p>
+                <span className="text-gold font-serif font-semibold">Explore</span> – Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
+              </p>
+              <div className="flex gap-4 mt-2 text-sm">
+                <Link href="/map" className="text-teal-light/70 hover:text-teal-light transition-colors">✦ Interactive Map</Link>
+                <Link href="/stories" className="text-teal-light/70 hover:text-teal-light transition-colors">✦ Library</Link>
+                <Link href="/explore" className="text-teal-light/70 hover:text-teal-light transition-colors">✦ Archive</Link>
+              </div>
+            </div>
+            <div>
+              <p>
+                <span className="text-gold font-serif font-semibold">Write</span> – Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
+              </p>
+              <div className="flex gap-4 mt-2 text-sm">
+                <Link href="/create" className="text-gold/70 hover:text-gold transition-colors">✦ Create</Link>
+                <Link href="/roster" className="text-gold/70 hover:text-gold transition-colors">✦ Roster</Link>
+                <Link href="/write" className="text-gold/70 hover:text-gold transition-colors">✦ Write</Link>
+              </div>
+            </div>
+            <div>
+              <p>
+                <span className="text-gold font-serif font-semibold">Play</span> – Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
+              </p>
+              <div className="flex gap-4 mt-2 text-sm">
+                <Link href="/player-deck" className="text-purple-400/70 hover:text-purple-400 transition-colors">✦ Player Deck</Link>
+                <Link href="/campaigns" className="text-purple-400/70 hover:text-purple-400 transition-colors">✦ Campaigns</Link>
+                <Link href="/quests" className="text-purple-400/70 hover:text-purple-400 transition-colors">✦ Quests</Link>
+              </div>
+            </div>
           </div>
 
           {/* Hero Image */}
