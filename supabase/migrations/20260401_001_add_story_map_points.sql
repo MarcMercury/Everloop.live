@@ -48,9 +48,9 @@ WHERE slug IN ('kaerlin', 'mira', 'thomel', 'eidon', 'watchers-hill', 'the-gorge
 -- VIRELAY COASTLANDS — Story 2 (The Prince and The Drowned City)
 -- =====================================================
 
--- Virelay — Major port city, temporally unstable
+-- Virelay — Major port city, temporally unstable (at former Drowned City site)
 UPDATE public.canon_entities
-SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 45, "map_z": 40}'::jsonb,
+SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 35, "map_z": 55}'::jsonb,
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'virelay';
 
@@ -66,62 +66,29 @@ SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x"
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'the-oar-and-candle';
 
--- The Well of Virelay
+-- The Well of Virelay (south of Virelay)
 UPDATE public.canon_entities
-SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 40, "map_z": 50}'::jsonb,
+SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 35, "map_z": 62}'::jsonb,
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'the-well-of-virelay';
 
--- The Third Shard (found in Virelay)
+-- The Third Shard (south of the Well)
 UPDATE public.canon_entities
-SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 40, "map_z": 52}'::jsonb,
+SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 35, "map_z": 67}'::jsonb,
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'the-third-shard';
 
--- The Cracked Pot (between House Thorne and Virelay)
+-- The Cracked Pot (at old Virelay site)
 UPDATE public.canon_entities
-SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 58, "map_z": 35}'::jsonb,
+SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 45, "map_z": 40}'::jsonb,
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'the-cracked-pot';
 
--- NEW: The Drowned City — the flickering, time-fractured version of Virelay
-DO $$
-DECLARE
-    admin_id UUID;
-BEGIN
-    SELECT id INTO admin_id FROM profiles WHERE is_admin = true LIMIT 1;
+-- (The Drowned City and House Thorne faction removed — see 20260401_002)
 
-    INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by, metadata, tags)
-    VALUES (
-        'The Drowned City',
-        'the-drowned-city',
-        'location',
-        'The flickering, time-fractured version of Virelay that exists beneath the waves. A ghostly mirror of the port city above, submerged and caught in an endless loop of destruction and rebirth. Buildings shimmer between states of ruin and splendor, streets flood and drain with impossible tides, and the echoes of lives never lived drift through drowned corridors. At its heart lay the Well—an ancient stone circle on the seafloor where all of Virelay''s temporal instability originated.',
-        'canonical',
-        0.6,
-        admin_id,
-        '{"region": "virelay", "map_x": 35, "map_z": 55}'::jsonb,
-        ARRAY['virelay', 'story-2', 'fray-touched']
-    ) ON CONFLICT (slug) DO NOTHING;
-
-    -- NEW: House Thorne — Auren's noble family as a faction
-    INSERT INTO public.canon_entities (name, slug, type, description, status, stability_rating, created_by, metadata, tags)
-    VALUES (
-        'House Thorne',
-        'house-thorne',
-        'faction',
-        'The noble house that oversees the Virelay Coastlands and surrounding territories. Led by Lord and Lady Thorne, the house has long served as a stabilizing presence along the fractured shore. Their lands are connected by trade routes to the port city of Virelay, and when the Fray began disrupting coastal trade and unraveling reality in Virelay, it was their son Auren—the "Lord of Luck"—who defied his parents'' protective wishes and journeyed to save the town. House Thorne is known for its quiet authority, scholarly traditions, and genuine concern for its people.',
-        'canonical',
-        0.85,
-        admin_id,
-        '{"region": "virelay", "map_x": 72, "map_z": 28}'::jsonb,
-        ARRAY['virelay', 'story-2']
-    ) ON CONFLICT (slug) DO NOTHING;
-END $$;
-
--- Assign Auren Thorne to Virelay region
+-- Assign Auren Thorne to Virelay region (next to Thorne Manor)
 UPDATE public.canon_entities
-SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 47, "map_z": 42}'::jsonb,
+SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"region": "virelay", "map_x": 72, "map_z": 32}'::jsonb,
     tags = array_cat(COALESCE(tags, '{}'), ARRAY['virelay', 'story-2'])
 WHERE slug = 'auren-thorne';
 
