@@ -1022,7 +1022,12 @@ function StepClass({
                   className="text-parchment-muted h-9 w-9 p-0"
                 >
                   <Plus className="w-4 h-4" />
-        
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Fighting Style Picker */}
       {['Fighter', 'Ranger', 'Paladin'].includes(charClass) && (
@@ -1135,11 +1140,6 @@ function StepClass({
                 </button>
               )
             })}
-          </div>
-        </Card>
-      )}        </Button>
-              </div>
-            </div>
           </div>
         </Card>
       )}
