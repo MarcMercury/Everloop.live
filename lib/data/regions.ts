@@ -32,7 +32,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'A living, layered ecosystem of memory. Cliffs on one side give way to expansive forest systems — redwood clusters, rainforest zones, swamp regions, and mixed woodland transitions. Fragmented waterways weave through wetlands and marshes. Hidden villages lie embedded within the ancient canopy.',
     color: '#50c070',
-    mapImage: null,
+    mapImage: '/Maps/Bellroot Vale.png',
     x: 0,
     z: 45,
   },
@@ -43,7 +43,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'A land of unnatural order and perfection. Geometric land patterns and structured landscapes stretch across evenly spaced settlements. Subtle glowing energy lines trace through the terrain. Beautiful — but unnerving in its precision.',
     color: '#e0d890',
-    mapImage: null,
+    mapImage: '/Maps/Luminous Expanse.png',
     x: -70,
     z: 30,
   },
@@ -65,7 +65,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'The past being erased. Partially submerged land and broken coastlines reveal flooded ruins and sunken cities. Scattered islands dot waters that rise without clear source, encroaching ever further inland.',
     color: '#509088',
-    mapImage: null,
+    mapImage: '/Maps/Drowned Reach.png',
     x: -80,
     z: -5,
   },
@@ -76,7 +76,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Reality folding on itself. A crystalline desert of reflective surfaces and fractured dunes stretches endlessly. Mirrored terrain patterns and strange light behavior create "echo" formations. Rare, reflective pools shimmer beneath an alien sky.',
     color: '#c0c8d0',
-    mapImage: null,
+    mapImage: '/Maps/Glass Expanse.png',
     x: 75,
     z: -5,
   },
@@ -87,7 +87,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Beauty with subtle wrongness. A fractured coastline of islands, coves, and peninsulas gives way to inland forests and hills. Multiple port towns dot the irregular waterways. Fog banks and shifting weather lend an uneasy atmosphere to this unstable shore.',
     color: '#8888aa',
-    mapImage: '/Maps/Viralay Coastlands.png',
+    mapImage: '/Maps/Virelay Coastlands.png',
     x: -55,
     z: -35,
   },
@@ -98,7 +98,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Sprawl without control. A chaotic mix of plains, forests, rocky mesas, and dry patches hosts the densest — yet most decentralized — civilization in the Everloop. Roads crisscross everywhere between camps and trade routes.',
     color: '#a08050',
-    mapImage: '/Maps/Varnhalt frontier.png',
+    mapImage: '/Maps/Varnhalt Frontier.png',
     x: 0,
     z: -45,
   },
@@ -109,7 +109,7 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Feels infinite and empty. Rolling grasslands and dry plains stretch beyond sight, crossed by sparse rivers and occasional rock formations. Faint migration paths and barely visible herds mark the wind-swept, open-sky expanse of endless movement.',
     color: '#d4a84b',
-    mapImage: '/Maps/Deyune Steps 1.png',
+    mapImage: '/Maps/Deyune Steps.png',
     x: 55,
     z: -40,
   },
