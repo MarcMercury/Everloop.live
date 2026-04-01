@@ -53,6 +53,12 @@ export default async function AdminLayout({
               >
                 Entities
               </Link>
+              <Link 
+                href="/admin/users" 
+                className="text-parchment-muted hover:text-parchment transition-colors"
+              >
+                Users
+              </Link>
               <div className="w-px h-4 bg-gold/20" />
               <Link 
                 href="/explore" 

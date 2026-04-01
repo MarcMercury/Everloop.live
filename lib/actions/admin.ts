@@ -347,3 +347,149 @@ export async function hydrateEntity(entityId: string) {
     return { success: false, error: 'Failed to generate embedding' }
   }
 }
+
+// ── User Management Actions ──────────────────────────────────
+
+/**
+ * Freeze (ban) a user account. Sets a far-future ban duration.
+ */
+export async function freezeUser(userId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const isAdmin = await verifyAdminAccess(supabase)
+  if (!isAdmin) return { success: false, error: 'Admin access required' }
+
+  if (userId === user.id) return { success: false, error: 'Cannot freeze your own account' }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { success: false, error: 'Admin client not available' }
+
+  const { error } = await adminClient.auth.admin.updateUserById(userId, {
+    ban_duration: '876600h', // ~100 years
+  })
+
+  if (error) {
+    console.error('[freezeUser] Error:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+/**
+ * Unfreeze (unban) a user account.
+ */
+export async function unfreezeUser(userId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const isAdmin = await verifyAdminAccess(supabase)
+  if (!isAdmin) return { success: false, error: 'Admin access required' }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { success: false, error: 'Admin client not available' }
+
+  const { error } = await adminClient.auth.admin.updateUserById(userId, {
+    ban_duration: 'none',
+  })
+
+  if (error) {
+    console.error('[unfreezeUser] Error:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+/**
+ * Delete a user account entirely (auth + profile).
+ */
+export async function deleteUser(userId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const isAdmin = await verifyAdminAccess(supabase)
+  if (!isAdmin) return { success: false, error: 'Admin access required' }
+
+  if (userId === user.id) return { success: false, error: 'Cannot delete your own account' }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { success: false, error: 'Admin client not available' }
+
+  // Delete auth user (Supabase cascades to profile via FK or trigger)
+  const { error } = await adminClient.auth.admin.deleteUser(userId)
+
+  if (error) {
+    console.error('[deleteUser] Error:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+/**
+ * Generate a password reset link for a user.
+ */
+export async function resetUserPassword(userId: string, email: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const isAdmin = await verifyAdminAccess(supabase)
+  if (!isAdmin) return { success: false, error: 'Admin access required' }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { success: false, error: 'Admin client not available' }
+
+  const { data, error } = await adminClient.auth.admin.generateLink({
+    type: 'recovery',
+    email,
+  })
+
+  if (error) {
+    console.error('[resetUserPassword] Error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return {
+    success: true,
+    resetLink: data.properties?.action_link || null,
+  }
+}
+
+/**
+ * Toggle admin status for a user.
+ */
+export async function toggleUserAdmin(userId: string, makeAdmin: boolean) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' }
+
+  const isAdmin = await verifyAdminAccess(supabase)
+  if (!isAdmin) return { success: false, error: 'Admin access required' }
+
+  if (userId === user.id) return { success: false, error: 'Cannot change your own admin status' }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { success: false, error: 'Admin client not available' }
+
+  const { error } = await adminClient
+    .from('profiles')
+    .update({ is_admin: makeAdmin, updated_at: new Date().toISOString() } as never)
+    .eq('id', userId)
+
+  if (error) {
+    console.error('[toggleUserAdmin] Error:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
