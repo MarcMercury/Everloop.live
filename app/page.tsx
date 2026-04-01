@@ -107,7 +107,7 @@ export default async function Home() {
           <p className="text-lg text-parchment-dark max-w-3xl mx-auto leading-relaxed">
             Everloop is a writing platform and living universe. Every story you write, every 
             character you create, every location you name becomes part of a shared canon that 
-            other writers and players build upon. There are two ways to enter the Everloop.
+            other writers and players build upon. There are 3 ways to enter the Everloop.
           </p>
         </div>
       </section>
