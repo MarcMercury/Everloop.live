@@ -4,6 +4,7 @@ import { useRef, useMemo, useState, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Float, Stars, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
+import { REGIONS } from '@/lib/data/regions'
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -901,32 +902,94 @@ function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
   )
 }
 
+function RegionLabel({ r }: { r: typeof REGION_LABEL_DATA[number] }) {
+  const [hovered, setHovered] = useState(false)
+  const surfH = getSurfaceHeight(r.x, r.z)
+  const region = REGIONS.find((reg) => reg.id === r.id)
+
+  return (
+    <Html
+      position={[r.x, SURFACE_Y + surfH + 6, r.z]}
+      center
+      style={{ pointerEvents: 'auto', whiteSpace: 'nowrap' }}
+    >
+      <div
+        className="text-center select-none relative"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ cursor: 'pointer' }}
+      >
+        <div
+          className="text-sm font-serif font-bold tracking-wide transition-all duration-200"
+          style={{
+            color: r.color,
+            textShadow: '0 0 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6)',
+            transform: hovered ? 'scale(1.1)' : 'scale(1)',
+          }}
+        >
+          {r.name}
+        </div>
+        <div className="text-[9px] italic opacity-50" style={{ color: r.color }}>
+          {r.sub}
+        </div>
+
+        {/* Hover popup */}
+        {hovered && region && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 mt-2 rounded-xl p-4 backdrop-blur-xl border z-50"
+            style={{
+              width: '280px',
+              whiteSpace: 'normal',
+              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.96), rgba(15, 30, 35, 0.93))',
+              borderColor: `${r.color}40`,
+              boxShadow: `0 0 30px ${r.color}25, 0 12px 40px rgba(0,0,0,0.6)`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ background: r.color, boxShadow: `0 0 8px ${r.color}80` }}
+              />
+              <span className="text-sm font-serif font-bold" style={{ color: r.color }}>
+                {r.name}
+              </span>
+            </div>
+            <div className="text-[10px] uppercase tracking-wider mb-2 opacity-60" style={{ color: r.color }}>
+              {r.sub}
+            </div>
+            <p
+              className="text-[11px] leading-relaxed mb-3"
+              style={{ color: 'rgba(210, 200, 180, 0.8)' }}
+            >
+              {region.description.length > 160
+                ? region.description.slice(0, 160) + '\u2026'
+                : region.description}
+            </p>
+            <a
+              href={`/map/${r.id}`}
+              className="block text-center px-3 py-2 rounded-lg text-xs font-medium transition-all hover:brightness-125"
+              style={{
+                background: `${r.color}20`,
+                color: r.color,
+                border: `1px solid ${r.color}40`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              Explore Region \u2192
+            </a>
+          </div>
+        )}
+      </div>
+    </Html>
+  )
+}
+
 function RegionLabels() {
   return (
     <group>
-      {REGION_LABEL_DATA.map((r) => {
-        const surfH = getSurfaceHeight(r.x, r.z)
-        return (
-          <Html
-            key={r.id}
-            position={[r.x, SURFACE_Y + surfH + 6, r.z]}
-            center
-            style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}
-          >
-            <div className="text-center select-none">
-              <div
-                className="text-sm font-serif font-bold tracking-wide"
-                style={{ color: r.color, textShadow: '0 0 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6)' }}
-              >
-                {r.name}
-              </div>
-              <div className="text-[9px] italic opacity-50" style={{ color: r.color }}>
-                {r.sub}
-              </div>
-            </div>
-          </Html>
-        )
-      })}
+      {REGION_LABEL_DATA.map((r) => (
+        <RegionLabel key={r.id} r={r} />
+      ))}
     </group>
   )
 }
