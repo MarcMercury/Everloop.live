@@ -48,14 +48,14 @@ const REGION_LABEL_DATA: {
   id: RegionId; name: string; sub: string
   x: number; z: number; color: string
 }[] = [
-  { id: 'bellroot',  name: 'The Bellroot Vale',     sub: 'Memory Nexus',         x: 0,   z: 45,  color: '#50c070' },
-  { id: 'luminous',  name: 'The Luminous Fold',     sub: 'Over-Stabilized Zone', x: -70, z: 30,  color: '#e0d890' },
-  { id: 'ashen',     name: 'The Ashen Spine',       sub: 'Volcanic Chain',       x: 55,  z: 38,  color: '#cc5533' },
-  { id: 'drowned',   name: 'The Drowned Reach',     sub: 'Submerged Ruins',      x: -80, z: -5,  color: '#509088' },
+  { id: 'bellroot',  name: 'The Bellroot Vale',     sub: 'Memory Nexus',         x: 28,  z: -3,  color: '#50c070' },
+  { id: 'luminous',  name: 'The Luminous Fold',     sub: 'Over-Stabilized Zone', x: 55,  z: -40, color: '#e0d890' },
+  { id: 'ashen',     name: 'The Ashen Spine',       sub: 'Volcanic Chain',       x: 0,   z: -45, color: '#cc5533' },
+  { id: 'drowned',   name: 'The Drowned Reach',     sub: 'Submerged Ruins',      x: 0,   z: 45,  color: '#509088' },
   { id: 'glass',     name: 'The Glass Expanse',     sub: 'Crystal Desert',       x: 75,  z: -5,  color: '#c0c8d0' },
-  { id: 'virelay',   name: 'Virelay Coastlands',    sub: 'Fractured Shore',      x: -55, z: -35, color: '#8888aa' },
-  { id: 'varnhalt',  name: 'Varnhalt Frontier',     sub: 'Rough Feudal Edge',    x: 0,   z: -45, color: '#a08050' },
-  { id: 'deyune',    name: 'The Deyune Steps',      sub: 'Nomadic Vastlands',    x: 55,  z: -40, color: '#d4a84b' },
+  { id: 'virelay',   name: 'Virelay Coastlands',    sub: 'Fractured Shore',      x: -70, z: 30,  color: '#8888aa' },
+  { id: 'varnhalt',  name: 'Varnhalt Frontier',     sub: 'Rough Feudal Edge',    x: -80, z: -5,  color: '#a08050' },
+  { id: 'deyune',    name: 'The Deyune Steps',      sub: 'Nomadic Vastlands',    x: -55, z: -35, color: '#d4a84b' },
 ]
 
 function getShardColor(region: RegionId): { color: string; emissive: string } {
