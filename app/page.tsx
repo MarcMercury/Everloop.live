@@ -112,6 +112,41 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Explore / Write / Play */}
+      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="story-card p-6 text-left space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-teal-light/10 border border-teal-light/20 flex items-center justify-center text-lg">🌍</div>
+                <h3 className="text-xl font-serif text-parchment">Explore</h3>
+              </div>
+              <p className="text-sm text-parchment-dark leading-relaxed">
+                Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
+              </p>
+            </div>
+            <div className="story-card p-6 text-left space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center text-lg">✍️</div>
+                <h3 className="text-xl font-serif text-parchment">Write</h3>
+              </div>
+              <p className="text-sm text-parchment-dark leading-relaxed">
+                Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
+              </p>
+            </div>
+            <div className="story-card p-6 text-left space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-lg">⚔️</div>
+                <h3 className="text-xl font-serif text-parchment">Play</h3>
+              </div>
+              <p className="text-sm text-parchment-dark leading-relaxed">
+                Build and experience: craft characters, quests, and campaigns—whether grounded in canon or wild one-shots in a reality unraveling.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Two Paths Section */}
       <section className="relative z-10 py-16 px-6 border-t border-gold/10">
         <div className="max-w-5xl mx-auto">

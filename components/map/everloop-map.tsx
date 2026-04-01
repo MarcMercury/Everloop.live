@@ -7,27 +7,6 @@ import * as THREE from 'three'
 import { REGIONS } from '@/lib/data/regions'
 
 // ═══════════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════════
-export interface MapLocation {
-  id: string
-  name: string
-  slug: string
-  type: string
-  description: string | null
-  stability: number
-  tags: string[]
-  x: number
-  z: number
-  elevation: number
-  createdAt: string
-}
-
-interface EverloopMapProps {
-  locations: MapLocation[]
-}
-
-// ═══════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════
 const SURFACE_Y = 30
@@ -44,32 +23,6 @@ const MAP_HALF_H = MAP_HEIGHT / 2
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
-function getTypeColor(type: string): string {
-  switch (type) {
-    case 'location':  return '#d4a84b'
-    case 'character': return '#6ec6ff'
-    case 'artifact':  return '#e066ff'
-    case 'faction':   return '#ff6b6b'
-    case 'creature':  return '#66ff9e'
-    case 'event':     return '#ffaa66'
-    case 'concept':   return '#66d9ff'
-    default:          return '#d4a84b'
-  }
-}
-
-function getTypeIcon(type: string): string {
-  switch (type) {
-    case 'location':  return '🏛️'
-    case 'character': return '👤'
-    case 'artifact':  return '✨'
-    case 'faction':   return '⚔️'
-    case 'creature':  return '🐉'
-    case 'event':     return '📜'
-    case 'concept':   return '💭'
-    default:          return '◈'
-  }
-}
-
 function seededRandom(seed: number) {
   const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123
   return x - Math.floor(x)
@@ -737,107 +690,6 @@ function FrayRifts() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LOCATION BEACONS (on the surface)
-// ═══════════════════════════════════════════════════════════════
-function LocationBeacon({
-  location, isSelected, onSelect,
-}: {
-  location: MapLocation; isSelected: boolean; onSelect: (loc: MapLocation) => void
-}) {
-  const beaconRef = useRef<THREE.Group>(null)
-  const ringRef = useRef<THREE.Mesh>(null)
-  const [hovered, setHovered] = useState(false)
-  const color = getTypeColor(location.type)
-  const icon = getTypeIcon(location.type)
-
-  const surfH = useMemo(
-    () => getSurfaceHeight(location.x, location.z),
-    [location.x, location.z]
-  )
-
-  useFrame(({ clock }) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.y = clock.elapsedTime * 0.5
-    }
-    if (beaconRef.current) {
-      beaconRef.current.position.y = SURFACE_Y + surfH + location.elevation +
-        Math.sin(clock.elapsedTime * 0.8 + location.x) * 0.15
-    }
-  })
-
-  const truncatedDesc = location.description
-    ? location.description.length > 120
-      ? location.description.slice(0, 120) + '…'
-      : location.description
-    : null
-
-  return (
-    <group
-      ref={beaconRef}
-      position={[location.x, SURFACE_Y + surfH + location.elevation, location.z]}
-      scale={isSelected ? 1.4 : hovered ? 1.2 : 1}
-      onClick={(e) => { e.stopPropagation(); onSelect(location) }}
-      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer' }}
-      onPointerOut={() => { setHovered(false); document.body.style.cursor = 'default' }}
-    >
-      <mesh position={[0, -location.elevation / 2, 0]}>
-        <cylinderGeometry args={[0.04, 0.15, location.elevation + 0.5, 8]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.8} transparent opacity={0.3} />
-      </mesh>
-      <Float speed={2} rotationIntensity={0.3} floatIntensity={0.3}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.35, 12, 12]} />
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.2} roughness={0.2} metalness={0.5} />
-        </mesh>
-        <mesh ref={ringRef}>
-          <torusGeometry args={[0.6, 0.03, 8, 24]} />
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.6} transparent opacity={0.7} />
-        </mesh>
-      </Float>
-      <Html position={[0, 1.5, 0]} center style={{ pointerEvents: 'none', whiteSpace: 'nowrap' }}>
-        <div className="text-center select-none">
-          <div className="text-xs font-serif font-bold drop-shadow-lg" style={{ color, textShadow: '0 0 8px rgba(0,0,0,0.9)' }}>
-            {location.name}
-          </div>
-        </div>
-      </Html>
-      {hovered && (
-        <Html position={[0, 3, 0]} center style={{ pointerEvents: 'auto', whiteSpace: 'normal' }}>
-          <div
-            className="select-none rounded-lg p-3 backdrop-blur-xl border"
-            style={{
-              width: '220px',
-              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.95), rgba(15, 30, 35, 0.92))',
-              borderColor: `${color}50`,
-              boxShadow: `0 0 20px ${color}30, 0 8px 30px rgba(0,0,0,0.6)`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-base">{icon}</span>
-              <span className="text-sm font-serif font-bold" style={{ color }}>{location.name}</span>
-            </div>
-            {truncatedDesc && (
-              <p className="text-[11px] leading-snug mb-2" style={{ color: 'rgba(210, 200, 180, 0.8)' }}>
-                {truncatedDesc}
-              </p>
-            )}
-            <a
-              href={`/explore/${location.slug}`}
-              className="block text-center px-2 py-1 rounded text-[11px] font-medium transition-all hover:brightness-125"
-              style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              View in Archive →
-            </a>
-          </div>
-        </Html>
-      )}
-      <pointLight color={color} intensity={isSelected ? 3 : hovered ? 2 : 1} distance={10} decay={2} />
-    </group>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════
 // AMBIENT PARTICLES (golden motes above the surface)
 // ═══════════════════════════════════════════════════════════════
 function SurfaceParticles() {
@@ -1000,14 +852,7 @@ const ORBIT_TARGET = new THREE.Vector3(0, 15, 0)
 // ═══════════════════════════════════════════════════════════════
 // SCENE
 // ═══════════════════════════════════════════════════════════════
-function Scene({
-  locations, selectedLocation, onSelectLocation, showSubLayers,
-}: {
-  locations: MapLocation[]
-  selectedLocation: MapLocation | null
-  onSelectLocation: (loc: MapLocation) => void
-  showSubLayers: boolean
-}) {
+function Scene({ showSubLayers }: { showSubLayers: boolean }) {
   return (
     <>
       {/* Warm lighting to match the parchment / painterly aesthetic */}
@@ -1044,16 +889,6 @@ function Scene({
       <TravelRoutes />
       <SurfaceParticles />
 
-      {/* Location beacons */}
-      {locations.filter(loc => loc.type === 'location').map((loc) => (
-        <LocationBeacon
-          key={loc.id}
-          location={loc}
-          isSelected={selectedLocation?.id === loc.id}
-          onSelect={onSelectLocation}
-        />
-      ))}
-
       {/* Labels */}
       <LayerLabels showSubLayers={showSubLayers} />
       <RegionLabels />
@@ -1074,54 +909,6 @@ function Scene({
 // ═══════════════════════════════════════════════════════════════
 // UI OVERLAYS
 // ═══════════════════════════════════════════════════════════════
-function InfoPanel({ location, onClose }: { location: MapLocation; onClose: () => void }) {
-  const color = getTypeColor(location.type)
-  const icon = getTypeIcon(location.type)
-
-  return (
-    <div className="absolute bottom-6 left-6 right-6 md:left-auto md:right-6 md:w-[420px] z-20 animate-slide-up">
-      <div className="rounded-xl p-6 backdrop-blur-xl border" style={{
-        background: 'linear-gradient(135deg, rgba(13, 26, 26, 0.95), rgba(20, 40, 40, 0.9))',
-        borderColor: `${color}40`,
-        boxShadow: `0 0 40px ${color}20, 0 20px 60px rgba(0,0,0,0.5)`,
-      }}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{icon}</span>
-            <div>
-              <h3 className="text-xl font-serif font-bold" style={{ color }}>{location.name}</h3>
-              <span className="text-xs uppercase tracking-wider opacity-70" style={{ color }}>{location.type}</span>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-parchment-muted hover:text-parchment transition-colors p-1" aria-label="Close">✕</button>
-        </div>
-        {location.description && <p className="text-sm text-parchment-muted leading-relaxed mb-4">{location.description}</p>}
-        <div className="flex flex-wrap gap-4 text-xs mb-4">
-          <div>
-            <span className="text-parchment-muted">Stability</span>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: `${color}20` }}>
-                <div className="h-full rounded-full" style={{ width: `${location.stability * 100}%`, background: color }} />
-              </div>
-              <span style={{ color }}>{Math.round(location.stability * 100)}%</span>
-            </div>
-          </div>
-        </div>
-        {location.tags && location.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {location.tags.map((tag) => (
-              <span key={tag} className="px-2 py-0.5 rounded-full text-xs border" style={{ borderColor: `${color}30`, color: `${color}cc`, background: `${color}10` }}>{tag}</span>
-            ))}
-          </div>
-        )}
-        <a href={`/explore/${location.slug}`} className="block text-center px-4 py-2 rounded-lg text-sm font-medium transition-all" style={{ background: `${color}20`, color, border: `1px solid ${color}40` }}>
-          View Full Entry →
-        </a>
-      </div>
-    </div>
-  )
-}
-
 function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; onToggleLayers: () => void }) {
   return (
     <div className="absolute top-4 left-4 z-10">
@@ -1164,7 +951,6 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
           <h4 className="text-xs font-serif text-parchment mb-1.5 uppercase tracking-wider">Surface Markers</h4>
           <div className="space-y-1.5">
             {[
-              { color: '#d4a84b', label: 'Locations', sub: 'Canon Places', shape: 'circle' as const },
               { color: '#60d0ff', label: 'Shard Sites', sub: 'Crystal Fragments', shape: 'diamond' as const },
               { color: '#8040c0', label: 'Fray Rifts', sub: 'Reality Tears', shape: 'circle' as const },
               { color: '#d4a84b', label: 'Travel Routes', sub: 'Safe Corridors', shape: 'line' as const },
@@ -1193,31 +979,11 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
   )
 }
 
-function EmptyState() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-      <div className="text-center">
-        <div className="text-6xl mb-4">🌫️</div>
-        <h2 className="text-2xl font-serif text-parchment mb-2">The Land Awaits</h2>
-        <p className="text-parchment-muted max-w-md">
-          No canonical locations have been discovered yet.
-        </p>
-      </div>
-    </div>
-  )
-}
-
 // ═══════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═══════════════════════════════════════════════════════════════
-export default function EverloopMap({ locations }: EverloopMapProps) {
-  const [selectedLocation, setSelectedLocation] = useState<MapLocation | null>(null)
+export default function EverloopMap() {
   const [showSubLayers, setShowSubLayers] = useState(false)
-
-  const handleSelect = useCallback((loc: MapLocation) => {
-    setSelectedLocation((prev) => (prev?.id === loc.id ? null : loc))
-  }, [])
-  const handleClose = useCallback(() => { setSelectedLocation(null) }, [])
   const handleToggleLayers = useCallback(() => { setShowSubLayers(prev => !prev) }, [])
 
   return (
@@ -1227,18 +993,10 @@ export default function EverloopMap({ locations }: EverloopMapProps) {
         camera={{ position: [0, 120, 140], fov: 40, near: 0.1, far: 1000 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
         style={{ background: '#030308' }}
-        onClick={() => setSelectedLocation(null)}
       >
-        <Scene
-          locations={locations}
-          selectedLocation={selectedLocation}
-          onSelectLocation={handleSelect}
-          showSubLayers={showSubLayers}
-        />
+        <Scene showSubLayers={showSubLayers} />
       </Canvas>
       <MapLegend showSubLayers={showSubLayers} onToggleLayers={handleToggleLayers} />
-      {locations.length === 0 && <EmptyState />}
-      {selectedLocation && <InfoPanel location={selectedLocation} onClose={handleClose} />}
     </div>
   )
 }

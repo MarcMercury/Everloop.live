@@ -1,16 +1,70 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { EverloopRegion } from '@/lib/data/regions'
+
+interface RegionLocation {
+  id: string
+  name: string
+  slug: string
+  type: string
+  description: string | null
+  stability: number
+  tags: string[]
+  x: number
+  z: number
+  createdAt: string
+}
 
 interface RegionMapClientProps {
   region: EverloopRegion
 }
 
+function getTypeIcon(type: string): string {
+  const icons: Record<string, string> = {
+    location: '🏛️', character: '👤', artifact: '✨',
+    faction: '⚔️', creature: '🐉', event: '📜', concept: '💭',
+  }
+  return icons[type] || '◈'
+}
+
+function getTypeColor(type: string): string {
+  const colors: Record<string, string> = {
+    location: '#d4a84b', character: '#6ec6ff', artifact: '#e066ff',
+    faction: '#ff6b6b', creature: '#66ff9e', event: '#ffaa66', concept: '#66d9ff',
+  }
+  return colors[type] || '#d4a84b'
+}
+
 export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [locations, setLocations] = useState<RegionLocation[]>([])
+  const [selectedLocation, setSelectedLocation] = useState<RegionLocation | null>(null)
+  const [hoveredLocation, setHoveredLocation] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchLocations() {
+      try {
+        const res = await fetch(`/api/map/regions/${region.id}/locations`)
+        if (!res.ok) return
+        const data = await res.json()
+        setLocations(data.locations ?? [])
+      } catch {
+        // Silently fail — locations are optional overlay
+      }
+    }
+    fetchLocations()
+  }, [region.id])
+
+  const handlePinClick = useCallback((loc: RegionLocation) => {
+    setSelectedLocation(prev => prev?.id === loc.id ? null : loc)
+  }, [])
+
+  const handleBackdropClick = useCallback(() => {
+    setSelectedLocation(null)
+  }, [])
 
   return (
     <div className="min-h-[calc(100vh-60px)] bg-charcoal relative">
@@ -59,12 +113,103 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
           <p className="text-sm leading-relaxed text-parchment-muted">
             {region.description}
           </p>
+          {locations.length > 0 && (
+            <div className="mt-3 pt-3 border-t" style={{ borderColor: `${region.color}20` }}>
+              <span className="text-[10px] uppercase tracking-wider text-parchment-muted">
+                {locations.length} canonical {locations.length === 1 ? 'location' : 'locations'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Selected location detail panel */}
+      {selectedLocation && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[380px] max-w-[calc(100vw-2rem)]">
+          <div
+            className="rounded-xl p-5 backdrop-blur-xl border"
+            style={{
+              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.96), rgba(15, 30, 35, 0.93))',
+              borderColor: `${getTypeColor(selectedLocation.type)}40`,
+              boxShadow: `0 0 40px ${getTypeColor(selectedLocation.type)}20, 0 20px 60px rgba(0,0,0,0.5)`,
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{getTypeIcon(selectedLocation.type)}</span>
+                <div>
+                  <h3 className="text-lg font-serif font-bold" style={{ color: getTypeColor(selectedLocation.type) }}>
+                    {selectedLocation.name}
+                  </h3>
+                  <span className="text-[10px] uppercase tracking-wider opacity-70" style={{ color: getTypeColor(selectedLocation.type) }}>
+                    {selectedLocation.type}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLocation(null)}
+                className="text-parchment-muted hover:text-parchment transition-colors p-1"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            {selectedLocation.description && (
+              <p className="text-sm text-parchment-muted leading-relaxed mb-3">
+                {selectedLocation.description.length > 200
+                  ? selectedLocation.description.slice(0, 200) + '…'
+                  : selectedLocation.description}
+              </p>
+            )}
+            <div className="flex items-center gap-3 mb-3">
+              <div>
+                <span className="text-[10px] text-parchment-muted">Stability</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: `${getTypeColor(selectedLocation.type)}20` }}>
+                    <div className="h-full rounded-full" style={{ width: `${selectedLocation.stability * 100}%`, background: getTypeColor(selectedLocation.type) }} />
+                  </div>
+                  <span className="text-[10px]" style={{ color: getTypeColor(selectedLocation.type) }}>{Math.round(selectedLocation.stability * 100)}%</span>
+                </div>
+              </div>
+            </div>
+            {selectedLocation.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {selectedLocation.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 rounded-full text-[10px] border"
+                    style={{
+                      borderColor: `${getTypeColor(selectedLocation.type)}30`,
+                      color: `${getTypeColor(selectedLocation.type)}cc`,
+                      background: `${getTypeColor(selectedLocation.type)}10`,
+                    }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            <a
+              href={`/explore/${selectedLocation.slug}`}
+              className="block text-center px-4 py-2 rounded-lg text-sm font-medium transition-all hover:brightness-125"
+              style={{
+                background: `${getTypeColor(selectedLocation.type)}20`,
+                color: getTypeColor(selectedLocation.type),
+                border: `1px solid ${getTypeColor(selectedLocation.type)}40`,
+              }}
+            >
+              View Full Entry →
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Map content */}
       {region.mapImage ? (
-        <div className="relative w-full h-[calc(100vh-60px)] overflow-hidden">
+        <div
+          className="relative w-full h-[calc(100vh-60px)] overflow-hidden"
+          onClick={handleBackdropClick}
+        >
           {/* Loading state */}
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-charcoal z-10">
@@ -78,7 +223,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             </div>
           )}
 
-          {/* Region map image with pan/zoom feel */}
+          {/* Region map image */}
           <div className="relative w-full h-full">
             <Image
               src={region.mapImage}
@@ -90,6 +235,79 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
               priority
               sizes="100vw"
             />
+
+            {/* Location pins overlaid on the map */}
+            {imageLoaded && locations.map((loc) => {
+              const color = getTypeColor(loc.type)
+              const isSelected = selectedLocation?.id === loc.id
+              const isHovered = hoveredLocation === loc.id
+
+              return (
+                <button
+                  key={loc.id}
+                  className="absolute transform -translate-x-1/2 -translate-y-full z-20 group"
+                  style={{
+                    left: `${loc.x}%`,
+                    top: `${loc.z}%`,
+                    transition: 'transform 0.15s ease',
+                    transform: `translate(-50%, -100%) scale(${isSelected ? 1.3 : isHovered ? 1.15 : 1})`,
+                  }}
+                  onClick={(e) => { e.stopPropagation(); handlePinClick(loc) }}
+                  onMouseEnter={() => setHoveredLocation(loc.id)}
+                  onMouseLeave={() => setHoveredLocation(null)}
+                  aria-label={loc.name}
+                >
+                  {/* Pin marker */}
+                  <div className="relative flex flex-col items-center">
+                    {/* Glow */}
+                    <div
+                      className="absolute -inset-2 rounded-full blur-md"
+                      style={{
+                        background: color,
+                        opacity: isSelected ? 0.4 : isHovered ? 0.25 : 0.1,
+                        transition: 'opacity 0.15s ease',
+                      }}
+                    />
+                    {/* Icon circle */}
+                    <div
+                      className="relative w-8 h-8 rounded-full flex items-center justify-center border-2"
+                      style={{
+                        background: `linear-gradient(135deg, rgba(10, 20, 25, 0.95), rgba(15, 30, 35, 0.9))`,
+                        borderColor: isSelected ? color : `${color}80`,
+                        boxShadow: `0 0 ${isSelected ? 16 : 8}px ${color}50, 0 2px 8px rgba(0,0,0,0.5)`,
+                      }}
+                    >
+                      <span className="text-sm">{getTypeIcon(loc.type)}</span>
+                    </div>
+                    {/* Pin stem */}
+                    <div
+                      className="w-0.5 h-2"
+                      style={{ background: `${color}60` }}
+                    />
+                    {/* Pin dot at bottom */}
+                    <div
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{ background: color, boxShadow: `0 0 4px ${color}80` }}
+                    />
+                    {/* Label */}
+                    <div
+                      className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none"
+                    >
+                      <span
+                        className="text-[10px] font-serif font-bold px-1.5 py-0.5 rounded"
+                        style={{
+                          color,
+                          textShadow: '0 0 6px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.8)',
+                          background: isHovered || isSelected ? 'rgba(5,10,15,0.8)' : 'transparent',
+                        }}
+                      >
+                        {loc.name}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
           </div>
 
           {/* Atmospheric vignette overlay */}
@@ -111,7 +329,6 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
       ) : (
         /* Placeholder for regions without map images yet */
         <div className="relative w-full h-[calc(100vh-60px)] flex items-center justify-center">
-          {/* Atmospheric background */}
           <div
             className="absolute inset-0"
             style={{
@@ -141,6 +358,35 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
               are still surveying {region.name.replace(/^The /, '')}. Check back as the world
               continues to reveal itself.
             </p>
+
+            {/* Show locations as a list even without a map image */}
+            {locations.length > 0 && (
+              <div className="mb-6 text-left">
+                <h3 className="text-xs uppercase tracking-wider text-parchment-muted mb-3">
+                  Known Locations in This Region
+                </h3>
+                <div className="space-y-2">
+                  {locations.map((loc) => (
+                    <a
+                      key={loc.id}
+                      href={`/explore/${loc.slug}`}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all hover:brightness-125"
+                      style={{
+                        background: `${getTypeColor(loc.type)}08`,
+                        borderColor: `${getTypeColor(loc.type)}20`,
+                      }}
+                    >
+                      <span>{getTypeIcon(loc.type)}</span>
+                      <span className="text-sm font-serif" style={{ color: getTypeColor(loc.type) }}>
+                        {loc.name}
+                      </span>
+                      <span className="text-[10px] text-parchment-muted ml-auto">{loc.type}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div
               className="inline-block px-4 py-2 rounded-lg text-xs font-medium border"
               style={{
