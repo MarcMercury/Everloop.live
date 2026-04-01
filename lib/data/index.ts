@@ -17,6 +17,10 @@ export { FULL_CASTER_SLOTS, HALF_CASTER_SLOTS, ARTIFICER_SLOTS, THIRD_CASTER_SLO
 // Spell Lists
 export { CLASS_SPELLS, getAvailableSpells, getCantrips, getSpellsAtLevel, isSpellAvailable, getAllCantrips, getAllSpellsAtLevel } from './spell-lists'
 
+// Spell Details (descriptions, metadata)
+export { SPELL_DETAILS, lookupSpellDetail } from './spell-details'
+export type { SpellDetail } from './spell-details'
+
 // Equipment
 export { WEAPONS, ARMOR, EQUIPMENT_PACKS, CLASS_STARTING_EQUIPMENT, getWeaponsByCategory, getArmorByType, canUseWeapon, canUseArmor } from './equipment'
 export type { WeaponData, ArmorData, GearData, WeaponCategory } from './equipment'
