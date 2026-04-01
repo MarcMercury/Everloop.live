@@ -11,7 +11,8 @@ import {
   Backpack, Star, Sparkles, Moon, Sun, Flame, 
   Skull, Eye, ArrowLeft, Pencil, Dices, Target,
   ChevronDown, ChevronUp, Timer, Brain,
-  CircleDot, Wind, PawPrint, MessageCircle
+  CircleDot, Wind, PawPrint, MessageCircle,
+  Loader2, Palette, X as XIcon
 } from 'lucide-react'
 import type { 
   PlayerCharacter, FeatureEntry, SpellEntry, WeaponEntry,
@@ -24,10 +25,11 @@ import {
 } from '@/types/player-character'
 import {
   updateCharacterHP, updateCharacterStatus, updateSpellSlots,
-  updateFeatureUses, shortRest, longRest
+  updateFeatureUses, shortRest, longRest, updatePlayerCharacter
 } from '@/lib/actions/player-characters'
 import { DiceRoller } from '@/components/player-deck/dice-roller'
 import { CelestialAdvisor } from '@/components/player-deck/celestial-advisor'
+import { lookupSpellDetail } from '@/lib/data/spell-details'
 
 export function CharacterSheet({ character: initial }: { character: PlayerCharacter }) {
   const [char, setChar] = useState(initial)
@@ -36,6 +38,11 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   const [showDice, setShowDice] = useState(false)
   const [showCelestial, setShowCelestial] = useState(false)
   const [lastRoll, setLastRoll] = useState<{ label: string; result: number; detail: string } | null>(null)
+  const [recapLoading, setRecapLoading] = useState(false)
+  const [recapText, setRecapText] = useState('')
+  const [showPortraitGen, setShowPortraitGen] = useState(false)
+  const [portraitStyle, setPortraitStyle] = useState('fantasy-oil')
+  const [portraitLoading, setPortraitLoading] = useState(false)
   
   const classColor = CLASS_COLORS[char.class] || '#d4a84b'
   const hp = hpPercentage(char.current_hp, char.max_hp)
@@ -82,6 +89,114 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
       startTransition(async () => {
         await updateSpellSlots(char.id, newSpellcasting)
       })
+    }
+  }
+
+  // Concentration tracking
+  function setConcentration(spellName: string | null) {
+    const newStatus = { ...char.status, concentration_spell: spellName }
+    setChar(prev => ({ ...prev, status: newStatus }))
+    startTransition(async () => {
+      await updateCharacterStatus(char.id, newStatus as unknown as Record<string, unknown>)
+    })
+  }
+
+  // Quick Cast — set concentration + use a slot in one tap
+  function quickCast(spellName: string, spellLevel: number) {
+    // Use spell slot
+    const levelKey = String(spellLevel)
+    const slots = { ...char.spellcasting.spell_slots }
+    if (slots[levelKey] && slots[levelKey].used < slots[levelKey].max) {
+      slots[levelKey] = { ...slots[levelKey], used: slots[levelKey].used + 1 }
+    }
+    const newSpellcasting = { ...char.spellcasting, spell_slots: slots }
+    // Set concentration
+    const details = lookupSpellDetail(spellName)
+    const isConcentration = details?.concentration ?? false
+    const newStatus = isConcentration
+      ? { ...char.status, concentration_spell: spellName }
+      : char.status
+    setChar(prev => ({ ...prev, spellcasting: newSpellcasting, status: newStatus }))
+    startTransition(async () => {
+      await updateSpellSlots(char.id, newSpellcasting)
+      if (isConcentration) {
+        await updateCharacterStatus(char.id, newStatus as unknown as Record<string, unknown>)
+      }
+    })
+  }
+
+  // Session Recap AI
+  async function generateRecap() {
+    setRecapLoading(true)
+    setRecapText('')
+    try {
+      const res = await fetch(`/api/player-deck/recap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId: char.id }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      const reader = res.body?.getReader()
+      if (!reader) return
+      const decoder = new TextDecoder()
+      let text = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('0:')) {
+            try { text += JSON.parse(line.slice(2)) } catch { /* skip */ }
+          }
+        }
+        setRecapText(text)
+      }
+    } catch {
+      setRecapText('Failed to generate recap. Try again later.')
+    } finally {
+      setRecapLoading(false)
+    }
+  }
+
+  // Portrait regeneration
+  async function regeneratePortrait() {
+    setPortraitLoading(true)
+    try {
+      const res = await fetch('/api/player-deck/portrait', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterData: {
+            name: char.name,
+            race: char.race,
+            class: char.class,
+            subclass: char.subclass,
+            age: char.age,
+            height: char.height,
+            weight: char.weight,
+            eyes: char.eyes,
+            hair: char.hair,
+            skin: char.skin,
+            appearance: char.appearance,
+            personality: char.personality_traits,
+          },
+          style: portraitStyle,
+          customDetails: '',
+        }),
+      })
+      if (!res.ok) throw new Error('Failed')
+      const data = await res.json()
+      if (data.imageUrl) {
+        setChar(prev => ({ ...prev, portrait_url: data.imageUrl }))
+        setShowPortraitGen(false)
+        startTransition(async () => {
+          await updatePlayerCharacter(char.id, { portrait_url: data.imageUrl })
+        })
+      }
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setPortraitLoading(false)
     }
   }
   
@@ -270,10 +385,11 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
         {/* Character Header with portrait */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-6">
           {/* Portrait */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 relative">
             <div 
-              className="w-full md:w-48 h-48 md:h-64 rounded-xl overflow-hidden border-2 relative"
+              className="w-full md:w-48 h-48 md:h-64 rounded-xl overflow-hidden border-2 relative cursor-pointer group"
               style={{ borderColor: `${classColor}40` }}
+              onClick={() => setShowPortraitGen(!showPortraitGen)}
             >
               {char.portrait_url ? (
                 <img src={char.portrait_url} alt={char.name} className="w-full h-full object-cover" />
@@ -292,7 +408,65 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                 className="absolute bottom-0 left-0 right-0 h-1/3"
                 style={{ background: `linear-gradient(to top, ${classColor}30, transparent)` }}
               />
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-xs text-white font-medium bg-black/60 px-3 py-1.5 rounded-full">
+                  <Palette className="w-3 h-3" />
+                  {char.portrait_url ? 'Regenerate' : 'Generate'}
+                </div>
+              </div>
             </div>
+
+            {/* Portrait Generation Panel */}
+            {showPortraitGen && (
+              <div className="absolute top-0 left-0 right-0 z-20 md:w-64 bg-charcoal-950 border border-gold-500/20 rounded-xl p-4 shadow-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-serif text-parchment flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-purple-400" /> AI Portrait
+                  </h4>
+                  <button onClick={() => setShowPortraitGen(false)} className="text-parchment-muted hover:text-parchment">
+                    <XIcon className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    { id: 'fantasy-oil', label: '🎨 Oil' },
+                    { id: 'anime', label: '✨ Anime' },
+                    { id: 'comic-book', label: '💥 Comic' },
+                    { id: 'realistic', label: '📷 Real' },
+                    { id: 'watercolor', label: '🌊 Water' },
+                    { id: 'dark-fantasy', label: '🌑 Dark' },
+                  ] as const).map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setPortraitStyle(s.id)}
+                      className={`text-[10px] p-1.5 rounded-md border transition-all ${
+                        portraitStyle === s.id
+                          ? 'border-gold-500/50 bg-gold-500/10 text-parchment'
+                          : 'border-gold-500/10 text-parchment-muted hover:border-gold-500/25'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/20"
+                  onClick={regeneratePortrait}
+                  disabled={portraitLoading}
+                >
+                  {portraitLoading ? (
+                    <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" /> Generating...</>
+                  ) : (
+                    <><Sparkles className="w-3 h-3 mr-1.5" /> Generate Portrait</>
+                  )}
+                </Button>
+                {portraitLoading && (
+                  <p className="text-[10px] text-parchment-muted text-center">~15 seconds...</p>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Character Info + HP */}
@@ -725,9 +899,10 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                     className={`text-xs capitalize touch-target ${
                       char.status?.conditions?.includes(condition) 
                         ? 'bg-red-500/20 text-red-300 border-red-500/40' 
-                        : 'text-parchment-muted border-gold-500/10'
+                        : 'text-parchment-muted border-gold-500/10 hover:border-red-500/20'
                     }`}
                     onClick={() => toggleCondition(condition)}
+                    title={CONDITION_EFFECTS[condition]?.description || condition}
                   >
                     {condition}
                   </Button>
@@ -915,13 +1090,45 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
               </Card>
             )}
 
+            {/* Concentration Tracker */}
+            {char.status?.concentration_spell && (
+              <Card className="p-3 bg-amber-500/5 border-amber-500/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                    <span className="text-sm text-amber-300 font-medium">Concentrating</span>
+                    <span className="text-sm text-parchment">{char.status.concentration_spell}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 h-7 px-2"
+                    onClick={() => setConcentration(null)}
+                  >
+                    Drop
+                  </Button>
+                </div>
+              </Card>
+            )}
+
             {/* Cantrips */}
             {char.spellcasting?.cantrips?.length > 0 && (
               <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
                 <h3 className="text-sm font-serif text-parchment mb-3">Cantrips</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {char.spellcasting.cantrips.map((cantrip, i) => (
-                    <SpellCard key={i} name={cantrip.name} school={cantrip.school} description={cantrip.description} damage={cantrip.damage} isCantrip />
+                    <SpellCard
+                      key={i}
+                      name={cantrip.name}
+                      school={cantrip.school}
+                      description={cantrip.description}
+                      damage={cantrip.damage}
+                      castingTime={cantrip.casting_time}
+                      range={cantrip.range}
+                      duration={cantrip.duration}
+                      spellComponents={cantrip.components}
+                      isCantrip
+                    />
                   ))}
                 </div>
               </Card>
@@ -951,6 +1158,10 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                               castingTime={spell.casting_time}
                               range={spell.range}
                               duration={spell.duration}
+                              spellComponents={spell.components}
+                              spellLevel={spell.level}
+                              concentrationActive={char.status?.concentration_spell === spell.name}
+                              onQuickCast={() => quickCast(spell.name, spell.level)}
                             />
                           ))}
                       </div>
@@ -1287,7 +1498,28 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             {/* Session Notes */}
             {char.session_notes?.length > 0 && (
               <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
-                <h3 className="text-sm font-serif text-parchment mb-3">Session Notes</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-serif text-parchment">Session Notes</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-purple-300 hover:text-purple-200 hover:bg-purple-500/10 h-7 px-2 gap-1"
+                    onClick={generateRecap}
+                    disabled={recapLoading}
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    {recapLoading ? 'Writing...' : 'AI Recap'}
+                  </Button>
+                </div>
+                {recapText && (
+                  <div className="mb-3 p-3 rounded-lg bg-purple-500/5 border border-purple-500/15">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Sparkles className="w-3 h-3 text-purple-400" />
+                      <span className="text-[10px] text-purple-400 uppercase tracking-wider font-medium">Chronicle Recap</span>
+                    </div>
+                    <p className="text-sm text-parchment-muted whitespace-pre-wrap leading-relaxed italic">{recapText}</p>
+                  </div>
+                )}
                 <div className="space-y-3">
                   {char.session_notes
                     .slice()
@@ -1353,46 +1585,75 @@ function StatBox({ icon, label, value, color }: { icon: React.ReactNode; label: 
 }
 
 function SpellCard({ 
-  name, school, description, damage, isCantrip, concentration, ritual, prepared, castingTime, range, duration
+  name, school, description, damage, isCantrip, concentration, ritual, prepared, castingTime, range, duration, spellComponents,
+  spellLevel, concentrationActive, onQuickCast
 }: { 
   name: string; school: string; description: string; damage?: string; isCantrip?: boolean
-  concentration?: boolean; ritual?: boolean; prepared?: boolean; castingTime?: string; range?: string; duration?: string
+  concentration?: boolean; ritual?: boolean; prepared?: boolean; castingTime?: string; range?: string; duration?: string; spellComponents?: string
+  spellLevel?: number; concentrationActive?: boolean; onQuickCast?: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
+
+  // Fallback to SRD spell details when fields are empty
+  const details = lookupSpellDetail(name)
+  const dSchool = school || details?.school || ''
+  const dCastingTime = castingTime || details?.casting_time || ''
+  const dRange = range || details?.range || ''
+  const dDuration = duration || details?.duration || ''
+  const dComponents = spellComponents || details?.components || ''
+  const dDescription = description && description !== `(${name})` && !description.startsWith('(') ? description : (details?.description || description || '')
+  const dDamage = damage || details?.damage || ''
+  const dConcentration = concentration ?? details?.concentration ?? false
+  const dRitual = ritual ?? details?.ritual ?? false
   
   return (
-    <button
+    <div
       className={`w-full text-left p-3 rounded-lg border transition-all ${
-        isCantrip 
-          ? 'bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30'
-          : prepared !== false
-            ? 'bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30'
-            : 'bg-charcoal-900/30 border-charcoal-900/50 opacity-60'
+        concentrationActive
+          ? 'bg-amber-500/10 border-amber-500/30 ring-1 ring-amber-500/20'
+          : isCantrip 
+            ? 'bg-emerald-500/5 border-emerald-500/10 hover:border-emerald-500/30'
+            : prepared !== false
+              ? 'bg-blue-500/5 border-blue-500/10 hover:border-blue-500/30'
+              : 'bg-charcoal-900/30 border-charcoal-900/50 opacity-60'
       }`}
-      onClick={() => setExpanded(!expanded)}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-parchment font-medium">{name}</span>
-          {concentration && <Sparkles className="w-3 h-3 text-amber-400" />}
-          {ritual && <BookOpen className="w-3 h-3 text-emerald-400" />}
+      <button className="w-full text-left" onClick={() => setExpanded(!expanded)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-parchment font-medium">{name}</span>
+            {dConcentration && <Sparkles className="w-3 h-3 text-amber-400" />}
+            {dRitual && <BookOpen className="w-3 h-3 text-emerald-400" />}
+            {concentrationActive && <span className="text-[9px] text-amber-400 font-medium uppercase tracking-wider">Active</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            {dDamage && <span className="text-xs text-red-400 font-mono">{dDamage}</span>}
+            {expanded ? <ChevronUp className="w-3 h-3 text-parchment-muted" /> : <ChevronDown className="w-3 h-3 text-parchment-muted" />}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {damage && <span className="text-xs text-red-400 font-mono">{damage}</span>}
-          {expanded ? <ChevronUp className="w-3 h-3 text-parchment-muted" /> : <ChevronDown className="w-3 h-3 text-parchment-muted" />}
-        </div>
-      </div>
-      <span className="text-[10px] text-parchment-muted">{school}</span>
+        <span className="text-[10px] text-parchment-muted">{dSchool}</span>
+      </button>
       
       {expanded && (
         <div className="mt-2 pt-2 border-t border-gold-500/10 space-y-1">
-          {castingTime && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Cast:</span> {castingTime}</div>}
-          {range && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Range:</span> {range}</div>}
-          {duration && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Duration:</span> {duration}</div>}
-          <p className="text-xs text-parchment-muted leading-relaxed mt-1">{description}</p>
+          {dCastingTime && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Cast:</span> {dCastingTime}</div>}
+          {dRange && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Range:</span> {dRange}</div>}
+          {dDuration && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Duration:</span> {dDuration}</div>}
+          {dComponents && <div className="text-xs text-parchment-muted"><span className="text-parchment-muted/70">Components:</span> {dComponents}</div>}
+          {dDescription && <p className="text-xs text-parchment-muted leading-relaxed mt-1">{dDescription}</p>}
+          {/* Quick Cast button for leveled spells */}
+          {!isCantrip && onQuickCast && prepared !== false && (
+            <button
+              className="mt-2 flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-blue-500/15 text-blue-300 border border-blue-500/25 hover:bg-blue-500/25 transition-colors"
+              onClick={(e) => { e.stopPropagation(); onQuickCast() }}
+            >
+              <Zap className="w-3 h-3" />
+              Cast{dConcentration ? ' (sets concentration)' : ''}
+            </button>
+          )}
         </div>
       )}
-    </button>
+    </div>
   )
 }
 

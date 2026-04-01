@@ -38,8 +38,10 @@ import {
   getSubclassBonusCantrips, getSubclassBonusSpells,
   getFightingStyles, MANEUVERS, getManeuverCount,
   getRacialSpells,
+  lookupSpellDetail,
 } from '@/lib/data'
 import type { RaceData, ClassData, BackgroundData, WeaponData, ArmorData, InvocationData, FightingStyleData, ManeuverData, RacialSpellEntry } from '@/lib/data'
+import { PortraitGenerator } from './portrait-generator'
 
 // ── CONSTANTS ──────────────────────────────────────────
 
@@ -330,27 +332,33 @@ export function CharacterForge() {
       }
 
       // Wire selected cantrips
-      spellData.cantrips = selectedCantrips.map(name => ({
-        name,
-        school: '',
-        casting_time: '1 action',
-        range: '',
-        components: '',
-        duration: '',
-        description: '',
-      }))
+      spellData.cantrips = selectedCantrips.map(name => {
+        const d = lookupSpellDetail(name)
+        return {
+          name,
+          school: d?.school || '',
+          casting_time: d?.casting_time || '1 action',
+          range: d?.range || '',
+          components: d?.components || '',
+          duration: d?.duration || '',
+          description: d?.description || '',
+          damage: d?.damage,
+        }
+      })
 
       // Add Pact of the Tome bonus cantrips
       if (pactBoon === 'Pact of the Tome') {
         for (const name of tomeCantrips) {
+          const d = lookupSpellDetail(name)
           spellData.cantrips.push({
             name,
-            school: '',
-            casting_time: '1 action',
-            range: '',
-            components: '',
-            duration: '',
-            description: '(Pact of the Tome)',
+            school: d?.school || '',
+            casting_time: d?.casting_time || '1 action',
+            range: d?.range || '',
+            components: d?.components || '',
+            duration: d?.duration || '',
+            description: d?.description || '(Pact of the Tome)',
+            damage: d?.damage,
           })
         }
       }
@@ -360,14 +368,16 @@ export function CharacterForge() {
         const bonusCantrips = getSubclassBonusCantrips(charClass, subclass)
         for (const name of bonusCantrips) {
           if (!spellData.cantrips.some(c => c.name === name)) {
+            const d = lookupSpellDetail(name)
             spellData.cantrips.push({
               name,
-              school: '',
-              casting_time: '1 action',
-              range: '',
-              components: '',
-              duration: '',
-              description: `(${subclass} bonus)`,
+              school: d?.school || '',
+              casting_time: d?.casting_time || '1 action',
+              range: d?.range || '',
+              components: d?.components || '',
+              duration: d?.duration || '',
+              description: d?.description || `(${subclass} bonus)`,
+              damage: d?.damage,
             })
           }
         }
@@ -378,14 +388,16 @@ export function CharacterForge() {
       for (const rs of racialSpellsForCreate) {
         if (rs.spellLevel === 0) {
           if (!spellData.cantrips.some(c => c.name === rs.spell)) {
+            const d = lookupSpellDetail(rs.spell)
             spellData.cantrips.push({
               name: rs.spell,
-              school: '',
-              casting_time: '1 action',
-              range: '',
-              components: '',
-              duration: '',
-              description: `(${race} racial)`,
+              school: d?.school || '',
+              casting_time: d?.casting_time || '1 action',
+              range: d?.range || '',
+              components: d?.components || '',
+              duration: d?.duration || '',
+              description: d?.description || `(${race} racial)`,
+              damage: d?.damage,
             })
           }
         }
@@ -395,18 +407,19 @@ export function CharacterForge() {
       const allSpells: import('@/types/player-character').SpellEntry[] = []
       for (const [lvlStr, spellNames] of Object.entries(selectedSpells)) {
         for (const spellName of spellNames) {
+          const d = lookupSpellDetail(spellName)
           allSpells.push({
             name: spellName,
             level: parseInt(lvlStr),
-            school: '',
-            casting_time: '1 action',
-            range: '',
-            components: '',
-            duration: '',
-            description: '',
+            school: d?.school || '',
+            casting_time: d?.casting_time || '1 action',
+            range: d?.range || '',
+            components: d?.components || '',
+            duration: d?.duration || '',
+            description: d?.description || '',
             prepared: classData.spellcasting.type === 'prepared',
-            concentration: false,
-            ritual: false,
+            concentration: d?.concentration ?? false,
+            ritual: d?.ritual ?? false,
           })
         }
       }
@@ -586,6 +599,7 @@ export function CharacterForge() {
         {currentStep.id === 'description' && (
           <StepDescription
             name={name} setName={setName}
+            race={race} charClass={charClass} subclass={subclass}
             background={background} setBackground={setBackground}
             alignment={alignment} setAlignment={setAlignment}
             portraitUrl={portraitUrl} setPortraitUrl={setPortraitUrl}
@@ -1276,7 +1290,8 @@ function StepAbilities({
 // ── STEP: DESCRIPTION ──────────────────────────────────
 
 function StepDescription({
-  name, setName, background, setBackground, alignment, setAlignment,
+  name, setName, race, charClass, subclass,
+  background, setBackground, alignment, setAlignment,
   portraitUrl, setPortraitUrl,
   personality, setPersonality, ideals, setIdeals, bonds, setBonds, flaws, setFlaws,
   backstory, setBackstory, appearance, setAppearance,
@@ -1285,6 +1300,7 @@ function StepDescription({
   campaignName, setCampaignName, dmName, setDmName,
 }: {
   name: string; setName: (v: string) => void
+  race: string; charClass: string; subclass: string
   background: string; setBackground: (v: string) => void
   alignment: string; setAlignment: (v: string) => void
   portraitUrl: string; setPortraitUrl: (v: string) => void
@@ -1304,8 +1320,113 @@ function StepDescription({
   campaignName: string; setCampaignName: (v: string) => void
   dmName: string; setDmName: (v: string) => void
 }) {
+  const [aiLoading, setAiLoading] = useState<'backstory' | 'personality' | 'all' | null>(null)
+
+  async function generateWithAI(field: 'backstory' | 'personality' | 'all') {
+    setAiLoading(field)
+    try {
+      const res = await fetch('/api/player-deck/backstory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          race, charClass, subclass, background, alignment, name,
+          personality, ideals, bonds, flaws, appearance, field,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed')
+
+      const reader = res.body?.getReader()
+      if (!reader) return
+
+      let fullText = ''
+      const decoder = new TextDecoder()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n')
+        for (const line of lines) {
+          if (line.startsWith('0:')) {
+            try {
+              const text = JSON.parse(line.slice(2))
+              fullText += text
+            } catch { /* skip */ }
+          }
+        }
+      }
+
+      if (field === 'backstory') {
+        setBackstory(fullText.trim())
+      } else if (field === 'personality') {
+        parsePersonalityFields(fullText)
+      } else {
+        parsePersonalityFields(fullText)
+        const backstoryMatch = fullText.match(/BACKSTORY:\s*([\s\S]*?)$/i)
+        if (backstoryMatch) setBackstory(backstoryMatch[1].trim())
+      }
+    } catch (err) {
+      console.error('AI generation error:', err)
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  function parsePersonalityFields(text: string) {
+    const pMatch = text.match(/PERSONALITY:\s*([\s\S]+?)(?=\n[A-Z]|\s*$)/i)
+    const iMatch = text.match(/IDEALS:\s*([\s\S]+?)(?=\n[A-Z]|\s*$)/i)
+    const bMatch = text.match(/BONDS:\s*([\s\S]+?)(?=\n[A-Z]|\s*$)/i)
+    const fMatch = text.match(/FLAWS:\s*([\s\S]+?)(?=\n[A-Z]|\s*$)/i)
+    if (pMatch) setPersonality(pMatch[1].trim())
+    if (iMatch) setIdeals(iMatch[1].trim())
+    if (bMatch) setBonds(bMatch[1].trim())
+    if (fMatch) setFlaws(fMatch[1].trim())
+  }
+
   return (
     <div className="space-y-6">
+      {/* AI Generate Bar */}
+      <Card className="p-4 bg-purple-500/10 border-purple-500/20">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2 text-purple-300">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-serif">AI Character Writer</span>
+            <span className="text-xs text-parchment-muted hidden sm:inline">— from your race/class/background</span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateWithAI('personality')}
+              disabled={!!aiLoading}
+              className="text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-1"
+            >
+              {aiLoading === 'personality' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              Personality
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateWithAI('backstory')}
+              disabled={!!aiLoading}
+              className="text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-1"
+            >
+              {aiLoading === 'backstory' ? <Loader2 className="w-3 h-3 animate-spin" /> : <BookOpen className="w-3 h-3" />}
+              Backstory
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => generateWithAI('all')}
+              disabled={!!aiLoading}
+              className="text-xs border-purple-500/30 text-purple-300 hover:bg-purple-500/10 gap-1"
+            >
+              {aiLoading === 'all' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Wand2 className="w-3 h-3" />}
+              Generate All
+            </Button>
+          </div>
+        </div>
+      </Card>
+
       {/* Identity */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
         <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
@@ -1503,6 +1624,23 @@ function StepDescription({
           </div>
         </div>
       </Card>
+
+      {/* AI Portrait Generator */}
+      <PortraitGenerator
+        race={race}
+        charClass={charClass}
+        subclass={subclass}
+        name={name}
+        age={age}
+        height={height}
+        weight={weight}
+        eyes={eyes}
+        hair={hair}
+        skin={skin}
+        appearance={appearance}
+        personality={personality}
+        onPortraitSelect={(url) => setPortraitUrl(url)}
+      />
 
       {/* Campaign Info */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
@@ -1994,6 +2132,58 @@ function StepSpells({
 
   const totalSelectedSpells = Object.values(selectedSpells).reduce((sum, arr) => sum + arr.length, 0)
 
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiReasoning, setAiReasoning] = useState('')
+
+  async function aiSuggestSpells() {
+    setAiLoading(true)
+    setAiReasoning('')
+    try {
+      const availableCantrips = cantrips
+      const availableSpellsByLevel: Record<number, string[]> = {}
+      for (let lv = 1; lv <= maxSpellLevel; lv++) {
+        const classSpells = getSpellsAtLevel(charClass, lv)
+        const subBonus = subclass ? (getSubclassBonusSpells(charClass, subclass, maxSpellLevel)[lv] || []) : []
+        availableSpellsByLevel[lv] = Array.from(new Set([...classSpells, ...subBonus])).sort()
+      }
+
+      const res = await fetch('/api/player-deck/spell-recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          charClass,
+          subclass,
+          level,
+          availableCantrips,
+          availableSpells: availableSpellsByLevel,
+          maxCantrips,
+          maxSpellsKnown,
+          casterType,
+        }),
+      })
+      if (!res.ok) throw new Error('AI suggestion failed')
+      const data = await res.json()
+      // Apply suggestions
+      if (data.cantrips?.length) {
+        setSelectedCantrips(data.cantrips.filter((c: string) => cantrips.includes(c)).slice(0, maxCantrips))
+      }
+      if (data.spells) {
+        const newSpells: Record<number, string[]> = {}
+        for (const [lvl, names] of Object.entries(data.spells) as [string, string[]][]) {
+          const lvNum = Number(lvl)
+          const available = availableSpellsByLevel[lvNum] || []
+          newSpells[lvNum] = names.filter((n: string) => available.includes(n))
+        }
+        setSelectedSpells(newSpells)
+      }
+      if (data.reasoning) setAiReasoning(data.reasoning)
+    } catch {
+      setAiReasoning('Failed to get suggestions. Try again.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
   function toggleCantrip(name: string) {
     if (selectedCantrips.includes(name)) {
       setSelectedCantrips(selectedCantrips.filter(c => c !== name))
@@ -2081,6 +2271,14 @@ function StepSpells({
           <span className="text-xs text-parchment-muted">
             {casterType === 'prepared' ? 'Prepares spells daily from full list' : casterType === 'known' ? 'Learns a fixed number of spells' : 'Pact Magic'}
           </span>
+          <button
+            className="ml-auto flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md bg-purple-500/15 text-purple-300 border border-purple-500/25 hover:bg-purple-500/25 transition-colors disabled:opacity-50"
+            onClick={aiSuggestSpells}
+            disabled={aiLoading}
+          >
+            {aiLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+            {aiLoading ? 'Thinking...' : 'AI Suggest'}
+          </button>
         </div>
         <div className="flex gap-4 mt-3 text-xs text-parchment-muted flex-wrap">
           <span>Cantrips: <strong className="text-parchment">{selectedCantrips.length}/{maxCantrips}</strong></span>
@@ -2092,6 +2290,15 @@ function StepSpells({
             <span>Bonus Cantrips: <strong className="text-emerald-400">{bonusCantrips.join(', ')}</strong></span>
           )}
         </div>
+        {aiReasoning && (
+          <div className="mt-3 p-2.5 rounded-md bg-purple-500/5 border border-purple-500/10">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles className="w-3 h-3 text-purple-400" />
+              <span className="text-[10px] text-purple-400 uppercase tracking-wider font-medium">AI Reasoning</span>
+            </div>
+            <p className="text-xs text-parchment-muted leading-relaxed">{aiReasoning}</p>
+          </div>
+        )}
       </Card>
 
       {/* Racial Spellcasting */}
