@@ -124,6 +124,11 @@ export default async function Home() {
               <p className="text-sm text-parchment-dark leading-relaxed">
                 Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
               </p>
+              <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
+                <Link href="/map" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-teal-light">✦</span> Interactive Map</Link>
+                <Link href="/stories" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-teal-light">✦</span> Library</Link>
+                <Link href="/explore" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-teal-light">✦</span> Archive</Link>
+              </div>
             </div>
             <div className="story-card p-6 text-left space-y-3">
               <div className="flex items-center gap-3">
@@ -133,6 +138,11 @@ export default async function Home() {
               <p className="text-sm text-parchment-dark leading-relaxed">
                 Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
               </p>
+              <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
+                <Link href="/create" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-gold">✦</span> Create</Link>
+                <Link href="/roster" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-gold">✦</span> Roster</Link>
+                <Link href="/write" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-gold">✦</span> Write</Link>
+              </div>
             </div>
             <div className="story-card p-6 text-left space-y-3">
               <div className="flex items-center gap-3">
@@ -142,6 +152,11 @@ export default async function Home() {
               <p className="text-sm text-parchment-dark leading-relaxed">
                 Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
               </p>
+              <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
+                <Link href="/player-deck" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Player Deck</Link>
+                <Link href="/campaigns" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Campaigns</Link>
+                <Link href="/quests" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Quests</Link>
+              </div>
             </div>
           </div>
         </div>
