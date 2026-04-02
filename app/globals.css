@@ -732,7 +732,7 @@
   }
 
   /* Bookshelf container */
-  .bookshelf-container canvas {
-    cursor: default;
+  .bookshelf-container {
+    perspective: 1200px;
   }
 }
