@@ -421,27 +421,9 @@ function TheSurface() {
 interface ShardSite { x: number; z: number; region: RegionId }
 
 const SHARD_SITES: ShardSite[] = [
-  { x: 50, z: -42, region: 'deyune' },
-  { x: 60, z: -35, region: 'deyune' },
-  { x: 45, z: -38, region: 'deyune' },
   { x: -48, z: -38, region: 'virelay' },
-  { x: -55, z: -28, region: 'virelay' },
-  { x: -42, z: -42, region: 'virelay' },
   { x: -5, z: 48, region: 'bellroot' },
-  { x: 8, z: 40, region: 'bellroot' },
-  { x: -10, z: 38, region: 'bellroot' },
-  { x: 52, z: 42, region: 'ashen' },
-  { x: 62, z: 35, region: 'ashen' },
-  { x: 48, z: 32, region: 'ashen' },
-  { x: 78, z: -8, region: 'glass' },
-  { x: 70, z: 2, region: 'glass' },
-  { x: 82, z: 5, region: 'glass' },
   { x: 5, z: -48, region: 'varnhalt' },
-  { x: -8, z: -52, region: 'varnhalt' },
-  { x: -52, z: 38, region: 'luminous' },
-  { x: -60, z: 28, region: 'luminous' },
-  { x: -58, z: -8, region: 'drowned' },
-  { x: -52, z: 2, region: 'drowned' },
 ]
 
 function SurfaceShard({ site, index }: { site: ShardSite; index: number }) {
@@ -761,31 +743,30 @@ function RegionLabel({ r }: { r: typeof REGION_LABEL_DATA[number] }) {
 
   return (
     <Html
-      position={[r.x, SURFACE_Y + surfH + 6, r.z]}
+      position={[r.x, SURFACE_Y + surfH + 2.5, r.z]}
       center
       style={{ pointerEvents: 'auto', whiteSpace: 'nowrap' }}
     >
-      <div
-        className="text-center select-none relative"
+      <a
+        href={`/map/${r.id}`}
+        className="block select-none relative"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{ cursor: 'pointer' }}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Invisible hitbox over the painted map text */}
         <div
-          className="text-sm font-serif font-bold tracking-wide transition-all duration-200"
+          className="transition-all duration-200"
           style={{
-            color: r.color,
-            textShadow: '0 0 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.6)',
-            transform: hovered ? 'scale(1.1)' : 'scale(1)',
+            width: '140px',
+            height: '36px',
+            background: hovered ? `${r.color}08` : 'transparent',
+            borderRadius: '6px',
           }}
-        >
-          {r.name}
-        </div>
-        <div className="text-[9px] italic opacity-50" style={{ color: r.color }}>
-          {r.sub}
-        </div>
+        />
 
-        {/* Hover popup */}
+        {/* Hover popup with region info */}
         {hovered && region && (
           <div
             className="absolute left-1/2 -translate-x-1/2 mt-2 rounded-xl p-4 backdrop-blur-xl border z-50"
@@ -817,21 +798,19 @@ function RegionLabel({ r }: { r: typeof REGION_LABEL_DATA[number] }) {
                 ? region.description.slice(0, 160) + '\u2026'
                 : region.description}
             </p>
-            <a
-              href={`/map/${r.id}`}
+            <span
               className="block text-center px-3 py-2 rounded-lg text-xs font-medium transition-all hover:brightness-125"
               style={{
                 background: `${r.color}20`,
                 color: r.color,
                 border: `1px solid ${r.color}40`,
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               Explore Region \u2192
-            </a>
+            </span>
           </div>
         )}
-      </div>
+      </a>
     </Html>
   )
 }
