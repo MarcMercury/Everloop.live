@@ -755,16 +755,21 @@ function RegionLabel({ r }: { r: typeof REGION_LABEL_DATA[number] }) {
         style={{ cursor: 'pointer' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Invisible hitbox over the painted map text */}
-        <div
-          className="transition-all duration-200"
-          style={{
-            width: '140px',
-            height: '36px',
-            background: hovered ? `${r.color}08` : 'transparent',
-            borderRadius: '6px',
-          }}
-        />
+        {/* Glowing marker dot */}
+        <div className="flex justify-center">
+          <div
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: hovered ? '12px' : '8px',
+              height: hovered ? '12px' : '8px',
+              background: r.color,
+              boxShadow: hovered
+                ? `0 0 12px ${r.color}, 0 0 24px ${r.color}80`
+                : `0 0 6px ${r.color}90, 0 0 14px ${r.color}50`,
+              border: `1.5px solid ${r.color}cc`,
+            }}
+          />
+        </div>
 
         {/* Hover popup with region info */}
         {hovered && region && (
