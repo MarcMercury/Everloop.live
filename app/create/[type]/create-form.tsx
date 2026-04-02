@@ -23,6 +23,7 @@ import {
   updateEntity,
   type EntityType 
 } from '@/lib/actions/create'
+import { ThreeDPreviewPanel } from '@/components/3d/three-d-preview-panel'
 
 // ═══════════════════════════════════════════════════════════
 // TYPE-SPECIFIC CONFIGURATIONS
@@ -131,6 +132,8 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
   const [tagline, setTagline] = useState(initialData?.tagline || '')
   const [description, setDescription] = useState(initialData?.description || '')
   const [imageUrl, setImageUrl] = useState<string | null>(initialData?.imageUrl || null)
+  
+  const [modelUrl, setModelUrl] = useState<string | null>(null)
   
   const [isGeneratingText, setIsGeneratingText] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
@@ -420,6 +423,21 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
               </div>
             </CardContent>
           </Card>
+
+          {/* 3D Model Generation */}
+          <ThreeDPreviewPanel
+            mode={imageUrl ? 'image-to-3d' : 'text-to-3d'}
+            input={imageUrl || description}
+            existingModelUrl={modelUrl}
+            onModelGenerated={(glbUrl) => setModelUrl(glbUrl)}
+            label={`3D ${config.label} Model`}
+            buttonLabel={imageUrl ? 'Convert to 3D Model' : 'Generate 3D from Description'}
+            meshyOptions={
+              type === 'character' || type === 'creature'
+                ? { pose_mode: 'a-pose', enable_pbr: true }
+                : { enable_pbr: true }
+            }
+          />
 
           {/* Action Buttons */}
           <div className="flex gap-3">

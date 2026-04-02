@@ -6,10 +6,12 @@ import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/campaigns'
 import { MOOD_THEMES } from '@/types/campaign'
 import type { Campaign, CampaignScene, CampaignSceneUpdate, SceneType, SceneMood } from '@/types/campaign'
-import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical } from 'lucide-react'
+import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Generate3DButton } from '@/components/3d/generate-3d-button'
+import { ModelViewerCompact } from '@/components/3d/model-viewer'
 
 interface Props {
   campaign: Campaign
@@ -43,6 +45,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
     narration: '',
     dm_notes: '',
   })
+  const [sceneModelUrls, setSceneModelUrls] = useState<Record<string, string>>({})
 
   async function handleCreateScene() {
     if (!newScene.title.trim()) return
@@ -191,6 +194,31 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                 className="w-full mt-1 rounded-lg bg-red-500/5 border border-red-500/10 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
+
+            {/* 3D Scene Environment */}
+            {newScene.description && (
+              <div className="col-span-2">
+                <Label className="text-parchment text-sm flex items-center gap-2">
+                  <Box className="w-3 h-3 text-purple-400" />
+                  3D Scene Environment
+                </Label>
+                <p className="text-xs text-parchment-muted mt-1 mb-2">
+                  Generate a 3D model of this scene&apos;s environment for immersive play
+                </p>
+                <Generate3DButton
+                  mode="text-to-3d"
+                  input={`Fantasy ${newScene.scene_type} scene environment: ${newScene.description}. Mood: ${newScene.mood}. Tabletop RPG diorama style, detailed terrain.`}
+                  onComplete={(glbUrl) => setSceneModelUrls(prev => ({ ...prev, new: glbUrl }))}
+                  label="Generate 3D Environment"
+                  options={{ enable_pbr: true }}
+                />
+                {sceneModelUrls['new'] && (
+                  <div className="mt-3 rounded-lg border border-purple-500/20 overflow-hidden">
+                    <ModelViewerCompact modelUrl={sceneModelUrls['new']} className="w-full h-48" />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-4">
