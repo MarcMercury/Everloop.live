@@ -56,17 +56,19 @@ export async function GET(
   const rows = (data ?? []) as unknown as CanonEntityRow[]
 
   // Filter entities that belong to this region:
-  // 1. metadata.region matches the region id
-  // 2. OR tags include the region id or region name
+  // 1. metadata.region matches the region id (authoritative)
+  // 2. For entities without an explicit region, fall back to tag/description matching
   const regionName = region.name.toLowerCase().replace(/^the /, '')
   const filtered = rows.filter((entity) => {
     const meta = entity.metadata
-    if (meta?.region === regionId) return true
+    // If the entity has an explicit region, only match on exact region
+    if (meta?.region) return meta.region === regionId
+    // Fallback: tags include the region id or region name
     if (entity.tags?.some((tag: string) => {
       const lower = tag.toLowerCase()
       return lower === regionId || lower === regionName || lower.includes(regionId)
     })) return true
-    // Also match entities whose description mentions the region
+    // Fallback: description mentions the region
     if (entity.description?.toLowerCase().includes(regionId)) return true
     if (entity.description?.toLowerCase().includes(regionName)) return true
     return false
