@@ -4,7 +4,6 @@ import { useRef, useMemo, useState, useCallback } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Float, Stars, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
-import { REGIONS } from '@/lib/data/regions'
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -39,24 +38,7 @@ function getSurfaceHeight(wx: number, wz: number): number {
 // ═══════════════════════════════════════════════════════════════
 // 8 REGIONS OF THE EVERLOOP
 // ═══════════════════════════════════════════════════════════════
-// Positioned to match the geography visible on the reference map.
-// Coordinates: X range [-120, 120], Z range [-80, 80]
-// Negative Z = south, Positive Z = north on the painted map.
 type RegionId = 'deyune' | 'virelay' | 'bellroot' | 'ashen' | 'glass' | 'varnhalt' | 'luminous' | 'drowned'
-
-const REGION_LABEL_DATA: {
-  id: RegionId; name: string; sub: string
-  x: number; z: number; color: string
-}[] = [
-  { id: 'bellroot',  name: 'The Bellroot Vale',     sub: 'Memory Nexus',         x: 28,  z: -3,  color: '#50c070' },
-  { id: 'luminous',  name: 'The Luminous Fold',     sub: 'Over-Stabilized Zone', x: 55,  z: -40, color: '#e0d890' },
-  { id: 'ashen',     name: 'The Ashen Spine',       sub: 'Volcanic Chain',       x: 0,   z: -45, color: '#cc5533' },
-  { id: 'drowned',   name: 'The Drowned Reach',     sub: 'Submerged Ruins',      x: 0,   z: 45,  color: '#509088' },
-  { id: 'glass',     name: 'The Glass Expanse',     sub: 'Crystal Desert',       x: 75,  z: -5,  color: '#c0c8d0' },
-  { id: 'virelay',   name: 'Virelay Coastlands',    sub: 'Fractured Shore',      x: -70, z: 30,  color: '#8888aa' },
-  { id: 'varnhalt',  name: 'Varnhalt Frontier',     sub: 'Rough Feudal Edge',    x: -80, z: -5,  color: '#a08050' },
-  { id: 'deyune',    name: 'The Deyune Steps',      sub: 'Nomadic Vastlands',    x: -55, z: -35, color: '#d4a84b' },
-]
 
 function getShardColor(region: RegionId): { color: string; emissive: string } {
   switch (region) {
@@ -736,100 +718,6 @@ function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
   )
 }
 
-function RegionLabel({ r }: { r: typeof REGION_LABEL_DATA[number] }) {
-  const [hovered, setHovered] = useState(false)
-  const surfH = getSurfaceHeight(r.x, r.z)
-  const region = REGIONS.find((reg) => reg.id === r.id)
-
-  return (
-    <Html
-      position={[r.x, SURFACE_Y + surfH + 2.5, r.z]}
-      center
-      style={{ pointerEvents: 'auto', whiteSpace: 'nowrap' }}
-    >
-      <a
-        href={`/map/${r.id}`}
-        className="block select-none relative"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{ cursor: 'pointer' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Glowing marker dot */}
-        <div className="flex justify-center">
-          <div
-            className="rounded-full transition-all duration-300"
-            style={{
-              width: hovered ? '12px' : '8px',
-              height: hovered ? '12px' : '8px',
-              background: r.color,
-              boxShadow: hovered
-                ? `0 0 12px ${r.color}, 0 0 24px ${r.color}80`
-                : `0 0 6px ${r.color}90, 0 0 14px ${r.color}50`,
-              border: `1.5px solid ${r.color}cc`,
-            }}
-          />
-        </div>
-
-        {/* Hover popup with region info */}
-        {hovered && region && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 mt-2 rounded-xl p-4 backdrop-blur-xl border z-50"
-            style={{
-              width: '280px',
-              whiteSpace: 'normal',
-              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.96), rgba(15, 30, 35, 0.93))',
-              borderColor: `${r.color}40`,
-              boxShadow: `0 0 30px ${r.color}25, 0 12px 40px rgba(0,0,0,0.6)`,
-            }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ background: r.color, boxShadow: `0 0 8px ${r.color}80` }}
-              />
-              <span className="text-sm font-serif font-bold" style={{ color: r.color }}>
-                {r.name}
-              </span>
-            </div>
-            <div className="text-[10px] uppercase tracking-wider mb-2 opacity-60" style={{ color: r.color }}>
-              {r.sub}
-            </div>
-            <p
-              className="text-[11px] leading-relaxed mb-3"
-              style={{ color: 'rgba(210, 200, 180, 0.8)' }}
-            >
-              {region.description.length > 160
-                ? region.description.slice(0, 160) + '\u2026'
-                : region.description}
-            </p>
-            <span
-              className="block text-center px-3 py-2 rounded-lg text-xs font-medium transition-all hover:brightness-125"
-              style={{
-                background: `${r.color}20`,
-                color: r.color,
-                border: `1px solid ${r.color}40`,
-              }}
-            >
-              Explore Region \u2192
-            </span>
-          </div>
-        )}
-      </a>
-    </Html>
-  )
-}
-
-function RegionLabels() {
-  return (
-    <group>
-      {REGION_LABEL_DATA.map((r) => (
-        <RegionLabel key={r.id} r={r} />
-      ))}
-    </group>
-  )
-}
-
 // Stable orbit target
 const ORBIT_TARGET = new THREE.Vector3(0, 15, 0)
 
@@ -875,7 +763,6 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
 
       {/* Labels */}
       <LayerLabels showSubLayers={showSubLayers} />
-      <RegionLabels />
 
       {/* Camera controls */}
       <OrbitControls
@@ -964,6 +851,206 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 }
 
 // ═══════════════════════════════════════════════════════════════
+// LOCATION DIRECTORY (collapsible right-side panel)
+// ═══════════════════════════════════════════════════════════════
+type LocationCategory = { heading: string; items: string[] }
+type RegionDirectory = {
+  id: RegionId; emoji: string; name: string; color: string
+  categories: LocationCategory[]
+}
+
+const WORLD_LOCATIONS: RegionDirectory[] = [
+  {
+    id: 'deyune', emoji: '🌾', name: 'The Deyune Steps', color: '#d4a84b',
+    categories: [
+      { heading: 'Settlements', items: ['Karak Camp', 'Tovin Encampment', 'Red Mile Camp', 'Sarn Flats Settlement', 'Khelt Crossing', 'Orun Field Camp'] },
+      { heading: 'Towns', items: ['Ashfall Crossing', 'Nerin Post', 'Vask Hollow', 'Telmar Edge'] },
+      { heading: 'Cities', items: ['Thorne Reach', 'Valen Spur'] },
+      { heading: 'Outposts / Forts', items: ['Long Run Watch', 'East Wind Post', 'Step Gate Station'] },
+      { heading: 'Ruins', items: ['Old Karak Stones', 'Broken Teeth Site', 'First Camp Remains'] },
+      { heading: 'Taverns / Armories', items: ['The Long Fire', 'Step Barrow Forge'] },
+      { heading: 'Key Features', items: ['The Long Run', 'The Standing Teeth', 'Whispering Expanse'] },
+    ],
+  },
+  {
+    id: 'ashen', emoji: '🌋', name: 'The Ashen Spine', color: '#cc5533',
+    categories: [
+      { heading: 'Villages', items: ['Emberfall Village', 'Korrin Hold', 'Blackridge Camp', 'Vesta Hollow'] },
+      { heading: 'Towns', items: ['Cinder Vale', 'Rookforge', 'Taldrin Pass'] },
+      { heading: 'Cities', items: ['Ironmark', 'Varr Keep'] },
+      { heading: 'Outposts / Forts', items: ['Spine Watch', 'Furnace Post', 'High Ash Station'] },
+      { heading: 'Ruins', items: ['Old Varr', 'Burnt Gate', 'Deep Core Site'] },
+      { heading: 'Taverns / Armories', items: ['The Ash Line', 'Black Hammer Forge', 'Red Barrel House'] },
+    ],
+  },
+  {
+    id: 'virelay', emoji: '🌊', name: 'Virelay Coastlands', color: '#8888aa',
+    categories: [
+      { heading: 'Villages', items: ['Lowtide', 'Marrow Bay', 'East Dock', 'Halven Shore'] },
+      { heading: 'Towns', items: ['Kelport', 'Darnis Bay', 'Coris Reach'] },
+      { heading: 'Cities', items: ['Virelay'] },
+      { heading: 'Outposts / Forts', items: ['Cliffwatch', 'Harbor Post 3', 'Tide Gate'] },
+      { heading: 'Ruins / Anomalies', items: ['The Drowned City', 'The Well Site', 'Old Harbor'] },
+      { heading: 'Taverns', items: ['The Salt House', 'Broken Mast', 'Low Lantern'] },
+    ],
+  },
+  {
+    id: 'varnhalt', emoji: '🏕️', name: 'Varnhalt Frontier', color: '#a08050',
+    categories: [
+      { heading: 'Villages', items: ['Dry Creek', 'Talon Ridge Camp', 'Brack Hollow', 'Pine Run'] },
+      { heading: 'Towns', items: ['Varnhalt', 'West Varnhalt', 'Drellin Post', 'Korr Field'] },
+      { heading: 'Cities', items: ['High Ridge Market', 'Farpoint'] },
+      { heading: 'Outposts / Forts', items: ['North Watch', 'Timber Post', 'Ridge Line Station'] },
+      { heading: 'Ruins', items: ['Old Varnhalt', 'Burn Camp Site', 'Stone Line Remains'] },
+      { heading: 'Taverns', items: ['The Split Table', 'Red Knife Tavern', 'Last Light'] },
+      { heading: 'Key Location', items: ['The Black Stone Tower'] },
+    ],
+  },
+  {
+    id: 'bellroot', emoji: '🌲', name: 'Bellroot Vale', color: '#50c070',
+    categories: [
+      { heading: 'Villages', items: ['Merrow Bend', 'Tallpine', 'Rootfall', 'Green Hollow'] },
+      { heading: 'Towns', items: ['Drelmere', 'East Drelmere', "Halrick's Reach"] },
+      { heading: 'Cities', items: ['Bellroot Crossing', 'South Vale Cluster'] },
+      { heading: 'Outposts', items: ['Root Watch', 'Vale Station', 'North Path Post'] },
+      { heading: 'Ruins', items: ['Old Bellroot Site', 'First Root Chamber', 'Lost Grove'] },
+      { heading: 'Taverns', items: ['The Quiet Bell', 'Root & Stone', 'The Low Fire'] },
+      { heading: 'Key Location', items: ['The Bell Tree'] },
+    ],
+  },
+  {
+    id: 'glass', emoji: '🪞', name: 'Glass Expanse', color: '#c0c8d0',
+    categories: [
+      { heading: 'Settlements', items: ['Shard Camp', 'Mirror Post', 'Drylight Camp'] },
+      { heading: 'Towns', items: ['Glass Reach', 'Twinmark', 'Clearline'] },
+      { heading: 'Cities', items: ['Prism City', 'Vell Glass'] },
+      { heading: 'Outposts', items: ['Reflection Station', 'West Mirror Post'] },
+      { heading: 'Ruins', items: ['Old Prism', 'Split Site', 'Echo Ruins'] },
+      { heading: 'Taverns', items: ['The Second Face', 'Clear Glass House'] },
+    ],
+  },
+  {
+    id: 'luminous', emoji: '✨', name: 'Luminous Fold', color: '#e0d890',
+    categories: [
+      { heading: 'Settlements', items: ['Order Field', 'Line Camp'] },
+      { heading: 'Towns', items: ['Symmetry', 'East Order', 'Venn'] },
+      { heading: 'Cities', items: ['Lumina', 'Central Fold'] },
+      { heading: 'Outposts', items: ['Grid Station 1', 'Grid Station 2', 'Grid Station 3', 'Grid Station 4', 'Grid Station 5', 'Grid Station 6', 'Axis Watch'] },
+      { heading: 'Ruins', items: ['Broken Line', 'Old Fold Node'] },
+      { heading: 'Taverns', items: ['The Even Table', 'The Quiet Line'] },
+    ],
+  },
+  {
+    id: 'drowned', emoji: '🌊', name: 'Drowned Reach', color: '#509088',
+    categories: [
+      { heading: 'Settlements', items: ['Lowwater', 'Drift Camp', 'Salt Edge'] },
+      { heading: 'Towns', items: ['New Harbor', 'West Reach', 'Floodmark'] },
+      { heading: 'Cities', items: ['Deep Reach', 'Sunken Port'] },
+      { heading: 'Outposts', items: ['Tide Watch', 'Flood Station'] },
+      { heading: 'Ruins', items: ['The Sunken City', 'Old Reach', 'Drowned Gate'] },
+      { heading: 'Taverns', items: ['The Wet Lantern', 'Last Dock', 'Salt Line'] },
+    ],
+  },
+]
+
+function LocationDirectory() {
+  const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
+
+  const toggleRegion = useCallback((id: string) => {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
+  }, [])
+
+  return (
+    <div className="absolute top-4 right-0 z-10 flex items-start">
+      {/* Toggle tab */}
+      <button
+        onClick={() => setOpen(prev => !prev)}
+        className="mt-2 px-1.5 py-3 rounded-l-md border border-r-0 border-gold/20 text-[9px] font-serif uppercase tracking-widest transition-colors hover:bg-gold/10"
+        style={{
+          background: 'rgba(5, 10, 15, 0.92)',
+          color: '#d4a84b',
+          writingMode: 'vertical-rl',
+          textOrientation: 'mixed',
+        }}
+      >
+        {open ? 'Close' : 'Locations'}
+      </button>
+
+      {/* Panel */}
+      {open && (
+        <div
+          className="rounded-l-lg border border-r-0 border-gold/20 overflow-hidden"
+          style={{
+            background: 'rgba(5, 10, 15, 0.94)',
+            backdropFilter: 'blur(12px)',
+            width: '220px',
+            maxHeight: 'calc(100vh - 120px)',
+          }}
+        >
+          <div className="p-2.5 border-b border-gold/10">
+            <h4 className="text-[10px] font-serif text-parchment uppercase tracking-wider">World Locations</h4>
+          </div>
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 170px)' }}>
+            {WORLD_LOCATIONS.map((region) => (
+              <div key={region.id} className="border-b border-gold/5 last:border-b-0">
+                {/* Region header — clickable to expand/collapse */}
+                <button
+                  onClick={() => toggleRegion(region.id)}
+                  className="w-full flex items-center gap-1.5 px-2.5 py-2 text-left transition-colors hover:bg-white/5"
+                >
+                  <span className="text-xs">{region.emoji}</span>
+                  <span className="text-[11px] font-serif font-bold flex-1" style={{ color: region.color }}>
+                    {region.name}
+                  </span>
+                  <span className="text-[9px] opacity-40" style={{ color: region.color }}>
+                    {expanded[region.id] ? '▾' : '▸'}
+                  </span>
+                </button>
+
+                {/* Expanded locations */}
+                {expanded[region.id] && (
+                  <div className="pb-2">
+                    {/* Link to full region map */}
+                    <a
+                      href={`/map/${region.id}`}
+                      className="block mx-2.5 mb-2 px-2 py-1 rounded text-[9px] font-medium text-center transition-all hover:brightness-125"
+                      style={{
+                        background: `${region.color}15`,
+                        color: region.color,
+                        border: `1px solid ${region.color}25`,
+                      }}
+                    >
+                      View Region Map →
+                    </a>
+                    {region.categories.map((cat) => (
+                      <div key={cat.heading} className="px-2.5 mb-1.5">
+                        <div className="text-[8px] uppercase tracking-wider mb-0.5 opacity-40" style={{ color: region.color }}>
+                          {cat.heading}
+                        </div>
+                        {cat.items.map((item) => (
+                          <a
+                            key={item}
+                            href={`/map/${region.id}`}
+                            className="block text-[10px] leading-relaxed text-parchment-muted hover:text-parchment transition-colors pl-1.5 hover:pl-2"
+                          >
+                            {item}
+                          </a>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═══════════════════════════════════════════════════════════════
 export default function EverloopMap() {
@@ -981,6 +1068,7 @@ export default function EverloopMap() {
         <Scene showSubLayers={showSubLayers} />
       </Canvas>
       <MapLegend showSubLayers={showSubLayers} onToggleLayers={handleToggleLayers} />
+      <LocationDirectory />
     </div>
   )
 }
