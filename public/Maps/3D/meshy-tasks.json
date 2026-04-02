@@ -1,0 +1,42 @@
+[
+  {
+    "region": "Ashen Spine",
+    "status": "success",
+    "taskId": "019d4fb1-0d71-7be4-8f70-03a0a7c0e0de"
+  },
+  {
+    "region": "Bellroot Vale",
+    "status": "success",
+    "taskId": "019d4fb3-bec8-7ba5-919a-f085ed38c6d5"
+  },
+  {
+    "region": "Deyune Steps",
+    "status": "success",
+    "taskId": "019d4fb8-0dc7-7d42-b46e-b8c75b51f313"
+  },
+  {
+    "region": "Drowned Reach",
+    "status": "success",
+    "taskId": "019d4fba-7e08-7e66-9242-348e78d915d9"
+  },
+  {
+    "region": "Glass Expanse",
+    "status": "success",
+    "taskId": "019d4fbc-ed09-7411-80c9-db50f127266b"
+  },
+  {
+    "region": "Luminous Expanse",
+    "status": "success",
+    "taskId": "019d4fbe-a8f2-7467-acad-23133b7a75ca"
+  },
+  {
+    "region": "Varnhalt Frontier",
+    "status": "success",
+    "taskId": "019d4fc0-2d41-74d6-87bb-759823d89c3e"
+  },
+  {
+    "region": "Virelay Coastlands",
+    "status": "success",
+    "taskId": "019d4fc3-140d-70bf-a2df-baf2f01fc884"
+  }
+]

@@ -23,6 +23,7 @@ import {
   defaultSpellcasting, defaultProficiencies, defaultInventory, defaultStatus
 } from '@/types/player-character'
 import { createPlayerCharacter, updatePlayerCharacter, deletePlayerCharacter } from '@/lib/actions/player-characters'
+import { ThreeDPreviewPanel } from '@/components/3d/three-d-preview-panel'
 
 interface Props {
   character?: PlayerCharacter
@@ -78,6 +79,7 @@ export function CharacterForm({ character }: Props) {
   const [hair, setHair] = useState(character?.hair || '')
   const [skin, setSkin] = useState(character?.skin || '')
   const [faith, setFaith] = useState(character?.faith || '')
+  const [modelUrl3d, setModelUrl3d] = useState<string | null>(null)
   
   // Spellcasting
   const [spellcasting, setSpellcasting] = useState<SpellcastingData>(
@@ -401,6 +403,17 @@ export function CharacterForm({ character }: Props) {
               <div className="md:col-span-2">
                 <Label className="text-parchment-muted">Portrait URL</Label>
                 <Input value={portraitUrl} onChange={e => setPortraitUrl(e.target.value)} placeholder="https://..." className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div className="md:col-span-2">
+                <ThreeDPreviewPanel
+                  mode={portraitUrl ? 'image-to-3d' : 'text-to-3d'}
+                  input={portraitUrl || `${race} ${charClass} character, ${name}, fantasy RPG miniature, detailed armor and equipment, heroic pose`}
+                  existingModelUrl={modelUrl3d}
+                  onModelGenerated={(glbUrl) => setModelUrl3d(glbUrl)}
+                  label="3D Character Model"
+                  buttonLabel={portraitUrl ? 'Convert Portrait to 3D' : 'Generate 3D Miniature'}
+                  meshyOptions={{ pose_mode: 'a-pose', enable_pbr: true }}
+                />
               </div>
               <div>
                 <label className="flex items-center gap-2 text-sm">

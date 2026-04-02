@@ -17,11 +17,13 @@ import type {
 import {
   Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map,
   Volume2, Eye, EyeOff, Sparkles, Flame, Shield, MessageSquare,
-  ChevronRight, Zap, Gift, SkipForward, AlertTriangle, Bot,
+  ChevronRight, Zap, Gift, SkipForward, AlertTriangle, Bot, Box,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AtmosphereEngine } from '@/components/campaign/atmosphere-engine'
+import { Generate3DButton } from '@/components/3d/generate-3d-button'
+import { ModelViewerCompact } from '@/components/3d/model-viewer'
 
 interface Props {
   campaign: Campaign
@@ -535,6 +537,17 @@ export function DMControlPanelClient({
                       <EyeOff className="w-3 h-3" /> {npc.secrets}
                     </div>
                   )}
+                  {/* Generate 3D Model for NPC */}
+                  <div className="mt-2 pt-2 border-t border-gold/5">
+                    <Generate3DButton
+                      mode="text-to-3d"
+                      input={`Fantasy RPG ${npc.npc_type} NPC miniature: ${npc.name}. ${npc.personality || ''} ${npc.description || 'detailed fantasy character'}. Tabletop RPG miniature style.`}
+                      onComplete={() => {}}
+                      label="Generate 3D"
+                      size="sm"
+                      options={{ pose_mode: 'a-pose', enable_pbr: true }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
