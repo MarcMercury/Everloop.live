@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen } from 'lucide-react'
 import { CANON_STORY_STATUSES } from '@/lib/utils'
-import { Bookshelf, BookshelfSkeleton } from '@/components/library/bookshelf'
+import { Bookshelf, BookshelfSkeleton } from '@/components/library/bookshelf-3d'
 
 export const metadata = {
   title: 'The Library | Everloop',
