@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import type { EverloopRegion } from '@/lib/data/regions'
+import { getRegionLocations } from '@/lib/data/region-locations'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 
 // Dynamic import to avoid SSR issues with Three.js
@@ -56,6 +57,19 @@ function getTypeColor(type: string): string {
   return colors[type] || '#d4a84b'
 }
 
+function getCategoryIcon(heading: string): string {
+  const lower = heading.toLowerCase()
+  if (lower.includes('city') || lower.includes('cities')) return '🏙️'
+  if (lower.includes('town')) return '🏘️'
+  if (lower.includes('village')) return '🏡'
+  if (lower.includes('settlement')) return '⛺'
+  if (lower.includes('outpost') || lower.includes('fort')) return '🏰'
+  if (lower.includes('ruin') || lower.includes('anomal')) return '🏚️'
+  if (lower.includes('tavern') || lower.includes('armori')) return '🍺'
+  if (lower.includes('key')) return '📍'
+  return '◈'
+}
+
 export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [locations, setLocations] = useState<RegionLocation[]>([])
@@ -63,6 +77,19 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'2d' | '3d'>(region.model3dPath ? '3d' : '2d')
   const [generated3dUrl, setGenerated3dUrl] = useState<string | null>(null)
+  const [locationKeyOpen, setLocationKeyOpen] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+
+  const regionDirectory = getRegionLocations(region.id)
+
+  const toggleCategory = useCallback((heading: string) => {
+    setExpandedCategories(prev => {
+      const next = new Set(prev)
+      if (next.has(heading)) next.delete(heading)
+      else next.add(heading)
+      return next
+    })
+  }, [])
 
   useEffect(() => {
     async function fetchLocations() {
@@ -142,6 +169,132 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
           )}
         </div>
       </div>
+
+      {/* Collapsible Location Key / Nav */}
+      {regionDirectory && (
+        <div className="absolute top-20 left-4 z-20" style={{ maxHeight: 'calc(100vh - 140px)' }}>
+          {/* Toggle button */}
+          <button
+            onClick={() => setLocationKeyOpen(prev => !prev)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+            style={{
+              background: 'rgba(5, 10, 15, 0.9)',
+              borderColor: `${region.color}30`,
+              color: region.color,
+            }}
+          >
+            <span className="text-base">{regionDirectory.emoji}</span>
+            <span className="font-serif">Location Key</span>
+            <svg
+              className="w-3.5 h-3.5 transition-transform duration-200"
+              style={{ transform: locationKeyOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Expanded panel */}
+          {locationKeyOpen && (
+            <div
+              className="mt-2 rounded-xl backdrop-blur-xl border overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, rgba(5, 10, 15, 0.95), rgba(10, 20, 25, 0.92))',
+                borderColor: `${region.color}25`,
+                boxShadow: `0 0 30px ${region.color}10, 0 12px 40px rgba(0,0,0,0.5)`,
+                maxHeight: 'calc(100vh - 200px)',
+                width: '280px',
+              }}
+            >
+              {/* Panel header */}
+              <div
+                className="px-4 py-3 border-b"
+                style={{ borderColor: `${region.color}15` }}
+              >
+                <h3 className="text-sm font-serif font-bold" style={{ color: region.color }}>
+                  {regionDirectory.name}
+                </h3>
+                <span className="text-[10px] text-parchment-muted">
+                  {regionDirectory.categories.reduce((sum, c) => sum + c.items.length, 0)} known locations
+                </span>
+              </div>
+
+              {/* Scrollable categories */}
+              <div
+                className="overflow-y-auto overscroll-contain"
+                style={{ maxHeight: 'calc(100vh - 270px)' }}
+              >
+                {regionDirectory.categories.map((cat) => {
+                  const isExpanded = expandedCategories.has(cat.heading)
+                  return (
+                    <div key={cat.heading} className="border-b" style={{ borderColor: `${region.color}08` }}>
+                      {/* Category header – clickable to expand/collapse */}
+                      <button
+                        onClick={() => toggleCategory(cat.heading)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-white/[0.03]"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px]">{getCategoryIcon(cat.heading)}</span>
+                          <span className="text-xs font-serif font-semibold tracking-wide" style={{ color: `${region.color}cc` }}>
+                            {cat.heading}
+                          </span>
+                          <span
+                            className="text-[9px] px-1.5 py-0.5 rounded-full"
+                            style={{ background: `${region.color}15`, color: `${region.color}80` }}
+                          >
+                            {cat.items.length}
+                          </span>
+                        </div>
+                        <svg
+                          className="w-3 h-3 transition-transform duration-200"
+                          style={{
+                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                            color: `${region.color}60`,
+                          }}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Location items */}
+                      {isExpanded && (
+                        <div className="px-3 pb-2">
+                          {cat.items.map((item) => (
+                            <div
+                              key={item}
+                              className="flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors hover:bg-white/[0.04] group"
+                            >
+                              {/* Placeholder for future render thumbnail */}
+                              <div
+                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center border"
+                                style={{
+                                  background: `${region.color}08`,
+                                  borderColor: `${region.color}15`,
+                                }}
+                              >
+                                <span className="text-[10px] opacity-40" style={{ color: region.color }}>
+                                  {getCategoryIcon(cat.heading)}
+                                </span>
+                              </div>
+                              <span
+                                className="text-[11px] font-serif leading-tight group-hover:brightness-125 transition-all"
+                                style={{ color: `${region.color}bb` }}
+                              >
+                                {item}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Selected location detail panel */}
       {selectedLocation && (

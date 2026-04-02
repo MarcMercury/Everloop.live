@@ -2,8 +2,9 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, User, ArrowRight } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { CANON_STORY_STATUSES } from '@/lib/utils'
+import { Bookshelf, BookshelfSkeleton } from '@/components/library/bookshelf'
 
 export const metadata = {
   title: 'The Library | Everloop',
@@ -30,16 +31,6 @@ function normalizeSearch(term: string): string {
     .trim()
     .replace(/[%,_]/g, ' ')
     .replace(/\s+/g, ' ')
-}
-
-function getSnippet(contentText?: string | null): string {
-  if (!contentText) return ''
-  const words = contentText
-    .split(/\s+/)
-    .map(word => word.trim())
-    .filter(Boolean)
-  const firstTwenty = words.slice(0, 20).join(' ')
-  return words.length > 20 ? `${firstTwenty}...` : firstTwenty
 }
 
 async function getCanonStories(search?: string): Promise<Story[]> {
@@ -91,84 +82,6 @@ async function getStoryCount(): Promise<number> {
   return count || 0
 }
 
-function StoryCard({ story }: { story: Story }) {
-  const snippet = getSnippet(story.content_text)
-  const authorName = story.author?.display_name || story.author?.username || 'Anonymous'
-
-  return (
-    <article
-      className="group flex flex-col justify-between p-6 rounded-lg bg-gradient-to-br from-teal-rich/60 to-teal-deep/80 
-                 border border-gold/10 hover:border-gold/30 shadow-lg shadow-black/20 hover:shadow-gold/10
-                 transition-all duration-300"
-    >
-      <div>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <Link
-              href={`/stories/${story.slug}`}
-              className="font-serif text-xl text-parchment group-hover:text-gold transition-colors"
-            >
-              {story.title}
-            </Link>
-            <p className="text-xs uppercase tracking-[0.3em] text-gold/70 mt-2">
-              Canon Story
-            </p>
-          </div>
-          <ArrowRight className="w-5 h-5 text-gold/70 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        <p className="text-sm text-parchment-muted mt-4 line-clamp-3">
-          {snippet || 'No preview available yet.'}
-        </p>
-      </div>
-
-      <div className="mt-6 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-parchment-muted">
-          {story.author?.username ? (
-            <Link
-              href={`/profile/${story.author.username}`}
-              className="flex items-center gap-2 hover:text-gold transition-colors"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>{authorName}</span>
-            </Link>
-          ) : (
-            <div className="flex items-center gap-2">
-              <User className="w-3.5 h-3.5" />
-              <span>{authorName}</span>
-            </div>
-          )}
-          <span className="flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5" />
-            {story.word_count ? `${story.word_count.toLocaleString()} words` : 'N/A'}
-          </span>
-        </div>
-
-        <Link
-          href={`/stories/${story.slug}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-gold hover:text-parchment transition-colors"
-          aria-label={`Read ${story.title}`}
-        >
-          Read Story
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    </article>
-  )
-}
-
-function StoryCardSkeleton() {
-  return (
-    <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 animate-pulse space-y-4">
-      <div className="h-6 bg-teal-deep/70 rounded w-3/4" />
-      <div className="h-4 bg-teal-deep/70 rounded w-full" />
-      <div className="h-4 bg-teal-deep/70 rounded w-2/3" />
-      <div className="h-4 bg-teal-deep/70 rounded w-1/2" />
-      <div className="h-4 bg-teal-deep/70 rounded w-1/3" />
-    </div>
-  )
-}
-
 interface StoriesPageProps {
   searchParams?: Promise<{ search?: string }>
 }
@@ -190,13 +103,7 @@ async function StoryGrid({ search }: { search?: string }) {
     )
   }
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {stories.map((story) => (
-        <StoryCard key={story.id} story={story} />
-      ))}
-    </div>
-  )
+  return <Bookshelf stories={stories} />
 }
 
 export default async function StoriesPage({ searchParams }: StoriesPageProps) {
@@ -262,13 +169,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
           )}
         </div>
 
-        <Suspense fallback={
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <StoryCardSkeleton key={i} />
-            ))}
-          </div>
-        }>
+        <Suspense fallback={<BookshelfSkeleton />}>
           <StoryGrid search={search} />
         </Suspense>
       </main>

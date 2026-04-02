@@ -669,4 +669,84 @@
     from { transform: translateY(16px); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
   }
+
+  /* ─── Library Bookshelf ─────────────────────────── */
+
+  /* Individual book hover lift on shelf */
+  .book-on-shelf {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+  }
+
+  .book-on-shelf:hover {
+    z-index: 5;
+    filter: brightness(1.1);
+  }
+
+  /* Flat book subtle hover */
+  .book-flat:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  /* Full-screen overlay when a book is selected */
+  .book-selected-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 15, 15, 0.85);
+    backdrop-filter: blur(8px);
+    animation: bookshelf-overlay-in 0.3s ease-out;
+    cursor: pointer;
+  }
+
+  @keyframes bookshelf-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Book cover reveal animation — slides out & scales up */
+  .book-cover-reveal {
+    position: relative;
+    cursor: pointer;
+    animation: book-pull-off-shelf 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: left center;
+  }
+
+  @keyframes book-pull-off-shelf {
+    0% {
+      opacity: 0;
+      transform: perspective(600px) rotateY(-30deg) scale(0.6) translateX(-40px);
+    }
+    60% {
+      opacity: 1;
+      transform: perspective(600px) rotateY(5deg) scale(1.02) translateX(0);
+    }
+    100% {
+      opacity: 1;
+      transform: perspective(600px) rotateY(0deg) scale(1) translateX(0);
+    }
+  }
+
+  .book-cover-reveal:hover {
+    transform: scale(1.03);
+    transition: transform 0.2s ease;
+  }
+
+  /* Shelf wood grain texture overlay */
+  .shelf-plank::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 20px,
+      rgba(0, 0, 0, 0.05) 20px,
+      rgba(0, 0, 0, 0.05) 21px
+    );
+    border-radius: inherit;
+    pointer-events: none;
+  }
 }
