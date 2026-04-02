@@ -22,8 +22,13 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AtmosphereEngine } from '@/components/campaign/atmosphere-engine'
+import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
-import { ModelViewerCompact } from '@/components/3d/model-viewer'
+
+const ModelViewerCompact = dynamic(
+  () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewerCompact),
+  { ssr: false }
+)
 
 interface Props {
   campaign: Campaign

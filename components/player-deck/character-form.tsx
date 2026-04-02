@@ -23,7 +23,12 @@ import {
   defaultSpellcasting, defaultProficiencies, defaultInventory, defaultStatus
 } from '@/types/player-character'
 import { createPlayerCharacter, updatePlayerCharacter, deletePlayerCharacter } from '@/lib/actions/player-characters'
-import { ThreeDPreviewPanel } from '@/components/3d/three-d-preview-panel'
+import dynamic from 'next/dynamic'
+
+const ThreeDPreviewPanel = dynamic(
+  () => import('@/components/3d/three-d-preview-panel').then((mod) => mod.ThreeDPreviewPanel),
+  { ssr: false }
+)
 
 interface Props {
   character?: PlayerCharacter

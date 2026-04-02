@@ -23,7 +23,12 @@ import {
   updateEntity,
   type EntityType 
 } from '@/lib/actions/create'
-import { ThreeDPreviewPanel } from '@/components/3d/three-d-preview-panel'
+import dynamic from 'next/dynamic'
+
+const ThreeDPreviewPanel = dynamic(
+  () => import('@/components/3d/three-d-preview-panel').then((mod) => mod.ThreeDPreviewPanel),
+  { ssr: false }
+)
 
 // ═══════════════════════════════════════════════════════════
 // TYPE-SPECIFIC CONFIGURATIONS
