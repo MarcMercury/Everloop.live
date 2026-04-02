@@ -3,9 +3,25 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import type { EverloopRegion } from '@/lib/data/regions'
-import { ModelViewer } from '@/components/3d/model-viewer'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
+
+// Dynamic import to avoid SSR issues with Three.js
+const ModelViewer = dynamic(
+  () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center bg-charcoal">
+        <div className="text-center animate-pulse">
+          <div className="text-4xl mb-4">📦</div>
+          <p className="text-parchment-muted text-sm">Loading 3D terrain...</p>
+        </div>
+      </div>
+    ),
+  }
+)
 
 interface RegionLocation {
   id: string
