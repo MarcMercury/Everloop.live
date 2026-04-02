@@ -842,8 +842,25 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 
         <div className="mt-2 pt-2 border-t border-gold/10">
           <p className="text-[9px] text-parchment-muted italic leading-tight">
-            Scroll to zoom · Drag to orbit<br />Hover beacons for info · Click for details
+            Scroll to zoom · Drag to orbit
           </p>
+        </div>
+
+        {/* Region links */}
+        <div className="mt-2 pt-2 border-t border-gold/10">
+          <h4 className="text-xs font-serif text-parchment mb-1.5 uppercase tracking-wider">Regions</h4>
+          <div className="space-y-1">
+            {WORLD_LOCATIONS.map((r) => (
+              <a
+                key={r.id}
+                href={`/map/${r.id}`}
+                className="flex items-center gap-1.5 px-1 py-0.5 rounded transition-colors hover:bg-white/5"
+              >
+                <span className="text-[10px]">{r.emoji}</span>
+                <span className="text-[11px] font-serif" style={{ color: r.color }}>{r.name}</span>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -953,103 +970,6 @@ const WORLD_LOCATIONS: RegionDirectory[] = [
   },
 ]
 
-function LocationDirectory() {
-  const [open, setOpen] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-
-  const toggleRegion = useCallback((id: string) => {
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
-  }, [])
-
-  return (
-    <div className="absolute top-4 right-0 z-10 flex items-start">
-      {/* Toggle tab */}
-      <button
-        onClick={() => setOpen(prev => !prev)}
-        className="mt-2 px-1.5 py-3 rounded-l-md border border-r-0 border-gold/20 text-[9px] font-serif uppercase tracking-widest transition-colors hover:bg-gold/10"
-        style={{
-          background: 'rgba(5, 10, 15, 0.92)',
-          color: '#d4a84b',
-          writingMode: 'vertical-rl',
-          textOrientation: 'mixed',
-        }}
-      >
-        {open ? 'Close' : 'Locations'}
-      </button>
-
-      {/* Panel */}
-      {open && (
-        <div
-          className="rounded-l-lg border border-r-0 border-gold/20 overflow-hidden"
-          style={{
-            background: 'rgba(5, 10, 15, 0.94)',
-            backdropFilter: 'blur(12px)',
-            width: '220px',
-            maxHeight: 'calc(100vh - 120px)',
-          }}
-        >
-          <div className="p-2.5 border-b border-gold/10">
-            <h4 className="text-[10px] font-serif text-parchment uppercase tracking-wider">World Locations</h4>
-          </div>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 170px)' }}>
-            {WORLD_LOCATIONS.map((region) => (
-              <div key={region.id} className="border-b border-gold/5 last:border-b-0">
-                {/* Region header — clickable to expand/collapse */}
-                <button
-                  onClick={() => toggleRegion(region.id)}
-                  className="w-full flex items-center gap-1.5 px-2.5 py-2 text-left transition-colors hover:bg-white/5"
-                >
-                  <span className="text-xs">{region.emoji}</span>
-                  <span className="text-[11px] font-serif font-bold flex-1" style={{ color: region.color }}>
-                    {region.name}
-                  </span>
-                  <span className="text-[9px] opacity-40" style={{ color: region.color }}>
-                    {expanded[region.id] ? '▾' : '▸'}
-                  </span>
-                </button>
-
-                {/* Expanded locations */}
-                {expanded[region.id] && (
-                  <div className="pb-2">
-                    {/* Link to full region map */}
-                    <a
-                      href={`/map/${region.id}`}
-                      className="block mx-2.5 mb-2 px-2 py-1 rounded text-[9px] font-medium text-center transition-all hover:brightness-125"
-                      style={{
-                        background: `${region.color}15`,
-                        color: region.color,
-                        border: `1px solid ${region.color}25`,
-                      }}
-                    >
-                      View Region Map →
-                    </a>
-                    {region.categories.map((cat) => (
-                      <div key={cat.heading} className="px-2.5 mb-1.5">
-                        <div className="text-[8px] uppercase tracking-wider mb-0.5 opacity-40" style={{ color: region.color }}>
-                          {cat.heading}
-                        </div>
-                        {cat.items.map((item) => (
-                          <a
-                            key={item}
-                            href={`/map/${region.id}`}
-                            className="block text-[10px] leading-relaxed text-parchment-muted hover:text-parchment transition-colors pl-1.5 hover:pl-2"
-                          >
-                            {item}
-                          </a>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ═══════════════════════════════════════════════════════════════
 // MAIN EXPORT
 // ═══════════════════════════════════════════════════════════════
@@ -1068,7 +988,6 @@ export default function EverloopMap() {
         <Scene showSubLayers={showSubLayers} />
       </Canvas>
       <MapLegend showSubLayers={showSubLayers} onToggleLayers={handleToggleLayers} />
-      <LocationDirectory />
     </div>
   )
 }
