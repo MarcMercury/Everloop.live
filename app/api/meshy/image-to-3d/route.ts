@@ -35,8 +35,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Convert HTTP URLs to base64 data URIs so Meshy doesn't need to
+    // download from external sources (avoids firewall/access issues)
+    let resolvedImageUrl = image_url
+    if (isHttpUrl) {
+      try {
+        const imgRes = await fetch(image_url)
+        if (!imgRes.ok) {
+          return NextResponse.json(
+            { error: 'Failed to download image from URL' },
+            { status: 400 }
+          )
+        }
+        const contentType = imgRes.headers.get('content-type') || 'image/png'
+        const buffer = await imgRes.arrayBuffer()
+        const base64 = Buffer.from(buffer).toString('base64')
+        resolvedImageUrl = `data:${contentType};base64,${base64}`
+      } catch {
+        return NextResponse.json(
+          { error: 'Failed to fetch image for 3D conversion' },
+          { status: 400 }
+        )
+      }
+    }
+
     const taskId = await createImageTo3D({
-      image_url,
+      image_url: resolvedImageUrl,
       ai_model: 'latest',
       should_texture: true,
       enable_pbr: true,
