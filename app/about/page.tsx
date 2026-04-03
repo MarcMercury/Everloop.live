@@ -31,8 +31,9 @@ export default function AboutPage() {
             About <span className="text-gold">Everloop</span>
           </h1>
           <p className="text-parchment-muted text-lg max-w-2xl mx-auto mb-6">
-            A Canon Engine for collaborative storytelling, where writers build within a living 
-            world — guided by AI, grounded in canon.
+            A Canon Engine for collaborative storytelling, where writers, players, and readers 
+            build within a living world — guided by AI, grounded in canon, drawn toward something 
+            no one fully understands yet.
           </p>
           
           {/* Download World Guide - Prominent placement */}
@@ -54,18 +55,19 @@ export default function AboutPage() {
           <div className="prose prose-invert max-w-none">
             <p className="text-parchment-muted leading-relaxed mb-4">
               The Everloop is both a world and a platform. As a world, it&apos;s a vast fantasy universe 
-              where time loops in mysterious patterns, ancient Shards of power dot the landscape, and 
-              reality itself can be shaped by those who understand its secrets.
+              held together by a thinning structure called the Pattern — and scattered across its 
+              regions lie the Shards, broken remnants of the Anchors that once kept reality stable.
             </p>
             <p className="text-parchment-muted leading-relaxed mb-4">
-              As a platform, Everloop is a <strong className="text-parchment">Canon Engine</strong> — a new 
-              kind of collaborative writing space where AI helps maintain consistency across stories 
-              written by many authors. Every approved story becomes permanent canon, building an 
-              ever-growing tapestry of interconnected narratives.
+              As a platform, Everloop is a <strong className="text-parchment">Canon Engine</strong> — a 
+              collaborative writing space where AI helps maintain consistency across stories 
+              written by many authors. Every approved story becomes permanent canon, and every 
+              contribution — whether a tale, a character, or a quest — moves the world closer 
+              to something no one has yet witnessed.
             </p>
             <p className="text-parchment-muted leading-relaxed">
-              Think of it as a shared universe where your contributions matter, your characters can 
-              become legendary, and the world itself remembers every story told within it.
+              Think of it as a shared universe where your contributions matter. The Shards are 
+              pulling together, and everything written here is part of that convergence.
             </p>
           </div>
         </section>
@@ -192,9 +194,10 @@ export default function AboutPage() {
           <div className="bg-gradient-to-r from-gold/5 to-transparent p-6 rounded-lg border border-gold/10">
             <p className="text-parchment-muted leading-relaxed italic">
               &quot;We believe the best stories are the ones we build together. The Everloop isn&apos;t 
-              just a writing platform — it&apos;s an experiment in collective imagination. What 
-              happens when thousands of writers contribute to the same living world, each 
-              adding their voice to an ever-expanding canon? We&apos;re building the tools to find out.&quot;
+              just a writing platform — it&apos;s a collective journey toward something unknown. 
+              Every story, every character, every quest pulls the Shards a little closer 
+              together. What happens when they converge? We don&apos;t know yet. We&apos;re building 
+              the tools — and the world — to find out.&quot;
             </p>
           </div>
         </section>

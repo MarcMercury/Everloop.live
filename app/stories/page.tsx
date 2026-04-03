@@ -135,7 +135,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
             The <span className="canon-text">Library</span>
           </h1>
           <p className="text-parchment-muted text-lg max-w-2xl mx-auto leading-relaxed">
-            Browse every story that earned a place in the Everloop canon. Each tale is vetted for lore accuracy and narrative quality.
+            Browse every story that earned a place in the Everloop canon. Each tale is vetted for lore accuracy and narrative quality — and each one moves the world a little closer to convergence.
           </p>
 
           <div className="flex items-center justify-center gap-4 mt-6 text-sm">

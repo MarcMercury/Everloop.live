@@ -10,6 +10,7 @@
 
 - **Core Philosophy:** "Contemplative, High-Function, Elegant."
 - **Core Loop:** Write (Draft) → Review (AI Analysis) → Publish (Canon) → Read (Library).
+- **Core Narrative Purpose:** Everything in the Everloop bends toward the Shards — the broken remnants of the Anchors, scattered across every region in unknown numbers. All stories, quests, campaigns, characters, and creations ultimately advance, complicate, or illuminate the collective journey toward convergence. No one knows what happens when all Shards of a region are united, or what occurs if every Shard from every region is brought together. This mystery is the gravitational center of the entire platform. It should be felt, not stated — atmospheric, not didactic.
 
 ---
 

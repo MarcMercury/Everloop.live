@@ -52,7 +52,8 @@ export default async function CreatorStudioPage() {
           </h1>
           <p className="text-parchment-muted text-lg max-w-2xl mx-auto">
             Craft your own characters, locations, and creatures with AI assistance. 
-            Build your personal roster and bring them into your stories.
+            Everything you create exists in a world being drawn toward convergence — 
+            and what you build here is part of that pull.
           </p>
         </div>
 

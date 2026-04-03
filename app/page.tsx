@@ -50,7 +50,7 @@ export default function Home() {
                 <h3 className="text-xl font-serif text-parchment">Explore</h3>
               </div>
               <p className="text-sm text-parchment-dark leading-relaxed">
-                Dive into Everloop: uncover stories, study the lore, explore vast maps, and immerse yourself in a living, shifting world.
+                Dive into Everloop: uncover stories, study the lore, explore vast maps, and search for what the world has scattered across its regions.
               </p>
               <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
                 <Link href="/map" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-teal-light">✦</span> Interactive Map</Link>
@@ -64,7 +64,7 @@ export default function Home() {
                 <h3 className="text-xl font-serif text-parchment">Write</h3>
               </div>
               <p className="text-sm text-parchment-dark leading-relaxed">
-                Expand the canon: create characters, locations, creatures, or full stories and contribute them to the Everloop universe.
+                Expand the canon: create characters, locations, creatures, or full stories — every entry moves the world closer to something no one fully understands yet.
               </p>
               <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
                 <Link href="/create" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-gold">✦</span> Create</Link>
@@ -78,7 +78,7 @@ export default function Home() {
                 <h3 className="text-xl font-serif text-parchment">Play</h3>
               </div>
               <p className="text-sm text-parchment-dark leading-relaxed">
-                Build and experience: craft playable characters, quests, and campaigns — whether grounded in canon or wild one-shots in a world where reality is unraveling.
+                Build and experience: craft playable characters, quests, and campaigns — every path through the Everloop bends toward what was broken and what might yet be found.
               </p>
               <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
                 <Link href="/player-deck" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Player Deck</Link>
@@ -170,10 +170,13 @@ export default function Home() {
             <div className="pl-8">
               <h2 className="text-sm uppercase tracking-[0.2em] text-red-400/80 mb-3 font-medium">The Unraveling</h2>
               <p className="text-lg leading-relaxed text-parchment-muted mb-4">
-                In some places, existence fades into the <span className="text-parchment">Hollows</span>. In others, it fractures into the <span className="text-red-400">Fray</span>. The Rogue Architects, in trying to repair what was failing, shattered the Anchors — leaving behind the <span className="text-gold font-medium">Shards</span>, fragments that can force reality to hold, but never without cost.
+                In some places, existence fades into the <span className="text-parchment">Hollows</span>. In others, it fractures into the <span className="text-red-400">Fray</span>. The Rogue Architects, in trying to repair what was failing, shattered the Anchors — leaving behind the <span className="text-gold font-medium">Shards</span>, fragments scattered across every region, each still humming with the intent that once held the world together.
+              </p>
+              <p className="text-lg leading-relaxed text-parchment-muted mb-4">
+                They pull toward one another. Slowly, inevitably, across distances no map fully records.
               </p>
               <p className="text-lg leading-relaxed text-parchment italic">
-                To save something is to risk losing something else.
+                No one knows what happens when they are all brought together.
               </p>
             </div>
           </div>
@@ -183,8 +186,11 @@ export default function Home() {
             <p className="text-xl md:text-2xl font-serif text-parchment-muted leading-relaxed mb-4">
               The world is not ending.
             </p>
-            <p className="text-3xl md:text-4xl font-serif text-parchment">
+            <p className="text-3xl md:text-4xl font-serif text-parchment mb-4">
               It is being <span className="canon-text font-semibold">decided</span>.
+            </p>
+            <p className="text-sm text-parchment-muted/60 italic">
+              And every story told here is part of that decision.
             </p>
           </div>
         </div>

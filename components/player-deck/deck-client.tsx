@@ -290,7 +290,7 @@ export function DeckClient({ characters }: { characters: PlayerCharacter[] }) {
               Your Deck Awaits
             </h2>
             <p className="text-parchment-muted max-w-md mb-4">
-              Create your first character and prepare for adventure. Track stats, spells, inventory, and get AI-powered tactical advice during live play.
+              Create your first character and step into a world where every path leads somewhere that matters. Track stats, spells, inventory, and get AI-powered tactical advice during live play.
             </p>
             <div className="flex flex-col items-center gap-3">
               <Link href="/player-deck/create">

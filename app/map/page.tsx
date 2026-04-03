@@ -3,7 +3,7 @@ import MapPageClient from './map-client'
 
 export const metadata = {
   title: 'Explore the Everloop — World Map',
-  description: 'Navigate the living world of the Everloop. Discover canonical locations, landmarks, and territories revealed through community storytelling.',
+  description: 'Navigate the living world of the Everloop. Discover canonical locations, landmarks, and the regions where Shards lie scattered — revealed through community storytelling.',
 }
 
 function MapSkeleton() {
