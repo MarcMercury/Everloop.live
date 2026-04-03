@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCampaign } from '@/lib/actions/campaigns'
 import { GAME_MODE_INFO } from '@/types/campaign'
@@ -18,8 +18,9 @@ import type {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, ArrowRight, Flame, Check } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Flame, Check, MapPin } from 'lucide-react'
 import Link from 'next/link'
+import { REGIONS } from '@/lib/data/regions'
 
 const STEPS = [
   'Identity',
@@ -51,13 +52,6 @@ const DIFFICULTY_OPTIONS: { value: DifficultyPreset; label: string; icon: string
   { value: 'standard', label: 'Standard', icon: '🟡', desc: 'Balanced encounters, RAW-friendly' },
   { value: 'brutal', label: 'Brutal', icon: '🔴', desc: 'Resource scarcity, permanent consequences' },
   { value: 'chaos', label: 'Chaos Mode', icon: '⚫', desc: 'Unpredictable shifts, hidden mechanics, reality instability' },
-]
-
-const SETTING_OPTIONS: { value: SettingName; label: string }[] = [
-  { value: 'custom', label: 'Custom World' },
-  { value: 'forgotten_realms', label: 'Forgotten Realms' },
-  { value: 'everloop_world', label: 'Everloop World' },
-  { value: 'other', label: 'Other / Imported' },
 ]
 
 const WORLD_STRUCTURE_OPTIONS: { value: WorldStructure; label: string; desc: string }[] = [
@@ -98,7 +92,7 @@ export default function CreateCampaignPage() {
     title: '',
     description: '',
     game_mode: 'classic' as GameMode,
-    setting_name: 'custom' as SettingName,
+    setting_name: 'everloop_world' as SettingName,
     tone: 'light_adventure' as CampaignTone,
     // Step 2: Structure
     campaign_length: 'full_campaign' as CampaignLength,
@@ -144,7 +138,28 @@ export default function CreateCampaignPage() {
     max_level: 20,
     everloop_classes_allowed: false,
     player_knowledge: 'shared' as 'shared' | 'partial' | 'isolated',
+    // Region & Location
+    regions: [] as string[],
+    location_ids: [] as string[],
   })
+
+  // Fetch canonical locations for the location picker
+  const [locations, setLocations] = useState<Array<{id: string; name: string; type: string; tags: string[]}>>([])  
+  useEffect(() => {
+    fetch('/api/map/locations')
+      .then(r => r.json())
+      .then(data => {
+        if (data.locations) {
+          setLocations(data.locations.filter((loc: { type: string }) => loc.type === 'location'))
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  function getLocationRegion(tags: string[]): string | null {
+    const regionIds = REGIONS.map(r => r.id) as string[]
+    return tags.find(t => regionIds.includes(t)) ?? null
+  }
 
   function nextStep() {
     if (step === 0 && !form.title.trim()) {
@@ -173,7 +188,7 @@ export default function CreateCampaignPage() {
       title: form.title.trim(),
       description: form.description.trim() || null,
       game_mode: form.game_mode,
-      setting_name: form.setting_name,
+      setting_name: 'everloop_world',
       tone: form.tone,
       campaign_length: form.campaign_length,
       difficulty_preset: form.difficulty_preset,
@@ -238,6 +253,9 @@ export default function CreateCampaignPage() {
       is_public: form.is_public,
       allow_spectators: form.allow_spectators,
       fray_intensity: form.fray_intensity,
+      tags: form.regions.map(r => `region:${r}`),
+      referenced_entities: form.location_ids,
+      metadata: { regions: form.regions, location_ids: form.location_ids },
       status: 'draft',
     })
 
@@ -323,11 +341,25 @@ export default function CreateCampaignPage() {
         </div>
 
         <div>
-          <Label className="text-parchment mb-3 block">Setting</Label>
+          <Label className="text-parchment mb-3 block">Regions</Label>
+          <p className="text-xs text-parchment-muted mb-3">Where in the Everloop does this campaign take place? Select one or more.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {SETTING_OPTIONS.map(opt => (
-              <OptionCard key={opt.value} selected={form.setting_name === opt.value} onClick={() => setForm(f => ({ ...f, setting_name: opt.value }))}>
-                <span className="text-sm text-parchment">{opt.label}</span>
+            {REGIONS.map(region => (
+              <OptionCard
+                key={region.id}
+                selected={form.regions.includes(region.id)}
+                onClick={() => setForm(f => ({
+                  ...f,
+                  regions: f.regions.includes(region.id)
+                    ? f.regions.filter(r => r !== region.id)
+                    : [...f.regions, region.id]
+                }))}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: region.color }} />
+                  <span className="text-sm text-parchment font-medium">{region.name}</span>
+                </div>
+                <p className="text-xs text-parchment-muted line-clamp-2">{region.sub}</p>
               </OptionCard>
             ))}
           </div>
@@ -569,6 +601,50 @@ export default function CreateCampaignPage() {
           </div>
         </div>
 
+        {/* Locations */}
+        <div>
+          <Label className="text-parchment mb-3 block text-lg font-serif">Locations</Label>
+          <p className="text-xs text-parchment-muted mb-3">
+            Select canonical locations for this campaign. {form.regions.length > 0 ? 'Showing locations in selected regions.' : 'Select regions in Identity step to filter.'}
+          </p>
+          {(() => {
+            const filtered = locations.filter(loc => {
+              if (form.regions.length === 0) return true
+              const locRegion = getLocationRegion(loc.tags)
+              return locRegion && form.regions.includes(locRegion)
+            })
+            if (filtered.length === 0) return (
+              <p className="text-sm text-parchment-muted/60 italic">No canonical locations found{form.regions.length > 0 ? ' in selected regions' : ''}. Locations are added as writers publish canon stories.</p>
+            )
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
+                {filtered.map(loc => (
+                  <button
+                    key={loc.id}
+                    type="button"
+                    onClick={() => setForm(f => ({
+                      ...f,
+                      location_ids: f.location_ids.includes(loc.id)
+                        ? f.location_ids.filter(id => id !== loc.id)
+                        : [...f.location_ids, loc.id]
+                    }))}
+                    className={`text-left p-3 rounded-lg border transition-all text-sm ${
+                      form.location_ids.includes(loc.id)
+                        ? 'border-gold/60 bg-gold/10 text-gold'
+                        : 'border-gold/10 bg-teal-rich/30 text-parchment-muted hover:border-gold/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{loc.name}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )
+          })()}
+        </div>
+
         <div>
           <Label className="text-parchment mb-3 block text-lg font-serif">AI Assist Level</Label>
           <div className="grid grid-cols-2 gap-3">
@@ -715,6 +791,18 @@ export default function CreateCampaignPage() {
               <span className="text-parchment-muted">Characters:</span>
               <span className="text-parchment ml-2 capitalize">{form.character_entry_mode.replace('_', ' ')}</span>
             </div>
+            {form.regions.length > 0 && (
+              <div className="col-span-2">
+                <span className="text-parchment-muted">Regions:</span>
+                <span className="text-parchment ml-2">{form.regions.map(r => REGIONS.find(reg => reg.id === r)?.name ?? r).join(', ')}</span>
+              </div>
+            )}
+            {form.location_ids.length > 0 && (
+              <div className="col-span-2">
+                <span className="text-parchment-muted">Locations:</span>
+                <span className="text-parchment ml-2">{form.location_ids.map(id => locations.find(l => l.id === id)?.name ?? id).join(', ')}</span>
+              </div>
+            )}
           </div>
           {form.description && (
             <div className="border-t border-gold/10 pt-3">

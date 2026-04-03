@@ -347,6 +347,7 @@ export interface CampaignInsert {
   character_rules?: Json
   join_code?: string | null
   tags?: string[]
+  metadata?: Json
 }
 
 export interface CampaignUpdate {
