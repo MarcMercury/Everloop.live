@@ -55,109 +55,678 @@ function getShardColor(region: RegionId): { color: string; emissive: string } {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LAYER 1 — THE DRIFT (Primordial Sea of Chaos)
+// LAYER 1 — THE DRIFT (Sea of Unformed Energy & Matter)
+// Pure chaos — nothing retains form but holds intent.
+// Mountains, ash, emotion — ever-changing dust, light, particles.
 // ═══════════════════════════════════════════════════════════════
-function TheDrift() {
-  const particlesObj = useMemo(() => {
-    const count = 4000
+
+/** Primary chaos dust — thousands of swirling particles in turbulent motion */
+function DriftChaosDust() {
+  const pointsRef = useRef<THREE.Points>(null)
+  const basePositions = useRef<Float32Array | null>(null)
+
+  const { geo, mat } = useMemo(() => {
+    const count = 8000
     const positions = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
+    const sizes = new Float32Array(count)
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2
-      const r = Math.random() * 170
-      positions[i * 3] = Math.cos(theta) * r
-      positions[i * 3 + 1] = DRIFT_Y + (Math.random() - 0.5) * 25
-      positions[i * 3 + 2] = Math.sin(theta) * r
+      const phi = (Math.random() - 0.5) * Math.PI * 0.8
+      const r = 15 + Math.random() * 155
+      positions[i * 3] = Math.cos(theta) * Math.cos(phi) * r
+      positions[i * 3 + 1] = DRIFT_Y + Math.sin(phi) * r * 0.15 + (Math.random() - 0.5) * 30
+      positions[i * 3 + 2] = Math.sin(theta) * Math.cos(phi) * r
+      // Rich chaos palette: deep purples, burning oranges, cold blues, hot pinks, ash grays
       const t = Math.random()
-      if (t < 0.6) { colors[i * 3] = 0.15; colors[i * 3 + 1] = 0.05; colors[i * 3 + 2] = 0.25 }
-      else if (t < 0.85) { colors[i * 3] = 0.05; colors[i * 3 + 1] = 0.08; colors[i * 3 + 2] = 0.2 }
-      else { colors[i * 3] = 0.4 + Math.random() * 0.3; colors[i * 3 + 1] = 0.3; colors[i * 3 + 2] = 0.5 + Math.random() * 0.3 }
+      if (t < 0.25) { colors[i * 3] = 0.3 + Math.random() * 0.2; colors[i * 3 + 1] = 0.02; colors[i * 3 + 2] = 0.4 + Math.random() * 0.3 } // violet
+      else if (t < 0.40) { colors[i * 3] = 0.6 + Math.random() * 0.4; colors[i * 3 + 1] = 0.15 + Math.random() * 0.15; colors[i * 3 + 2] = 0.05 } // burning orange
+      else if (t < 0.55) { colors[i * 3] = 0.05; colors[i * 3 + 1] = 0.1 + Math.random() * 0.1; colors[i * 3 + 2] = 0.4 + Math.random() * 0.3 } // cold blue
+      else if (t < 0.65) { colors[i * 3] = 0.6 + Math.random() * 0.3; colors[i * 3 + 1] = 0.05; colors[i * 3 + 2] = 0.4 + Math.random() * 0.3 } // hot pink
+      else if (t < 0.80) { colors[i * 3] = 0.12; colors[i * 3 + 1] = 0.1; colors[i * 3 + 2] = 0.08 } // ash
+      else { colors[i * 3] = 0.8 + Math.random() * 0.2; colors[i * 3 + 1] = 0.7 + Math.random() * 0.2; colors[i * 3 + 2] = 0.9 } // intent flash (bright white-purple)
+      sizes[i] = 0.15 + Math.random() * 0.5
     }
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    const mat = new THREE.PointsMaterial({
-      size: 0.3, vertexColors: true, transparent: true, opacity: 0.6,
+    basePositions.current = new Float32Array(positions)
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    g.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
+    const m = new THREE.PointsMaterial({
+      size: 0.35, vertexColors: true, transparent: true, opacity: 0.7,
       sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending,
     })
-    return new THREE.Points(geo, mat)
+    return { geo: g, mat: m }
   }, [])
 
   useFrame(({ clock }) => {
-    const pos = particlesObj.geometry.attributes.position as THREE.BufferAttribute
-    const t = clock.elapsedTime * 0.08
-    for (let i = 0; i < Math.min(pos.count, 800); i++) {
-      const x = pos.getX(i); const z = pos.getZ(i)
-      pos.setX(i, x + Math.sin(t + z * 0.02) * 0.02)
-      pos.setZ(i, z + Math.cos(t + x * 0.02) * 0.02)
-      pos.setY(i, pos.getY(i) + Math.sin(t * 2 + i * 0.3) * 0.005)
+    if (!pointsRef.current || !basePositions.current) return
+    const pos = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute
+    const col = pointsRef.current.geometry.attributes.color as THREE.BufferAttribute
+    const t = clock.elapsedTime
+    // Turbulent displacement — each particle swirls chaotically
+    for (let i = 0; i < pos.count; i++) {
+      const bx = basePositions.current[i * 3]
+      const by = basePositions.current[i * 3 + 1]
+      const bz = basePositions.current[i * 3 + 2]
+      const speed = 0.15
+      const scale = 0.02
+      const dx = Math.sin(t * speed + bz * scale + Math.cos(t * 0.1 + i * 0.01)) * 4
+      const dy = Math.cos(t * speed * 0.7 + bx * scale * 1.3) * 2 + Math.sin(t * 0.3 + i * 0.005) * 1.5
+      const dz = Math.cos(t * speed * 0.9 + by * scale + Math.sin(t * 0.08 + i * 0.008)) * 4
+      pos.setX(i, bx + dx)
+      pos.setY(i, by + dy)
+      pos.setZ(i, bz + dz)
+      // Shift colors over time for "nothing retains form" feeling
+      if (i < 1000 && i % 4 === 0) {
+        const shift = Math.sin(t * 0.5 + i * 0.1) * 0.5 + 0.5
+        col.setX(i, col.getX(i) * 0.99 + shift * 0.01 * (0.3 + Math.sin(t + i) * 0.2))
+      }
     }
     pos.needsUpdate = true
-    particlesObj.rotation.y = t * 0.05
+    col.needsUpdate = true
+    // Slow overall rotation — the whole drift churns
+    pointsRef.current.rotation.y = Math.sin(t * 0.02) * 0.3
+    pointsRef.current.rotation.x = Math.cos(t * 0.015) * 0.05
+  })
+
+  return <points ref={pointsRef} geometry={geo} material={mat} />
+}
+
+/** Ephemeral forms — shapes that rise, almost coalesce, then dissolve back into chaos */
+function DriftEphemeralForms() {
+  const groupRef = useRef<THREE.Group>(null)
+  const formsData = useMemo(() => {
+    const forms: { x: number; z: number; seed: number; scale: number; type: number }[] = []
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 + Math.random() * 0.5
+      const r = 30 + Math.random() * 100
+      forms.push({
+        x: Math.cos(angle) * r,
+        z: Math.sin(angle) * r,
+        seed: Math.random() * 100,
+        scale: 3 + Math.random() * 8,
+        type: Math.floor(Math.random() * 3), // 0=mountain, 1=spire, 2=wave
+      })
+    }
+    return forms
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    const t = clock.elapsedTime
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Mesh) {
+        const form = formsData[i]
+        if (!form) return
+        // Cycle: rise → almost form → dissolve → repeat
+        const cycle = ((t * 0.15 + form.seed) % 4) / 4 // 0 to 1 over ~26 seconds
+        const presence = Math.sin(cycle * Math.PI) // 0→1→0
+        const mat = child.material as THREE.MeshStandardMaterial
+        mat.opacity = presence * 0.25
+        // Shift position as if being blown by chaotic winds
+        child.position.x = form.x + Math.sin(t * 0.1 + form.seed) * 8
+        child.position.y = DRIFT_Y - 5 + presence * form.scale * 1.5
+        child.position.z = form.z + Math.cos(t * 0.08 + form.seed * 2) * 8
+        // Distort shape
+        child.scale.x = 1 + Math.sin(t * 0.3 + form.seed) * 0.4
+        child.scale.y = 0.5 + presence * 1.5 + Math.sin(t * 0.5 + form.seed) * 0.3
+        child.scale.z = 1 + Math.cos(t * 0.25 + form.seed * 1.5) * 0.4
+        child.rotation.y = t * 0.1 + form.seed
+        child.rotation.x = Math.sin(t * 0.07 + form.seed) * 0.3
+      }
+    })
   })
 
   return (
-    <group>
-      <primitive object={particlesObj} />
-      <mesh position={[0, DRIFT_Y - 5, 0]}>
-        <sphereGeometry args={[170, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#050510" side={THREE.BackSide} transparent opacity={0.9} />
-      </mesh>
-      {[0, 1, 2].map(i => (
-        <mesh key={i} position={[0, DRIFT_Y - 3 + i * 3, 0]} rotation={[Math.PI / 2, 0, i * 0.7]}>
-          <torusGeometry args={[80 + i * 30, 15, 8, 64]} />
+    <group ref={groupRef}>
+      {formsData.map((form, i) => (
+        <mesh key={i} position={[form.x, DRIFT_Y, form.z]}>
+          {form.type === 0 ? (
+            <coneGeometry args={[form.scale * 0.8, form.scale * 2, 5]} />
+          ) : form.type === 1 ? (
+            <cylinderGeometry args={[form.scale * 0.2, form.scale * 0.6, form.scale * 2.5, 4]} />
+          ) : (
+            <torusKnotGeometry args={[form.scale * 0.5, form.scale * 0.15, 32, 6]} />
+          )}
           <meshStandardMaterial
-            color={i === 0 ? '#1a0a2e' : i === 1 ? '#0a1030' : '#150820'}
-            transparent opacity={0.12} side={THREE.DoubleSide} depthWrite={false}
+            color={i % 3 === 0 ? '#2a0a3e' : i % 3 === 1 ? '#3a1505' : '#0a1535'}
+            emissive={i % 3 === 0 ? '#5020a0' : i % 3 === 1 ? '#a04010' : '#1040a0'}
+            emissiveIntensity={0.6}
+            transparent opacity={0.15} side={THREE.DoubleSide} depthWrite={false}
+            wireframe={i % 2 === 0}
           />
         </mesh>
       ))}
-      <pointLight position={[0, DRIFT_Y, 0]} intensity={0.3} color="#3a1a5e" distance={60} decay={2} />
+    </group>
+  )
+}
+
+/** Energy wisps — bright streaks of intent that arc through the chaos */
+function DriftEnergyWisps() {
+  const groupRef = useRef<THREE.Group>(null)
+  const wispsData = useMemo(() => {
+    const wisps: THREE.Line[] = []
+    for (let w = 0; w < 20; w++) {
+      const points: THREE.Vector3[] = []
+      const startAngle = Math.random() * Math.PI * 2
+      const startR = 20 + Math.random() * 120
+      const sx = Math.cos(startAngle) * startR
+      const sz = Math.sin(startAngle) * startR
+      const numPts = 20
+      for (let p = 0; p < numPts; p++) {
+        const t = p / numPts
+        points.push(new THREE.Vector3(
+          sx + Math.sin(t * Math.PI * 3 + w) * 15,
+          DRIFT_Y + (Math.random() - 0.5) * 20 + Math.sin(t * Math.PI) * 10,
+          sz + Math.cos(t * Math.PI * 2.5 + w * 1.3) * 15,
+        ))
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points)
+      const hue = Math.random()
+      const color = hue < 0.3 ? '#ff6030' : hue < 0.5 ? '#c040ff' : hue < 0.7 ? '#3080ff' : '#ff50a0'
+      const mat = new THREE.LineBasicMaterial({
+        color, transparent: true, opacity: 0.3,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      })
+      wisps.push(new THREE.Line(geo, mat))
+    }
+    return wisps
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    const t = clock.elapsedTime
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Line) {
+        const mat = child.material as THREE.LineBasicMaterial
+        // Wisps pulse and fade — intent flickering through chaos
+        const pulse = Math.sin(t * 1.5 + i * 0.8) * 0.5 + 0.5
+        mat.opacity = pulse * 0.4
+        child.rotation.y = t * 0.03 + i * 0.3
+        child.rotation.x = Math.sin(t * 0.05 + i) * 0.1
+      }
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {wispsData.map((wisp, i) => <primitive key={i} object={wisp} />)}
+    </group>
+  )
+}
+
+/** Chaos vortex — swirling nebula rings at different angles */
+function DriftVortexRings() {
+  const ringsRef = useRef<THREE.Group>(null)
+
+  useFrame(({ clock }) => {
+    if (!ringsRef.current) return
+    const t = clock.elapsedTime
+    ringsRef.current.children.forEach((child, i) => {
+      child.rotation.x = Math.sin(t * 0.05 + i * 2) * 0.3 + i * 0.4
+      child.rotation.y = t * (0.02 + i * 0.008)
+      child.rotation.z = Math.cos(t * 0.03 + i * 1.5) * 0.2
+      if (child instanceof THREE.Mesh) {
+        const mat = child.material as THREE.MeshStandardMaterial
+        mat.opacity = 0.06 + Math.sin(t * 0.4 + i * 1.2) * 0.04
+        mat.emissiveIntensity = 0.3 + Math.sin(t * 0.6 + i * 0.9) * 0.2
+      }
+    })
+  })
+
+  const rings = useMemo(() => {
+    return [
+      { r: 60, tube: 25, color: '#1a0a2e', emissive: '#4020a0' },
+      { r: 90, tube: 20, color: '#150505', emissive: '#a03010' },
+      { r: 120, tube: 30, color: '#0a0a25', emissive: '#2040b0' },
+      { r: 45, tube: 18, color: '#200a20', emissive: '#8030a0' },
+      { r: 100, tube: 22, color: '#0a1510', emissive: '#20a060' },
+    ]
+  }, [])
+
+  return (
+    <group ref={ringsRef} position={[0, DRIFT_Y, 0]}>
+      {rings.map((ring, i) => (
+        <mesh key={i} rotation={[Math.PI / 2 + i * 0.5, 0, i * 0.7]}>
+          <torusGeometry args={[ring.r, ring.tube, 12, 48]} />
+          <meshStandardMaterial
+            color={ring.color} emissive={ring.emissive} emissiveIntensity={0.3}
+            transparent opacity={0.08} side={THREE.DoubleSide} depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Intent flashes — brief bright pulses that appear and vanish, showing latent will in chaos */
+function DriftIntentFlashes() {
+  const flashesRef = useRef<THREE.Group>(null)
+  const flashData = useMemo(() => {
+    return Array.from({ length: 25 }, (_, i) => ({
+      x: (Math.random() - 0.5) * 280,
+      y: DRIFT_Y + (Math.random() - 0.5) * 25,
+      z: (Math.random() - 0.5) * 280,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.5 + Math.random() * 2,
+      color: ['#ffffff', '#ff80ff', '#80ffff', '#ffff80', '#ff8060'][Math.floor(Math.random() * 5)],
+    }))
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!flashesRef.current) return
+    const t = clock.elapsedTime
+    flashesRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Mesh) {
+        const data = flashData[i]
+        if (!data) return
+        // Brief bright flash then long dark period
+        const cycle = (t * data.speed + data.phase) % (Math.PI * 2)
+        const flash = Math.pow(Math.max(0, Math.sin(cycle)), 8) // Sharp spike
+        const mat = child.material as THREE.MeshStandardMaterial
+        mat.emissiveIntensity = flash * 3
+        mat.opacity = flash * 0.8
+        child.scale.setScalar(0.5 + flash * 2)
+        // Drift through space
+        child.position.x = data.x + Math.sin(t * 0.1 + data.phase) * 10
+        child.position.y = data.y + Math.cos(t * 0.15 + data.phase) * 5
+        child.position.z = data.z + Math.sin(t * 0.12 + data.phase * 1.5) * 10
+      }
+    })
+  })
+
+  return (
+    <group ref={flashesRef}>
+      {flashData.map((d, i) => (
+        <mesh key={i} position={[d.x, d.y, d.z]}>
+          <sphereGeometry args={[0.5, 6, 6]} />
+          <meshStandardMaterial
+            color={d.color} emissive={d.color} emissiveIntensity={0}
+            transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+function TheDrift() {
+  return (
+    <group>
+      {/* Core chaos particles */}
+      <DriftChaosDust />
+      {/* Nebula vortex rings */}
+      <DriftVortexRings />
+      {/* Ephemeral forms — mountains, spires, shapes that almost form then dissolve */}
+      <DriftEphemeralForms />
+      {/* Energy wisps — intent arcing through the void */}
+      <DriftEnergyWisps />
+      {/* Intent flashes — brief sparks of will */}
+      <DriftIntentFlashes />
+      {/* Abyss bowl */}
+      <mesh position={[0, DRIFT_Y - 12, 0]}>
+        <sphereGeometry args={[170, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#030008" side={THREE.BackSide} transparent opacity={0.95} />
+      </mesh>
+      {/* Deep chaos glow */}
+      <pointLight position={[0, DRIFT_Y, 0]} intensity={0.6} color="#5020a0" distance={100} decay={2} />
+      <pointLight position={[40, DRIFT_Y - 5, -30]} intensity={0.4} color="#a04010" distance={60} decay={2} />
+      <pointLight position={[-50, DRIFT_Y + 5, 20]} intensity={0.3} color="#2050b0" distance={60} decay={2} />
+      <pointLight position={[0, DRIFT_Y + 10, 0]} intensity={0.2} color="#ff40a0" distance={50} decay={2} />
     </group>
   )
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LAYER 2 — THE FOLD (Architects' Realm)
+// LAYER 2 — THE FOLD (Where Matter Barely Holds Form)
+// The outer edge of the Drift where Architects emerge —
+// beings of intent and permanence who pull chaos into order.
 // ═══════════════════════════════════════════════════════════════
-function TheFold() {
+
+/** The boundary membrane — shimmering edge between chaos and nascent form */
+function FoldBoundaryMembrane() {
   const ref = useRef<THREE.Mesh>(null)
+  const innerRef = useRef<THREE.Mesh>(null)
 
   useFrame(({ clock }) => {
+    const t = clock.elapsedTime
     if (ref.current) {
       const mat = ref.current.material as THREE.MeshStandardMaterial
-      mat.opacity = 0.08 + Math.sin(clock.elapsedTime * 0.3) * 0.03
+      mat.opacity = 0.06 + Math.sin(t * 0.3) * 0.03 + Math.sin(t * 0.7) * 0.02
+      mat.emissiveIntensity = 0.3 + Math.sin(t * 0.5) * 0.15
+      ref.current.rotation.z = t * 0.005
+    }
+    if (innerRef.current) {
+      const mat = innerRef.current.material as THREE.MeshStandardMaterial
+      mat.opacity = 0.1 + Math.sin(t * 0.4 + 1) * 0.04
+      mat.emissiveIntensity = 0.4 + Math.sin(t * 0.6 + 0.5) * 0.2
     }
   })
 
   return (
     <group>
+      {/* Outer boundary ring — chaos side, flickering */}
       <mesh ref={ref} position={[0, FOLD_Y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[140, 96]} />
+        <ringGeometry args={[120, 145, 96]} />
         <meshStandardMaterial
-          color="#a0c0e0" transparent opacity={0.1} roughness={0.05} metalness={0.8}
+          color="#6040a0" emissive="#4020a0" emissiveIntensity={0.3}
+          transparent opacity={0.08} roughness={0.1} metalness={0.6}
           side={THREE.DoubleSide} depthWrite={false}
         />
       </mesh>
+      {/* Inner stabilized disc — where form begins to hold */}
+      <mesh ref={innerRef} position={[0, FOLD_Y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[120, 96]} />
+        <meshStandardMaterial
+          color="#2a3a5a" emissive="#304080" emissiveIntensity={0.4}
+          transparent opacity={0.12} roughness={0.05} metalness={0.8}
+          side={THREE.DoubleSide} depthWrite={false}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+/** Fold chaos-to-order particles — outside is chaotic, inside is structured */
+function FoldTransitionParticles() {
+  const pointsRef = useRef<THREE.Points>(null)
+  const baseData = useRef<{ angle: number; r: number; baseY: number }[]>([])
+
+  const { geo, mat } = useMemo(() => {
+    const count = 3000
+    const positions = new Float32Array(count * 3)
+    const colors = new Float32Array(count * 3)
+    const data: { angle: number; r: number; baseY: number }[] = []
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const r = 20 + Math.random() * 130
+      positions[i * 3] = Math.cos(angle) * r
+      positions[i * 3 + 1] = FOLD_Y + (Math.random() - 0.5) * 8
+      positions[i * 3 + 2] = Math.sin(angle) * r
+      data.push({ angle, r, baseY: positions[i * 3 + 1] })
+      // Outside (r > 120): chaotic drift colors, Inside: more blue/structured
+      const isOuter = r > 110
+      if (isOuter) {
+        const t = Math.random()
+        colors[i * 3] = t < 0.5 ? 0.3 + Math.random() * 0.3 : 0.1
+        colors[i * 3 + 1] = 0.05
+        colors[i * 3 + 2] = t < 0.5 ? 0.2 + Math.random() * 0.2 : 0.3 + Math.random() * 0.2
+      } else {
+        colors[i * 3] = 0.15 + (1 - r / 120) * 0.1
+        colors[i * 3 + 1] = 0.3 + (1 - r / 120) * 0.3
+        colors[i * 3 + 2] = 0.6 + (1 - r / 120) * 0.2
+      }
+    }
+    baseData.current = data
+
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    const m = new THREE.PointsMaterial({
+      size: 0.2, vertexColors: true, transparent: true, opacity: 0.5,
+      sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    })
+    return { geo: g, mat: m }
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!pointsRef.current) return
+    const pos = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute
+    const t = clock.elapsedTime
+    for (let i = 0; i < pos.count; i++) {
+      const d = baseData.current[i]
+      if (!d) continue
+      // Outer particles: chaotic like drift. Inner: gentle orbit.
+      const chaosAmount = Math.max(0, (d.r - 80) / 60) // 0 at center, 1 at edge
+      const chaos = chaosAmount * Math.sin(t * 0.5 + i * 0.1) * 3
+      const orderedOrbit = (1 - chaosAmount) * t * 0.02
+      const a = d.angle + orderedOrbit
+      const x = Math.cos(a) * d.r + chaos * Math.sin(t * 0.3 + i * 0.05)
+      const z = Math.sin(a) * d.r + chaos * Math.cos(t * 0.25 + i * 0.07)
+      const y = d.baseY + chaos * 0.8 * Math.sin(t * 0.4 + i * 0.02)
+      pos.setXYZ(i, x, y, z)
+    }
+    pos.needsUpdate = true
+  })
+
+  return <points ref={pointsRef} geometry={geo} material={mat} />
+}
+
+/** The Architects — tall angular figures standing at the boundary, beings of intent */
+function FoldArchitects() {
+  const groupRef = useRef<THREE.Group>(null)
+  const architects = useMemo(() => {
+    const result: { angle: number; r: number; height: number; phase: number }[] = []
+    const count = 7
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + 0.2
+      result.push({
+        angle,
+        r: 105 + Math.sin(i * 1.7) * 15,
+        height: 8 + Math.random() * 6,
+        phase: Math.random() * Math.PI * 2,
+      })
+    }
+    return result
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    const t = clock.elapsedTime
+    groupRef.current.children.forEach((group, i) => {
+      const arch = architects[i]
+      if (!arch) return
+      // Subtle swaying — they are permanent but in a chaotic realm
+      group.rotation.y = Math.sin(t * 0.1 + arch.phase) * 0.05
+      group.rotation.x = Math.cos(t * 0.08 + arch.phase) * 0.03
+      // Pulsing glow — their intent radiates
+      group.children.forEach((child) => {
+        if (child instanceof THREE.Mesh) {
+          const mat = child.material as THREE.MeshStandardMaterial
+          mat.emissiveIntensity = 0.5 + Math.sin(t * 0.4 + arch.phase) * 0.3
+        }
+      })
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {architects.map((arch, i) => {
+        const x = Math.cos(arch.angle) * arch.r
+        const z = Math.sin(arch.angle) * arch.r
+        return (
+          <group key={i} position={[x, FOLD_Y, z]}>
+            {/* Body — tall angular pillar */}
+            <mesh position={[0, arch.height / 2, 0]}>
+              <cylinderGeometry args={[0.4, 1.2, arch.height, 4]} />
+              <meshStandardMaterial
+                color="#1a2040" emissive="#4060c0" emissiveIntensity={0.5}
+                transparent opacity={0.6} roughness={0.1} metalness={0.9}
+              />
+            </mesh>
+            {/* Head — floating geometric shape */}
+            <Float speed={0.5} rotationIntensity={0.5} floatIntensity={0.3}>
+              <mesh position={[0, arch.height + 1.5, 0]}>
+                <octahedronGeometry args={[1, 0]} />
+                <meshStandardMaterial
+                  color="#6080c0" emissive="#80a0ff" emissiveIntensity={0.8}
+                  transparent opacity={0.7} roughness={0.05} metalness={0.9}
+                />
+              </mesh>
+            </Float>
+            {/* Arms/tendrils reaching outward into drift, inward toward pattern */}
+            <mesh position={[-2, arch.height * 0.6, 0]} rotation={[0, 0, -0.6]}>
+              <cylinderGeometry args={[0.08, 0.2, 4, 4]} />
+              <meshStandardMaterial
+                color="#3050a0" emissive="#4070c0" emissiveIntensity={0.4}
+                transparent opacity={0.35} depthWrite={false}
+              />
+            </mesh>
+            <mesh position={[2, arch.height * 0.6, 0]} rotation={[0, 0, 0.6]}>
+              <cylinderGeometry args={[0.08, 0.2, 4, 4]} />
+              <meshStandardMaterial
+                color="#3050a0" emissive="#4070c0" emissiveIntensity={0.4}
+                transparent opacity={0.35} depthWrite={false}
+              />
+            </mesh>
+            {/* Intent aura */}
+            <pointLight color="#5080dd" intensity={1} distance={15} decay={2} position={[0, arch.height * 0.7, 0]} />
+          </group>
+        )
+      })}
+    </group>
+  )
+}
+
+/** Semi-stable geometric fragments — matter trying to hold form, flickering */
+function FoldFormingFragments() {
+  const groupRef = useRef<THREE.Group>(null)
+  const fragments = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => ({
+      angle: Math.random() * Math.PI * 2,
+      r: 40 + Math.random() * 80,
+      y: FOLD_Y + (Math.random() - 0.5) * 6,
+      size: 0.3 + Math.random() * 1.2,
+      phase: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.3,
+      type: Math.floor(Math.random() * 4),
+    }))
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    const t = clock.elapsedTime
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Mesh) {
+        const frag = fragments[i]
+        if (!frag) return
+        // Fragments flicker between solid and dissolving
+        const stability = Math.sin(t * 0.8 + frag.phase)
+        const mat = child.material as THREE.MeshStandardMaterial
+        mat.opacity = 0.15 + Math.max(0, stability) * 0.35
+        mat.wireframe = stability < -0.3 // Dissolve into wireframe when unstable
+        mat.emissiveIntensity = 0.3 + Math.max(0, stability) * 0.5
+        // Jitter position when unstable
+        const jitter = Math.max(0, -stability) * 0.5
+        child.position.x = Math.cos(frag.angle) * frag.r + Math.sin(t + frag.phase) * jitter
+        child.position.z = Math.sin(frag.angle) * frag.r + Math.cos(t + frag.phase) * jitter
+        child.rotation.y = t * frag.rotSpeed
+        child.rotation.x = t * frag.rotSpeed * 0.7
+        // Scale wobble
+        child.scale.setScalar(frag.size * (1 + Math.sin(t * 1.5 + frag.phase) * 0.2 * Math.max(0, -stability)))
+      }
+    })
+  })
+
+  return (
+    <group ref={groupRef}>
+      {fragments.map((frag, i) => (
+        <mesh key={i} position={[Math.cos(frag.angle) * frag.r, frag.y, Math.sin(frag.angle) * frag.r]}>
+          {frag.type === 0 ? <boxGeometry args={[frag.size, frag.size, frag.size]} /> :
+           frag.type === 1 ? <tetrahedronGeometry args={[frag.size]} /> :
+           frag.type === 2 ? <dodecahedronGeometry args={[frag.size, 0]} /> :
+           <icosahedronGeometry args={[frag.size, 0]} />}
+          <meshStandardMaterial
+            color="#304060" emissive="#4070b0" emissiveIntensity={0.4}
+            transparent opacity={0.3} roughness={0.15} metalness={0.7} depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Energy streams being drawn inward from drift into fold */
+function FoldInflowStreams() {
+  const streamsObj = useMemo(() => {
+    const group = new THREE.Group()
+    const streamCount = 16
+    for (let s = 0; s < streamCount; s++) {
+      const angle = (s / streamCount) * Math.PI * 2
+      const points: THREE.Vector3[] = []
+      const outerR = 160
+      const innerR = 50
+      const steps = 30
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps
+        const r = outerR - (outerR - innerR) * t
+        // Spiral inward
+        const a = angle + t * 0.8
+        const wobble = Math.sin(t * Math.PI * 3 + s * 0.7) * 5 * (1 - t)
+        points.push(new THREE.Vector3(
+          Math.cos(a) * r + wobble,
+          FOLD_Y + Math.sin(t * Math.PI) * 3 * (1 - t),
+          Math.sin(a) * r + wobble,
+        ))
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points)
+      const mat = new THREE.LineBasicMaterial({
+        color: s % 2 === 0 ? '#6040a0' : '#4060a0',
+        transparent: true, opacity: 0.15,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      })
+      group.add(new THREE.Line(geo, mat))
+    }
+    return group
+  }, [])
+
+  const streamRef = useRef<THREE.Group>(null)
+
+  useFrame(({ clock }) => {
+    if (!streamRef.current) return
+    const t = clock.elapsedTime
+    streamRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Line) {
+        const mat = child.material as THREE.LineBasicMaterial
+        mat.opacity = 0.1 + Math.sin(t * 0.5 + i * 0.4) * 0.08
+      }
+    })
+    streamRef.current.rotation.y = t * 0.005
+  })
+
+  return <group ref={streamRef}><primitive object={streamsObj} /></group>
+}
+
+function TheFold() {
+  return (
+    <group>
+      {/* Boundary membrane — the edge between chaos and form */}
+      <FoldBoundaryMembrane />
+      {/* Transition particles — chaotic outside, ordered inside */}
+      <FoldTransitionParticles />
+      {/* Inflow streams — drift matter being drawn inward */}
+      <FoldInflowStreams />
+      {/* Semi-stable fragments — matter trying to hold form */}
+      <FoldFormingFragments />
+      {/* The Architects — beings of intent and permanence */}
+      <FoldArchitects />
+      {/* Grid showing nascent structure */}
       <FoldGrid />
-      <pointLight position={[0, FOLD_Y + 3, 0]} intensity={0.4} color="#4080c0" distance={80} decay={2} />
+      {/* Ambient lighting */}
+      <pointLight position={[0, FOLD_Y + 3, 0]} intensity={0.6} color="#4080c0" distance={100} decay={2} />
+      <pointLight position={[0, FOLD_Y - 2, 0]} intensity={0.3} color="#5030a0" distance={60} decay={2} />
     </group>
   )
 }
 
 function FoldGrid() {
   const obj = useMemo(() => {
-    const mat = new THREE.LineBasicMaterial({ color: '#4060a0', transparent: true, opacity: 0.08, depthWrite: false })
     const group = new THREE.Group()
-    for (let i = -130; i <= 130; i += 15) {
+    // More subtle grid — order emerging from chaos
+    for (let i = -120; i <= 120; i += 12) {
+      const distFromCenter = Math.abs(i) / 120
+      const opacity = 0.03 + (1 - distFromCenter) * 0.08 // Stronger near center
+      const mat = new THREE.LineBasicMaterial({ color: '#4060a0', transparent: true, opacity, depthWrite: false })
       const geoX = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(i, FOLD_Y + 0.1, -130),
-        new THREE.Vector3(i, FOLD_Y + 0.1, 130),
+        new THREE.Vector3(i, FOLD_Y + 0.1, -120),
+        new THREE.Vector3(i, FOLD_Y + 0.1, 120),
       ])
       group.add(new THREE.Line(geoX, mat))
       const geoZ = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-130, FOLD_Y + 0.1, i),
-        new THREE.Vector3(130, FOLD_Y + 0.1, i),
+        new THREE.Vector3(-120, FOLD_Y + 0.1, i),
+        new THREE.Vector3(120, FOLD_Y + 0.1, i),
       ])
       group.add(new THREE.Line(geoZ, mat))
     }
@@ -167,44 +736,87 @@ function FoldGrid() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LAYER 3 — THE PATTERN (Lattice / Weaving)
+// LAYER 3 — THE PATTERN (Lattice of Intent & Purpose)
+// Woven from the chaos of the Drift by the Architects,
+// pinned to the Fold by great Anchors — the stable foundation
+// from which the Everloop springs.
 // ═══════════════════════════════════════════════════════════════
-function ThePattern() {
+
+/** Primary lattice — intricate web of glowing threads with flowing energy */
+function PatternLattice() {
   const latticeRef = useRef<THREE.Group>(null)
 
   const latticeObj = useMemo(() => {
     const group = new THREE.Group()
-    const spacing = 16
+    const spacing = 12
     const range = 105
-    const nodeMat = new THREE.MeshStandardMaterial({
-      color: '#40a0ff', emissive: '#2080dd', emissiveIntensity: 0.8,
-      transparent: true, opacity: 0.9, roughness: 0.2,
-    })
-    const nodeGeo = new THREE.SphereGeometry(0.35, 8, 8)
-    const lineMat = new THREE.LineBasicMaterial({
-      color: '#3090ee', transparent: true, opacity: 0.4, depthWrite: false, blending: THREE.AdditiveBlending,
-    })
+    // Nodes — brighter and more varied than before
+    const nodeGeo = new THREE.SphereGeometry(0.4, 8, 8)
 
+    // Primary grid
     for (let x = -range; x <= range; x += spacing) {
       for (let z = -range; z <= range; z += spacing) {
         const dist = Math.sqrt(x * x + z * z)
         if (dist > range + 5) continue
+
+        // Node intensity based on distance — stronger near Anchors
+        const anchorProximity = getAnchorProximity(x, z)
+        const intensity = 0.6 + anchorProximity * 0.4
+
+        const nodeMat = new THREE.MeshStandardMaterial({
+          color: '#50b0ff', emissive: '#3090ee',
+          emissiveIntensity: intensity,
+          transparent: true, opacity: 0.9, roughness: 0.15,
+        })
         const node = new THREE.Mesh(nodeGeo, nodeMat)
         node.position.set(x, PATTERN_Y, z)
         group.add(node)
+
+        // Horizontal connections
         if (x + spacing <= range) {
-          const geo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(x, PATTERN_Y, z),
-            new THREE.Vector3(x + spacing, PATTERN_Y, z),
-          ])
-          group.add(new THREE.Line(geo, lineMat))
+          const nx = x + spacing
+          const nd = Math.sqrt(nx * nx + z * z)
+          if (nd <= range + 5) {
+            const lineMat = new THREE.LineBasicMaterial({
+              color: '#3090ee', transparent: true, opacity: 0.3 + intensity * 0.2,
+              depthWrite: false, blending: THREE.AdditiveBlending,
+            })
+            const geo = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(x, PATTERN_Y, z),
+              new THREE.Vector3(nx, PATTERN_Y, z),
+            ])
+            group.add(new THREE.Line(geo, lineMat))
+          }
         }
         if (z + spacing <= range) {
-          const geo = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(x, PATTERN_Y, z),
-            new THREE.Vector3(x, PATTERN_Y, z + spacing),
-          ])
-          group.add(new THREE.Line(geo, lineMat))
+          const nz = z + spacing
+          const nd = Math.sqrt(x * x + nz * nz)
+          if (nd <= range + 5) {
+            const lineMat = new THREE.LineBasicMaterial({
+              color: '#3090ee', transparent: true, opacity: 0.3 + intensity * 0.2,
+              depthWrite: false, blending: THREE.AdditiveBlending,
+            })
+            const geo = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(x, PATTERN_Y, z),
+              new THREE.Vector3(x, PATTERN_Y, nz),
+            ])
+            group.add(new THREE.Line(geo, lineMat))
+          }
+        }
+        // Diagonal cross-threads for richer weave
+        if (x + spacing <= range && z + spacing <= range) {
+          const nd = Math.sqrt((x + spacing) ** 2 + (z + spacing) ** 2)
+          if (nd <= range + 5 && Math.random() > 0.4) {
+            const lineMat = new THREE.LineBasicMaterial({
+              color: '#2080dd', transparent: true, opacity: 0.12,
+              depthWrite: false, blending: THREE.AdditiveBlending,
+            })
+            const geo = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(x, PATTERN_Y, z),
+              new THREE.Vector3(x + spacing, PATTERN_Y, z + spacing),
+            ])
+            group.add(new THREE.Line(geo, lineMat))
+          }
         }
       }
     }
@@ -213,11 +825,16 @@ function ThePattern() {
 
   useFrame(({ clock }) => {
     if (latticeRef.current) {
+      const t = clock.elapsedTime
+      // Animate node emissive — energy pulse waves radiating from center
       latticeRef.current.children.forEach((child) => {
         if (child instanceof THREE.Mesh) {
           const mat = child.material as THREE.MeshStandardMaterial
           const d = child.position.length()
-          mat.emissiveIntensity = 0.6 + Math.sin(clock.elapsedTime * 1.5 - d * 0.05) * 0.4
+          // Wave pulses outward from center
+          const wave1 = Math.sin(t * 1.2 - d * 0.06) * 0.3
+          const wave2 = Math.sin(t * 0.7 + d * 0.04) * 0.15
+          mat.emissiveIntensity = 0.5 + wave1 + wave2 + getAnchorProximity(child.position.x, child.position.z) * 0.3
         }
       })
     }
@@ -228,7 +845,141 @@ function ThePattern() {
       <group ref={latticeRef}>
         <primitive object={latticeObj} />
       </group>
-      <pointLight position={[0, PATTERN_Y, 0]} intensity={1.5} color="#3090ee" distance={80} decay={2} />
+      <pointLight position={[0, PATTERN_Y, 0]} intensity={1.5} color="#3090ee" distance={100} decay={2} />
+    </group>
+  )
+}
+
+/** Helper to calculate proximity to nearest anchor position */
+function getAnchorProximity(x: number, z: number): number {
+  let minDist = Infinity
+  const count = 8
+  const r = 95
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2
+    const ax = Math.cos(angle) * r
+    const az = Math.sin(angle) * r
+    const dist = Math.sqrt((x - ax) ** 2 + (z - az) ** 2)
+    if (dist < minDist) minDist = dist
+  }
+  return Math.max(0, 1 - minDist / 40)
+}
+
+/** Energy flow particles — visible streams moving upward through the Pattern toward the surface */
+function PatternEnergyFlow() {
+  const pointsRef = useRef<THREE.Points>(null)
+  const flowData = useRef<{ x: number; z: number; speed: number; phase: number }[]>([])
+
+  const { geo, mat } = useMemo(() => {
+    const count = 1500
+    const positions = new Float32Array(count * 3)
+    const colors = new Float32Array(count * 3)
+    const data: { x: number; z: number; speed: number; phase: number }[] = []
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const r = Math.random() * 100
+      const x = Math.cos(angle) * r
+      const z = Math.sin(angle) * r
+      positions[i * 3] = x
+      positions[i * 3 + 1] = PATTERN_Y + Math.random() * (SURFACE_Y - PATTERN_Y)
+      positions[i * 3 + 2] = z
+      data.push({ x, z, speed: 0.5 + Math.random() * 1.5, phase: Math.random() * Math.PI * 2 })
+      // Bright blue-white energy
+      colors[i * 3] = 0.4 + Math.random() * 0.3
+      colors[i * 3 + 1] = 0.6 + Math.random() * 0.3
+      colors[i * 3 + 2] = 0.9 + Math.random() * 0.1
+    }
+    flowData.current = data
+    const g = new THREE.BufferGeometry()
+    g.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    g.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    const m = new THREE.PointsMaterial({
+      size: 0.15, vertexColors: true, transparent: true, opacity: 0.5,
+      sizeAttenuation: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    })
+    return { geo: g, mat: m }
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!pointsRef.current) return
+    const pos = pointsRef.current.geometry.attributes.position as THREE.BufferAttribute
+    const t = clock.elapsedTime
+    const range = SURFACE_Y - PATTERN_Y
+    for (let i = 0; i < pos.count; i++) {
+      const d = flowData.current[i]
+      if (!d) continue
+      // Flow upward, reset to bottom when reaching top
+      let y = pos.getY(i) + d.speed * 0.02
+      if (y > SURFACE_Y - 2) y = PATTERN_Y + Math.random() * 2
+      pos.setY(i, y)
+      // Slight lateral sway
+      pos.setX(i, d.x + Math.sin(t * 0.3 + d.phase) * 1.5)
+      pos.setZ(i, d.z + Math.cos(t * 0.25 + d.phase) * 1.5)
+    }
+    pos.needsUpdate = true
+  })
+
+  return <points ref={pointsRef} geometry={geo} material={mat} />
+}
+
+/** Weaving threads — visible strands being pulled from below (Fold) upward into the lattice */
+function PatternWeavingThreads() {
+  const groupRef = useRef<THREE.Group>(null)
+  const threads = useMemo(() => {
+    const group = new THREE.Group()
+    const threadCount = 24
+    for (let t = 0; t < threadCount; t++) {
+      const angle = (t / threadCount) * Math.PI * 2 + Math.random() * 0.3
+      const r = 20 + Math.random() * 75
+      const points: THREE.Vector3[] = []
+      const steps = 20
+      for (let i = 0; i <= steps; i++) {
+        const frac = i / steps
+        const y = FOLD_Y + (PATTERN_Y - FOLD_Y + 3) * frac
+        // Spiral upward
+        const spiralAngle = angle + frac * 1.5
+        const spiralR = r + Math.sin(frac * Math.PI * 2) * 5
+        points.push(new THREE.Vector3(
+          Math.cos(spiralAngle) * spiralR,
+          y,
+          Math.sin(spiralAngle) * spiralR,
+        ))
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(points)
+      const mat = new THREE.LineBasicMaterial({
+        color: t % 3 === 0 ? '#6040c0' : t % 3 === 1 ? '#4080dd' : '#50a0ee',
+        transparent: true, opacity: 0.2,
+        depthWrite: false, blending: THREE.AdditiveBlending,
+      })
+      group.add(new THREE.Line(geo, mat))
+    }
+    return group
+  }, [])
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return
+    const t = clock.elapsedTime
+    groupRef.current.children.forEach((child, i) => {
+      if (child instanceof THREE.Line) {
+        const mat = child.material as THREE.LineBasicMaterial
+        mat.opacity = 0.1 + Math.sin(t * 0.4 + i * 0.5) * 0.1
+      }
+    })
+    groupRef.current.rotation.y = t * 0.003
+  })
+
+  return <group ref={groupRef}><primitive object={threads} /></group>
+}
+
+function ThePattern() {
+  return (
+    <group>
+      {/* Intricate lattice web */}
+      <PatternLattice />
+      {/* Energy flowing upward through the Pattern toward the surface */}
+      <PatternEnergyFlow />
+      {/* Visible weaving threads from Fold into Pattern */}
+      <PatternWeavingThreads />
     </group>
   )
 }
@@ -260,31 +1011,67 @@ function Anchor({ x, z, index }: { x: number; z: number; index: number }) {
 
   useFrame(({ clock }) => {
     if (ref.current) {
-      const child = ref.current.children[0] as THREE.Mesh
-      if (child) {
-        const mat = child.material as THREE.MeshStandardMaterial
-        mat.emissiveIntensity = 0.4 + Math.sin(clock.elapsedTime * 0.8 + index) * 0.2
-      }
+      const t = clock.elapsedTime
+      // Pulse all luminous parts
+      ref.current.children.forEach((child, i) => {
+        if (child instanceof THREE.Mesh) {
+          const mat = child.material as THREE.MeshStandardMaterial
+          if (mat.emissive) {
+            mat.emissiveIntensity = 0.4 + Math.sin(t * 0.6 + index * 0.8 + i * 0.3) * 0.25
+          }
+        }
+      })
     }
   })
 
   return (
     <group ref={ref} position={[x, FOLD_Y, z]}>
+      {/* Main anchor pillar — thick, imposing, crystalline */}
       <mesh position={[0, height / 2, 0]}>
-        <cylinderGeometry args={[0.6, 1.5, height, 6]} />
+        <cylinderGeometry args={[0.8, 2, height, 8]} />
         <meshStandardMaterial
-          color="#60b0ff" emissive="#3080dd" emissiveIntensity={0.5}
-          transparent opacity={0.5} roughness={0.1} metalness={0.7}
+          color="#4090dd" emissive="#3070cc" emissiveIntensity={0.5}
+          transparent opacity={0.55} roughness={0.05} metalness={0.8}
         />
       </mesh>
-      <mesh position={[0, height + 0.5, 0]}>
-        <coneGeometry args={[1.2, 3, 6]} />
+      {/* Inner energy core — brighter */}
+      <mesh position={[0, height / 2, 0]}>
+        <cylinderGeometry args={[0.3, 0.8, height * 0.9, 6]} />
         <meshStandardMaterial
-          color="#80c0ff" emissive="#4090ee" emissiveIntensity={0.6}
+          color="#80d0ff" emissive="#60b0ff" emissiveIntensity={0.9}
+          transparent opacity={0.35} roughness={0} metalness={1} depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      {/* Crown — where anchor meets the surface */}
+      <mesh position={[0, height + 0.5, 0]}>
+        <coneGeometry args={[1.5, 4, 8]} />
+        <meshStandardMaterial
+          color="#80c0ff" emissive="#60a0ee" emissiveIntensity={0.7}
           transparent opacity={0.6} roughness={0.05} metalness={0.9}
         />
       </mesh>
-      <pointLight position={[0, height / 2, 0]} intensity={0.8} color="#4090dd" distance={20} decay={2} />
+      {/* Base — rooted in the Fold */}
+      <mesh position={[0, -0.5, 0]}>
+        <cylinderGeometry args={[3, 2.5, 1.5, 8]} />
+        <meshStandardMaterial
+          color="#2a4060" emissive="#304080" emissiveIntensity={0.4}
+          transparent opacity={0.5} roughness={0.1} metalness={0.7}
+        />
+      </mesh>
+      {/* Radial energy rings spiraling up the pillar */}
+      {[0.2, 0.4, 0.6, 0.8].map((frac, ri) => (
+        <mesh key={ri} position={[0, height * frac, 0]} rotation={[Math.PI / 2, 0, ri * 0.5]}>
+          <torusGeometry args={[1.5 - frac * 0.5, 0.06, 8, 24]} />
+          <meshStandardMaterial
+            color="#60c0ff" emissive="#40a0ff" emissiveIntensity={0.8}
+            transparent opacity={0.3} depthWrite={false} blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      ))}
+      {/* Anchor light column */}
+      <pointLight position={[0, height / 2, 0]} intensity={1.2} color="#4090dd" distance={25} decay={2} />
+      <pointLight position={[0, height, 0]} intensity={0.6} color="#60b0ff" distance={15} decay={2} />
     </group>
   )
 }
@@ -693,10 +1480,10 @@ function SurfaceParticles() {
 // ═══════════════════════════════════════════════════════════════
 function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
   const labels = [
-    { y: SURFACE_Y + 15, text: 'THE EVERLOOP', sub: 'Living Surface', color: '#d4a84b', always: true },
-    { y: PATTERN_Y, text: 'THE PATTERN', sub: 'Fabric of Reality', color: '#40a0ff', always: false },
-    { y: FOLD_Y, text: 'THE FOLD', sub: "Architects' Realm", color: '#6080b0', always: false },
-    { y: DRIFT_Y, text: 'THE DRIFT', sub: 'Sea of Origins', color: '#6030a0', always: false },
+    { y: SURFACE_Y + 15, text: 'THE EVERLOOP', sub: 'The Living World', color: '#d4a84b', always: true },
+    { y: PATTERN_Y, text: 'THE PATTERN', sub: 'Lattice of Intent & Purpose', color: '#40a0ff', always: false },
+    { y: FOLD_Y, text: 'THE FOLD', sub: 'Where the Architects Weave', color: '#6080b0', always: false },
+    { y: DRIFT_Y, text: 'THE DRIFT', sub: 'Sea of Unformed Chaos', color: '#8040c0', always: false },
   ]
 
   return (
@@ -802,11 +1589,11 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 
         <div className="space-y-1.5">
           {[
-            { color: '#d4a84b', label: 'The Everloop', sub: 'Living Surface' },
+            { color: '#d4a84b', label: 'The Everloop', sub: 'The Living World' },
             ...(showSubLayers ? [
-              { color: '#40a0ff', label: 'The Pattern', sub: 'Fabric of Reality' },
-              { color: '#6080b0', label: 'The Fold', sub: "Architects' Realm" },
-              { color: '#6030a0', label: 'The Drift', sub: 'Sea of Origins' },
+              { color: '#40a0ff', label: 'The Pattern', sub: 'Lattice of Intent' },
+              { color: '#6080b0', label: 'The Fold', sub: 'Where Architects Weave' },
+              { color: '#8040c0', label: 'The Drift', sub: 'Sea of Unformed Chaos' },
             ] : []),
           ].map(({ color, label, sub }) => (
             <div key={label} className="flex items-center gap-2">
