@@ -49,12 +49,37 @@ export async function POST(request: NextRequest) {
       quality: 'standard',
     })
 
-    const imageUrl = response.data?.[0]?.url
-    if (!imageUrl) {
+    const tempUrl = response.data?.[0]?.url
+    if (!tempUrl) {
       return NextResponse.json({ error: 'No image generated' }, { status: 500 })
     }
 
-    return NextResponse.json({ imageUrl, revisedPrompt: response.data?.[0]?.revised_prompt })
+    // Download from DALL-E (temporary URL) and upload to Supabase Storage
+    const imgRes = await fetch(tempUrl)
+    if (!imgRes.ok) {
+      return NextResponse.json({ error: 'Failed to download generated image' }, { status: 500 })
+    }
+
+    const imageBuffer = await imgRes.arrayBuffer()
+    const fileName = `${user.id}/portrait-${Date.now()}.png`
+
+    const { error: uploadError } = await supabase.storage
+      .from('entity-images')
+      .upload(fileName, imageBuffer, {
+        contentType: 'image/png',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Portrait upload error:', uploadError)
+      return NextResponse.json({ error: 'Failed to save portrait image' }, { status: 500 })
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('entity-images')
+      .getPublicUrl(fileName)
+
+    return NextResponse.json({ imageUrl: publicUrl, revisedPrompt: response.data?.[0]?.revised_prompt })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Image generation failed'
     console.error('Portrait generation error:', message)

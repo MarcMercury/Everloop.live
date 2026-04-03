@@ -1,10 +1,24 @@
 'use client'
 
-import { Suspense, useRef, Component, type ReactNode } from 'react'
+import { Suspense, useRef, useMemo, Component, type ReactNode } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF, Environment, ContactShadows, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { Loader2, AlertTriangle } from 'lucide-react'
+
+/** Route external Meshy/CloudFront URLs through our server proxy to avoid CORS issues. */
+function resolveModelUrl(url: string): string {
+  if (typeof window === 'undefined') return url
+  try {
+    const parsed = new URL(url, window.location.origin)
+    // Local files are fine as-is
+    if (parsed.origin === window.location.origin) return url
+    // External URLs (Meshy CloudFront signed URLs) go through the proxy
+    return `/api/meshy/proxy-glb?url=${encodeURIComponent(url)}`
+  } catch {
+    return url
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // Error Boundary for catching GLB load failures
@@ -112,9 +126,20 @@ export function ModelViewer({
   showControls = true,
   backgroundColor = 'transparent',
 }: ModelViewerProps) {
+  const resolvedUrl = useMemo(() => resolveModelUrl(modelUrl), [modelUrl])
+  // Friendly name for error display (strip query params)
+  const displayName = useMemo(() => {
+    try {
+      const pathname = new URL(modelUrl, 'https://x').pathname
+      return pathname.split('/').pop() || 'model.glb'
+    } catch {
+      return 'model.glb'
+    }
+  }, [modelUrl])
+
   return (
     <div className={`relative ${className}`}>
-      <ModelErrorBoundary fallback={<ErrorFallback message={`Could not load: ${modelUrl.split('/').pop()}`} />}>
+      <ModelErrorBoundary fallback={<ErrorFallback message={`Could not load: ${displayName}`} />}>
         <Canvas
           camera={{ position: [0, 1.5, 3.5], fov: 45 }}
           style={{ background: backgroundColor }}
@@ -125,7 +150,7 @@ export function ModelViewer({
           <directionalLight position={[-3, 3, -3]} intensity={0.4} />
 
           <Suspense fallback={<LoadingFallback />}>
-            <Model url={modelUrl} autoRotate={autoRotate} />
+            <Model url={resolvedUrl} autoRotate={autoRotate} />
             <Environment preset="city" />
             <ContactShadows
               position={[0, -1.05, 0]}
