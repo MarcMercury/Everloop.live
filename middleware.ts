@@ -53,7 +53,6 @@ export async function middleware(request: NextRequest) {
   // Everything else requires login
   const publicRoutes = [
     '/',           // Home page
-    '/welcome',    // Overview page
     '/login',      // Login page
     '/auth',       // Auth callback
     '/explore',    // Public entity browser
@@ -63,6 +62,8 @@ export async function middleware(request: NextRequest) {
     '/guide',      // World lore guide
     '/guidelines', // Writing guidelines
     '/profile',    // Public author profiles
+    '/readers-guide',  // Reader's guide
+    '/players-guide',  // Player's guide
   ]
   
   const isPublicRoute = publicRoutes.some(route => 

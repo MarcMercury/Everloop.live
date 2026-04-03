@@ -12,7 +12,7 @@ export default function PlayersGuidePage() {
     <div className="min-h-screen">
       <div className="container mx-auto px-6 py-12 max-w-4xl">
         {/* Back link */}
-        <Link href="/welcome" className="inline-flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-8">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" />
           Back to Overview
         </Link>

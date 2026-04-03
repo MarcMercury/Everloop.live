@@ -15,7 +15,7 @@ export default function GuidePage() {
           
           {/* Back Button */}
           <div className="mb-8">
-            <Link href="/welcome">
+            <Link href="/">
               <Button variant="ghost" size="sm" className="gap-2 text-parchment-muted hover:text-parchment">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Overview
@@ -221,7 +221,7 @@ export default function GuidePage() {
 
           {/* Back Button (bottom) */}
           <div className="text-center mt-8">
-            <Link href="/welcome">
+            <Link href="/">
               <Button variant="ghost" size="sm" className="gap-2 text-parchment-muted hover:text-parchment">
                 <ArrowLeft className="w-4 h-4" />
                 Back to Overview
