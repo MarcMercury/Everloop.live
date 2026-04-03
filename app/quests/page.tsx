@@ -82,7 +82,7 @@ export default async function QuestsPage() {
             <span className="canon-text">Quest Portal</span>
           </h1>
           <p className="text-parchment-muted mt-2">
-            Enter the Loop. No DM required—choose your quest and begin.
+            Enter the Loop. Every quest leads somewhere — and everything in the Everloop is being drawn together.
           </p>
         </div>
         {user && (

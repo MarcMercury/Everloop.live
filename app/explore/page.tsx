@@ -100,7 +100,8 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
           </h1>
           <p className="text-parchment-muted text-lg max-w-2xl mx-auto leading-relaxed">
             Explore the canonical entities that shape our shared universe. 
-            Every character, location, and artifact documented here is part of the living lore.
+            Every character, location, and artifact documented here is part of the living lore — 
+            and part of the pull drawing the world toward what comes next.
           </p>
           
           {/* Stats */}

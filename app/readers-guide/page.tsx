@@ -81,7 +81,7 @@ const INSTABILITIES = [
   },
   {
     term: 'The Shards',
-    description: 'Fragments of the Anchors created when they were broken. Each still carries stabilizing force, but without balance. They can hold reality in place, but often distort it.',
+    description: 'Fragments of the Anchors created when they were broken. Each region holds an unknown number, and they naturally pull toward one another. They carry stabilizing force, but without balance — and no one knows what happens when all Shards of a region are brought together.',
     color: 'gold',
     icon: '◇',
   },
@@ -304,11 +304,11 @@ export default function ReadersGuidePage() {
                 The Fray is spreading
               </span>
               <span className="px-4 py-2 rounded-full border border-gold/20 text-gold/80">
-                Shards remain scattered
+                Shards remain scattered — but pulling closer
               </span>
             </div>
             <p className="text-parchment-muted/60 text-sm mt-6 italic">
-              No confirmed method exists to fully restore stability.
+              No one knows how many Shards remain. No one knows what convergence would bring.
             </p>
           </div>
         </section>
@@ -321,7 +321,9 @@ export default function ReadersGuidePage() {
               'Why did the Pattern begin to fail?',
               'What happened to the Prime Beings?',
               'Do the First Architects still exist in any form?',
-              'Can the Shards be used to restore balance, or only to delay collapse?',
+              'How many Shards does each region hold?',
+              'What happens when all Shards of a region are brought together?',
+              'What would it mean if every Shard, from every region, converged?',
             ].map((question, i) => (
               <div
                 key={i}

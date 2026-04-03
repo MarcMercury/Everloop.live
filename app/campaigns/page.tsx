@@ -98,7 +98,7 @@ export default async function CampaignsPage() {
             <span className="canon-text">Engine</span>
           </h1>
           <p className="text-parchment-muted mt-2 max-w-xl">
-            Enter the Everloop as a player. Join campaigns, build your character, and shape the world through live, interactive sessions.
+            Enter the Everloop as a player. Join campaigns, build your character, and follow the pull that draws all things toward what was broken.
           </p>
         </div>
         {user && (

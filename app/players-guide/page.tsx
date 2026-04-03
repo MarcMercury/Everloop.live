@@ -151,7 +151,7 @@ export default function PlayersGuidePage() {
 
           <div className="p-8 rounded-lg border border-gold/20" style={{ background: 'linear-gradient(135deg, rgba(25, 20, 15, 0.4) 0%, rgba(15, 12, 8, 0.3) 100%)' }}>
             <p className="text-lg text-parchment-muted leading-relaxed mb-6">
-              Shards are fragments of what once held the world together. They still carry that weight.
+              Shards are fragments of what once held the world together. They still carry that weight. Each region holds an unknown number of them — and they pull toward one another.
             </p>
 
             <div className="pl-6 border-l-2 border-gold/20 mb-6">
@@ -160,17 +160,25 @@ export default function PlayersGuidePage() {
                 <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>Reality stabilizes — but unnaturally</li>
                 <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>Time, memory, and matter may bend to match it</li>
                 <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>The surrounding area becomes volatile or distorted</li>
+                <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>Other Shards nearby grow restless, as if responding</li>
+              </ul>
+            </div>
+
+            <div className="pl-6 border-l-2 border-gold/30 mb-6">
+              <p className="text-sm uppercase tracking-wider text-gold/60 mb-3">What is known:</p>
+              <ul className="space-y-2 text-parchment-muted">
+                <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>Each region contains an unknown number of Shards</li>
+                <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>They naturally pull toward one another — slowly, inevitably</li>
+                <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>No one knows what happens when all Shards of a region converge</li>
+                <li className="flex items-start gap-2"><span className="text-gold/40 mt-1">◦</span>No one knows what happens if every Shard, from every region, is brought together</li>
               </ul>
             </div>
 
             <p className="text-parchment-muted leading-relaxed mb-2">
-              Shards can be used. They can hold a place together. They can restore what is slipping.
+              Shards can be found, collected, guarded, or stolen. Every quest, every campaign, every story in the Everloop bends toward them — whether the characters know it or not.
             </p>
             <p className="text-parchment italic leading-relaxed">
-              But they do not fix the world. They force it.
-            </p>
-            <p className="text-parchment-muted/60 mt-4 text-sm italic">
-              And forcing one place to remain often causes instability somewhere else.
+              Something is pulling everything together. You are part of that pull.
             </p>
           </div>
         </section>
@@ -294,9 +302,10 @@ export default function PlayersGuidePage() {
             <p className="text-parchment-muted mb-4">No one agrees on what should be done.</p>
             <div className="space-y-3">
               {[
-                'Some believe the Shards can restore the world',
-                'Some believe using them will finish its destruction',
-                'Some worship the Fray',
+                'Some believe gathering the Shards will restore the world',
+                'Some believe bringing them together will finish its destruction',
+                'Some seek Shards for power, others hide them out of fear',
+                'Some worship the Fray as liberation from the Pattern\'s design',
                 'Most ignore it and hope it never reaches them',
               ].map((belief, i) => (
                 <div key={i} className="flex items-start gap-3 text-parchment-muted">
@@ -318,18 +327,18 @@ export default function PlayersGuidePage() {
               The world is not ending.
             </p>
             <p className="text-xl text-parchment leading-relaxed mb-6">
-              It is losing its ability to remain.
+              It is pulling itself back together.
             </p>
             <div className="w-16 h-px bg-gold/30 mx-auto my-8" />
             <p className="text-lg text-parchment-muted leading-relaxed">
               And for the first time —
             </p>
             <p className="text-2xl font-serif text-parchment mt-4 leading-relaxed">
-              What survives, and what is allowed to slip,
+              What is found, what is gathered, what is brought together,
             </p>
             <p className="text-2xl font-serif mt-2">
-              <span className="text-parchment">may depend on </span>
-              <span className="canon-text font-semibold">what you choose to do</span>.
+              <span className="text-parchment">may determine </span>
+              <span className="canon-text font-semibold">what comes next</span>.
             </p>
           </div>
         </section>

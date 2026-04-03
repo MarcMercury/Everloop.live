@@ -27,7 +27,8 @@ export default function GuidelinesPage() {
             Writing <span className="text-gold">Guidelines</span>
           </h1>
           <p className="text-parchment-muted text-lg">
-            Everything you need to know about contributing stories to the Everloop canon.
+            Everything you need to know about contributing stories to the Everloop canon. 
+            Every entry here — whether it tells of a Shard or never mentions one — is part of a larger convergence.
           </p>
         </div>
 
@@ -69,6 +70,18 @@ export default function GuidelinesPage() {
                   </p>
                 </div>
               </div>
+              <div className="flex gap-4">
+                <CheckCircle className="w-5 h-5 text-green-400 mt-1 shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-parchment">Serve the Current</h3>
+                  <p className="text-parchment-muted text-sm">
+                    Everything in the Everloop is pulled by a deeper gravity. Your story doesn&apos;t need to 
+                    mention the Shards directly, but it should feel like it belongs in a world where something 
+                    scattered is slowly being drawn back together. Characters, obstacles, discoveries — they&apos;re 
+                    all part of this current, whether they know it or not.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -101,7 +114,8 @@ export default function GuidelinesPage() {
               </CardHeader>
               <CardContent className="text-sm text-parchment-muted">
                 Stories that reference existing lore naturally, not forced. Characters 
-                that feel like they belong in the Everloop universe.
+                that feel like they belong in the Everloop universe — touched by its gravity, 
+                even when the larger stakes remain out of view.
               </CardContent>
             </Card>
             <Card>

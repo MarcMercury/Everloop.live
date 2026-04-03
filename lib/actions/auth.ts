@@ -67,7 +67,7 @@ export async function login(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  redirect('/explore')
+  redirect('/dashboard')
 }
 
 export async function signup(formData: FormData): Promise<AuthResult> {

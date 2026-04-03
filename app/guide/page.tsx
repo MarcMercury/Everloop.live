@@ -135,7 +135,7 @@ export default function GuidePage() {
                 <div>
                   <h3 className="text-xl font-serif text-parchment mb-3">The Shards</h3>
                   <p className="text-lg leading-relaxed">
-                    Broken remnants of the Anchors — each still hums with the intent that once held the world together. Where Shards lie buried, the world trembles most, and time runs like spilled ink. Shard-touched regions are the most unstable, with time, matter, and memory contorting where their influence spreads.
+                    Broken remnants of the Anchors — each still hums with the intent that once held the world together. Every region holds an unknown number of them, scattered, buried, guarded, or forgotten. Where Shards lie, the world trembles most, and time runs like spilled ink. But they pull toward one another — slowly, inevitably, as if remembering what they once were.
                   </p>
                 </div>
 
@@ -182,13 +182,16 @@ export default function GuidePage() {
                   The world is quiet but trembling. The Hollows have become wounds where regions blink in and out of existence. Whole villages wake to find their neighbors never existed. Children forget their parents between dawn and dusk.
                 </p>
                 <p className="text-lg leading-relaxed">
-                  The Fray expands. Where the Shards lie buried, time runs like spilled ink. Some places resist — but resistance is not victory. It is only delay.
+                  The Fray expands. Where the Shards lie scattered, time runs like spilled ink. Some places resist — but resistance is not victory. It is only delay.
                 </p>
                 <p className="text-lg leading-relaxed">
-                  Yet where there is unraveling, there is also possibility. The Shards, though dangerous, hold the key. Some believe that gathering them could repair the Pattern. Others fear that wielding such power would complete its destruction.
+                  Yet where there is unraveling, there is also possibility. The Shards pull toward one another — across distances, through obstacles, with a patience that outlasts empires. Some believe that gathering all of a region&apos;s Shards could restore what was lost. Others fear what such a convergence might unleash. And beyond that — if every Shard, from every region, were brought together — something would happen. Something that would change the nature of existence itself.
+                </p>
+                <p className="text-lg leading-relaxed">
+                  No one knows what. No one has come close enough to find out.
                 </p>
                 <p className="text-lg leading-relaxed italic text-parchment">
-                  You have stepped into a broken world that is slowly unraveling. What will you do?
+                  You have stepped into a broken world that is slowly pulling itself back together. What will you do?
                 </p>
               </div>
             </section>
