@@ -49,7 +49,7 @@ export async function Navbar() {
           {/* Navigation Links */}
           <div className="flex items-center gap-6">
             <Link 
-              href="/welcome"
+              href="/"
               className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
             >
               <Sparkles className="w-4 h-4" />

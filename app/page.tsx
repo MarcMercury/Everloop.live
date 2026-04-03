@@ -1,119 +1,47 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import Image from 'next/image'
+import { Headphones, BookOpen, ScrollText } from 'lucide-react'
 
-export default async function Home() {
-  const supabase = await createClient()
-  
-  // Fetch counts from database with error handling
-  let profileCount = 0
-  let storyCount = 0
-  try {
-    const [profilesResult, storiesResult] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
-      supabase.from('stories').select('id', { count: 'exact', head: true }).in('canon_status', ['approved', 'canonical'])
-    ])
-    profileCount = profilesResult.count ?? 0
-    storyCount = storiesResult.count ?? 0
-  } catch (e) {
-    console.error('Error fetching homepage counts:', e)
-  }
-
+export default function Home() {
   return (
-    <div className="min-h-[calc(100vh-60px)] flex flex-col relative overflow-hidden">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
       {/* Decorative floating orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gold/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-teal-light/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/3 w-48 h-48 bg-gold/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gold/5 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-purple-900/10 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 rounded-full blur-[150px]" />
       </div>
 
       {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-24 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          {/* Logo/Title with enhanced styling */}
-          <div className="relative">
-            <h1 className="text-6xl md:text-7xl lg:text-8xl font-serif tracking-tight">
-              <span className="text-parchment">Ever</span>
-              <span className="canon-text">loop</span>
-            </h1>
-            {/* Subtitle flourish */}
-            <p className="text-sm tracking-[0.3em] text-parchment-muted uppercase mt-4">
-              Stories from the Broken World
-            </p>
-          </div>
-
-          {/* Ornate divider */}
-          <div className="flex items-center justify-center gap-4 py-4">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent via-gold/40 to-gold/60" />
-            <div className="flex items-center gap-2">
-              <span className="text-gold/40 text-xs">✦</span>
-              <div className="w-2 h-2 rotate-45 bg-gold/60 shadow-lg shadow-gold/30" />
-              <span className="text-gold/40 text-xs">✦</span>
-            </div>
-            <div className="h-px w-16 bg-gradient-to-l from-transparent via-gold/40 to-gold/60" />
-          </div>
-
-          {/* Tagline */}
-          <p className="text-xl md:text-2xl text-parchment-dark max-w-2xl mx-auto leading-relaxed">
-            A collaborative universe where writers build the history of a world that is slowly unraveling.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Link
-              href="/explore"
-              className="btn-fantasy text-lg"
-            >
-              ✦ Enter the Archive
-            </Link>
-            <Link
-              href="/write"
-              className="btn-outline-fantasy text-lg"
-            >
-              Begin Your Story
-            </Link>
-          </div>
-
-          {/* Atmospheric stats */}
-          <div className="pt-20">
-            <div className="inline-flex items-center gap-8 px-8 py-4 rounded-full 
-                          bg-teal-rich/50 border border-gold/10
-                          shadow-lg shadow-black/20">
-              <div className="text-center">
-                <div className="text-2xl font-serif text-gold">{storyCount || '∞'}</div>
-                <div className="text-xs text-parchment-muted tracking-wide">Stories</div>
-              </div>
-              <div className="w-px h-8 bg-gold/20" />
-              <div className="text-center">
-                <div className="text-2xl font-serif text-gold">{profileCount}</div>
-                <div className="text-xs text-parchment-muted tracking-wide">Writers</div>
-              </div>
-              <div className="w-px h-8 bg-gold/20" />
-              <div className="text-center">
-                <div className="text-2xl font-serif text-gold">1</div>
-                <div className="text-xs text-parchment-muted tracking-wide">Universe</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* What is Everloop — Intro Section */}
-      <section className="relative z-10 py-20 px-6 border-t border-gold/10">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl md:text-4xl font-serif text-parchment">
-            A Collaborative Canon Engine
-          </h2>
-          <p className="text-lg text-parchment-dark max-w-3xl mx-auto leading-relaxed">
-            Everloop is a writing platform and living universe. Every story you write, every 
-            character you create, every location you name becomes part of a shared canon that 
-            other writers and players build upon. There are 3 ways to enter the Everloop.
+      <section className="relative z-10 pt-20 md:pt-32 pb-12 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-serif tracking-tight mb-4">
+            <span className="canon-text">EVERLOOP</span>
+          </h1>
+          <p className="text-xl md:text-2xl font-serif text-parchment-muted">
+            Welcome to The Broken World
           </p>
         </div>
       </section>
 
-      {/* Explore / Write / Play */}
-      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
+      {/* Structure Image */}
+      <section className="relative z-10 px-6 pb-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
+            <Image
+              src="/Maps/New Structure Map.png"
+              alt="Structure of the Everloop"
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-teal-deep/60 via-transparent to-transparent" />
+          </div>
+        </div>
+      </section>
+
+      {/* Explore / Write / Play Tiles */}
+      <section className="relative z-10 py-16 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="story-card p-6 text-left space-y-3">
@@ -150,7 +78,7 @@ export default async function Home() {
                 <h3 className="text-xl font-serif text-parchment">Play</h3>
               </div>
               <p className="text-sm text-parchment-dark leading-relaxed">
-                Build and experience: craft playable characters, quests, and campaigns—whether grounded in canon or wild one-shots in a world where reality is unraveling.
+                Build and experience: craft playable characters, quests, and campaigns — whether grounded in canon or wild one-shots in a world where reality is unraveling.
               </p>
               <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
                 <Link href="/player-deck" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Player Deck</Link>
@@ -162,147 +90,134 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Two Paths Section */}
-      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-            {/* Path 1 — Build the Universe */}
-            <div className="story-card p-8 text-left relative overflow-hidden group hover:border-gold/40 transition-all">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center text-xl">
-                    📜
-                  </div>
-                  <div>
-                    <p className="text-xs tracking-[0.15em] text-gold/60 uppercase">Path One</p>
-                    <h3 className="text-2xl font-serif text-parchment">Build the Universe</h3>
-                  </div>
-                </div>
-                <p className="text-parchment-dark text-sm leading-relaxed mb-6">
-                  Write stories and add them to the Everloop universe canon. Create locations, 
-                  NPCs, factions, and artifacts that other writers reference and that players 
-                  encounter in campaigns. Every creation expands the shared world.
-                </p>
-                <div className="space-y-2.5 text-sm text-parchment-muted mb-8">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gold">✦</span>
-                    <span><span className="text-parchment">Library</span> — Read the canonical stories</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gold">✦</span>
-                    <span><span className="text-parchment">Archive</span> — Browse all canonical entities</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gold">✦</span>
-                    <span><span className="text-parchment">Create</span> — Build characters, locations & creatures</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gold">✦</span>
-                    <span><span className="text-parchment">My Roster</span> — Manage and submit your creations</span>
-                  </div>
-                </div>
-                <Link
-                  href="/create"
-                  className="btn-fantasy text-sm inline-flex"
-                >
-                  ✦ Start Creating
-                </Link>
+      {/* Audio — Listen to the Narrative */}
+      <section className="relative z-10 py-12 px-6">
+        <div className="max-w-md mx-auto">
+          <div className="rounded-lg border border-gold/15 bg-teal-rich/30 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                <Headphones className="w-4 h-4 text-gold/70" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-parchment">Listen to the Narrative</p>
+                <p className="text-xs text-parchment-muted">The Everloop — spoken aloud</p>
               </div>
             </div>
-
-            {/* Path 2 — Play the Canon */}
-            <div className="story-card p-8 text-left relative overflow-hidden group hover:border-purple-500/40 transition-all">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-              <div className="relative">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-xl">
-                    ⚔️
-                  </div>
-                  <div>
-                    <p className="text-xs tracking-[0.15em] text-purple-400/60 uppercase">Path Two</p>
-                    <h3 className="text-2xl font-serif text-parchment">Play the Canon</h3>
-                  </div>
-                </div>
-                <p className="text-parchment-dark text-sm leading-relaxed mb-6">
-                  Step into the world as a player. Run campaigns as a Dungeon Master, 
-                  embark on guided quests solo or with friends, and build persistent 
-                  characters that carry their story across every adventure.
-                </p>
-                <div className="space-y-2.5 text-sm text-parchment-muted mb-8">
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400">✦</span>
-                    <span><span className="text-parchment">Campaigns</span> — Run or join live campaign sessions</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400">✦</span>
-                    <span><span className="text-parchment">Quests</span> — Solo, party & AI-guided adventures</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400">✦</span>
-                    <span><span className="text-parchment">Player Deck</span> — Build & manage your characters</span>
-                  </div>
-                </div>
-                <Link
-                  href="/campaigns"
-                  className="btn-outline-fantasy text-sm inline-flex"
-                >
-                  Enter the Fray →
-                </Link>
-              </div>
-            </div>
-
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <audio
+              controls
+              preload="none"
+              className="w-full h-10 [&::-webkit-media-controls-panel]:bg-teal-deep/80 [&::-webkit-media-controls-current-time-display]:text-parchment-muted [&::-webkit-media-controls-time-remaining-display]:text-parchment-muted"
+            >
+              <source src="/audio/everloop-narrative.mp3" type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
           </div>
         </div>
       </section>
 
-      {/* Library Preview */}
+      {/* Brief Intro Text */}
+      <section className="relative z-10 py-16 px-6">
+        <div className="max-w-3xl mx-auto space-y-12">
+          {/* The Drift */}
+          <div className="relative">
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-purple-500/30 to-transparent" />
+            <div className="pl-8">
+              <h2 className="text-sm uppercase tracking-[0.2em] text-purple-400/80 mb-3 font-medium">The Drift</h2>
+              <p className="text-lg leading-relaxed text-parchment-muted">
+                Before anything could remain, there was only the <span className="text-purple-300 font-medium">Drift</span> — a boundless chaos where matter and intent dissolved as quickly as they formed. Within it moved the <span className="text-parchment">Prime Beings</span>, vast forces that gave weight to the chaos, but never held it.
+              </p>
+            </div>
+          </div>
+
+          {/* The Fold */}
+          <div className="relative">
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-blue-500/30 to-transparent" />
+            <div className="pl-8">
+              <h2 className="text-sm uppercase tracking-[0.2em] text-blue-400/80 mb-3 font-medium">The Fold</h2>
+              <p className="text-lg leading-relaxed text-parchment-muted">
+                At the edge of that unrest, the motion slowed. That boundary became the <span className="text-blue-300 font-medium">Fold</span> — and within it, something endured. The <span className="text-parchment">First Architects</span> shaped the First Map, not of land, but of possibility itself. From it, they wove the <span className="text-blue-300 font-medium">Pattern</span>, a hidden structure that allows time, memory, and matter to remain.
+              </p>
+            </div>
+          </div>
+
+          {/* The Anchors */}
+          <div className="relative">
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent" />
+            <div className="pl-8">
+              <h2 className="text-sm uppercase tracking-[0.2em] text-gold/80 mb-3 font-medium">The Anchors</h2>
+              <p className="text-lg leading-relaxed text-parchment-muted mb-4">
+                To keep it from collapsing, they became the <span className="text-gold font-medium">Anchors</span>.
+              </p>
+              <p className="text-lg leading-relaxed text-parchment-muted">
+                Around them, the <span className="canon-text font-semibold">Everloop</span> rose — a living world where things can exist long enough to matter.
+              </p>
+            </div>
+          </div>
+
+          {/* The Breaking */}
+          <div className="text-center py-4">
+            <div className="w-16 h-px bg-red-500/40 mx-auto mb-6" />
+            <p className="text-2xl md:text-3xl font-serif text-parchment leading-relaxed">
+              But the Pattern is <span className="text-red-400 font-medium">thinning</span>.
+            </p>
+            <div className="w-16 h-px bg-red-500/40 mx-auto mt-6" />
+          </div>
+
+          {/* The Unraveling */}
+          <div className="relative">
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-red-500/30 to-transparent" />
+            <div className="pl-8">
+              <h2 className="text-sm uppercase tracking-[0.2em] text-red-400/80 mb-3 font-medium">The Unraveling</h2>
+              <p className="text-lg leading-relaxed text-parchment-muted mb-4">
+                In some places, existence fades into the <span className="text-parchment">Hollows</span>. In others, it fractures into the <span className="text-red-400">Fray</span>. The Rogue Architects, in trying to repair what was failing, shattered the Anchors — leaving behind the <span className="text-gold font-medium">Shards</span>, fragments that can force reality to hold, but never without cost.
+              </p>
+              <p className="text-lg leading-relaxed text-parchment italic">
+                To save something is to risk losing something else.
+              </p>
+            </div>
+          </div>
+
+          {/* The Conclusion */}
+          <div className="text-center py-4">
+            <p className="text-xl md:text-2xl font-serif text-parchment-muted leading-relaxed mb-4">
+              The world is not ending.
+            </p>
+            <p className="text-3xl md:text-4xl font-serif text-parchment">
+              It is being <span className="canon-text font-semibold">decided</span>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Guide Links */}
       <section className="relative z-10 py-16 px-6 border-t border-gold/10">
-        <div className="max-w-5xl mx-auto text-center space-y-6">
-          <h2 className="text-2xl md:text-3xl font-serif text-parchment">
-            From the Library
-          </h2>
-          <p className="text-sm text-parchment-muted max-w-2xl mx-auto">
-            Stories written by the community that have been approved as canon. 
-            Every story shapes what comes next.
-          </p>
-          <div className="pt-4">
-            <Link
-              href="/stories"
-              className="inline-flex items-center gap-2 text-gold hover:text-gold/80 transition-colors text-sm font-medium"
-            >
-              Browse the Full Library →
+        <div className="max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <Link href="/readers-guide" className="story-card p-6 flex items-center gap-4 hover:border-gold/40 transition-all group">
+              <div className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-parchment group-hover:text-gold transition-colors">Reader&apos;s Guide</h3>
+                <p className="text-xs text-parchment-muted">A glossary of the world as it is known</p>
+              </div>
+            </Link>
+            <Link href="/players-guide" className="story-card p-6 flex items-center gap-4 hover:border-purple-500/40 transition-all group">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+                <ScrollText className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-serif text-parchment group-hover:text-purple-400 transition-colors">Player&apos;s Guide</h3>
+                <p className="text-xs text-parchment-muted">What you need to know before stepping in</p>
+              </div>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Features Row */}
-      <section className="relative z-10 py-16 px-6 border-t border-gold/10">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">📜</div>
-              <h3 className="font-serif text-parchment text-lg">Write &amp; Publish</h3>
-              <p className="text-sm text-parchment-muted mt-2">Draft stories with AI analysis, then submit to canon review</p>
-            </div>
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">⚔️</div>
-              <h3 className="font-serif text-parchment text-lg">Campaign &amp; Quest Engine</h3>
-              <p className="text-sm text-parchment-muted mt-2">5 game modes, live sessions, AI co-DM, and the Fray engine</p>
-            </div>
-            <div className="story-card text-center">
-              <div className="text-3xl mb-3">🌀</div>
-              <h3 className="font-serif text-parchment text-lg">Shared Canon</h3>
-              <p className="text-sm text-parchment-muted mt-2">Every creation feeds back into the world — writers and players build together</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="py-6 px-6 border-t border-gold/10 relative z-10">
+      <footer className="py-6 px-6 border-t border-gold/10 relative z-10 mt-auto">
         <div className="max-w-4xl mx-auto flex items-center justify-between text-sm text-parchment-muted">
           <p>&copy; {new Date().getFullYear()} Everloop. All stories live forever.</p>
           <nav className="flex gap-6">
