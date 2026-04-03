@@ -248,6 +248,14 @@ export async function saveEntity(input: SaveEntityInput): Promise<{
     revalidatePath('/roster')
     revalidatePath('/create')
 
+    // Auto-queue 3D model generation in the background
+    // Fire-and-forget — don't block the save response
+    import('./auto-3d').then(({ queueEntityModel }) => {
+      queueEntityModel(data.id).catch((err: unknown) => {
+        console.error('[Auto 3D] Background queue failed:', err)
+      })
+    }).catch(() => {})
+
     return { success: true, entityId: data.id, slug: data.slug }
   } catch (error) {
     console.error('Error saving entity:', error)
