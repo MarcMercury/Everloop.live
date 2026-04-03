@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { NavDropdown } from '@/components/nav-dropdown'
-import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map, PenLine, Search, Users } from 'lucide-react'
+import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map, PenLine, Search, Users, ScrollText } from 'lucide-react'
 
 interface ProfileData {
   username: string | null
@@ -66,6 +66,7 @@ export async function Navbar() {
                     { href: '/map', label: 'Interactive Map', icon: <Map className="w-4 h-4" />, description: 'Explore the Everloop world' },
                     { href: '/stories', label: 'Library', icon: <Library className="w-4 h-4" />, description: 'Read canonical stories' },
                     { href: '/explore', label: 'Archive', icon: <BookOpen className="w-4 h-4" />, description: 'Browse canonical entities' },
+                    { href: '/readers-guide', label: "Reader's Guide", icon: <ScrollText className="w-4 h-4" />, description: 'Glossary of the world' },
                   ]}
                 />
 
@@ -88,6 +89,7 @@ export async function Navbar() {
                     { href: '/player-deck', label: 'Player Deck', icon: <Swords className="w-4 h-4" />, description: 'Your playable characters' },
                     { href: '/campaigns', label: 'Campaigns', icon: <Flame className="w-4 h-4" />, description: 'Run or join live campaigns' },
                     { href: '/quests', label: 'Quests', icon: <Compass className="w-4 h-4" />, description: 'Solo & party adventures' },
+                    { href: '/players-guide', label: "Player's Guide", icon: <BookOpen className="w-4 h-4" />, description: 'What players need to know' },
                   ]}
                 />
 

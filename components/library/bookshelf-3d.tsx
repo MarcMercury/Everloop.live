@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { X, BookOpen } from 'lucide-react'
+import { X, BookOpen, Sparkles } from 'lucide-react'
 
 /* ───────── types ───────── */
 interface Story {
@@ -15,6 +15,27 @@ interface Story {
   created_at: string
   author: { username: string; display_name: string | null } | null
 }
+
+interface LoreBook {
+  id: string
+  title: string
+  subtitle: string
+  slug: string
+  href: string
+  description: string
+}
+
+/* ───────── hardcoded lore books ───────── */
+const LORE_BOOKS: LoreBook[] = [
+  {
+    id: 'lore-narrative-history',
+    title: 'The Everloop',
+    subtitle: 'Narrative History',
+    slug: 'narrative-history',
+    href: '/stories/narrative-history',
+    description: 'The foundational history of the world — from the Drift to the Pattern, from the First Architects to the unraveling.',
+  },
+]
 
 /* ───────── cover map ───────── */
 const COVER_IMAGES: Record<string, string> = {
@@ -383,8 +404,10 @@ function useShelfBooks(
       title: string
       slug: string
       isReal: boolean
+      isLore?: boolean
       style: BookStyle
       story?: Story
+      loreBook?: LoreBook
     }[] = []
 
     // Determine which real stories go on this shelf
@@ -400,23 +423,58 @@ function useShelfBooks(
     const rng = seededRandom(baseSeed)
     const totalFillerCount = 8 + Math.floor(rng() * 6) // 8-13 fillers per shelf
 
+    // Add lore books on the first shelf
+    const loreOnShelf = shelfIndex === 0 ? LORE_BOOKS : []
+
     // Distribute real books among fillers
-    const totalSlots = totalFillerCount + realOnShelf.length
+    const totalSlots = totalFillerCount + realOnShelf.length + loreOnShelf.length
     const realPositions = new Set<number>()
+    const lorePositions = new Set<number>()
     const posRng = seededRandom(baseSeed + 31)
+
+    // Place lore books first (near the center for prominence)
+    for (const lb of loreOnShelf) {
+      const centerArea = Math.floor(totalSlots * 0.4) + Math.floor(posRng() * Math.floor(totalSlots * 0.2))
+      let pos = centerArea
+      while (lorePositions.has(pos) || realPositions.has(pos)) pos++
+      lorePositions.add(pos)
+    }
+
     for (const story of realOnShelf) {
       let pos: number
       do {
         pos = Math.floor(posRng() * totalSlots)
-      } while (realPositions.has(pos))
+      } while (realPositions.has(pos) || lorePositions.has(pos))
       realPositions.add(pos)
     }
 
     const realArray = [...realOnShelf]
+    const loreArray = [...loreOnShelf]
     let fillerIdx = 0
 
     for (let i = 0; i < totalSlots; i++) {
-      if (realPositions.has(i) && realArray.length > 0) {
+      if (lorePositions.has(i) && loreArray.length > 0) {
+        const lb = loreArray.shift()!
+        books.push({
+          id: lb.id,
+          title: lb.title,
+          slug: lb.slug,
+          isReal: true,
+          isLore: true,
+          style: {
+            bg: 'linear-gradient(180deg, #2a1f0a 0%, #1a1505 15%, #2a1f0a 35%, #c9a84c 38%, #2a1f0a 41%, #1a1505 60%, #c9a84c 63%, #2a1f0a 66%, #1a1505 85%, #2a1f0a 100%)',
+            text: '#f0d060',
+            accent: '#f0d060',
+            height: 270,
+            width: 48,
+            tilt: 0,
+            fontStyle: 'serif',
+            hasGoldEmboss: true,
+            pattern: 'leather',
+          },
+          loreBook: lb,
+        })
+      } else if (realPositions.has(i) && realArray.length > 0) {
         const story = realArray.shift()!
         const seed = hashStr(story.id)
         books.push({
@@ -571,17 +629,144 @@ function SelectedBookOverlay({
   )
 }
 
+/* ───────── lore book overlay ───────── */
+function LoreBookOverlay({
+  loreBook,
+  onClose,
+}: {
+  loreBook: LoreBook
+  onClose: () => void
+}) {
+  return (
+    <div
+      className="book-selected-overlay"
+      onClick={onClose}
+    >
+      <div
+        className="book-cover-reveal"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-4 -right-4 z-10 w-8 h-8 rounded-full bg-charcoal-800/80 border border-gold/30 
+                     flex items-center justify-center text-parchment-muted hover:text-gold hover:border-gold/60 transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Book cover with 3D effect */}
+        <div className="book-cover-3d relative">
+          {/* Spine edge */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-4"
+            style={{
+              background: 'linear-gradient(90deg, #4a3118 0%, #6b4c2a 40%, #5c3d1e 100%)',
+              transform: 'perspective(600px) rotateY(-15deg)',
+              transformOrigin: 'right center',
+              borderRadius: '2px 0 0 2px',
+              boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.3)',
+              zIndex: 1,
+            }}
+          />
+
+          {/* Cover — gold-themed stylized cover */}
+          <div
+            className="relative ml-3 rounded-r-sm overflow-hidden flex flex-col items-center justify-center"
+            style={{
+              width: 280,
+              height: 400,
+              background: 'linear-gradient(160deg, #1a1410 0%, #0d1f1f 30%, #0a1818 60%, #1a1410 100%)',
+              boxShadow: `
+                4px 4px 20px rgba(0,0,0,0.6),
+                -2px 0 8px rgba(0,0,0,0.3),
+                inset 0 0 0 1px rgba(212,168,75,0.15),
+                inset 0 0 80px rgba(212,168,75,0.04)
+              `,
+            }}
+          >
+            {/* Decorative border frame */}
+            <div
+              className="absolute inset-3 rounded-sm"
+              style={{
+                border: '1px solid rgba(212,168,75,0.2)',
+                boxShadow: 'inset 0 0 20px rgba(212,168,75,0.03)',
+              }}
+            />
+            <div
+              className="absolute inset-5 rounded-sm"
+              style={{
+                border: '1px solid rgba(212,168,75,0.1)',
+              }}
+            />
+
+            {/* Sparkle icon */}
+            <Sparkles className="w-8 h-8 text-gold/50 mb-6" />
+
+            {/* Title */}
+            <h3 className="text-2xl font-serif text-gold text-center px-8 leading-tight">
+              {loreBook.title}
+            </h3>
+            <p className="text-sm font-serif text-gold/60 text-center mt-2 tracking-wider uppercase">
+              {loreBook.subtitle}
+            </p>
+
+            {/* Decorative line */}
+            <div className="mt-6 w-16 h-px bg-gold/30" />
+
+            {/* Foundational text badge */}
+            <p className="mt-6 text-xs text-parchment-muted/50 tracking-[0.15em] uppercase">
+              Foundational Lore
+            </p>
+
+            {/* Page edges effect (right side) */}
+            <div
+              className="absolute top-1 right-0 bottom-1 w-[3px]"
+              style={{
+                background: `repeating-linear-gradient(
+                  180deg,
+                  #f5f0e8 0px,
+                  #e8dcc4 1px,
+                  #ddd2b8 2px
+                )`,
+                boxShadow: 'inset -1px 0 1px rgba(0,0,0,0.15)',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Book info */}
+        <div className="mt-6 text-center max-w-xs">
+          <h3 className="text-xl font-serif text-parchment mb-1">{loreBook.title}: {loreBook.subtitle}</h3>
+          <p className="text-sm text-parchment-muted">{loreBook.description}</p>
+
+          <Link
+            href={loreBook.href}
+            className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 rounded-lg bg-gold/20 border border-gold/40
+                       text-gold hover:bg-gold/30 hover:border-gold/60 transition-all text-sm font-medium"
+          >
+            <BookOpen className="w-4 h-4" />
+            Begin Reading
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ───────── bookshelf row ───────── */
 function ShelfRow({
   stories,
   shelfIndex,
   storiesPerShelf,
   onSelectStory,
+  onSelectLoreBook,
 }: {
   stories: Story[]
   shelfIndex: number
   storiesPerShelf: number[]
   onSelectStory: (story: Story) => void
+  onSelectLoreBook: (loreBook: LoreBook) => void
 }) {
   const books = useShelfBooks(stories, shelfIndex, storiesPerShelf)
   // Varied bookshelf row height based on tallest book
@@ -616,7 +801,9 @@ function ShelfRow({
             style={book.style}
             isReal={book.isReal}
             onClick={
-              book.isReal && book.story
+              book.isLore && book.loreBook
+                ? () => onSelectLoreBook(book.loreBook!)
+                : book.isReal && book.story
                 ? () => onSelectStory(book.story!)
                 : undefined
             }
@@ -633,6 +820,7 @@ function ShelfRow({
 /* ───────── main bookshelf ───────── */
 export function Bookshelf({ stories }: { stories: Story[] }) {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null)
+  const [selectedLoreBook, setSelectedLoreBook] = useState<LoreBook | null>(null)
 
   // Distribute real stories across shelves (3 shelves)
   const shelfCount = 3
@@ -702,6 +890,7 @@ export function Bookshelf({ stories }: { stories: Story[] }) {
               shelfIndex={i}
               storiesPerShelf={storiesPerShelf}
               onSelectStory={setSelectedStory}
+              onSelectLoreBook={setSelectedLoreBook}
             />
           ))}
         </div>
@@ -733,6 +922,14 @@ export function Bookshelf({ stories }: { stories: Story[] }) {
         <SelectedBookOverlay
           story={selectedStory}
           onClose={() => setSelectedStory(null)}
+        />
+      )}
+
+      {/* Selected lore book overlay */}
+      {selectedLoreBook && (
+        <LoreBookOverlay
+          loreBook={selectedLoreBook}
+          onClose={() => setSelectedLoreBook(null)}
         />
       )}
     </div>
