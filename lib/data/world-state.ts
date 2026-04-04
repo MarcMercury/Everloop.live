@@ -271,7 +271,7 @@ export async function getShardEvents(shardId?: string, limit = 10): Promise<Shar
 // These are the immutable rules of the Everloop
 // =====================================================
 
-export const WORLD_CONSTANTS = {
+const WORLD_CONSTANTS = {
   // The Pattern holds reality together
   PATTERN_DESCRIPTION: 'The Pattern is the invisible lattice that holds reality together. Where it frays, the world becomes unreliable.',
   
@@ -310,7 +310,7 @@ export const WORLD_CONSTANTS = {
 /**
  * Get the Fray severity label for a given intensity
  */
-export function getFraySeverity(intensity: number): {
+function getFraySeverity(intensity: number): {
   label: string
   color: string
   description: string
@@ -353,7 +353,7 @@ export function getFraySeverity(intensity: number): {
  * Get monster spawn context for a Fray intensity
  * Monsters are CONSEQUENCES of the Fray, not random encounters
  */
-export function getMonsterContext(frayIntensity: number): {
+function getMonsterContext(frayIntensity: number): {
   spawnLikelihood: 'none' | 'rare' | 'occasional' | 'frequent' | 'constant'
   dominantType: keyof typeof WORLD_CONSTANTS.MONSTER_ORIGIN_TYPES
   narrativeNote: string
