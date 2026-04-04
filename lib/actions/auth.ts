@@ -43,6 +43,12 @@ export async function login(formData: FormData): Promise<AuthResult> {
     }
   }
   
+  // Update last_sign_in_at in profiles
+  await supabase
+    .from('profiles')
+    .update({ last_sign_in_at: new Date().toISOString() } as never)
+    .eq('id', data.user.id)
+
   // Ensure profile exists for this user (handle orphan case)
   const { data: profile, error: profileError } = await supabase
     .from('profiles')

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     role TEXT DEFAULT 'writer' CHECK (role IN ('writer', 'curator', 'lorekeeper', 'admin')),
     is_admin BOOLEAN DEFAULT FALSE,
     reputation_score INTEGER DEFAULT 0,
+    last_sign_in_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
