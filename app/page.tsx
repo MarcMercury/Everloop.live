@@ -109,7 +109,7 @@ export default function Home() {
               preload="none"
               className="w-full h-10 [&::-webkit-media-controls-panel]:bg-teal-deep/80 [&::-webkit-media-controls-current-time-display]:text-parchment-muted [&::-webkit-media-controls-time-remaining-display]:text-parchment-muted"
             >
-              <source src="/audio/everloop-narrative.mp3" type="audio/mpeg" />
+              <source src="/audio/ElevenLabs_The_Everloop_Intro.mp3" type="audio/mpeg" />
               Your browser does not support the audio element.
             </audio>
           </div>
