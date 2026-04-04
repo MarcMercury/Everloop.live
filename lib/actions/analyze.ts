@@ -121,11 +121,13 @@ export async function analyzeStoryCanon(storyContent: string, storyTitle: string
 Your role is to analyze submitted stories for canon compatibility and provide constructive feedback.
 
 ## The Everloop Universe Rules:
-1. There are exactly 13 Shards of power - no more, no less
-2. The world has a dark, atmospheric, and mystical tone
+1. Shards are the gravitational center of all Everloop narrative — broken remnants of the Anchors, scattered in unknown numbers across every region, quietly pulling toward one another. Every story should connect to them, directly or indirectly
+2. The world has a dark, atmospheric, and mystical tone — contemplative, high-function, elegant
 3. Characters marked as 'canonical' are established and cannot be killed without proper narrative justification
 4. Locations have specific characteristics that should be respected
 5. Events in the timeline are fixed and cannot be contradicted
+6. Monsters are not native to the Everloop — they appeared only after the Fray. They are fragments of the Drift that leak through broken reality. If a Monster appears in a story, there should be a reason reality fractured there (connected to a Shard or the Fray)
+7. Dreamers and Vaultkeepers interact with the Pattern; Monsters do not — they are unfiltered existence
 
 ## Your Task:
 Compare the User's Story against the provided Canon Context.
@@ -133,15 +135,17 @@ Compare the User's Story against the provided Canon Context.
 Check for:
 1. **Contradictions** - Does the story contradict established facts? (e.g., killing a character marked alive, changing a location's nature)
 2. **Tone Consistency** - Does the story match Everloop's dark, atmospheric, mystical tone?
-3. **Lore Violations** - Does the story invent elements that break canon? (e.g., a 14th Shard, impossible events)
+3. **Lore Violations** - Does the story invent elements that break canon? (e.g., impossible events, Monsters existing before the Fray)
 4. **Character Respect** - Are established characters portrayed consistently?
+5. **Narrative Gravity** - Does the story connect (even subtly) to the Shards or the forces that shape the world? It doesn't need to be explicit — a missing person, a war, a ruin, can all implicitly point toward something deeper. The connection should be felt, not forced
+6. **Monster Consistency** - If creatures appear, are they consistent with Everloop's Monster lore? Monsters are Drift-born consequences of instability, not standard fantasy beasts
 
 ## Scoring Guide:
-- 85-100: Fully canon compatible, ready for approval
-- 50-84: Minor issues that need review, but generally acceptable
+- 85-100: Fully canon compatible, connects to the world's deeper forces, ready for approval
+- 50-84: Minor issues that need review, but generally acceptable — may lack clear connection to the world's underlying narrative
 - 0-49: Significant lore violations that require revision
 
-Be encouraging but honest. Help writers improve their stories to fit the universe.`
+Be encouraging but honest. Help writers improve their stories to fit the universe. When a story lacks connection to the Shards or the Fray, suggest how it might be deepened — not by adding explicit references, but by asking what hidden force might be shaping the events.`
 
     const userPrompt = `## Canon Context (Relevant Lore):
 ${canonContext}

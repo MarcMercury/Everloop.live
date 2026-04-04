@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCampaign } from '@/lib/actions/campaigns'
 import { GAME_MODE_INFO } from '@/types/campaign'
@@ -18,9 +18,10 @@ import type {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, ArrowRight, Flame, Check, MapPin } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Flame, Check, MapPin, ChevronDown, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { REGIONS } from '@/lib/data/regions'
+import { WORLD_LOCATIONS } from '@/lib/data/region-locations'
 
 const STEPS = [
   'Identity',
@@ -141,24 +142,39 @@ export default function CreateCampaignPage() {
     // Region & Location
     regions: [] as string[],
     location_ids: [] as string[],
+    location_names: [] as string[],
   })
 
-  // Fetch canonical locations for the location picker
-  const [locations, setLocations] = useState<Array<{id: string; name: string; type: string; tags: string[]}>>([])  
-  useEffect(() => {
-    fetch('/api/map/locations')
-      .then(r => r.json())
-      .then(data => {
-        if (data.locations) {
-          setLocations(data.locations.filter((loc: { type: string }) => loc.type === 'location'))
-        }
-      })
-      .catch(() => {})
-  }, [])
+  // Track which region is expanded in the location picker
+  const [activeLocationRegion, setActiveLocationRegion] = useState<string | null>(null)
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
 
-  function getLocationRegion(tags: string[]): string | null {
-    const regionIds = REGIONS.map(r => r.id) as string[]
-    return tags.find(t => regionIds.includes(t)) ?? null
+  function toggleCategory(key: string) {
+    setExpandedCategories(prev => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  function toggleLocationName(name: string) {
+    setForm(f => ({
+      ...f,
+      location_names: f.location_names.includes(name)
+        ? f.location_names.filter(n => n !== name)
+        : [...f.location_names, name]
+    }))
+  }
+
+  function selectAllInCategory(items: string[]) {
+    setForm(f => {
+      const newNames = new Set(f.location_names)
+      items.forEach(item => newNames.add(item))
+      return { ...f, location_names: Array.from(newNames) }
+    })
+  }
+
+  function deselectAllInCategory(items: string[]) {
+    setForm(f => ({
+      ...f,
+      location_names: f.location_names.filter(n => !items.includes(n))
+    }))
   }
 
   function nextStep() {
@@ -255,7 +271,7 @@ export default function CreateCampaignPage() {
       fray_intensity: form.fray_intensity,
       tags: form.regions.map(r => `region:${r}`),
       referenced_entities: form.location_ids,
-      metadata: { regions: form.regions, location_ids: form.location_ids },
+      metadata: { regions: form.regions, location_ids: form.location_ids, location_names: form.location_names },
       status: 'draft',
     })
 
@@ -336,13 +352,13 @@ export default function CreateCampaignPage() {
           </div>
           <div>
             <Label htmlFor="description" className="text-parchment">Description</Label>
-            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="In the fracturing ruins of the Third Loop..." rows={3} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
+            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What pulls your players into this story? What is the local problem, the contained issue, the thing that feels bigger than it should? In the Everloop, every campaign begins somewhere ordinary... but never ends there." rows={3} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
           </div>
         </div>
 
         <div>
           <Label className="text-parchment mb-3 block">Regions</Label>
-          <p className="text-xs text-parchment-muted mb-3">Where in the Everloop does this campaign take place? Select one or more.</p>
+          <p className="text-xs text-parchment-muted mb-3">Where in the Everloop does this campaign take place? Every region holds Shards in unknown numbers — your choice shapes what gravity pulls your story forward.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {REGIONS.map(region => (
               <OptionCard
@@ -404,6 +420,11 @@ export default function CreateCampaignPage() {
         <p className="text-sm text-parchment-muted">
           Campaign length determines XP pacing, event frequency, narrative complexity, resource scarcity, and AI involvement level.
         </p>
+        <div className="p-4 rounded-lg border border-gold/10 bg-teal-rich/20 mt-2">
+          <p className="text-xs text-parchment-muted italic leading-relaxed">
+            &ldquo;Every campaign in the Everloop follows a natural arc: it begins with something local — a disturbance, a disappearance, a wrong that feels bigger than it should. It deepens into instability — encounters with distortion, creatures born from the Drift, clues toward something ancient. And it resolves at a Shard — a decision that ripples outward, stabilizing or fracturing the world further.&rdquo;
+          </p>
+        </div>
       </div>
     )
   }
@@ -601,48 +622,188 @@ export default function CreateCampaignPage() {
           </div>
         </div>
 
-        {/* Locations */}
+        {/* Locations — Region → Category → Area */}
         <div>
           <Label className="text-parchment mb-3 block text-lg font-serif">Locations</Label>
           <p className="text-xs text-parchment-muted mb-3">
-            Select canonical locations for this campaign. {form.regions.length > 0 ? 'Showing locations in selected regions.' : 'Select regions in Identity step to filter.'}
+            Select a region to explore its areas. Pick specific locations where your campaign takes place.
+            {form.location_names.length > 0 && <span className="text-gold ml-1">{form.location_names.length} selected</span>}
           </p>
-          {(() => {
-            const filtered = locations.filter(loc => {
-              if (form.regions.length === 0) return true
-              const locRegion = getLocationRegion(loc.tags)
-              return locRegion && form.regions.includes(locRegion)
-            })
-            if (filtered.length === 0) return (
-              <p className="text-sm text-parchment-muted/60 italic">No canonical locations found{form.regions.length > 0 ? ' in selected regions' : ''}. Locations are added as writers publish canon stories.</p>
-            )
-            return (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
-                {filtered.map(loc => (
+
+          {/* Region tabs */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {(() => {
+              const regionsToShow = form.regions.length > 0
+                ? WORLD_LOCATIONS.filter(r => form.regions.includes(r.id))
+                : WORLD_LOCATIONS
+              return regionsToShow.map(region => {
+                const selectedCount = region.categories.reduce((sum, cat) =>
+                  sum + cat.items.filter(item => form.location_names.includes(item)).length, 0
+                )
+                return (
                   <button
-                    key={loc.id}
+                    key={region.id}
                     type="button"
-                    onClick={() => setForm(f => ({
-                      ...f,
-                      location_ids: f.location_ids.includes(loc.id)
-                        ? f.location_ids.filter(id => id !== loc.id)
-                        : [...f.location_ids, loc.id]
-                    }))}
-                    className={`text-left p-3 rounded-lg border transition-all text-sm ${
-                      form.location_ids.includes(loc.id)
-                        ? 'border-gold/60 bg-gold/10 text-gold'
-                        : 'border-gold/10 bg-teal-rich/30 text-parchment-muted hover:border-gold/30'
+                    onClick={() => setActiveLocationRegion(activeLocationRegion === region.id ? null : region.id)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all ${
+                      activeLocationRegion === region.id
+                        ? 'border-gold/60 bg-gold/10 text-gold shadow-md shadow-gold/10'
+                        : selectedCount > 0
+                          ? 'border-gold/30 bg-teal-rich/50 text-parchment'
+                          : 'border-gold/10 bg-teal-rich/30 text-parchment-muted hover:border-gold/30'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{loc.name}</span>
-                    </div>
+                    <span>{region.emoji}</span>
+                    <span className="font-medium">{region.name}</span>
+                    {selectedCount > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-gold/20 text-gold">{selectedCount}</span>
+                    )}
                   </button>
-                ))}
+                )
+              })
+            })()}
+          </div>
+
+          {form.regions.length === 0 && !activeLocationRegion && (
+            <p className="text-xs text-parchment-muted/60 italic mb-3">
+              Tip: Select regions in the Identity step to narrow down your choices, or browse all regions above.
+            </p>
+          )}
+
+          {/* Region detail panel */}
+          {activeLocationRegion && (() => {
+            const region = WORLD_LOCATIONS.find(r => r.id === activeLocationRegion)
+            const regionInfo = REGIONS.find(r => r.id === activeLocationRegion)
+            if (!region || !regionInfo) return null
+
+            const allItems = region.categories.flatMap(c => c.items)
+            const allSelected = allItems.every(item => form.location_names.includes(item))
+            const someSelected = allItems.some(item => form.location_names.includes(item))
+
+            return (
+              <div className="rounded-xl border border-gold/20 bg-teal-rich/30 overflow-hidden">
+                {/* Region header */}
+                <div className="p-4 border-b border-gold/10" style={{ borderLeftWidth: 4, borderLeftColor: region.color }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-serif text-parchment flex items-center gap-2">
+                        <span>{region.emoji}</span> {region.name}
+                      </h3>
+                      <p className="text-xs text-parchment-muted mt-1">{regionInfo.description}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => allSelected ? deselectAllInCategory(allItems) : selectAllInCategory(allItems)}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-gold/20 text-parchment-muted hover:text-gold hover:border-gold/40 transition-all"
+                    >
+                      {allSelected ? 'Deselect All' : someSelected ? 'Select Remaining' : 'Select All'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Categories */}
+                <div className="divide-y divide-gold/5">
+                  {region.categories.map(category => {
+                    const catKey = `${region.id}-${category.heading}`
+                    const isExpanded = expandedCategories[catKey] !== false
+                    const catSelectedCount = category.items.filter(item => form.location_names.includes(item)).length
+                    const allCatSelected = catSelectedCount === category.items.length
+
+                    return (
+                      <div key={catKey}>
+                        {/* Category header */}
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(catKey)}
+                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gold/5 transition-all"
+                        >
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? <ChevronDown className="w-4 h-4 text-gold/60" /> : <ChevronRight className="w-4 h-4 text-parchment-muted" />}
+                            <span className="text-sm font-medium text-parchment">{category.heading}</span>
+                            <span className="text-xs text-parchment-muted">({category.items.length})</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {catSelectedCount > 0 && (
+                              <span className="text-xs px-1.5 py-0.5 rounded-full bg-gold/15 text-gold">
+                                {catSelectedCount}/{category.items.length}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                allCatSelected
+                                  ? deselectAllInCategory(category.items)
+                                  : selectAllInCategory(category.items)
+                              }}
+                              className="text-xs px-2 py-1 rounded border border-gold/15 text-parchment-muted hover:text-gold hover:border-gold/30 transition-all"
+                            >
+                              {allCatSelected ? 'Clear' : 'All'}
+                            </button>
+                          </div>
+                        </button>
+
+                        {/* Location items */}
+                        {isExpanded && (
+                          <div className="px-4 pb-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {category.items.map(item => {
+                              const isSelected = form.location_names.includes(item)
+                              return (
+                                <button
+                                  key={item}
+                                  type="button"
+                                  onClick={() => toggleLocationName(item)}
+                                  className={`text-left px-3 py-2 rounded-lg border transition-all text-sm ${
+                                    isSelected
+                                      ? 'border-gold/50 bg-gold/10 text-gold'
+                                      : 'border-gold/10 bg-teal-rich/20 text-parchment-muted hover:border-gold/25 hover:text-parchment'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <MapPin className={`w-3 h-3 shrink-0 ${isSelected ? 'text-gold' : 'text-parchment-muted/40'}`} />
+                                    <span className="truncate">{item}</span>
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )
           })()}
+
+          {/* Selected locations summary */}
+          {form.location_names.length > 0 && (
+            <div className="mt-4 p-3 rounded-lg border border-gold/15 bg-teal-rich/20">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-parchment-muted">Selected Locations ({form.location_names.length})</span>
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, location_names: [] }))}
+                  className="text-xs text-parchment-muted hover:text-red-400 transition-colors"
+                >
+                  Clear all
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {form.location_names.map(name => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-gold/10 text-gold border border-gold/20 cursor-pointer hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all"
+                    onClick={() => toggleLocationName(name)}
+                  >
+                    <MapPin className="w-2.5 h-2.5" />
+                    {name}
+                    <span className="ml-0.5">&times;</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
@@ -679,7 +840,8 @@ export default function CreateCampaignPage() {
               <Flame className="w-4 h-4 text-orange-400" />
               Fray Intensity
             </Label>
-            <div className="mt-2 flex items-center gap-3">
+            <p className="text-xs text-parchment-muted mt-1 mb-2">How deeply has reality fractured here? Higher Fray means more Monsters — Drift-born manifestations that leak through the cracks. It also means Shards are closer to the surface, pulling harder.</p>
+            <div className="flex items-center gap-3">
               <input type="range" min={0} max={100} value={Math.round(form.fray_intensity * 100)} onChange={e => setForm(f => ({ ...f, fray_intensity: parseInt(e.target.value) / 100 }))} className="flex-1 accent-gold" />
               <span className="text-sm text-parchment w-10 text-right">{Math.round(form.fray_intensity * 100)}%</span>
             </div>
@@ -797,10 +959,10 @@ export default function CreateCampaignPage() {
                 <span className="text-parchment ml-2">{form.regions.map(r => REGIONS.find(reg => reg.id === r)?.name ?? r).join(', ')}</span>
               </div>
             )}
-            {form.location_ids.length > 0 && (
+            {form.location_names.length > 0 && (
               <div className="col-span-2">
                 <span className="text-parchment-muted">Locations:</span>
-                <span className="text-parchment ml-2">{form.location_ids.map(id => locations.find(l => l.id === id)?.name ?? id).join(', ')}</span>
+                <span className="text-parchment ml-2">{form.location_names.join(', ')}</span>
               </div>
             )}
           </div>

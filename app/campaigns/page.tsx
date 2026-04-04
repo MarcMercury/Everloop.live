@@ -1,14 +1,17 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getConvergenceState } from '@/lib/data/world-state'
 import { GAME_MODE_INFO } from '@/types/campaign'
 import type { GameMode, CampaignStatus } from '@/types/campaign'
 import { Plus, Users, Clock, Flame, Search, Swords, Target, Skull, Eye } from 'lucide-react'
+import { WorldPulse, FrayIndicator, MonsterWarning } from '@/components/world-pulse'
 
 interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; updated_at: string; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
 
 export default async function CampaignsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const convergence = await getConvergenceState()
 
   // Fetch public campaigns
   const { data: campaignsData } = await supabase
@@ -113,8 +116,12 @@ export default async function CampaignsPage() {
       </div>
 
       {/* Game Mode Showcase */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-12">
-        {(Object.entries(GAME_MODE_INFO) as [GameMode, typeof GAME_MODE_INFO[GameMode]][]).map(([key, mode]) => (
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-12">
+        <div className="md:col-span-1">
+          <WorldPulse convergence={convergence} />
+        </div>
+        <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-5 gap-3">
+          {(Object.entries(GAME_MODE_INFO) as [GameMode, typeof GAME_MODE_INFO[GameMode]][]).map(([key, mode]) => (
           <div
             key={key}
             className="story-card text-center p-4 hover:border-gold/40 transition-all cursor-pointer"
@@ -124,6 +131,7 @@ export default async function CampaignsPage() {
             <div className="text-xs text-parchment-muted mt-1">{mode.estimatedLength}</div>
           </div>
         ))}
+        </div>
       </div>
 
       {/* My Campaigns */}
@@ -170,11 +178,9 @@ export default async function CampaignsPage() {
                       <Clock className="w-3 h-3" />
                       {campaign.session_count} sessions
                     </span>
-                    <span className="flex items-center gap-1">
-                      <Flame className="w-3 h-3" />
-                      Fray: {Math.round((campaign.fray_intensity ?? 0.5) * 100)}%
-                    </span>
+                    <FrayIndicator intensity={campaign.fray_intensity ?? 0.15} />
                   </div>
+                  <MonsterWarning frayIntensity={campaign.fray_intensity ?? 0.15} className="mt-2" />
                 </Link>
               )
             })}
@@ -218,10 +224,7 @@ export default async function CampaignsPage() {
                         <Users className="w-3 h-3" />
                         {campaign.max_players} max
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Flame className="w-3 h-3" />
-                        Fray: {Math.round((campaign.fray_intensity ?? 0.5) * 100)}%
-                      </span>
+                      <FrayIndicator intensity={campaign.fray_intensity ?? 0.15} />
                     </div>
                     {dm && (
                       <span className="text-xs text-parchment-muted">
@@ -229,6 +232,7 @@ export default async function CampaignsPage() {
                       </span>
                     )}
                   </div>
+                  <MonsterWarning frayIntensity={campaign.fray_intensity ?? 0.15} className="mt-2" />
                 </Link>
               )
             })}

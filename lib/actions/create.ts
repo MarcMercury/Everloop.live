@@ -56,13 +56,13 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
     }
 
     const typeDescriptions = {
-      character: 'a character in a fantasy universe called the Everloop, a world of looping time, ancient shards of power, and mystical forces',
-      location: 'a mystical location in the Everloop, a fantasy universe with looping time, ancient ruins, and ethereal landscapes',
-      creature: 'a creature or being in the Everloop, a fantasy universe filled with spirits, mythical beasts, and otherworldly entities',
+      character: 'a character in the Everloop, a world where reality is fractured into Shards — broken remnants of the Anchors that once held everything together. Characters are shaped by their relationship to the Shards: seeking them, protecting them, being changed by them, or drawn toward them without understanding why',
+      location: 'a location in the Everloop, a world where the Pattern frays and reality fractures. Locations exist in tension with the forces beneath them — some still stand because a Shard holds them together, others crumble because the Fray runs deep. Monsters born from the Drift may haunt places where reality has broken',
+      creature: 'a creature in the Everloop — a being that appeared only after the Fray, when the Rogue Architects broke the world. Creatures are manifestations of the Drift leaking through fractured reality: Pure Drift Intrusions (alien, unstable), Corrupted Reality (warped by Drift exposure), or Echo Constructs (formed from memory). If a creature exists, something broke in reality to let it through',
     }
 
     const prompt = input.existingDescription
-      ? `You are a creative writing assistant for the Everloop fantasy universe. 
+      ? `You are a creative writing assistant for the Everloop universe. 
          Expand and enrich this ${input.type} description while maintaining its core essence.
          
          Name: ${input.name}
@@ -72,11 +72,12 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          Write a rich, evocative 2-3 paragraph description that:
          - Expands on the existing description
          - Adds sensory details and atmosphere
-         - Hints at mysteries and connections to the broader world
-         - Maintains a fantasy tone appropriate for ${typeDescriptions[input.type]}
+         - Hints at connections to the deeper forces shaping the world (Shards, the Fray, the Pattern)
+         - ${input.type === 'creature' ? 'Implies what broke in reality to let this creature through — connect it to the Fray or a Shard' : input.type === 'character' ? 'Suggests how this person relates to the Shards — are they seeking, guarding, changed by, or unknowingly drawn toward one?' : 'Hints at what hidden force holds this place together or tears it apart — a buried Shard, a Fray zone, the pull of something deeper'}
+         - Maintains a contemplative, atmospheric tone appropriate for ${typeDescriptions[input.type]}
          
          Return ONLY the description text, no headers or labels.`
-      : `You are a creative writing assistant for the Everloop fantasy universe.
+      : `You are a creative writing assistant for the Everloop universe.
          Create a compelling description for ${typeDescriptions[input.type]}.
          
          Name: ${input.name}
@@ -85,8 +86,9 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          Write a rich, evocative 2-3 paragraph description that:
          - Captures the essence of the name and tagline
          - Includes sensory details and atmosphere
-         - Hints at mysteries and backstory
-         - Maintains a fantasy tone
+         - Hints at connections to the deeper forces of the Everloop — Shards, the Fray, the Pattern
+         - ${input.type === 'creature' ? 'Implies what fractured in reality to birth this creature. Monsters are consequences, not random beings. Connect it to the Drift, the Fray, or a Shard' : input.type === 'character' ? 'Suggests their relationship to the hidden forces shaping the world — the Shards that pull everything toward convergence' : 'Hints at what remains beneath this place — a Shard, a Fray zone, an instability that draws or repels'}
+         - Maintains a contemplative, atmospheric tone
          
          Return ONLY the description text, no headers or labels.`
 

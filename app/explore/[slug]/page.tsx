@@ -2,9 +2,11 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getCanonEntityBySlug } from '@/lib/data/canon'
+import { getEntityCrossReferences } from '@/lib/data/cross-references'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ArrowLeft, User, Calendar, Sparkles } from 'lucide-react'
+import { FrayIndicator } from '@/components/world-pulse'
+import { ArrowLeft, User, Calendar, Sparkles, BookOpen, Swords, Scroll, Link2, Diamond } from 'lucide-react'
 import type { CanonEntityType } from '@/types/database'
 
 interface EntityPageProps {
@@ -86,9 +88,11 @@ export default async function EntityPage({ params }: EntityPageProps) {
     notFound()
   }
 
+  const crossRefs = await getEntityCrossReferences(entity.id)
   const stabilityPercent = entity.stability_rating * 100
   const entityImage = (entity.metadata as { image_url?: string })?.image_url
   const extendedLore = entity.extended_lore as Record<string, unknown> | null
+  const regionMeta = (entity.metadata as { region?: string })?.region
 
   // Format dates
   const formatDate = (dateString: string) => {
@@ -270,11 +274,164 @@ export default async function EntityPage({ params }: EntityPageProps) {
 
             {/* Related Stories placeholder */}
             <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
-              <h3 className="text-lg font-serif text-gold">Appears In</h3>
-              <p className="text-sm text-parchment-muted">
-                Stories referencing this entity will appear here.
-              </p>
+              <h3 className="text-lg font-serif text-gold flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Appears In Stories
+              </h3>
+              {crossRefs.stories.length > 0 ? (
+                <ul className="space-y-2">
+                  {crossRefs.stories.map((story) => (
+                    <li key={story.id}>
+                      <Link
+                        href={`/stories/${story.slug}`}
+                        className="block p-2 rounded hover:bg-gold/5 transition-colors"
+                      >
+                        <span className="text-sm text-parchment hover:text-gold transition-colors">
+                          {story.title}
+                        </span>
+                        <span className="text-xs text-parchment-muted block mt-0.5">
+                          by {story.author_username}
+                          {story.canon_status === 'canonical' && (
+                            <span className="text-gold ml-2">✦ Canon</span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-parchment-muted italic">
+                  No stories reference this entity yet. This part of the world awaits its chronicler.
+                </p>
+              )}
             </div>
+
+            {/* Campaigns */}
+            {crossRefs.campaigns.length > 0 && (
+              <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
+                <h3 className="text-lg font-serif text-gold flex items-center gap-2">
+                  <Swords className="w-4 h-4" />
+                  Active Campaigns
+                </h3>
+                <ul className="space-y-2">
+                  {crossRefs.campaigns.map((campaign) => (
+                    <li key={campaign.id}>
+                      <Link
+                        href={`/campaigns/${campaign.slug}`}
+                        className="block p-2 rounded hover:bg-gold/5 transition-colors"
+                      >
+                        <span className="text-sm text-parchment hover:text-gold transition-colors">
+                          {campaign.title}
+                        </span>
+                        <span className="text-xs text-parchment-muted block mt-0.5">
+                          {campaign.game_mode.replace('_', ' ')} · {campaign.status}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Quests */}
+            {crossRefs.quests.length > 0 && (
+              <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
+                <h3 className="text-lg font-serif text-gold flex items-center gap-2">
+                  <Scroll className="w-4 h-4" />
+                  Active Quests
+                </h3>
+                <ul className="space-y-2">
+                  {crossRefs.quests.map((quest) => (
+                    <li key={quest.id}>
+                      <Link
+                        href={`/quests/${quest.slug}`}
+                        className="block p-2 rounded hover:bg-gold/5 transition-colors"
+                      >
+                        <span className="text-sm text-parchment hover:text-gold transition-colors">
+                          {quest.title}
+                        </span>
+                        <span className="text-xs text-parchment-muted block mt-0.5">
+                          {quest.quest_type.replace('_', ' ')} · {quest.status}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Related Entities */}
+            {crossRefs.related_entities.length > 0 && (
+              <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
+                <h3 className="text-lg font-serif text-gold flex items-center gap-2">
+                  <Link2 className="w-4 h-4" />
+                  Connected Lore
+                </h3>
+                <ul className="space-y-2">
+                  {crossRefs.related_entities.map((related) => (
+                    <li key={related.id}>
+                      <Link
+                        href={`/explore/${related.slug}`}
+                        className="flex items-center gap-2 p-2 rounded hover:bg-gold/5 transition-colors"
+                      >
+                        <span className="text-sm text-parchment hover:text-gold transition-colors">
+                          {related.name}
+                        </span>
+                        <Badge variant={related.type as CanonEntityType} className="text-[10px]">
+                          {related.type}
+                        </Badge>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Shard Connections */}
+            {crossRefs.shard_connections.length > 0 && (
+              <div className="p-6 rounded-lg bg-gradient-to-br from-purple-900/20 to-teal-rich/50 border border-purple-500/20 space-y-4">
+                <h3 className="text-lg font-serif text-purple-300 flex items-center gap-2">
+                  <Diamond className="w-4 h-4" />
+                  Shard Presence
+                </h3>
+                <ul className="space-y-2">
+                  {crossRefs.shard_connections.map((shard) => (
+                    <li key={shard.id} className="flex items-center justify-between p-2">
+                      <span className="text-sm text-purple-200">{shard.name}</span>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-purple-400 capitalize">{shard.state}</span>
+                        <span className="text-gold">⚡ {shard.power_level}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[10px] text-purple-400/60 italic">
+                  The Shards pull toward each other. Their presence here is not coincidence.
+                </p>
+              </div>
+            )}
+
+            {/* Lore impact summary */}
+            {crossRefs.total_references > 0 && (
+              <div className="p-4 rounded-lg bg-charcoal-800/50 border border-gold/5 text-center">
+                <span className="text-xs text-parchment-muted">
+                  Referenced across <span className="text-gold font-medium">{crossRefs.total_references}</span> elements of the world
+                </span>
+              </div>
+            )}
+
+            {/* Region context */}
+            {regionMeta && (
+              <div className="p-4 rounded-lg bg-teal-rich/50 border border-gold/10">
+                <h3 className="text-sm font-serif text-gold mb-2">Region</h3>
+                <Link
+                  href={`/map/${regionMeta}`}
+                  className="text-sm text-parchment hover:text-gold transition-colors"
+                >
+                  View on Map →
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </main>

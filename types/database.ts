@@ -1138,6 +1138,140 @@ export interface Database {
           updated_at?: string
         }
       }
+      regional_state: {
+        Row: {
+          id: string
+          region_id: string
+          region_name: string
+          fray_intensity: number
+          stability_index: number
+          shards_known: number
+          shards_gathered: number
+          hollow_count: number
+          drift_breach_count: number
+          active_campaigns: number
+          active_quests: number
+          canonical_stories: number
+          last_shard_event: string | null
+          last_fray_event: string | null
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          region_id: string
+          region_name: string
+          fray_intensity?: number
+          stability_index?: number
+          shards_known?: number
+          shards_gathered?: number
+          hollow_count?: number
+          drift_breach_count?: number
+          active_campaigns?: number
+          active_quests?: number
+          canonical_stories?: number
+          last_shard_event?: string | null
+          last_fray_event?: string | null
+          metadata?: Json
+        }
+        Update: {
+          fray_intensity?: number
+          stability_index?: number
+          shards_known?: number
+          shards_gathered?: number
+          hollow_count?: number
+          drift_breach_count?: number
+          active_campaigns?: number
+          active_quests?: number
+          canonical_stories?: number
+          last_shard_event?: string | null
+          last_fray_event?: string | null
+          metadata?: Json
+        }
+      }
+      shard_events: {
+        Row: {
+          id: string
+          shard_id: string | null
+          event_type: string
+          region_id: string | null
+          actor_id: string | null
+          campaign_id: string | null
+          quest_id: string | null
+          story_id: string | null
+          description: string | null
+          world_impact: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          shard_id?: string | null
+          event_type: string
+          region_id?: string | null
+          actor_id?: string | null
+          campaign_id?: string | null
+          quest_id?: string | null
+          story_id?: string | null
+          description?: string | null
+          world_impact?: string | null
+          metadata?: Json
+        }
+        Update: {
+          shard_id?: string | null
+          event_type?: string
+          region_id?: string | null
+          description?: string | null
+          world_impact?: string | null
+          metadata?: Json
+        }
+      }
+      world_events: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          event_type: string
+          severity: string
+          region_id: string | null
+          source_campaign_id: string | null
+          source_quest_id: string | null
+          source_story_id: string | null
+          affected_entities: string[]
+          affected_shards: string[]
+          world_state_changes: Json
+          is_visible: boolean
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          event_type: string
+          severity?: string
+          region_id?: string | null
+          source_campaign_id?: string | null
+          source_quest_id?: string | null
+          source_story_id?: string | null
+          affected_entities?: string[]
+          affected_shards?: string[]
+          world_state_changes?: Json
+          is_visible?: boolean
+          created_by?: string | null
+        }
+        Update: {
+          title?: string
+          description?: string | null
+          event_type?: string
+          severity?: string
+          region_id?: string | null
+          affected_entities?: string[]
+          affected_shards?: string[]
+          world_state_changes?: Json
+          is_visible?: boolean
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -1162,6 +1296,16 @@ export interface Database {
         Args: Record<string, never>
         Returns: boolean
       }
+      get_convergence_state: {
+        Args: Record<string, never>
+        Returns: {
+          total_shards: number
+          gathered_shards: number
+          convergence_percentage: number
+          global_fray: number
+          world_phase: string
+        }[]
+      }
     }
     Enums: {
       canon_entity_type: CanonEntityType
@@ -1178,6 +1322,9 @@ export type CanonEntity = Database['public']['Tables']['canon_entities']['Row']
 export type Shard = Database['public']['Tables']['shards']['Row']
 export type Story = Database['public']['Tables']['stories']['Row']
 export type StoryReview = Database['public']['Tables']['story_reviews']['Row']
+export type RegionalState = Database['public']['Tables']['regional_state']['Row']
+export type ShardEvent = Database['public']['Tables']['shard_events']['Row']
+export type WorldEvent = Database['public']['Tables']['world_events']['Row']
 
 // Insert types
 export type ProfileInsert = Database['public']['Tables']['profiles']['Insert']
@@ -1185,6 +1332,9 @@ export type CanonEntityInsert = Database['public']['Tables']['canon_entities']['
 export type ShardInsert = Database['public']['Tables']['shards']['Insert']
 export type StoryInsert = Database['public']['Tables']['stories']['Insert']
 export type StoryReviewInsert = Database['public']['Tables']['story_reviews']['Insert']
+export type RegionalStateInsert = Database['public']['Tables']['regional_state']['Insert']
+export type ShardEventInsert = Database['public']['Tables']['shard_events']['Insert']
+export type WorldEventInsert = Database['public']['Tables']['world_events']['Insert']
 
 // Update types
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
@@ -1192,3 +1342,6 @@ export type CanonEntityUpdate = Database['public']['Tables']['canon_entities']['
 export type ShardUpdate = Database['public']['Tables']['shards']['Update']
 export type StoryUpdate = Database['public']['Tables']['stories']['Update']
 export type StoryReviewUpdate = Database['public']['Tables']['story_reviews']['Update']
+export type RegionalStateUpdate = Database['public']['Tables']['regional_state']['Update']
+export type ShardEventUpdate = Database['public']['Tables']['shard_events']['Update']
+export type WorldEventUpdate = Database['public']['Tables']['world_events']['Update']
