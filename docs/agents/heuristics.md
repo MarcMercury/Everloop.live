@@ -63,6 +63,21 @@
 | Always verify edit button links have corresponding handler code - edit params need to be read | 2024-12-30 |
 | Table name is `story_chapters` NOT `chapters` - always verify `.from()` table names against schema | 2025-01 |
 | Entity column name is `type` NOT `entity_type` - verify column names against schema.sql | 2025-01 |
+
+---
+
+## External APIs / Integrations
+
+| Heuristic | Added |
+|-----------|-------|
+| ElevenLabs JS SDK uses camelCase params (`durationSeconds`) not snake_case (`duration_seconds`) | 2025-04 |
+| `Buffer` is not a valid `Response` body in Next.js — wrap with `new Uint8Array(buffer)` | 2025-04 |
+| Open5E SRD data is static — use `next: { revalidate: 86400 }` (24h cache) on fetch calls | 2025-04 |
+| Open5E v2 endpoints use `key` not `slug` for resource identifiers | 2025-04 |
+| dnd5eapi.co uses `index` (kebab-case) for resource IDs, e.g., `fire-bolt`, `chain-mail` | 2025-04 |
+| All ElevenLabs/paid API routes MUST require auth to prevent cost abuse | 2025-04 |
+| Combat tracker is stateless server-side — client passes full `combat_state` each request | 2025-04 |
+| `DndCondition` type does NOT include 'exhaustion' — it's tracked via `CharacterStatus.exhaustion_level` | 2025-04 |
 | All AI endpoints (analyze, refine, voice) MUST have auth checks to prevent OpenAI cost abuse | 2025-01 |
 | Mutation actions need ownership checks: fetch resource → verify author_id/user_id === user.id | 2025-01 |
 | `deleteStory` must cascade-delete all related tables (chapters, comments, revisions, collaborators, sessions, reviews) | 2025-01 |

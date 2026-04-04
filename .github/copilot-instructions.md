@@ -11,6 +11,7 @@
 - **Core Philosophy:** "Contemplative, High-Function, Elegant."
 - **Core Loop:** Write (Draft) → Review (AI Analysis) → Publish (Canon) → Read (Library).
 - **Core Narrative Purpose:** Everything in the Everloop bends toward the Shards — the broken remnants of the Anchors, scattered across every region in unknown numbers. All stories, quests, campaigns, characters, and creations ultimately advance, complicate, or illuminate the collective journey toward convergence. No one knows what happens when all Shards of a region are united, or what occurs if every Shard from every region is brought together. This mystery is the gravitational center of the entire platform. It should be felt, not stated — atmospheric, not didactic.
+- **Core Monster Principle:** Monsters are not native to the Everloop. They appeared only after the Fray — the breaking of the world by the Rogue Architects. They are fragments of the Drift leaking through fractured reality: forms not bound by the Pattern, broken combinations of matter, memory, and intent. If a Monster appears, reality broke there for a reason — and that reason connects to a Shard or the Fray. Monsters are consequences, not random encounters.
 
 ---
 
@@ -24,6 +25,9 @@
 | Auth | Supabase Auth (SSR) |
 | Styling | Tailwind CSS + Shadcn/UI |
 | AI | OpenAI via Vercel AI SDK |
+| 3D Models | Meshy AI |
+| Voice/Audio | ElevenLabs (TTS, Sound Effects) |
+| Game Data | Open5E API + D&D 5e SRD API |
 | Deployment | Vercel |
 
 ---

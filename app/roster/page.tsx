@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getUserEntityUsageStats } from '@/lib/data/cross-references'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,7 +11,10 @@ import {
   MapPin, 
   Sparkles,
   ImageIcon,
-  Clock
+  Clock,
+  BookOpen,
+  Swords,
+  Scroll
 } from 'lucide-react'
 import { DeleteEntityButton } from './delete-entity-button'
 import { SubmitToCanonButton } from './submit-to-canon-button'
@@ -85,6 +89,8 @@ export default async function RosterPage({
   const statusFilter = (params.status || 'all') as 'draft' | 'proposed' | 'all'
 
   const allEntities = await getUserEntities(user.id, statusFilter)
+  const usageStats = await getUserEntityUsageStats(user.id)
+  const usageMap = new Map(usageStats.map(s => [s.entityId, s]))
   const entities = typeFilter 
     ? allEntities.filter(e => e.type === typeFilter)
     : allEntities
@@ -271,6 +277,31 @@ export default async function RosterPage({
                           &quot;{tagline}&quot;
                         </p>
                       )}
+
+                      {/* World Impact - how this entity ripples through the Everloop */}
+                      {(() => {
+                        const usage = usageMap.get(entity.id)
+                        if (!usage || (usage.storyCount === 0 && usage.campaignCount === 0 && usage.questCount === 0)) return null
+                        return (
+                          <div className="flex items-center gap-3 text-[10px] text-parchment-muted mb-2 pb-2 border-b border-gold/5">
+                            {usage.storyCount > 0 && (
+                              <span className="flex items-center gap-0.5" title="Stories referencing this entity">
+                                <BookOpen className="w-3 h-3" /> {usage.storyCount}
+                              </span>
+                            )}
+                            {usage.campaignCount > 0 && (
+                              <span className="flex items-center gap-0.5" title="Campaigns using this entity">
+                                <Swords className="w-3 h-3" /> {usage.campaignCount}
+                              </span>
+                            )}
+                            {usage.questCount > 0 && (
+                              <span className="flex items-center gap-0.5" title="Quests referencing this entity">
+                                <Scroll className="w-3 h-3" /> {usage.questCount}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
                       
                       {/* Actions */}
                       <div className="flex flex-col gap-2 pt-2 border-t border-gold/10">

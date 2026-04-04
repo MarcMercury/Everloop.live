@@ -81,6 +81,43 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Step 3b: Fetch world state for context (Shards, regional Fray, convergence)
+    let worldStateContext = ''
+    const { data: convergence } = await supabase.rpc('get_convergence_state')
+    if (convergence) {
+      worldStateContext += `\nWorld Phase: ${(convergence as Record<string, unknown>).world_phase}`
+      worldStateContext += `\nGlobal Fray Intensity: ${((convergence as Record<string, unknown>).global_fray_intensity as number * 100).toFixed(1)}%`
+      worldStateContext += `\nShards Gathered: ${(convergence as Record<string, unknown>).gathered_shards}/${(convergence as Record<string, unknown>).total_shards}`
+      worldStateContext += `\nConvergence: ${(convergence as Record<string, unknown>).convergence_percentage}%`
+    }
+
+    const { data: regionalStates } = await supabase
+      .from('regional_state')
+      .select('region_name, fray_intensity, stability_index, shards_known, shards_gathered')
+      .order('fray_intensity', { ascending: false })
+      .limit(8)
+
+    if (regionalStates && regionalStates.length > 0) {
+      worldStateContext += '\n\nRegional Status:'
+      for (const r of regionalStates as Array<{region_name: string; fray_intensity: number; stability_index: number; shards_known: number; shards_gathered: number}>) {
+        worldStateContext += `\n- ${r.region_name}: Fray ${(r.fray_intensity * 100).toFixed(0)}%, Stability ${(r.stability_index * 100).toFixed(0)}%, Shards ${r.shards_gathered}/${r.shards_known} gathered`
+      }
+    }
+
+    const { data: recentEvents } = await supabase
+      .from('world_events')
+      .select('title, description, event_type, severity, region_id')
+      .eq('is_visible', true)
+      .order('created_at', { ascending: false })
+      .limit(5)
+
+    if (recentEvents && recentEvents.length > 0) {
+      worldStateContext += '\n\nRecent World Events:'
+      for (const e of recentEvents as Array<{title: string; description: string | null; event_type: string; severity: string; region_id: string | null}>) {
+        worldStateContext += `\n- [${e.severity}] ${e.title}: ${e.description ?? 'No details'} (${e.event_type}${e.region_id ? `, in ${e.region_id}` : ''})`
+      }
+    }
+
     // Step 4: Build RAG context
     const loreContext = entities.length > 0
       ? entities.map(e => {
@@ -104,11 +141,20 @@ ROLE: Answer questions about the Everloop universe using ONLY the provided Lore 
 
 WORLD OVERVIEW:
 - The Pattern is the vast lattice binding time, space, and thought — woven by the First Architects
-- The Fray is the unraveling edge of reality where loops collapse
-- Shards are broken remnants of the Anchors that once held the world together
+- The Fray is the unraveling edge of reality where the Pattern frays and loops collapse — caused by the Rogue Architects breaking the world
+- Shards are broken remnants of the Anchors that once held the world together — scattered in unknown numbers across every region, quietly pulling toward one another. Every story in the Everloop ultimately bends toward the Shards
 - The Fold is the intermediary plane of thought and design
-- The Drift is the primordial sea of chaos
+- The Drift is the primordial sea of chaos from which the First Architects drew substance
+- Monsters appeared only after the Fray — they are not native to the Everloop. They are fragments of the Drift that leaked through broken reality: forms not bound by the Pattern, broken combinations of matter, memory, and intent. Where the Fray is strongest, Monsters manifest
+- Monster types include Pure Drift Intrusions (alien, unstable), Corrupted Reality (warped beings tied to Fray zones), and Echo Constructs (formed from memory, repetitive)
+- Dreamers and Vaultkeepers interact with the Pattern; Monsters do not — they are unfiltered existence
 - Canon entities have types: character, location, artifact, event, faction, concept, creature
+
+NARRATIVE PRINCIPLES:
+- Everything in the Everloop bends toward the Shards. A missing person leads to someone who saw a Shard. A war is fought over something no one fully understands. A ruin still stands because something beneath it holds it together
+- Shards behave like gravity, not objectives — people don't collect them, they deal with consequences of them
+- If Monsters appear somewhere, reality broke there for a reason — and that reason connects to a Shard or the Fray
+- The world is reorganizing itself around the Shards. The Monsters are what happens when that process fails
 
 RULES:
 - Be precise. Cite entity names when referencing lore.
@@ -116,7 +162,9 @@ RULES:
 - Never invent facts not in the provided context.
 - If asked about something not in the lore, say "This isn't recorded in the current canon" rather than guessing.
 - Keep answers concise but thorough. Use markdown formatting.
-- Match the contemplative, high-function tone of Everloop.`
+- Match the contemplative, high-function tone of Everloop.
+- When discussing Shards, emphasize their gravitational nature — they pull stories and people toward them
+- When discussing Monsters, emphasize they are consequences of the Fray, not random beasts`
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
@@ -135,7 +183,7 @@ RULES:
       content: `## Lore Context (Retrieved from canon database):
 ${loreContext}
 
-${storyContext ? `## Relevant Canon Stories:\n${storyContext}\n\n` : ''}## Question:
+${storyContext ? `## Relevant Canon Stories:\n${storyContext}\n\n` : ''}${worldStateContext ? `## Current World State:\n${worldStateContext}\n\n` : ''}## Question:
 ${question}`,
     })
 

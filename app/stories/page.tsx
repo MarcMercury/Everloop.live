@@ -1,10 +1,12 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getConvergenceState } from '@/lib/data/world-state'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen } from 'lucide-react'
 import { CANON_STORY_STATUSES } from '@/lib/utils'
 import { Bookshelf, BookshelfSkeleton } from '@/components/library/bookshelf-3d'
+import { WorldPulse } from '@/components/world-pulse'
 
 export const metadata = {
   title: 'The Library | Everloop',
@@ -110,6 +112,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
   const params = searchParams ? await searchParams : { search: undefined }
   const search = params.search?.trim() ? params.search.trim() : undefined
   const storyCount = await getStoryCount()
+  const convergence = await getConvergenceState()
 
   return (
     <div className="min-h-screen">
@@ -143,6 +146,11 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
               <BookOpen className="w-3 h-3 mr-1" />
               {storyCount} {storyCount === 1 ? 'Story' : 'Stories'} in Circulation
             </Badge>
+          </div>
+
+          {/* World Pulse - the living state of the Everloop */}
+          <div className="flex justify-center mt-4">
+            <WorldPulse convergence={convergence} compact />
           </div>
         </div>
 

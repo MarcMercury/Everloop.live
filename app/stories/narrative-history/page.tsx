@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, BookOpen, Sparkles, Clock } from 'lucide-react'
+import { ArrowLeft, BookOpen, Sparkles, Clock, Headphones } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export const metadata = {
@@ -249,6 +249,22 @@ export default function NarrativeHistoryPage() {
               <Clock className="w-4 h-4" />
               ~8 min read
             </span>
+          </div>
+
+          {/* Audio Version */}
+          <div className="mt-8 p-4 rounded-lg border border-gold/20 bg-gold/5">
+            <div className="flex items-center gap-2 mb-3 text-gold text-sm font-medium">
+              <Headphones className="w-4 h-4" />
+              Listen — Full Narration
+            </div>
+            <audio
+              controls
+              preload="metadata"
+              className="w-full [&::-webkit-media-controls-panel]:bg-teal-deep/80"
+              src="/audio/ElevenLabs_Everlop_full_Narator.mp3"
+            >
+              Your browser does not support the audio element.
+            </audio>
           </div>
         </header>
 

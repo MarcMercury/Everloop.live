@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getConvergenceState } from '@/lib/data/world-state'
 import { Plus, Users, Clock, Sparkles, Compass, Zap, Globe, Bot } from 'lucide-react'
+import { WorldPulse } from '@/components/world-pulse'
 
 interface QuestRow {
   id: string
@@ -40,6 +42,7 @@ const DIFFICULTY_BADGE: Record<string, { color: string; label: string }> = {
 export default async function QuestsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const convergence = await getConvergenceState()
 
   // Fetch available quests
   const { data: questsData } = await supabase
@@ -97,14 +100,22 @@ export default async function QuestsPage() {
       </div>
 
       {/* Quest Type Showcase */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-12">
-        {Object.entries(QUEST_TYPE_INFO).map(([key, info]) => (
-          <div key={key} className="story-card p-4 text-center">
-            <div className="flex justify-center text-gold mb-2">{info.icon}</div>
-            <h3 className="text-sm font-serif text-parchment">{info.label}</h3>
-            <p className="text-xs text-parchment-muted mt-1 line-clamp-2">{info.desc}</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-12">
+        <div className="md:col-span-1 space-y-3">
+          <WorldPulse convergence={convergence} />
+          <div className="p-3 rounded-lg bg-purple-900/10 border border-purple-500/10 text-xs text-purple-300/70 italic leading-relaxed">
+            Every quest follows the pull of the Shards. Whether you know it or not, your path leads toward what was broken — and what might yet be made whole.
           </div>
-        ))}
+        </div>
+        <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {Object.entries(QUEST_TYPE_INFO).map(([key, info]) => (
+            <div key={key} className="story-card p-4 text-center">
+              <div className="flex justify-center text-gold mb-2">{info.icon}</div>
+              <h3 className="text-sm font-serif text-parchment">{info.label}</h3>
+              <p className="text-xs text-parchment-muted mt-1 line-clamp-2">{info.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* My Active Quests */}

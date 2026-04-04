@@ -51,21 +51,22 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
   character: {
     label: 'Character',
     namePlaceholder: 'Kaelen Voss, The Drift Warden...',
-    nameHint: 'Names in the Everloop often carry meaning—titles, epithets, or echoes of past lives.',
+    nameHint: 'Names in the Everloop often carry meaning — titles, epithets, or echoes of past lives.',
     taglinePlaceholder: 'A soul caught between two ages...',
     taglineHint: 'Capture their essence in a single breath. What defines them?',
     taglineExample: '"The last keeper of the Unwritten Oath"',
     descriptionPlaceholder: `Who is this person? Consider:
 
-• Their role in the world—are they a wanderer, a scholar, a forgotten ruler?
-• What drives them—duty, revenge, love, or something they cannot name?
-• Physical presence—how do others perceive them when they enter a room?
-• Their connection to the Loops—are they aware of time's cycles?
-• Secrets they carry—what do they hide, even from themselves?`,
+• Their role in the world — are they a wanderer, a scholar, a forgotten ruler?
+• What drives them — duty, revenge, love, or something they cannot name? Are they seeking something, protecting something, or being pulled toward something they don't understand?
+• Physical presence — how do others perceive them when they enter a room?
+• Their connection to the deeper forces — do they seek Shards? Guard one unknowingly? Have they been changed by proximity to the Fray?
+• Secrets they carry — what do they hide, even from themselves?`,
     descriptionHints: [
-      'What haunts them from a past Loop?',
+      'What are they being pulled toward, even if they don\'t know it?',
       'What relationship defines them most?',
       'What would they sacrifice everything for?',
+      'How do they relate to the Shards — seeking, protecting, misusing, or affected by them?',
     ],
     emptyImageHint: 'Describe your character\'s appearance and presence, then generate their portrait',
   },
@@ -73,21 +74,22 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
   location: {
     label: 'Location',
     namePlaceholder: 'The Hollow Spire, Verandell Harbor...',
-    nameHint: 'Places in the Everloop have names that echo through time—some remembered, some forbidden.',
+    nameHint: 'Places in the Everloop have names that echo through time — some remembered, some forbidden.',
     taglinePlaceholder: 'Where the sea meets the sky\'s tears...',
     taglineHint: 'Evoke the feeling of arriving here for the first time.',
     taglineExample: '"A lighthouse that guides ships to shores that no longer exist"',
     descriptionPlaceholder: `Paint this place into existence. Consider:
 
-• The atmosphere—what does one feel upon arriving? Dread? Wonder? Peace?
-• Sensory details—the sounds, smells, textures that make it real
-• History echoes—what happened here that left its mark?
-• The Loop's touch—does time flow strangely here? What persists?
-• Who dwells here—or what drove them away?`,
+• The atmosphere — what does one feel upon arriving? Dread? Wonder? Peace?
+• Sensory details — the sounds, smells, textures that make it real
+• History echoes — what happened here that left its mark?
+• The hidden force — is this place still standing because something beneath it holds it together? Is there a Shard buried here, a Fray zone nearby, or instability that draws Monsters?
+• Who dwells here — or what drove them away?`,
     descriptionHints: [
-      'What secret does this place guard?',
-      'How has it changed across the Loops?',
+      'What hidden force is holding this place together — or tearing it apart?',
+      'How has the Fray touched this place? Are Monsters drawn here?',
       'What draws travelers here despite the danger?',
+      'What remains beneath this region that no one speaks of?',
     ],
     emptyImageHint: 'Describe the atmosphere and landmarks, then generate concept art of this place',
   },
@@ -95,23 +97,24 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
   creature: {
     label: 'Creature',
     namePlaceholder: 'Veilstalker, Ember Wraith, The Hollow King...',
-    nameHint: 'Creatures often earn names from those who survive encountering them.',
+    nameHint: 'Creatures often earn names from those who survive encountering them. In the Everloop, what survivors call something matters more than what it is.',
     taglinePlaceholder: 'Born from the space between heartbeats...',
     taglineHint: 'What whispered warning would travelers share about this being?',
     taglineExample: '"It wears the faces of those who trusted too easily"',
     descriptionPlaceholder: `Bring this being to life. Consider:
 
-• Its nature—is it a beast, a spirit, something that defies categorization?
-• Origins—was it created, evolved, or did it simply always exist?
-• Behavior—how does it hunt, communicate, or interact with the world?
-• The threat or wonder it represents—is it dangerous, sacred, or both?
-• Its place in the Loop—does it remember past cycles? Does it transcend them?`,
+• Its nature — is it a Drift-born intrusion, a corrupted fragment of reality, or an echo of something that once was?
+• Origins — Monsters in the Everloop only appeared after the Fray. What broke in reality to let this through? Is it tied to a Shard, a Fray zone, or something deeper?
+• Behavior — does it hunt, wander, repeat? Does it seem drawn to something it cannot name?
+• The threat or wonder it represents — is it dangerous, tragic, or both?
+• Its form — does it hold a consistent shape, or does it shift? What elements of the Drift bleed through it?`,
     descriptionHints: [
+      'What broke in reality to allow this creature through?',
+      'Is it drawn to something — a Shard, a place, a person?',
       'What do people get wrong about this creature?',
-      'Is there a way to survive an encounter?',
-      'What does it want that mortals cannot understand?',
+      'Is there a way to survive an encounter, or only to endure one?',
     ],
-    emptyImageHint: 'Detail the creature\'s form and nature, then generate its visual design',
+    emptyImageHint: 'Detail the creature\'s form and the wrongness of reality around it, then generate its visual design',
   },
 }
 

@@ -7,6 +7,25 @@ import * as THREE from 'three'
 import { Loader2, AlertTriangle } from 'lucide-react'
 
 // ═══════════════════════════════════════════════════════════
+// Proxy helper — rewrites external Meshy URLs through our API
+// to avoid CORS blocks from assets.meshy.ai / CloudFront
+// ═══════════════════════════════════════════════════════════
+
+const PROXY_HOSTS = ['assets.meshy.ai', 'd2eii41no6ts20.cloudfront.net', 'd39bg2k09y8bsb.cloudfront.net']
+
+function proxyUrl(url: string): string {
+  try {
+    const parsed = new URL(url, window.location.origin)
+    if (PROXY_HOSTS.some((h) => parsed.hostname === h || parsed.hostname.endsWith('.cloudfront.net'))) {
+      return `/api/meshy/proxy-glb?url=${encodeURIComponent(url)}`
+    }
+  } catch {
+    // relative / local path — use as-is
+  }
+  return url
+}
+
+// ═══════════════════════════════════════════════════════════
 // Error Boundary for catching GLB load failures
 // ═══════════════════════════════════════════════════════════
 
@@ -55,7 +74,8 @@ function ErrorFallback({ message }: { message?: string }) {
 // ═══════════════════════════════════════════════════════════
 
 function Model({ url, autoRotate }: { url: string; autoRotate: boolean }) {
-  const { scene } = useGLTF(url)
+  const proxied = proxyUrl(url)
+  const { scene } = useGLTF(proxied)
   const ref = useRef<THREE.Group>(null)
 
   // Auto-center and scale the model to fit within a unit sphere

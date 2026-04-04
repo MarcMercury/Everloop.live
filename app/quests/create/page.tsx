@@ -20,10 +20,10 @@ const QUEST_TYPE_OPTIONS: { value: QuestType; label: string; icon: React.ReactNo
 ]
 
 const DIFFICULTY_OPTIONS: { value: DifficultyPreset; label: string; icon: string; desc: string }[] = [
-  { value: 'story_mode', label: 'Story Mode', icon: '🟢', desc: 'Relaxed, narrative-focused' },
-  { value: 'standard', label: 'Standard', icon: '🟡', desc: 'Balanced challenge' },
-  { value: 'brutal', label: 'Brutal', icon: '🔴', desc: 'Resource scarce, real danger' },
-  { value: 'chaos', label: 'Chaos', icon: '⚫', desc: 'Reality bends unpredictably' },
+  { value: 'story_mode', label: 'Story Mode', icon: '🟢', desc: 'Narrative-focused, the Shard reveals itself gently' },
+  { value: 'standard', label: 'Standard', icon: '🟡', desc: 'Balanced challenge, the world tests those who seek' },
+  { value: 'brutal', label: 'Brutal', icon: '🔴', desc: 'Resources scarce, Monsters stir, the Fray runs deep' },
+  { value: 'chaos', label: 'Chaos', icon: '⚫', desc: 'Reality fractures — the Drift presses through' },
 ]
 
 const NARRATOR_STYLES = ['atmospheric', 'cinematic', 'minimalist', 'verbose', 'poetic'] as const
@@ -134,7 +134,7 @@ export default function CreateQuestPage() {
         <span className="canon-text">Quest</span>
       </h1>
       <p className="text-parchment-muted mb-8">
-        Design an Everloop experience for players. No DM required—the system guides the narrative.
+        Design an Everloop experience for players. Every quest in the Everloop ultimately bends toward a Shard — what hidden force shapes yours?
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
@@ -167,14 +167,14 @@ export default function CreateQuestPage() {
           </div>
           <div>
             <Label htmlFor="description" className="text-parchment">Description</Label>
-            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="A fractured memory calls to you from beyond the veil..." rows={4} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
+            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What pulls players into this quest? A fractured memory, a missing scholar, a ruin that should have collapsed long ago... something beneath the surface is holding this story together." rows={4} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
           </div>
         </div>
 
         {/* Regions */}
         <div>
           <Label className="text-parchment mb-3 block text-lg font-serif">Regions</Label>
-          <p className="text-xs text-parchment-muted mb-3">Where in the Everloop does this quest take place? Select one or more.</p>
+          <p className="text-xs text-parchment-muted mb-3">Where in the Everloop does this quest take place? Every region holds Shards in unknown numbers — choose where the instability runs deepest.</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {REGIONS.map(region => (
               <button

@@ -1,7 +1,13 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getRegionById, getRegionIds } from '@/lib/data/regions'
+import { getRegionalState } from '@/lib/data/world-state'
+import { getShardsByRegion } from '@/lib/data/world-state'
+import { getStoriesByRegion } from '@/lib/data/cross-references'
 import RegionMapClient from './region-map-client'
+import { FrayIndicator, MonsterWarning } from '@/components/world-pulse'
+import Link from 'next/link'
+import type { RegionId } from '@/lib/data/regions'
 
 interface RegionMapPageProps {
   params: Promise<{ region: string }>
@@ -41,11 +47,70 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
   const region = getRegionById(regionId)
   if (!region) notFound()
 
+  const [regionalState, shards, stories] = await Promise.all([
+    getRegionalState(regionId as RegionId),
+    getShardsByRegion(regionId),
+    getStoriesByRegion(regionId),
+  ])
+
   return (
     <main className="flex-1 relative">
       <Suspense fallback={<RegionMapSkeleton />}>
         <RegionMapClient region={region} />
       </Suspense>
+
+      {/* Regional State Overlay */}
+      <div className="absolute bottom-4 left-4 max-w-xs space-y-3 z-10">
+        {/* Fray Status */}
+        {regionalState && (
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-2">
+            <h3 className="text-xs font-serif text-gold">{region.name} — World State</h3>
+            <FrayIndicator intensity={regionalState.fray_intensity} showDescription />
+            <MonsterWarning frayIntensity={regionalState.fray_intensity} />
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-parchment-muted pt-1 border-t border-gold/5">
+              <div>Stability: <span className="text-parchment">{Math.round(regionalState.stability_index * 100)}%</span></div>
+              <div>Shards Known: <span className="text-gold">{regionalState.shards_known}</span></div>
+              <div>Campaigns: <span className="text-parchment">{regionalState.active_campaigns}</span></div>
+              <div>Stories: <span className="text-parchment">{regionalState.canonical_stories}</span></div>
+            </div>
+          </div>
+        )}
+
+        {/* Shard Presence */}
+        {shards.length > 0 && (
+          <div className="p-3 rounded-lg bg-purple-900/80 backdrop-blur border border-purple-500/20 space-y-1.5">
+            <h3 className="text-xs font-serif text-purple-300">Shard Presence</h3>
+            {shards.map(shard => (
+              <div key={shard.id} className="flex items-center justify-between text-[10px]">
+                <span className="text-purple-200">{shard.name}</span>
+                <span className="text-purple-400 capitalize">{shard.state} ⚡{shard.power_level}</span>
+              </div>
+            ))}
+            <p className="text-[9px] text-purple-400/50 italic pt-1">
+              The Shards pull toward each other across the breaking world.
+            </p>
+          </div>
+        )}
+
+        {/* Canon Stories set here */}
+        {stories.length > 0 && (
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-1.5">
+            <h3 className="text-xs font-serif text-gold">Canon Stories in {region.name}</h3>
+            {stories.slice(0, 3).map(story => (
+              <Link
+                key={story.id}
+                href={`/stories/${story.slug}`}
+                className="block text-[10px] text-parchment hover:text-gold transition-colors"
+              >
+                {story.title} <span className="text-parchment-muted">by {story.author_username}</span>
+              </Link>
+            ))}
+            {stories.length > 3 && (
+              <span className="text-[10px] text-parchment-muted">+{stories.length - 3} more</span>
+            )}
+          </div>
+        )}
+      </div>
     </main>
   )
 }
