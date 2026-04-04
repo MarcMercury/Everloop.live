@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { 
@@ -11,18 +11,39 @@ import {
   CheckCircle, 
   XCircle, 
   PenLine, 
-  Trash2, 
   ExternalLink,
-  BookOpen,
   Award,
-  AlertCircle
+  AlertCircle,
+  Swords,
+  Users,
+  Shield,
+  Crown,
+  Plus
 } from 'lucide-react'
 import { DeleteStoryButton } from './delete-story-button'
 import { WritingStatsCard } from '@/components/dashboard/writing-stats-card'
+import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { GAME_MODE_INFO } from '@/types/campaign'
+import type { GameMode } from '@/types/campaign'
+import type { PlayerCharacter } from '@/types/player-character'
 
 export const metadata = {
   title: 'My Dashboard | Everloop',
   description: 'Manage your stories and track your progress in the Everloop universe',
+}
+
+interface DashboardCampaign {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  dm_id: string
+  game_mode: string
+  status: string
+  max_players: number
+  session_count: number
+  updated_at: string
+  dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null
 }
 
 interface UserStory {
@@ -213,6 +234,145 @@ function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'published' | 
   )
 }
 
+// =====================================================
+// PLAYING SECTION HELPERS
+// =====================================================
+
+async function getUserCampaigns(userId: string) {
+  const supabase = await createClient()
+
+  // Campaigns I DM
+  const { data: dmCampaigns } = await supabase
+    .from('campaigns')
+    .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .eq('dm_id', userId)
+    .order('updated_at', { ascending: false })
+
+  // Campaigns I'm a player in
+  const { data: playerEntries } = await supabase
+    .from('campaign_players')
+    .select('campaign_id')
+    .eq('user_id', userId)
+    .in('status', ['pending', 'accepted'])
+
+  let playerCampaigns: DashboardCampaign[] = []
+  if (playerEntries && playerEntries.length > 0) {
+    const ids = (playerEntries as unknown as { campaign_id: string }[]).map(p => p.campaign_id)
+    const { data } = await supabase
+      .from('campaigns')
+      .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+      .in('id', ids)
+      .order('updated_at', { ascending: false })
+    playerCampaigns = (data ?? []) as unknown as DashboardCampaign[]
+  }
+
+  const dmList = (dmCampaigns ?? []) as unknown as DashboardCampaign[]
+  // Tag which are DM'd vs played
+  const dmd = dmList.map(c => ({ ...c, isDm: true }))
+  const played = playerCampaigns.filter(c => !dmList.some(d => d.id === c.id)).map(c => ({ ...c, isDm: false }))
+
+  return { dmd, played }
+}
+
+async function getUserCharacters(userId: string) {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('player_characters')
+    .select('id, name, race, class, level, current_hp, max_hp, armor_class, is_active, portrait_url, theme_color, campaign_name, updated_at')
+    .eq('user_id', userId)
+    .order('is_active', { ascending: false })
+    .order('updated_at', { ascending: false })
+
+  return (data ?? []) as unknown as Pick<PlayerCharacter, 'id' | 'name' | 'race' | 'class' | 'level' | 'current_hp' | 'max_hp' | 'armor_class' | 'is_active' | 'portrait_url' | 'theme_color' | 'campaign_name' | 'updated_at'>[]
+}
+
+function getStatusBadge(status: string) {
+  const map: Record<string, { color: string; label: string }> = {
+    draft: { color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', label: 'Draft' },
+    lobby: { color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', label: 'Lobby' },
+    ready: { color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', label: 'Ready' },
+    active: { color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', label: 'Active' },
+    paused: { color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', label: 'Paused' },
+    complete: { color: 'bg-gold/20 text-gold border-gold/30', label: 'Complete' },
+    archived: { color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', label: 'Archived' },
+    recruiting: { color: 'bg-sky-500/20 text-sky-400 border-sky-500/30', label: 'Recruiting' },
+    in_progress: { color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', label: 'In Progress' },
+  }
+  const info = map[status] || { color: 'bg-slate-500/20 text-slate-400 border-slate-500/30', label: status }
+  return <Badge className={info.color}>{info.label}</Badge>
+}
+
+function CampaignRow({ campaign, isDm }: { campaign: DashboardCampaign; isDm: boolean }) {
+  const modeInfo = GAME_MODE_INFO[campaign.game_mode as GameMode]
+  return (
+    <div className="flex items-center justify-between p-4 rounded-lg bg-teal-rich/30 border border-gold/10 hover:border-gold/20 transition-colors">
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="font-serif text-lg text-parchment truncate">{campaign.title}</h3>
+          {isDm && (
+            <Badge className="bg-gold/20 text-gold border-gold/30 text-xs gap-1">
+              <Crown className="w-3 h-3" />
+              DM
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-3 mt-1 text-sm text-parchment-muted">
+          {modeInfo && <span>{modeInfo.icon} {modeInfo.name}</span>}
+          {getStatusBadge(campaign.status)}
+          <span>{campaign.session_count} sessions</span>
+          {!isDm && campaign.dm && (
+            <span>DM: {campaign.dm.display_name || campaign.dm.username}</span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 ml-4">
+        <Link href={`/campaigns/${campaign.slug}`}>
+          <Button variant="outline" size="sm" className="gap-1">
+            <ExternalLink className="w-3 h-3" />
+            Open
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function CharacterRow({ character }: { character: Pick<PlayerCharacter, 'id' | 'name' | 'race' | 'class' | 'level' | 'current_hp' | 'max_hp' | 'armor_class' | 'is_active' | 'portrait_url' | 'theme_color' | 'campaign_name' | 'updated_at'> }) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-lg bg-teal-rich/30 border border-gold/10 hover:border-gold/20 transition-colors">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {character.portrait_url ? (
+          <img src={character.portrait_url} alt={character.name} className="w-10 h-10 rounded-full border border-gold/20 object-cover" />
+        ) : (
+          <div className="w-10 h-10 rounded-full border border-gold/20 flex items-center justify-center" style={{ backgroundColor: character.theme_color || '#1a3a3a' }}>
+            <Shield className="w-5 h-5 text-parchment-muted" />
+          </div>
+        )}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-serif text-lg text-parchment truncate">{character.name}</h3>
+            {character.is_active && <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">Active</Badge>}
+          </div>
+          <div className="flex items-center gap-3 text-sm text-parchment-muted">
+            <span>Lvl {character.level} {character.race} {character.class}</span>
+            <span>HP {character.current_hp}/{character.max_hp}</span>
+            <span>AC {character.armor_class}</span>
+            {character.campaign_name && <span className="truncate">• {character.campaign_name}</span>}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2 ml-4">
+        <Link href={`/player-deck/${character.id}`}>
+          <Button variant="outline" size="sm" className="gap-1">
+            <ExternalLink className="w-3 h-3" />
+            View
+          </Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -228,11 +388,13 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single() as { data: { username: string | null, display_name: string | null } | null }
   
-  const displayName = profile?.display_name || profile?.username || 'Writer'
+  const displayName = profile?.display_name || profile?.username || 'Adventurer'
   
-  const [stories, stats] = await Promise.all([
+  const [stories, stats, campaigns, characters] = await Promise.all([
     getUserStories(user.id),
     getUserStats(user.id),
+    getUserCampaigns(user.id),
+    getUserCharacters(user.id),
   ])
   
   // Categorize stories
@@ -240,6 +402,289 @@ export default async function DashboardPage() {
   const pending = stories.filter(s => ['submitted', 'under_review'].includes(s.canon_status))
   const published = stories.filter(s => ['approved', 'canonical'].includes(s.canon_status))
   const rejected = stories.filter(s => s.canon_status === 'rejected')
+
+  const allCampaigns = [...campaigns.dmd, ...campaigns.played]
+  const totalCharacters = characters.length
+
+  // =====================================================
+  // WRITING SECTION
+  // =====================================================
+  const writingContent = (
+    <>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gold/10">
+                <FileText className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{stats.total}</p>
+                <p className="text-xs text-parchment-muted">Total Stories</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-sky-500/10">
+                <PenLine className="w-5 h-5 text-sky-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{stats.drafts}</p>
+                <p className="text-xs text-parchment-muted">Drafts</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Award className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{stats.approved}</p>
+                <p className="text-xs text-parchment-muted">Canon</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Clock className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{stats.submitted}</p>
+                <p className="text-xs text-parchment-muted">Pending</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Writing Stats Card */}
+      <div className="mb-10">
+        <WritingStatsCard />
+      </div>
+
+      {/* Story Tabs */}
+      <Tabs defaultValue="drafts" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 bg-teal-deep/50 border border-gold/10">
+          <TabsTrigger value="drafts" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
+            <PenLine className="w-4 h-4" />
+            <span className="hidden sm:inline">Drafts</span>
+            <Badge variant="secondary" className="ml-1">{drafts.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="pending" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">Pending</span>
+            <Badge variant="secondary" className="ml-1">{pending.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="published" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
+            <CheckCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Published</span>
+            <Badge variant="secondary" className="ml-1">{published.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="rejected" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
+            <XCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Rejected</span>
+            <Badge variant="secondary" className="ml-1">{rejected.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="drafts" className="space-y-3">
+          {drafts.length > 0 ? (
+            drafts.map(story => (
+              <StoryRow key={story.id} story={story} variant="draft" />
+            ))
+          ) : (
+            <EmptyState variant="draft" />
+          )}
+        </TabsContent>
+
+        <TabsContent value="pending" className="space-y-3">
+          {pending.length > 0 ? (
+            pending.map(story => (
+              <StoryRow key={story.id} story={story} variant="pending" />
+            ))
+          ) : (
+            <EmptyState variant="pending" />
+          )}
+        </TabsContent>
+
+        <TabsContent value="published" className="space-y-3">
+          {published.length > 0 ? (
+            published.map(story => (
+              <StoryRow key={story.id} story={story} variant="published" />
+            ))
+          ) : (
+            <EmptyState variant="published" />
+          )}
+        </TabsContent>
+
+        <TabsContent value="rejected" className="space-y-3">
+          {rejected.length > 0 ? (
+            rejected.map(story => (
+              <StoryRow key={story.id} story={story} variant="rejected" />
+            ))
+          ) : (
+            <EmptyState variant="rejected" />
+          )}
+        </TabsContent>
+      </Tabs>
+    </>
+  )
+
+  // =====================================================
+  // PLAYING SECTION
+  // =====================================================
+  const playingContent = (
+    <>
+      {/* Playing Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gold/10">
+                <Swords className="w-5 h-5 text-gold" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{allCampaigns.length}</p>
+                <p className="text-xs text-parchment-muted">Total Campaigns</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/10">
+                <Crown className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{campaigns.dmd.length}</p>
+                <p className="text-xs text-parchment-muted">As DM</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-sky-500/10">
+                <Users className="w-5 h-5 text-sky-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{campaigns.played.length}</p>
+                <p className="text-xs text-parchment-muted">As Player</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10">
+                <Shield className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-serif text-parchment">{totalCharacters}</p>
+                <p className="text-xs text-parchment-muted">Characters</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Campaigns Section */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-serif text-parchment">My Campaigns</h2>
+          <Link href="/campaigns/create">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Plus className="w-3 h-3" />
+              New Campaign
+            </Button>
+          </Link>
+        </div>
+        
+        {allCampaigns.length > 0 ? (
+          <div className="space-y-3">
+            {campaigns.dmd.map(c => (
+              <CampaignRow key={c.id} campaign={c} isDm={true} />
+            ))}
+            {campaigns.played.map(c => (
+              <CampaignRow key={c.id} campaign={c} isDm={false} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Swords className="w-12 h-12 mx-auto mb-4 text-parchment-muted/50" />
+            <h3 className="font-serif text-lg text-parchment mb-2">No Campaigns Yet</h3>
+            <p className="text-parchment-muted text-sm mb-4">Create or join a campaign to begin your adventure.</p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/campaigns/create">
+                <Button variant="outline" className="gap-1">
+                  <Plus className="w-4 h-4" />
+                  Create Campaign
+                </Button>
+              </Link>
+              <Link href="/campaigns">
+                <Button variant="outline" className="gap-1">
+                  <Users className="w-4 h-4" />
+                  Browse Campaigns
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Characters Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-serif text-parchment">My Characters</h2>
+          <Link href="/player-deck/create">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Plus className="w-3 h-3" />
+              New Character
+            </Button>
+          </Link>
+        </div>
+
+        {characters.length > 0 ? (
+          <div className="space-y-3">
+            {characters.map(c => (
+              <CharacterRow key={c.id} character={c} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Shield className="w-12 h-12 mx-auto mb-4 text-parchment-muted/50" />
+            <h3 className="font-serif text-lg text-parchment mb-2">No Characters Yet</h3>
+            <p className="text-parchment-muted text-sm mb-4">Create a character to join campaigns.</p>
+            <Link href="/player-deck/create">
+              <Button variant="outline" className="gap-1">
+                <Plus className="w-4 h-4" />
+                Create Character
+              </Button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </>
+  )
 
   return (
     <div className="min-h-screen">
@@ -251,139 +696,15 @@ export default async function DashboardPage() {
             {displayName}&apos;s <span className="text-gold">Dashboard</span>
           </h1>
           <p className="text-parchment-muted">
-            Track your stories and monitor their journey to becoming canon.
+            Track your stories and adventures across the Everloop.
           </p>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gold/10">
-                  <FileText className="w-5 h-5 text-gold" />
-                </div>
-                <div>
-                  <p className="text-2xl font-serif text-parchment">{stats.total}</p>
-                  <p className="text-xs text-parchment-muted">Total Stories</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-sky-500/10">
-                  <PenLine className="w-5 h-5 text-sky-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-serif text-parchment">{stats.drafts}</p>
-                  <p className="text-xs text-parchment-muted">Drafts</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Award className="w-5 h-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-serif text-parchment">{stats.approved}</p>
-                  <p className="text-xs text-parchment-muted">Canon</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Clock className="w-5 h-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-2xl font-serif text-parchment">{stats.submitted}</p>
-                  <p className="text-xs text-parchment-muted">Pending</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Writing Stats Card */}
-        <div className="mb-10">
-          <WritingStatsCard />
-        </div>
-
-        {/* Story Tabs */}
-        <Tabs defaultValue="drafts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-teal-deep/50 border border-gold/10">
-            <TabsTrigger value="drafts" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
-              <PenLine className="w-4 h-4" />
-              <span className="hidden sm:inline">Drafts</span>
-              <Badge variant="secondary" className="ml-1">{drafts.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
-              <Clock className="w-4 h-4" />
-              <span className="hidden sm:inline">Pending</span>
-              <Badge variant="secondary" className="ml-1">{pending.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="published" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
-              <CheckCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Published</span>
-              <Badge variant="secondary" className="ml-1">{published.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
-              <XCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Rejected</span>
-              <Badge variant="secondary" className="ml-1">{rejected.length}</Badge>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="drafts" className="space-y-3">
-            {drafts.length > 0 ? (
-              drafts.map(story => (
-                <StoryRow key={story.id} story={story} variant="draft" />
-              ))
-            ) : (
-              <EmptyState variant="draft" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="pending" className="space-y-3">
-            {pending.length > 0 ? (
-              pending.map(story => (
-                <StoryRow key={story.id} story={story} variant="pending" />
-              ))
-            ) : (
-              <EmptyState variant="pending" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="published" className="space-y-3">
-            {published.length > 0 ? (
-              published.map(story => (
-                <StoryRow key={story.id} story={story} variant="published" />
-              ))
-            ) : (
-              <EmptyState variant="published" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="rejected" className="space-y-3">
-            {rejected.length > 0 ? (
-              rejected.map(story => (
-                <StoryRow key={story.id} story={story} variant="rejected" />
-              ))
-            ) : (
-              <EmptyState variant="rejected" />
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Top-level Writing / Playing Tabs */}
+        <DashboardShell
+          writingContent={writingContent}
+          playingContent={playingContent}
+        />
       </div>
 
       {/* Footer */}
