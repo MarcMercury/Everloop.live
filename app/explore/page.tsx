@@ -121,6 +121,17 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
               <span className="text-muted-foreground ml-1">Locations</span>
             </div>
           </div>
+
+          {/* Everloop Game Link */}
+          <div className="mt-6">
+            <Link
+              href="/explore/everloop-game"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm border bg-teal-rich/50 border-gold/20 text-parchment-muted hover:border-gold/40 hover:text-gold transition-all"
+            >
+              <span>♟️</span>
+              <span>Learn to Play Everloop: The Game</span>
+            </Link>
+          </div>
         </div>
 
         {/* Type Filters */}
