@@ -40,6 +40,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Audio — Listen to the Narrative */}
+      <section className="relative z-10 py-12 px-6">
+        <div className="max-w-md mx-auto">
+          <div className="rounded-lg border border-gold/15 bg-teal-rich/30 backdrop-blur-sm p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                <Headphones className="w-4 h-4 text-gold/70" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-parchment">Listen to the Narrative</p>
+                <p className="text-xs text-parchment-muted">The Everloop — spoken aloud</p>
+              </div>
+            </div>
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <audio
+              controls
+              preload="none"
+              className="w-full h-10 [&::-webkit-media-controls-panel]:bg-teal-deep/80 [&::-webkit-media-controls-current-time-display]:text-parchment-muted [&::-webkit-media-controls-time-remaining-display]:text-parchment-muted"
+            >
+              <source src="/audio/ElevenLabs_The_Everloop_Intro.mp3" type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        </div>
+      </section>
+
       {/* Explore / Write / Play Tiles */}
       <section className="relative z-10 py-16 px-6">
         <div className="max-w-5xl mx-auto">
@@ -86,32 +112,6 @@ export default function Home() {
                 <Link href="/quests" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Quests</Link>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Audio — Listen to the Narrative */}
-      <section className="relative z-10 py-12 px-6">
-        <div className="max-w-md mx-auto">
-          <div className="rounded-lg border border-gold/15 bg-teal-rich/30 backdrop-blur-sm p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                <Headphones className="w-4 h-4 text-gold/70" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-parchment">Listen to the Narrative</p>
-                <p className="text-xs text-parchment-muted">The Everloop — spoken aloud</p>
-              </div>
-            </div>
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-            <audio
-              controls
-              preload="none"
-              className="w-full h-10 [&::-webkit-media-controls-panel]:bg-teal-deep/80 [&::-webkit-media-controls-current-time-display]:text-parchment-muted [&::-webkit-media-controls-time-remaining-display]:text-parchment-muted"
-            >
-              <source src="/audio/ElevenLabs_The_Everloop_Intro.mp3" type="audio/mpeg" />
-              Your browser does not support the audio element.
-            </audio>
           </div>
         </div>
       </section>
