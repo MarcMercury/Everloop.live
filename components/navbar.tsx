@@ -67,6 +67,7 @@ export async function Navbar() {
                     { href: '/stories', label: 'Library', icon: <Library className="w-4 h-4" />, description: 'Read canonical stories' },
                     { href: '/explore', label: 'Archive', icon: <BookOpen className="w-4 h-4" />, description: 'Browse canonical entities' },
                     { href: '/readers-guide', label: "Reader's Guide", icon: <ScrollText className="w-4 h-4" />, description: 'Glossary of the world' },
+                    { href: '/explore/everloop-game', label: 'Everloop: The Game', icon: <Swords className="w-4 h-4" />, description: 'Learn to play the board game' },
                   ]}
                 />
 
