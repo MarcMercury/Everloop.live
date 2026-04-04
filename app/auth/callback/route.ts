@@ -14,6 +14,12 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error && data.user) {
+      // Update last_sign_in_at for returning OAuth users
+      await supabase
+        .from('profiles')
+        .update({ last_sign_in_at: new Date().toISOString() } as never)
+        .eq('id', data.user.id)
+
       // Ensure profile exists for OAuth users
       // The database trigger should handle this, but we verify here for robustness
       const { data: existingProfile } = await supabase

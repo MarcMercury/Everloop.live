@@ -31,7 +31,7 @@ export async function GET() {
     // Fetch profiles
     const { data: profiles, error: profileError } = await adminClient
       .from('profiles')
-      .select('id, username, display_name, avatar_url, role, is_admin, created_at, updated_at') as {
+      .select('id, username, display_name, avatar_url, role, is_admin, created_at, updated_at, last_sign_in_at') as {
         data: Array<{
           id: string
           username: string
@@ -41,6 +41,7 @@ export async function GET() {
           is_admin: boolean
           created_at: string
           updated_at: string
+          last_sign_in_at: string | null
         }> | null
         error: Error | null
       }
@@ -66,7 +67,7 @@ export async function GET() {
         role: profile?.role || 'writer',
         is_admin: profile?.is_admin || false,
         created_at: authUser.created_at,
-        last_sign_in_at: authUser.last_sign_in_at || null,
+        last_sign_in_at: profile?.last_sign_in_at || authUser.last_sign_in_at || null,
         is_banned: !!bannedUntil && new Date(bannedUntil) > new Date(),
         banned_until: bannedUntil || null,
         email_confirmed_at: authUser.email_confirmed_at || null,
