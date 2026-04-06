@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { CreateEntityForm } from './create-form'
 import { getEntity, type EntityType } from '@/lib/actions/create'
 
-const validTypes = ['character', 'location', 'creature'] as const
+const validTypes = ['character', 'location', 'creature', 'monster'] as const
 
 const typeConfig: Record<EntityType, { title: string; editTitle: string; description: string }> = {
   character: {
@@ -20,6 +20,11 @@ const typeConfig: Record<EntityType, { title: string; editTitle: string; descrip
     title: 'Create a Creature',
     editTitle: 'Edit Creature',
     description: 'Summon a mythical beast, spirit, or otherworldly being.',
+  },
+  monster: {
+    title: 'Create a Monster',
+    editTitle: 'Edit Monster',
+    description: 'Manifest a Drift-born horror — something that should not exist, but the Fray made real.',
   },
 }
 

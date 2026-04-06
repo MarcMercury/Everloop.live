@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -79,8 +79,50 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [generated3dUrl, setGenerated3dUrl] = useState<string | null>(null)
   const [locationKeyOpen, setLocationKeyOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [regionInfoOpen, setRegionInfoOpen] = useState(true)
+
+  // Pan & zoom state for 2D map
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const isPanning = useRef(false)
+  const panStart = useRef({ x: 0, y: 0 })
+  const panOrigin = useRef({ x: 0, y: 0 })
+  const didDrag = useRef(false)
 
   const regionDirectory = getRegionLocations(region.id)
+
+  // --- Pan & zoom handlers ---
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Only pan with left mouse / single touch
+    if (e.button !== 0) return
+    isPanning.current = true
+    didDrag.current = false
+    panStart.current = { x: e.clientX, y: e.clientY }
+    panOrigin.current = { ...pan }
+    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+  }, [pan])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isPanning.current) return
+    const dx = e.clientX - panStart.current.x
+    const dy = e.clientY - panStart.current.y
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didDrag.current = true
+    setPan({ x: panOrigin.current.x + dx, y: panOrigin.current.y + dy })
+  }, [])
+
+  const handlePointerUp = useCallback(() => {
+    isPanning.current = false
+  }, [])
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    setZoom(prev => Math.min(5, Math.max(0.5, prev - e.deltaY * 0.001)))
+  }, [])
+
+  const resetView = useCallback(() => {
+    setPan({ x: 0, y: 0 })
+    setZoom(1)
+  }, [])
 
   const toggleCategory = useCallback((heading: string) => {
     setExpandedCategories(prev => {
@@ -130,44 +172,71 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
         </Link>
       </div>
 
-      {/* Region header info */}
+      {/* Region header info — collapsible */}
       <div className="absolute top-4 right-4 z-20 max-w-sm">
-        <div
-          className="rounded-xl p-5 backdrop-blur-xl border"
-          style={{
-            background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.95), rgba(15, 30, 35, 0.92))',
-            borderColor: `${region.color}30`,
-            boxShadow: `0 0 30px ${region.color}15, 0 12px 40px rgba(0,0,0,0.5)`,
-          }}
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div
-              className="w-4 h-4 rounded-full"
-              style={{ background: region.color, boxShadow: `0 0 12px ${region.color}80` }}
-            />
-            <div>
-              <h1 className="text-xl font-serif font-bold" style={{ color: region.color }}>
-                {region.name}
-              </h1>
-              <span
-                className="text-[11px] uppercase tracking-wider opacity-60"
-                style={{ color: region.color }}
-              >
-                {region.sub}
-              </span>
+        {regionInfoOpen ? (
+          <div
+            className="rounded-xl p-5 backdrop-blur-xl border relative"
+            style={{
+              background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.95), rgba(15, 30, 35, 0.92))',
+              borderColor: `${region.color}30`,
+              boxShadow: `0 0 30px ${region.color}15, 0 12px 40px rgba(0,0,0,0.5)`,
+            }}
+          >
+            <button
+              onClick={() => setRegionInfoOpen(false)}
+              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-parchment-muted hover:text-parchment transition-colors"
+              style={{ background: `${region.color}15` }}
+              aria-label="Collapse region info"
+            >
+              ✕
+            </button>
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-4 h-4 rounded-full"
+                style={{ background: region.color, boxShadow: `0 0 12px ${region.color}80` }}
+              />
+              <div>
+                <h1 className="text-xl font-serif font-bold" style={{ color: region.color }}>
+                  {region.name}
+                </h1>
+                <span
+                  className="text-[11px] uppercase tracking-wider opacity-60"
+                  style={{ color: region.color }}
+                >
+                  {region.sub}
+                </span>
+              </div>
             </div>
+            <p className="text-sm leading-relaxed text-parchment-muted">
+              {region.description}
+            </p>
+            {locations.length > 0 && (
+              <div className="mt-3 pt-3 border-t" style={{ borderColor: `${region.color}20` }}>
+                <span className="text-[10px] uppercase tracking-wider text-parchment-muted">
+                  {locations.length} canonical {locations.length === 1 ? 'location' : 'locations'}
+                </span>
+              </div>
+            )}
           </div>
-          <p className="text-sm leading-relaxed text-parchment-muted">
-            {region.description}
-          </p>
-          {locations.length > 0 && (
-            <div className="mt-3 pt-3 border-t" style={{ borderColor: `${region.color}20` }}>
-              <span className="text-[10px] uppercase tracking-wider text-parchment-muted">
-                {locations.length} canonical {locations.length === 1 ? 'location' : 'locations'}
-              </span>
-            </div>
-          )}
-        </div>
+        ) : (
+          <button
+            onClick={() => setRegionInfoOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+            style={{
+              background: 'rgba(5, 10, 15, 0.9)',
+              borderColor: `${region.color}30`,
+              color: region.color,
+            }}
+          >
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ background: region.color, boxShadow: `0 0 8px ${region.color}80` }}
+            />
+            <span className="font-serif">{region.name}</span>
+            <span className="text-[10px] opacity-60">ⓘ</span>
+          </button>
+        )}
       </div>
 
       {/* Collapsible Location Key / Nav */}
@@ -447,8 +516,29 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
       {viewMode === '2d' && region.mapImage ? (
         <div
           className="relative w-full h-[calc(100vh-60px)] overflow-hidden"
-          onClick={handleBackdropClick}
+          style={{ cursor: isPanning.current ? 'grabbing' : 'grab', touchAction: 'none' }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onWheel={handleWheel}
+          onClick={(e) => { if (!didDrag.current) handleBackdropClick() }}
         >
+          {/* Reset view button */}
+          {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); resetView() }}
+              className="absolute bottom-28 right-4 z-30 px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+              style={{
+                background: 'rgba(5, 10, 15, 0.9)',
+                borderColor: `${region.color}30`,
+                color: region.color,
+              }}
+            >
+              ↻ Reset View
+            </button>
+          )}
+
           {/* Loading state */}
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center bg-charcoal z-10">
@@ -462,8 +552,15 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             </div>
           )}
 
-          {/* Region map image */}
-          <div className="relative w-full h-full">
+          {/* Region map image — pannable & zoomable */}
+          <div
+            className="relative w-full h-full"
+            style={{
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transformOrigin: 'center center',
+              transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
+            }}
+          >
             <Image
               src={region.mapImage}
               alt={`Map of ${region.name}`}
@@ -473,6 +570,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
               onLoad={() => setImageLoaded(true)}
               priority
               sizes="100vw"
+              draggable={false}
             />
 
             {/* Location pins overlaid on the map */}
@@ -491,7 +589,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                     transition: 'transform 0.15s ease',
                     transform: `translate(-50%, -100%) scale(${isSelected ? 1.3 : isHovered ? 1.15 : 1})`,
                   }}
-                  onClick={(e) => { e.stopPropagation(); handlePinClick(loc) }}
+                  onClick={(e) => { e.stopPropagation(); if (!didDrag.current) handlePinClick(loc) }}
                   onMouseEnter={() => setHoveredLocation(loc.id)}
                   onMouseLeave={() => setHoveredLocation(null)}
                   aria-label={loc.name}

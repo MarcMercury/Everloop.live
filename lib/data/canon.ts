@@ -99,6 +99,7 @@ export async function getCanonEntityCounts(): Promise<Record<CanonEntityType, nu
     faction: 0,
     concept: 0,
     creature: 0,
+    monster: 0,
   }
 
   if (error) {

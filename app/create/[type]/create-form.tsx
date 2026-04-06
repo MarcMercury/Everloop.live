@@ -116,6 +116,29 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
     ],
     emptyImageHint: 'Detail the creature\'s form and the wrongness of reality around it, then generate its visual design',
   },
+  
+  monster: {
+    label: 'Monster',
+    namePlaceholder: 'The Unraveling, Hollowmaw, The Stitched Tide...',
+    nameHint: 'Monsters are named by the survivors who witnessed them — or by the silence they leave behind. In the Everloop, names carry the weight of what broke to let them through.',
+    taglinePlaceholder: 'It arrived when the ground forgot how to be still...',
+    taglineHint: 'What would someone whisper to warn others this thing was near?',
+    taglineExample: '"Where it walks, the world forgets it was ever whole"',
+    descriptionPlaceholder: `Describe what entered through the crack. Consider:
+
+• The Fray connection — what broke in reality to let this through? The Fray cuts from the Everloop through the Pattern, through the Fold, all the way to the Drift. Where did this one enter?
+• Its nature — is it a pure Drift intrusion (alien, unstable, no recognizable form), a corrupted fragment of reality (something warped beyond recognition), or an echo construct (formed from memory and repetition)?
+• Its form — does it hold a shape, or does it shift? Is it incomplete, overlapping, partially recognizable? What elements of the Drift bleed through it?
+• Behavior — does it hunt, drift, repeat? Is it drawn to something — a Shard, a place, a person — without understanding why?
+• Why it is monstrous — not because it chooses to be, but because it lacks consistent structure, stable identity, or any logic that belongs in this world.`,
+    descriptionHints: [
+      'What broke in reality — a Shard, a Fray zone, or something deeper — to let this through?',
+      'Is it drawn to something it cannot name? A Shard, a person, a place?',
+      'What do survivors get wrong about this thing?',
+      'Is it dangerous because it wants to be, or because it simply cannot stop?',
+    ],
+    emptyImageHint: 'Describe the monster\'s unstable form and the wrongness of reality around it, then generate its visual design',
+  },
 }
 
 interface InitialData {

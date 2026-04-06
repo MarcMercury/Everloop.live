@@ -43,6 +43,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   const [showPortraitGen, setShowPortraitGen] = useState(false)
   const [portraitStyle, setPortraitStyle] = useState('fantasy-oil')
   const [portraitLoading, setPortraitLoading] = useState(false)
+  const [portraitError, setPortraitError] = useState<string | null>(null)
   
   const classColor = CLASS_COLORS[char.class] || '#d4a84b'
   const hp = hpPercentage(char.current_hp, char.max_hp)
@@ -161,6 +162,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   // Portrait regeneration
   async function regeneratePortrait() {
     setPortraitLoading(true)
+    setPortraitError(null)
     try {
       const res = await fetch('/api/player-deck/portrait', {
         method: 'POST',
@@ -184,7 +186,10 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           customDetails: '',
         }),
       })
-      if (!res.ok) throw new Error('Failed')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Portrait generation failed')
+      }
       const data = await res.json()
       if (data.imageUrl) {
         setChar(prev => ({ ...prev, portrait_url: data.imageUrl }))
@@ -193,8 +198,8 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           await updatePlayerCharacter(char.id, { portrait_url: data.imageUrl })
         })
       }
-    } catch {
-      // silently fail — user can retry
+    } catch (err) {
+      setPortraitError(err instanceof Error ? err.message : 'Portrait generation failed. Try again.')
     } finally {
       setPortraitLoading(false)
     }

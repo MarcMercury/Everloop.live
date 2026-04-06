@@ -29,6 +29,8 @@ const badgeVariants = cva(
           "border-cyan-500/40 bg-cyan-500/15 text-cyan-400 shadow-sm shadow-cyan-500/10",
         creature:
           "border-amber-500/40 bg-amber-500/15 text-amber-400 shadow-sm shadow-amber-500/10",
+        monster:
+          "border-red-500/40 bg-red-500/15 text-red-400 shadow-sm shadow-red-500/10",
         // Status variants
         canonical:
           "border-gold/60 bg-gold/25 text-gold shadow-md shadow-gold/20",
