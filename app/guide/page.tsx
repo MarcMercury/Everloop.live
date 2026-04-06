@@ -148,10 +148,59 @@ export default function GuidePage() {
               </div>
             </section>
 
-            {/* Part IV: Those Who Remain */}
+            {/* Part IV: What Came Through */}
+            <section className="glass-subtle p-8 rounded-lg border border-red-500/10">
+              <h2 className="text-2xl md:text-3xl font-serif text-red-400 mb-6">
+                Part IV: What Came Through
+              </h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <p className="text-lg leading-relaxed">
+                    The Everloop originally had no monsters. The world, held firm by the Pattern and the First Map, was structured and stable. Nothing from the Drift could reach it. Nothing unintended could form.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-serif text-parchment mb-3">The Fray Cuts Deep</h3>
+                  <p className="text-lg leading-relaxed">
+                    When the Rogue Architects shattered the Anchors, the Fray did not merely damage the surface of reality. It cut from the Everloop through the Pattern, through the Fold, all the way back to the Drift. The world was no longer sealed. The original structure — Pattern and First Map — was bypassed.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-serif text-parchment mb-3">Monsters</h3>
+                  <p className="text-lg leading-relaxed">
+                    What entered were not creatures in any natural sense. They are chaotic manifestations of the Drift forcing itself into form without rules — amalgamations, mutations, unstable expressions of raw existence that were never shaped by the First Map, never stabilized by the Pattern, never constrained by normal reality.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-serif text-parchment mb-3">Why They Are Monstrous</h3>
+                  <p className="text-lg leading-relaxed">
+                    They lack consistent structure. They have no stable identity, no logical biology, no predictable behavior. They are incomplete, overlapping, unstable — sometimes partially recognizable, sometimes not at all. They are what happens when existence enters without permission.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-serif text-parchment mb-3">The Two-Way Pressure</h3>
+                  <p className="text-lg leading-relaxed">
+                    The Drift pulls the world inward, drawing it toward dissolution. At the same time, things from the Drift push outward into the Everloop through the cracks. Monsters are the result of that two-way pressure — the collision between a world trying to hold itself together and chaos trying to fill the gaps.
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-lg leading-relaxed italic text-parchment">
+                    If a monster appears, reality broke there for a reason — and that reason connects to a Shard or the Fray. They are not random encounters. They are signals.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Part V: Those Who Remain */}
             <section className="glass-subtle p-8 rounded-lg border border-gold/10">
               <h2 className="text-2xl md:text-3xl font-serif text-gold mb-6">
-                Part IV: Those Who Remain
+                Part V: Those Who Remain
               </h2>
               
               <div className="space-y-6">
@@ -171,10 +220,10 @@ export default function GuidePage() {
               </div>
             </section>
 
-            {/* Part V: The World Now */}
+            {/* Part VI: The World Now */}
             <section className="glass-subtle p-8 rounded-lg border border-gold/10">
               <h2 className="text-2xl md:text-3xl font-serif text-gold mb-6">
-                Part V: The World Now
+                Part VI: The World Now
               </h2>
               
               <div className="space-y-4">

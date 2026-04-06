@@ -115,6 +115,54 @@ export default function PlayersGuidePage() {
           </p>
         </section>
 
+        {/* ═══ What Comes Through ═══ */}
+        <section className="mb-16">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <span className="text-red-400 text-lg">◈</span>
+            </div>
+            <h2 className="text-2xl font-serif text-parchment">What Comes Through</h2>
+          </div>
+
+          <div className="p-8 rounded-lg border border-red-500/15" style={{ background: 'linear-gradient(135deg, rgba(30, 15, 15, 0.3) 0%, rgba(20, 10, 10, 0.2) 100%)' }}>
+            <p className="text-lg text-parchment-muted leading-relaxed mb-4">
+              Where the Fray cuts deepest, the boundary between the Everloop and the Drift <span className="text-red-400 font-medium">breaks open</span>.
+            </p>
+            <p className="text-parchment-muted leading-relaxed mb-6">
+              Things enter that were never meant to exist here. The Everloop originally had no monsters. They appeared only after the breaking — chaotic manifestations of the Drift forcing itself into form without rules.
+            </p>
+
+            <div className="pl-6 border-l-2 border-red-500/20 mb-6">
+              <p className="text-sm uppercase tracking-wider text-red-400/60 mb-3">What Monsters Are</p>
+              <ul className="space-y-2 text-parchment-muted">
+                <li className="flex items-start gap-2"><span className="text-red-400/40 mt-1">–</span>Not native to the Everloop — they are leaks from the Drift</li>
+                <li className="flex items-start gap-2"><span className="text-red-400/40 mt-1">–</span>Not shaped by the First Map or stabilized by the Pattern</li>
+                <li className="flex items-start gap-2"><span className="text-red-400/40 mt-1">–</span>Incomplete, unstable, overlapping forms — raw existence given shape by accident</li>
+                <li className="flex items-start gap-2"><span className="text-red-400/40 mt-1">–</span>No consistent biology, no predictable behavior, no stable identity</li>
+              </ul>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-3 mb-6">
+              <div className="p-4 rounded-lg border border-purple-500/15" style={{ background: 'linear-gradient(135deg, rgba(20, 13, 30, 0.4) 0%, rgba(15, 10, 20, 0.3) 100%)' }}>
+                <p className="text-sm font-serif text-purple-300 font-semibold mb-2">Drift Intrusions</p>
+                <p className="text-xs text-parchment-muted/70">Completely alien. No recognizable biology. Exist in unstable states.</p>
+              </div>
+              <div className="p-4 rounded-lg border border-amber-500/15" style={{ background: 'linear-gradient(135deg, rgba(25, 20, 13, 0.4) 0%, rgba(18, 15, 10, 0.3) 100%)' }}>
+                <p className="text-sm font-serif text-amber-300 font-semibold mb-2">Corrupted Reality</p>
+                <p className="text-xs text-parchment-muted/70">Animals, people, or objects warped by Drift exposure. Part Everloop, part not.</p>
+              </div>
+              <div className="p-4 rounded-lg border border-teal-500/15" style={{ background: 'linear-gradient(135deg, rgba(13, 25, 25, 0.4) 0%, rgba(10, 18, 18, 0.3) 100%)' }}>
+                <p className="text-sm font-serif text-teal-300 font-semibold mb-2">Echo Constructs</p>
+                <p className="text-xs text-parchment-muted/70">Formed from memory and repetition. Not fully alive, not fully gone.</p>
+              </div>
+            </div>
+
+            <p className="text-parchment italic text-center">
+              If you encounter a monster, something broke here. That is never a coincidence.
+            </p>
+          </div>
+        </section>
+
         {/* ═══ What Caused It ═══ */}
         <section className="mb-16">
           <div className="flex items-center gap-4 mb-8">
