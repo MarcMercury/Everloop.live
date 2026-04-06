@@ -286,11 +286,24 @@ const WORLD_CONSTANTS = {
   },
   
   // Monster spawn rules — they are CONSEQUENCES, not encounters
+  // Canon: Monsters are uncontrolled manifestations of the Drift entering the Everloop
+  // through the Fray, forming unstable and unnatural beings not bound by the Pattern or First Map.
+  // The Fray cuts from the Everloop → through the Pattern → through the Fold → back to the Drift.
+  // Monsters result from the two-way pressure: the Drift pulling inward, chaos pushing outward.
   MONSTER_ORIGIN_TYPES: {
     drift_intrusion: 'Pure alien forms leaking through fractured reality — completely foreign, unstable, wrong',
     corrupted_reality: 'Living things warped by sustained Drift contact — part Everloop, part not',
     echo_construct: 'Shapes formed from memory and repetition — not fully alive, not fully gone',
   },
+  
+  // What makes monsters monstrous — they lack consistent structure, stable identity,
+  // logical biology, or predictable behavior. They are raw existence forcing itself into form.
+  MONSTER_CHARACTERISTICS: [
+    'No consistent structure — forms shift, merge, or collapse',
+    'No stable identity — incomplete, overlapping, unstable',
+    'No logical biology — not bound by natural law',
+    'No predictable behavior — driven by forces that have no name',
+  ] as const,
   
   // Every quest should answer these about the Shards
   SHARD_QUESTIONS: [
