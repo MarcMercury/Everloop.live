@@ -30,7 +30,7 @@ function generateSlug(name: string): string {
   return `${baseSlug}-${timestamp}`
 }
 
-export type EntityType = 'character' | 'location' | 'creature'
+export type EntityType = 'character' | 'location' | 'creature' | 'monster'
 
 interface GenerateDescriptionInput {
   name: string
@@ -59,6 +59,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
       character: 'a character in the Everloop, a world where reality is fractured into Shards — broken remnants of the Anchors that once held everything together. Characters are shaped by their relationship to the Shards: seeking them, protecting them, being changed by them, or drawn toward them without understanding why',
       location: 'a location in the Everloop, a world where the Pattern frays and reality fractures. Locations exist in tension with the forces beneath them — some still stand because a Shard holds them together, others crumble because the Fray runs deep. Monsters born from the Drift may haunt places where reality has broken',
       creature: 'a creature in the Everloop — a being that appeared only after the Fray, when the Rogue Architects broke the world. Creatures are manifestations of the Drift leaking through fractured reality: Pure Drift Intrusions (alien, unstable), Corrupted Reality (warped by Drift exposure), or Echo Constructs (formed from memory). If a creature exists, something broke in reality to let it through',
+      monster: 'a monster in the Everloop — an uncontrolled manifestation of the Drift entering through the Fray. Monsters are NOT native to the Everloop. They appeared only after the Rogue Architects shattered the Anchors and the Fray cut from the Everloop through the Pattern, through the Fold, all the way to the Drift. They are raw existence forcing itself into form without rules — broken combinations of matter, memory, and intent. They lack consistent structure, stable identity, logical biology, or predictable behavior. If a monster exists, reality broke there for a reason tied to a Shard or the Fray',
     }
 
     const prompt = input.existingDescription
@@ -73,7 +74,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          - Expands on the existing description
          - Adds sensory details and atmosphere
          - Hints at connections to the deeper forces shaping the world (Shards, the Fray, the Pattern)
-         - ${input.type === 'creature' ? 'Implies what broke in reality to let this creature through — connect it to the Fray or a Shard' : input.type === 'character' ? 'Suggests how this person relates to the Shards — are they seeking, guarding, changed by, or unknowingly drawn toward one?' : 'Hints at what hidden force holds this place together or tears it apart — a buried Shard, a Fray zone, the pull of something deeper'}
+         - ${input.type === 'creature' || input.type === 'monster' ? 'Implies what broke in reality to let this through — connect it to the Fray, the Drift, or a Shard. It is a consequence of instability, not a random being' : input.type === 'character' ? 'Suggests how this person relates to the Shards — are they seeking, guarding, changed by, or unknowingly drawn toward one?' : 'Hints at what hidden force holds this place together or tears it apart — a buried Shard, a Fray zone, the pull of something deeper'}
          - Maintains a contemplative, atmospheric tone appropriate for ${typeDescriptions[input.type]}
          
          Return ONLY the description text, no headers or labels.`
@@ -87,7 +88,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          - Captures the essence of the name and tagline
          - Includes sensory details and atmosphere
          - Hints at connections to the deeper forces of the Everloop — Shards, the Fray, the Pattern
-         - ${input.type === 'creature' ? 'Implies what fractured in reality to birth this creature. Monsters are consequences, not random beings. Connect it to the Drift, the Fray, or a Shard' : input.type === 'character' ? 'Suggests their relationship to the hidden forces shaping the world — the Shards that pull everything toward convergence' : 'Hints at what remains beneath this place — a Shard, a Fray zone, an instability that draws or repels'}
+         - ${input.type === 'creature' || input.type === 'monster' ? 'Implies what fractured in reality to birth this being. Monsters are consequences of the Fray, not random beings. Connect it to the Drift, the Fray, or a Shard' : input.type === 'character' ? 'Suggests their relationship to the hidden forces shaping the world — the Shards that pull everything toward convergence' : 'Hints at what remains beneath this place — a Shard, a Fray zone, an instability that draws or repels'}
          - Maintains a contemplative, atmospheric tone
          
          Return ONLY the description text, no headers or labels.`
@@ -132,6 +133,7 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
       character: 'fantasy character portrait, detailed face and upper body, dramatic lighting, painterly style, high fantasy art',
       location: 'fantasy landscape illustration, atmospheric, mystical lighting, detailed environment, concept art style',
       creature: 'fantasy creature design, detailed anatomy, magical aura, concept art style, dramatic pose',
+      monster: 'dark fantasy horror creature, unstable form, reality distortion, eldritch design, fractured anatomy, concept art style, dramatic lighting, atmospheric dread',
     }
 
     const imagePrompt = `${input.name}: ${input.description.slice(0, 300)}. Style: ${stylePrompts[input.type]}. No text, no watermarks.`
@@ -595,5 +597,123 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
   } catch (error) {
     console.error('Error updating entity:', error)
     return { success: false, error: 'Failed to update entity' }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAMPAIGN MONSTER (D&D 5e stat block)
+// ═══════════════════════════════════════════════════════════
+
+interface CampaignMonsterStats {
+  role: string
+  cr: number
+  hp: number
+  ac: number
+  damagePerRound: string
+  movements: { type: string; speed: number }[]
+  actions: { name: string; description: string; damage?: string; actionType: string }[]
+  traits: string[]
+  weaknesses: string[]
+  regionId: string
+  isOneOff: boolean
+  whatBrokeHere: string
+  whatLeakedThrough: string
+  drawnTo: string
+}
+
+interface SaveCampaignMonsterInput {
+  name: string
+  tagline: string
+  description: string
+  imageUrl?: string
+  monsterStats: CampaignMonsterStats
+}
+
+/**
+ * Save a campaign-ready D&D 5e monster to canon_entities
+ * Stores full stat block and Everloop lore in extended_lore + metadata
+ */
+export async function saveCampaignMonster(input: SaveCampaignMonsterInput): Promise<{
+  success: boolean
+  entityId?: string
+  slug?: string
+  error?: string
+}> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'You must be logged in to save monsters' }
+    }
+
+    const slug = generateSlug(input.name)
+    const stats = input.monsterStats
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase
+      .from('canon_entities') as any)
+      .insert({
+        name: input.name,
+        slug,
+        type: 'monster' as CanonEntityType,
+        description: input.description,
+        status: 'draft',
+        created_by: user.id,
+        extended_lore: {
+          tagline: input.tagline,
+          image_url: input.imageUrl || null,
+          is_user_created: true,
+          monster_stats: {
+            role: stats.role,
+            cr: stats.cr,
+            hp: stats.hp,
+            ac: stats.ac,
+            damage_per_round: stats.damagePerRound,
+            movements: stats.movements,
+            actions: stats.actions,
+            traits: stats.traits,
+            weaknesses: stats.weaknesses,
+          },
+          everloop_lore: {
+            what_broke_here: stats.whatBrokeHere,
+            what_leaked_through: stats.whatLeakedThrough,
+            drawn_to: stats.drawnTo,
+          },
+          region_id: stats.regionId,
+          is_one_off: stats.isOneOff,
+        },
+        metadata: {
+          created_via: 'campaign_monster_wizard',
+          monster_purpose: 'campaign',
+          region_id: stats.regionId,
+          is_one_off: stats.isOneOff,
+        },
+      })
+      .select('id, slug')
+      .single()
+
+    if (error) {
+      console.error('Save campaign monster error:', error)
+      const errorMessage = error.code === '42501'
+        ? 'Permission denied - please contact support'
+        : error.message || 'Failed to save monster'
+      return { success: false, error: errorMessage }
+    }
+
+    revalidatePath('/roster')
+    revalidatePath('/create')
+
+    // Auto-queue 3D model generation in the background
+    import('./auto-3d').then(({ queueEntityModel }) => {
+      queueEntityModel(data.id).catch((err: unknown) => {
+        console.error('[Auto 3D] Background queue failed:', err)
+      })
+    }).catch(() => {})
+
+    return { success: true, entityId: data.id, slug: data.slug }
+  } catch (error) {
+    console.error('Error saving campaign monster:', error)
+    return { success: false, error: 'Failed to save monster. Please try again.' }
   }
 }

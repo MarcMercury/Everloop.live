@@ -21,6 +21,7 @@ const typeFilters: { type: CanonEntityType | 'all'; label: string; icon: string 
   { type: 'artifact', label: 'Artifacts', icon: '✨' },
   { type: 'faction', label: 'Factions', icon: '⚔️' },
   { type: 'creature', label: 'Creatures', icon: '🐉' },
+  { type: 'monster', label: 'Monsters', icon: '👁️' },
   { type: 'event', label: 'Events', icon: '📜' },
   { type: 'concept', label: 'Concepts', icon: '💭' },
 ]

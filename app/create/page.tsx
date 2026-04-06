@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
-import { User, MapPin, Sparkles, ChevronRight } from 'lucide-react'
+import { User, MapPin, Sparkles, Skull, ChevronRight } from 'lucide-react'
 
 const entityTypes = [
   {
@@ -32,6 +32,15 @@ const entityTypes = [
     borderColor: 'border-purple-500/30 hover:border-purple-500/60',
     iconColor: 'text-purple-400',
   },
+  {
+    type: 'monster',
+    title: 'Create Monster',
+    description: 'Manifest a Drift-born horror — something that should not exist, but the Fray made real.',
+    icon: Skull,
+    gradient: 'from-red-500/20 to-rose-900/20',
+    borderColor: 'border-red-500/30 hover:border-red-500/60',
+    iconColor: 'text-red-400',
+  },
 ]
 
 export default async function CreatorStudioPage() {
@@ -51,7 +60,7 @@ export default async function CreatorStudioPage() {
             Creator <span className="text-gold">Studio</span>
           </h1>
           <p className="text-parchment-muted text-lg max-w-2xl mx-auto">
-            Craft your own characters, locations, and creatures with AI assistance. 
+            Craft your own characters, locations, creatures, and monsters with AI assistance. 
             Everything you create exists in a world being drawn toward convergence — 
             and what you build here is part of that pull.
           </p>

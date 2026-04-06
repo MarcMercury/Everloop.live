@@ -25,6 +25,7 @@ function getTypeLabel(type: string): string {
     faction: 'Faction',
     concept: 'Concept',
     creature: 'Creature',
+    monster: 'Monster',
   }
   return labels[type] || type
 }
@@ -41,6 +42,7 @@ function getTypeIcon(type: string): string {
     faction: '⚔️',
     concept: '💭',
     creature: '🐉',
+    monster: '👁️',
   }
   return icons[type] || '📄'
 }

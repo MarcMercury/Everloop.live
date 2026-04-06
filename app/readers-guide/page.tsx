@@ -87,6 +87,27 @@ const INSTABILITIES = [
   },
 ]
 
+const MONSTERS = [
+  {
+    term: 'Drift Intrusions',
+    description: 'Completely alien. No recognizable biology. They exist in unstable states — forms that the Pattern never shaped and cannot contain.',
+    color: 'purple-400',
+    icon: '◈',
+  },
+  {
+    term: 'Corrupted Reality',
+    description: 'Animals, people, or objects warped beyond recognition by prolonged Drift exposure. Part Everloop, part something else entirely.',
+    color: 'amber-400',
+    icon: '◉',
+  },
+  {
+    term: 'Echo Constructs',
+    description: 'Formed from memory and repetition in places where the Pattern loops or stutters. Not fully alive, not fully gone.',
+    color: 'teal-400',
+    icon: '◌',
+  },
+]
+
 const PERCEIVERS = [
   {
     term: 'Vaultkeepers',
@@ -172,6 +193,57 @@ export default function ReadersGuidePage() {
 
           <div className="space-y-4">
             {INSTABILITIES.map((item) => (
+              <div
+                key={item.term}
+                className="relative p-6 rounded-lg border border-red-500/15 transition-all hover:scale-[1.01]"
+                style={{
+                  background: `linear-gradient(135deg, rgba(30, 15, 15, 0.4) 0%, rgba(20, 10, 10, 0.3) 100%)`,
+                }}
+              >
+                <div className="flex items-start gap-4">
+                  <span className={`text-${item.color} text-2xl mt-0.5`}>{item.icon}</span>
+                  <div>
+                    <h3 className={`text-lg font-serif font-semibold text-${item.color} mb-2`}>
+                      {item.term}
+                    </h3>
+                    <p className="text-parchment-muted leading-relaxed">
+                      {item.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ Monsters ═══ */}
+        <section className="mb-20">
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <span className="text-red-400 text-lg">⚠</span>
+            </div>
+            <div>
+              <h2 className="text-2xl font-serif text-parchment">Monsters</h2>
+              <p className="text-sm text-parchment-muted">What comes through when reality breaks</p>
+            </div>
+          </div>
+
+          <div
+            className="relative p-8 rounded-lg border border-red-500/15 mb-6"
+            style={{
+              background: `linear-gradient(135deg, rgba(30, 15, 15, 0.4) 0%, rgba(20, 10, 10, 0.3) 100%)`,
+            }}
+          >
+            <p className="text-parchment-muted leading-relaxed mb-4">
+              Monsters are not native to the Everloop. They appeared only after the Fray — chaotic manifestations of the Drift forcing itself into form without rules. They are fragments of raw existence given shape by accident, not by the Pattern.
+            </p>
+            <p className="text-parchment italic leading-relaxed">
+              If a monster appears, reality broke there for a reason — and that reason is never a coincidence.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {MONSTERS.map((item) => (
               <div
                 key={item.term}
                 className="relative p-6 rounded-lg border border-red-500/15 transition-all hover:scale-[1.01]"

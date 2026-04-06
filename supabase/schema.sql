@@ -52,7 +52,8 @@ CREATE TYPE canon_entity_type AS ENUM (
     'event',
     'faction',
     'concept',
-    'creature'
+    'creature',
+    'monster'
 );
 
 CREATE TYPE canon_status AS ENUM (

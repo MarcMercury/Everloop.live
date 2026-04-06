@@ -15,7 +15,7 @@ export type Json =
 
 // Enum types
 export type UserRole = 'writer' | 'curator' | 'lorekeeper' | 'admin'
-export type CanonEntityType = 'character' | 'location' | 'artifact' | 'event' | 'faction' | 'concept' | 'creature'
+export type CanonEntityType = 'character' | 'location' | 'artifact' | 'event' | 'faction' | 'concept' | 'creature' | 'monster'
 export type CanonStatus = 'draft' | 'proposed' | 'canonical' | 'deprecated' | 'contested'
 export type ShardState = 'dormant' | 'awakening' | 'active' | 'corrupted' | 'shattered' | 'transcended'
 export type StoryCanonStatus = 'draft' | 'submitted' | 'under_review' | 'revision_requested' | 'approved' | 'rejected' | 'canonical'

@@ -5,6 +5,14 @@ import { revalidatePath } from 'next/cache'
 import type { PlayerCharacterInsert, PlayerCharacterUpdate, PlayerCharacter } from '@/types/player-character'
 import type { Json } from '@/types/database'
 
+/** Reject temporary external image URLs (e.g. expired DALL-E links). */
+function sanitizePortraitUrl(url: string | null | undefined): string | null {
+  if (!url) return null
+  // DALL-E temporary URLs expire within hours
+  if (url.includes('oaidalleapiprodscus.blob.core.windows.net')) return null
+  return url
+}
+
 /**
  * Get all characters for the current user
  */
@@ -83,6 +91,7 @@ export async function createPlayerCharacter(input: Omit<PlayerCharacterInsert, '
   const insertData = {
     ...input,
     user_id: user.id,
+    portrait_url: sanitizePortraitUrl(input.portrait_url),
   }
   
   const { data, error } = await supabase
@@ -115,6 +124,11 @@ export async function updatePlayerCharacter(id: string, updates: PlayerCharacter
     return { success: false, error: 'Not authenticated' }
   }
   
+  // Sanitize portrait_url to prevent saving temporary external URLs
+  if ('portrait_url' in updates) {
+    updates = { ...updates, portrait_url: sanitizePortraitUrl(updates.portrait_url) }
+  }
+
   const { data, error } = await supabase
     .from('player_characters')
     .update(updates as never)

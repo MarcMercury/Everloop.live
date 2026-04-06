@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Gamepad2, Swords, Eye, Zap, AlertTriangle, HelpCircle } from 'lucide-react'
+import { CollapsibleSection } from './collapsible-section'
 
 export const metadata = {
   title: "Player's Guide | Everloop",
@@ -33,14 +34,11 @@ export default function PlayersGuidePage() {
         </div>
 
         {/* ═══ What the World Is ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center">
-              <Gamepad2 className="w-5 h-5 text-gold" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What the World Is</h2>
-          </div>
-
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center"><Gamepad2 className="w-5 h-5 text-gold" /></div>}
+          title="What the World Is"
+          defaultOpen={true}
+        >
           <div
             className="p-8 rounded-lg border border-gold/15"
             style={{ background: 'linear-gradient(135deg, rgba(20, 30, 30, 0.5) 0%, rgba(13, 20, 20, 0.4) 100%)' }}
@@ -58,17 +56,13 @@ export default function PlayersGuidePage() {
               It is where things last long enough to matter.
             </p>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What Is Going Wrong ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What Is Going Wrong</h2>
-          </div>
-
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center"><AlertTriangle className="w-5 h-5 text-red-400" /></div>}
+          title="What Is Going Wrong"
+        >
           <div className="mb-6 p-6 rounded-lg border border-red-500/15" style={{ background: 'linear-gradient(135deg, rgba(30, 15, 15, 0.3) 0%, rgba(20, 10, 10, 0.2) 100%)' }}>
             <p className="text-lg text-parchment-muted leading-relaxed mb-4">
               The Pattern is <span className="text-red-400 font-medium">weakening</span>.
@@ -113,17 +107,13 @@ export default function PlayersGuidePage() {
           <p className="text-center text-parchment-muted mt-6 italic">
             Most people don&apos;t understand this. They just know something feels wrong.
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What Comes Through ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <span className="text-red-400 text-lg">◈</span>
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What Comes Through</h2>
-          </div>
-
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center"><span className="text-red-400 text-lg">◈</span></div>}
+          title="What Comes Through"
+        >
           <div className="p-8 rounded-lg border border-red-500/15" style={{ background: 'linear-gradient(135deg, rgba(30, 15, 15, 0.3) 0%, rgba(20, 10, 10, 0.2) 100%)' }}>
             <p className="text-lg text-parchment-muted leading-relaxed mb-4">
               Where the Fray cuts deepest, the boundary between the Everloop and the Drift <span className="text-red-400 font-medium">breaks open</span>.
@@ -161,17 +151,13 @@ export default function PlayersGuidePage() {
               If you encounter a monster, something broke here. That is never a coincidence.
             </p>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What Caused It ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-gold" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What Caused It</h2>
-          </div>
-
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center"><Zap className="w-5 h-5 text-gold" /></div>}
+          title="What Caused It"
+        >
           <div className="p-8 rounded-lg border border-gold/15" style={{ background: 'linear-gradient(135deg, rgba(25, 20, 15, 0.4) 0%, rgba(15, 12, 8, 0.3) 100%)' }}>
             <p className="text-parchment-muted leading-relaxed mb-4">
               When the Pattern began to thin, some tried to fix it. These were the <span className="text-gold font-medium">Rogue Architects</span> — Vaultkeepers and Dreamers who believed they could restore what was failing.
@@ -186,17 +172,13 @@ export default function PlayersGuidePage() {
               The Anchors, which once held everything stable, were shattered. What remains are the <span className="text-gold font-medium">Shards</span>.
             </p>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ The Shards ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center">
-              <span className="text-gold text-lg">◇</span>
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">The Shards</h2>
-          </div>
-
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center"><span className="text-gold text-lg">◇</span></div>}
+          title="The Shards"
+        >
           <div className="p-8 rounded-lg border border-gold/20" style={{ background: 'linear-gradient(135deg, rgba(25, 20, 15, 0.4) 0%, rgba(15, 12, 8, 0.3) 100%)' }}>
             <p className="text-lg text-parchment-muted leading-relaxed mb-6">
               Shards are fragments of what once held the world together. They still carry that weight. Each region holds an unknown number of them — and they pull toward one another.
@@ -229,11 +211,13 @@ export default function PlayersGuidePage() {
               Something is pulling everything together. You are part of that pull.
             </p>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What Lies Beneath ═══ */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-serif text-parchment mb-6">What Lies Beneath</h2>
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center"><span className="text-purple-400 text-lg">◎</span></div>}
+          title="What Lies Beneath"
+        >
           <p className="text-parchment-muted mb-6">
             Players don&apos;t interact with this directly — but it matters:
           </p>
@@ -258,16 +242,13 @@ export default function PlayersGuidePage() {
           <p className="text-sm text-parchment-muted/50 mt-4 text-center italic">
             These are not places you travel to in a normal sense. They are what the world is made from.
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ Who Can See It ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
-              <Eye className="w-5 h-5 text-teal-400" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">Who Can See It</h2>
-          </div>
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center"><Eye className="w-5 h-5 text-teal-400" /></div>}
+          title="Who Can See It"
+        >
 
           <p className="text-parchment-muted mb-6">
             Most people are <span className="text-parchment font-medium">Pattern-blind</span>. They live normal lives, even as the world begins to fail around them. But some can perceive more:
@@ -296,16 +277,13 @@ export default function PlayersGuidePage() {
           <p className="text-sm text-parchment-muted/60 mt-4 text-center italic">
             Neither group fully understands what they&apos;re dealing with.
           </p>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What This Means for You ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center">
-              <Swords className="w-5 h-5 text-gold" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What This Means for You</h2>
-          </div>
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center"><Swords className="w-5 h-5 text-gold" /></div>}
+          title="What This Means for You"
+        >
 
           <div className="p-8 rounded-lg border border-gold/20" style={{ background: 'linear-gradient(135deg, rgba(20, 25, 20, 0.4) 0%, rgba(13, 18, 13, 0.3) 100%)' }}>
             <p className="text-lg text-parchment-muted leading-relaxed mb-6">
@@ -335,16 +313,13 @@ export default function PlayersGuidePage() {
               </p>
             </div>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ What People Believe ═══ */}
-        <section className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="w-10 h-10 rounded-full bg-parchment-muted/10 border border-parchment-muted/20 flex items-center justify-center">
-              <HelpCircle className="w-5 h-5 text-parchment-muted" />
-            </div>
-            <h2 className="text-2xl font-serif text-parchment">What People Believe</h2>
-          </div>
+        <CollapsibleSection
+          icon={<div className="w-10 h-10 rounded-full bg-parchment-muted/10 border border-parchment-muted/20 flex items-center justify-center"><HelpCircle className="w-5 h-5 text-parchment-muted" /></div>}
+          title="What People Believe"
+        >
 
           <div className="p-6 rounded-lg border border-gold/10" style={{ background: 'linear-gradient(135deg, rgba(13, 26, 26, 0.4) 0%, rgba(20, 36, 36, 0.3) 100%)' }}>
             <p className="text-parchment-muted mb-4">No one agrees on what should be done.</p>
@@ -366,7 +341,7 @@ export default function PlayersGuidePage() {
               No one knows the truth.
             </p>
           </div>
-        </section>
+        </CollapsibleSection>
 
         {/* ═══ Final Statement ═══ */}
         <section className="mb-16">

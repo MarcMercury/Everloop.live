@@ -9,7 +9,7 @@
 -- Tracks Fray intensity and stability per region
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.regional_state (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     region_id TEXT NOT NULL UNIQUE,
     region_name TEXT NOT NULL,
     fray_intensity DECIMAL(4,3) DEFAULT 0.100 CHECK (fray_intensity >= 0 AND fray_intensity <= 1),
@@ -53,7 +53,7 @@ ON CONFLICT (region_id) DO NOTHING;
 -- Records when Shards are found, moved, or used
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.shard_events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     shard_id UUID REFERENCES public.shards(id) ON DELETE SET NULL,
     event_type TEXT NOT NULL CHECK (event_type IN ('found', 'revealed', 'moved', 'misunderstood', 'used', 'corrupted', 'united')),
     region_id TEXT,
@@ -81,7 +81,7 @@ CREATE POLICY "Only elevated roles can record shard events"
 -- Significant narrative events that affect the world
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.world_events (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
     event_type TEXT NOT NULL CHECK (event_type IN ('fray_surge', 'hollow_formed', 'drift_breach', 'convergence_pulse', 'shard_resonance', 'monster_emergence', 'region_shift', 'narrative_milestone')),
