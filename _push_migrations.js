@@ -21,6 +21,7 @@ if (!PROJECT_REF || !SBP_TOKEN) {
 }
 
 const migrations = [
+  'supabase/migrations/20260404_001_add_last_sign_in_to_profiles.sql',
   'supabase/migrations/20260406_002_expand_shards_system.sql',
   'supabase/migrations/20260406_003_seed_88_shards.sql',
 ];

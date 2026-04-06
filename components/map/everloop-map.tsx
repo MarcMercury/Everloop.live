@@ -5,7 +5,6 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Float, Stars, Html, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { WORLD_LOCATIONS } from '@/lib/data/region-locations'
-import SublayerGeneratePanel from './sublayer-generate-panel'
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -2171,13 +2170,9 @@ function SurfaceParticles() {
 // LAYER LABELS (positioned along the side in 3D space)
 // ═══════════════════════════════════════════════════════════════
 function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
-  const labels = [
-    { y: SURFACE_Y + 15, text: 'THE EVERLOOP', sub: 'The Living World', color: '#d4a84b', always: true },
-    { y: (SURFACE_Y + PATTERN_Y) / 2, text: 'THE STRUCTURE', sub: 'Bone of the World', color: '#d4a060', always: false },
-    { y: PATTERN_Y, text: 'THE PATTERN', sub: 'Lattice of Intent & Purpose', color: '#40a0ff', always: false },
-    { y: FOLD_Y, text: 'THE FOLD', sub: 'Where the Architects Weave', color: '#6080b0', always: false },
-    { y: DRIFT_Y, text: 'THE DRIFT', sub: 'Sea of Unformed Chaos', color: '#8040c0', always: false },
-  ]
+  const labels = showSubLayers
+    ? [{ y: 15, text: 'THE STRUCTURE', sub: 'Beneath the Surface — Bone of the World', color: '#d4a060', always: true }]
+    : [{ y: SURFACE_Y + 15, text: 'THE EVERLOOP', sub: 'The Living World', color: '#d4a84b', always: true }]
 
   return (
     <group>
@@ -2251,7 +2246,7 @@ const TerrainVertexShader = `
   }
 `
 
-/** Fragment shader — paints the terrain with the structure map texture + lighting */
+/** Fragment shader — paints the terrain with the structure map texture + realistic lighting */
 const TerrainFragmentShader = `
   uniform sampler2D uColorMap;
   uniform float uTime;
@@ -2262,36 +2257,34 @@ const TerrainFragmentShader = `
   varying vec3 vNormal;
 
   void main() {
-    // Sample the structure map as color
+    // Sample the structure map as color — render it faithfully
     vec4 texColor = texture2D(uColorMap, vUv);
 
-    // Simple directional light
-    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
-    float diff = max(dot(vNormal, lightDir), 0.0);
-    float ambient = 0.35;
-    float lighting = ambient + diff * 0.65;
+    // Multi-directional lighting for realistic terrain feel
+    vec3 lightDir1 = normalize(vec3(0.4, 0.8, 0.3));
+    vec3 lightDir2 = normalize(vec3(-0.3, 0.6, -0.4));
+    float diff1 = max(dot(vNormal, lightDir1), 0.0);
+    float diff2 = max(dot(vNormal, lightDir2), 0.0);
+    float ambient = 0.45;
+    float lighting = ambient + diff1 * 0.4 + diff2 * 0.15;
 
-    // Height-based tint: low areas get a deep blue/purple, high areas brighten
-    vec3 lowColor = vec3(0.12, 0.08, 0.25);
-    vec3 highColor = vec3(1.0, 0.95, 0.85);
-    vec3 heightTint = mix(lowColor, highColor, smoothstep(0.1, 0.8, vHeight));
+    // Subtle shadow in valleys, highlight on ridges
+    float ao = smoothstep(0.0, 0.3, vHeight) * 0.3 + 0.7;
+    lighting *= ao;
 
-    // Blend texture with height tint
+    // Apply lighting to texture color
     vec3 color = texColor.rgb * lighting;
-    color = mix(color, color * heightTint, 0.4);
 
-    // Edge glow — subtle emissive at terrain edges
-    float edgeDist = length(vWorldPos.xz) / 130.0;
-    float edgeFade = smoothstep(1.0, 0.7, edgeDist);
+    // Very subtle warm highlight on peaks
+    color += vec3(0.08, 0.06, 0.03) * smoothstep(0.6, 0.9, vHeight);
 
-    // Subtle energy pulse through the terrain
-    float pulse = sin(vWorldPos.x * 0.03 + vWorldPos.z * 0.02 + uTime * 0.5) * 0.5 + 0.5;
-    vec3 energyColor = vec3(0.2, 0.5, 0.9);
-    color += energyColor * pulse * 0.06 * vHeight;
+    // Gentle depth fog at edges
+    float edgeDist = length(vWorldPos.xz) / 140.0;
+    float edgeFade = smoothstep(1.0, 0.8, edgeDist);
+    vec3 fogColor = vec3(0.03, 0.02, 0.05);
+    color = mix(fogColor, color, edgeFade);
 
-    float alpha = uOpacity * edgeFade * (0.85 + vHeight * 0.15);
-
-    gl_FragColor = vec4(color, alpha);
+    gl_FragColor = vec4(color, uOpacity);
   }
 `
 
@@ -2310,9 +2303,9 @@ function StructureTerrain() {
   const uniforms = useMemo(() => ({
     uHeightMap: { value: structureTexture },
     uColorMap: { value: structureTexture },
-    uDisplacement: { value: 18.0 },
+    uDisplacement: { value: 25.0 },
     uTime: { value: 0 },
-    uOpacity: { value: 0.92 },
+    uOpacity: { value: 1.0 },
   }), [structureTexture])
 
   useFrame(({ clock }) => {
@@ -2321,58 +2314,43 @@ function StructureTerrain() {
     }
   })
 
-  // High-res plane for detailed displacement
-  const TERRAIN_Y = (SURFACE_Y + PATTERN_Y) / 2 // Sits between Pattern and Surface
-
   return (
-    <group position={[0, TERRAIN_Y, 0]}>
+    <group position={[0, 0, 0]}>
       {/* Main structure terrain — displacement-mapped plane */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[MAP_WIDTH, MAP_HEIGHT, 256, 256]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
+        <planeGeometry args={[MAP_WIDTH, MAP_HEIGHT, 512, 512]} />
         <shaderMaterial
           ref={matRef}
           vertexShader={TerrainVertexShader}
           fragmentShader={TerrainFragmentShader}
           uniforms={uniforms}
-          transparent
-          side={THREE.DoubleSide}
+          transparent={false}
+          side={THREE.FrontSide}
           depthWrite={true}
         />
       </mesh>
 
-      {/* Subtle underglow to connect terrain to Pattern below */}
+      {/* Dark base beneath the terrain */}
       <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[MAP_WIDTH + 10, MAP_HEIGHT + 10]} />
+        <planeGeometry args={[MAP_WIDTH + 20, MAP_HEIGHT + 20]} />
         <meshStandardMaterial
-          color="#0a1525"
-          emissive="#1a3a60"
-          emissiveIntensity={0.3}
-          transparent
-          opacity={0.35}
-          side={THREE.DoubleSide}
-          depthWrite={false}
+          color="#080612"
+          roughness={0.95}
+          metalness={0.05}
+          side={THREE.FrontSide}
         />
       </mesh>
 
-      {/* Edge glow ring */}
-      <mesh position={[0, 0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[Math.min(MAP_HALF_W, MAP_HALF_H) - 5, Math.min(MAP_HALF_W, MAP_HALF_H) + 2, 96]} />
-        <meshStandardMaterial
-          color="#2060a0"
-          emissive="#3080cc"
-          emissiveIntensity={0.5}
-          transparent
-          opacity={0.15}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
+      {/* Edge frame — dark border */}
+      <mesh position={[0, -1, 0]}>
+        <boxGeometry args={[MAP_WIDTH + 4, 3, MAP_HEIGHT + 4]} />
+        <meshStandardMaterial color="#1a1418" roughness={0.9} metalness={0.1} />
       </mesh>
 
       {/* Terrain lighting */}
-      <pointLight position={[0, 15, 0]} intensity={0.6} color="#6090c0" distance={100} decay={2} />
-      <pointLight position={[60, 10, -40]} intensity={0.3} color="#d4a84b" distance={80} decay={2} />
-      <pointLight position={[-60, 10, 40]} intensity={0.3} color="#4080c0" distance={80} decay={2} />
+      <pointLight position={[0, 30, 0]} intensity={0.5} color="#e0d8c0" distance={200} decay={2} />
+      <pointLight position={[80, 20, -50]} intensity={0.4} color="#d4a84b" distance={150} decay={2} />
+      <pointLight position={[-80, 20, 50]} intensity={0.4} color="#8090b0" distance={150} decay={2} />
     </group>
   )
 }
@@ -2384,39 +2362,33 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
   return (
     <>
       {/* Warm lighting to match the parchment / painterly aesthetic */}
-      <ambientLight intensity={0.45} color="#f0e8d0" />
+      <ambientLight intensity={showSubLayers ? 0.6 : 0.45} color="#f0e8d0" />
       <directionalLight
-        position={[100, 120, 60]} intensity={1.0} color="#fff8e8" castShadow
+        position={[100, 120, 60]} intensity={showSubLayers ? 1.2 : 1.0} color="#fff8e8" castShadow
         shadow-mapSize={[2048, 2048]} shadow-camera-far={400}
         shadow-camera-left={-160} shadow-camera-right={160}
         shadow-camera-top={160} shadow-camera-bottom={-160}
       />
       <directionalLight position={[-80, 100, -50]} intensity={0.25} color="#c0c8e0" />
-      <hemisphereLight args={['#e0d8c0', '#1a1a30', 0.35]} />
+      <hemisphereLight args={['#e0d8c0', '#1a1a30', showSubLayers ? 0.5 : 0.35]} />
 
       <Stars radius={400} depth={200} count={8000} factor={6} saturation={0.3} fade speed={0.3} />
 
-      {/* Sub-layers — togglable */}
-      {showSubLayers && (
+      {showSubLayers ? (
+        /* Sub-layer view — Structure Terrain only, no flat surface */
         <group>
           <StructureTerrain />
-          <TheDrift />
-          <TheFold />
-          <ThePattern />
-          <Anchors />
-          <PatternShards />
-          <Hollows />
+        </group>
+      ) : (
+        /* Normal surface view — 2D textured map with overlays */
+        <group>
+          <TheSurface />
+          <FrayRifts />
+          <SurfaceShards />
+          <TravelRoutes />
+          <SurfaceParticles />
         </group>
       )}
-
-      {/* THE SURFACE — Image-textured map */}
-      <TheSurface />
-
-      {/* Surface overlays */}
-      <FrayRifts />
-      <SurfaceShards />
-      <TravelRoutes />
-      <SurfaceParticles />
 
       {/* Labels */}
       <LayerLabels showSubLayers={showSubLayers} />
@@ -2425,7 +2397,7 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
       <OrbitControls
         makeDefault enableDamping dampingFactor={0.05}
         minDistance={15} maxDistance={400}
-        target={ORBIT_TARGET}
+        target={showSubLayers ? new THREE.Vector3(0, 5, 0) : ORBIT_TARGET}
         enablePan
       />
 
@@ -2458,13 +2430,10 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 
         <div className="space-y-1.5">
           {[
-            { color: '#d4a84b', label: 'The Everloop', sub: 'The Living World' },
-            ...(showSubLayers ? [
-              { color: '#d4a060', label: 'The Structure', sub: 'Bone of the World' },
-              { color: '#40a0ff', label: 'The Pattern', sub: 'Lattice of Intent' },
-              { color: '#6080b0', label: 'The Fold', sub: 'Where Architects Weave' },
-              { color: '#8040c0', label: 'The Drift', sub: 'Sea of Unformed Chaos' },
-            ] : []),
+            ...(showSubLayers
+              ? [{ color: '#d4a060', label: 'The Structure', sub: 'Bone of the World' }]
+              : [{ color: '#d4a84b', label: 'The Everloop', sub: 'The Living World' }]
+            ),
           ].map(({ color, label, sub }) => (
             <div key={label} className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}80` }} />
@@ -2476,6 +2445,7 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
           ))}
         </div>
 
+        {!showSubLayers && (
         <div className="mt-2 pt-2 border-t border-gold/10">
           <h4 className="text-xs font-serif text-parchment mb-1.5 uppercase tracking-wider">Surface Markers</h4>
           <div className="space-y-1.5">
@@ -2497,6 +2467,7 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
             ))}
           </div>
         </div>
+        )}
 
         <div className="mt-2 pt-2 border-t border-gold/10">
           <p className="text-[9px] text-parchment-muted italic leading-tight">
@@ -2532,37 +2503,19 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 // ═══════════════════════════════════════════════════════════════
 export default function EverloopMap() {
   const [showSubLayers, setShowSubLayers] = useState(false)
-  const [showGeneratePanel, setShowGeneratePanel] = useState(false)
   const handleToggleLayers = useCallback(() => { setShowSubLayers(prev => !prev) }, [])
 
   return (
     <div className="relative w-full h-full">
       <Canvas
         shadows
-        camera={{ position: [0, 120, 140], fov: 40, near: 0.1, far: 1000 }}
+        camera={{ position: showSubLayers ? [0, 80, 120] : [0, 120, 140], fov: 40, near: 0.1, far: 1000 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
         style={{ background: '#030308' }}
       >
         <Scene showSubLayers={showSubLayers} />
       </Canvas>
       <MapLegend showSubLayers={showSubLayers} onToggleLayers={handleToggleLayers} />
-      {/* Generate panel — admin tool accessible from the map */}
-      {showSubLayers && (
-        <div className="absolute top-4 right-4 z-10">
-          <button
-            onClick={() => setShowGeneratePanel(prev => !prev)}
-            className="px-3 py-1.5 rounded text-[10px] font-medium transition-all border backdrop-blur-xl mb-2"
-            style={{
-              background: showGeneratePanel ? 'rgba(64, 160, 255, 0.15)' : 'rgba(212, 168, 75, 0.1)',
-              borderColor: showGeneratePanel ? 'rgba(64, 160, 255, 0.3)' : 'rgba(212, 168, 75, 0.2)',
-              color: showGeneratePanel ? '#40a0ff' : '#d4a84b',
-            }}
-          >
-            {showGeneratePanel ? '✕ Close Generator' : '◆ Generate Sublayer Visuals'}
-          </button>
-          {showGeneratePanel && <SublayerGeneratePanel />}
-        </div>
-      )}
     </div>
   )
 }
