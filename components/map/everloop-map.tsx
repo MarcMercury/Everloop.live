@@ -651,26 +651,31 @@ function DriftIntentFlashes() {
   )
 }
 
-/** Volumetric nebula cloud dome — the sea of chaos rendered as a living cloud volume */
-function DriftNebulaDome() {
+/** Volumetric nebula cloud plane — the sea of chaos rendered as flat living cloud layers */
+function DriftNebulaPlane() {
   const matRef = useRef<THREE.ShaderMaterial>(null)
+  const mat2Ref = useRef<THREE.ShaderMaterial>(null)
 
   const uniforms = useMemo(() => ({
     uTime: { value: 0 },
     uOpacity: { value: 0.55 },
   }), [])
 
+  const uniforms2 = useMemo(() => ({
+    uTime: { value: 0 },
+    uOpacity: { value: 0.35 },
+  }), [])
+
   useFrame(({ clock }) => {
-    if (matRef.current) {
-      matRef.current.uniforms.uTime.value = clock.elapsedTime
-    }
+    if (matRef.current) matRef.current.uniforms.uTime.value = clock.elapsedTime
+    if (mat2Ref.current) mat2Ref.current.uniforms.uTime.value = clock.elapsedTime
   })
 
   return (
     <group>
-      {/* Main nebula dome — top half of sphere for the chaos cloud volume */}
-      <mesh position={[0, DRIFT_Y, 0]} rotation={[0, 0, 0]}>
-        <sphereGeometry args={[155, 64, 32, 0, Math.PI * 2, 0, Math.PI * 0.6]} />
+      {/* Main nebula plane — flat chaos cloud layer */}
+      <mesh position={[0, DRIFT_Y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH * 1.3, MAP_HEIGHT * 1.3, 128, 128]} />
         <shaderMaterial
           ref={matRef}
           vertexShader={DriftNebulaVertexShader}
@@ -682,16 +687,14 @@ function DriftNebulaDome() {
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      {/* Inner chaos cloud layer — denser, smaller, different rotation */}
-      <mesh position={[0, DRIFT_Y - 3, 0]} rotation={[0.2, 0, 0.1]}>
-        <sphereGeometry args={[100, 48, 24, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+      {/* Second offset chaos cloud layer for depth */}
+      <mesh position={[0, DRIFT_Y - 5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH * 1.1, MAP_HEIGHT * 1.1, 96, 96]} />
         <shaderMaterial
+          ref={mat2Ref}
           vertexShader={DriftNebulaVertexShader}
           fragmentShader={DriftNebulaFragmentShader}
-          uniforms={{
-            uTime: uniforms.uTime,
-            uOpacity: { value: 0.35 },
-          }}
+          uniforms={uniforms2}
           transparent
           side={THREE.DoubleSide}
           depthWrite={false}
@@ -764,8 +767,8 @@ function DriftEnergyTendrils() {
 function TheDrift() {
   return (
     <group>
-      {/* Volumetric nebula cloud dome — the primordial sea */}
-      <DriftNebulaDome />
+      {/* Flat nebula cloud layers — the primordial sea */}
+      <DriftNebulaPlane />
       {/* Core chaos particles */}
       <DriftChaosDust />
       {/* Nebula vortex rings */}
@@ -778,10 +781,10 @@ function TheDrift() {
       <DriftEnergyTendrils />
       {/* Intent flashes — brief sparks of will */}
       <DriftIntentFlashes />
-      {/* Abyss bowl */}
-      <mesh position={[0, DRIFT_Y - 12, 0]}>
-        <sphereGeometry args={[170, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#030008" side={THREE.BackSide} transparent opacity={0.95} />
+      {/* Flat abyss floor */}
+      <mesh position={[0, DRIFT_Y - 12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH * 1.5, MAP_HEIGHT * 1.5]} />
+        <meshStandardMaterial color="#030008" side={THREE.DoubleSide} transparent opacity={0.95} />
       </mesh>
       {/* Deep chaos glow — enhanced lighting */}
       <pointLight position={[0, DRIFT_Y, 0]} intensity={0.8} color="#5020a0" distance={130} decay={2} />
@@ -2170,6 +2173,7 @@ function SurfaceParticles() {
 function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
   const labels = [
     { y: SURFACE_Y + 15, text: 'THE EVERLOOP', sub: 'The Living World', color: '#d4a84b', always: true },
+    { y: (SURFACE_Y + PATTERN_Y) / 2, text: 'THE STRUCTURE', sub: 'Bone of the World', color: '#d4a060', always: false },
     { y: PATTERN_Y, text: 'THE PATTERN', sub: 'Lattice of Intent & Purpose', color: '#40a0ff', always: false },
     { y: FOLD_Y, text: 'THE FOLD', sub: 'Where the Architects Weave', color: '#6080b0', always: false },
     { y: DRIFT_Y, text: 'THE DRIFT', sub: 'Sea of Unformed Chaos', color: '#8040c0', always: false },
@@ -2199,6 +2203,181 @@ function LayerLabels({ showSubLayers }: { showSubLayers: boolean }) {
 const ORBIT_TARGET = new THREE.Vector3(0, 15, 0)
 
 // ═══════════════════════════════════════════════════════════════
+// STRUCTURE TERRAIN — 3D terrain from "New Structure Map.png"
+// A detailed displacement-mapped landscape sitting between
+// Pattern and Surface layers, showing the world's bone structure.
+// ═══════════════════════════════════════════════════════════════
+
+/** Vertex shader that displaces a flat plane based on a heightmap texture */
+const TerrainVertexShader = `
+  uniform sampler2D uHeightMap;
+  uniform float uDisplacement;
+  uniform float uTime;
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
+  varying float vHeight;
+  varying vec3 vNormal;
+
+  void main() {
+    vUv = uv;
+
+    // Sample heightmap for displacement
+    vec4 heightData = texture2D(uHeightMap, uv);
+    // Use luminance as height
+    float h = dot(heightData.rgb, vec3(0.299, 0.587, 0.114));
+    vHeight = h;
+
+    // Displace vertex along normal (Y axis for a flat plane)
+    vec3 displaced = position;
+    displaced.z += h * uDisplacement;
+
+    // Subtle animation — gentle breathing of the terrain
+    displaced.z += sin(position.x * 0.02 + uTime * 0.3) * 0.3;
+    displaced.z += cos(position.y * 0.025 + uTime * 0.2) * 0.2;
+
+    vec4 worldPos = modelMatrix * vec4(displaced, 1.0);
+    vWorldPos = worldPos.xyz;
+
+    // Approximate normal from neighbors
+    float eps = 0.005;
+    float hL = dot(texture2D(uHeightMap, uv - vec2(eps, 0.0)).rgb, vec3(0.299, 0.587, 0.114));
+    float hR = dot(texture2D(uHeightMap, uv + vec2(eps, 0.0)).rgb, vec3(0.299, 0.587, 0.114));
+    float hD = dot(texture2D(uHeightMap, uv - vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114));
+    float hU = dot(texture2D(uHeightMap, uv + vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114));
+    vec3 n = normalize(vec3(hL - hR, hD - hU, 2.0 / (uDisplacement * 0.1)));
+    vNormal = normalize(normalMatrix * n);
+
+    gl_Position = projectionMatrix * viewMatrix * worldPos;
+  }
+`
+
+/** Fragment shader — paints the terrain with the structure map texture + lighting */
+const TerrainFragmentShader = `
+  uniform sampler2D uColorMap;
+  uniform float uTime;
+  uniform float uOpacity;
+  varying vec2 vUv;
+  varying vec3 vWorldPos;
+  varying float vHeight;
+  varying vec3 vNormal;
+
+  void main() {
+    // Sample the structure map as color
+    vec4 texColor = texture2D(uColorMap, vUv);
+
+    // Simple directional light
+    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3));
+    float diff = max(dot(vNormal, lightDir), 0.0);
+    float ambient = 0.35;
+    float lighting = ambient + diff * 0.65;
+
+    // Height-based tint: low areas get a deep blue/purple, high areas brighten
+    vec3 lowColor = vec3(0.12, 0.08, 0.25);
+    vec3 highColor = vec3(1.0, 0.95, 0.85);
+    vec3 heightTint = mix(lowColor, highColor, smoothstep(0.1, 0.8, vHeight));
+
+    // Blend texture with height tint
+    vec3 color = texColor.rgb * lighting;
+    color = mix(color, color * heightTint, 0.4);
+
+    // Edge glow — subtle emissive at terrain edges
+    float edgeDist = length(vWorldPos.xz) / 130.0;
+    float edgeFade = smoothstep(1.0, 0.7, edgeDist);
+
+    // Subtle energy pulse through the terrain
+    float pulse = sin(vWorldPos.x * 0.03 + vWorldPos.z * 0.02 + uTime * 0.5) * 0.5 + 0.5;
+    vec3 energyColor = vec3(0.2, 0.5, 0.9);
+    color += energyColor * pulse * 0.06 * vHeight;
+
+    float alpha = uOpacity * edgeFade * (0.85 + vHeight * 0.15);
+
+    gl_FragColor = vec4(color, alpha);
+  }
+`
+
+function StructureTerrain() {
+  const matRef = useRef<THREE.ShaderMaterial>(null)
+
+  // Load the New Structure Map as both color and displacement
+  const structureTexture = useTexture('/Maps/New Structure Map.png')
+  structureTexture.colorSpace = THREE.SRGBColorSpace
+  structureTexture.wrapS = THREE.ClampToEdgeWrapping
+  structureTexture.wrapT = THREE.ClampToEdgeWrapping
+  structureTexture.minFilter = THREE.LinearMipmapLinearFilter
+  structureTexture.magFilter = THREE.LinearFilter
+  structureTexture.anisotropy = 16
+
+  const uniforms = useMemo(() => ({
+    uHeightMap: { value: structureTexture },
+    uColorMap: { value: structureTexture },
+    uDisplacement: { value: 18.0 },
+    uTime: { value: 0 },
+    uOpacity: { value: 0.92 },
+  }), [structureTexture])
+
+  useFrame(({ clock }) => {
+    if (matRef.current) {
+      matRef.current.uniforms.uTime.value = clock.elapsedTime
+    }
+  })
+
+  // High-res plane for detailed displacement
+  const TERRAIN_Y = (SURFACE_Y + PATTERN_Y) / 2 // Sits between Pattern and Surface
+
+  return (
+    <group position={[0, TERRAIN_Y, 0]}>
+      {/* Main structure terrain — displacement-mapped plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH, MAP_HEIGHT, 256, 256]} />
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={TerrainVertexShader}
+          fragmentShader={TerrainFragmentShader}
+          uniforms={uniforms}
+          transparent
+          side={THREE.DoubleSide}
+          depthWrite={true}
+        />
+      </mesh>
+
+      {/* Subtle underglow to connect terrain to Pattern below */}
+      <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH + 10, MAP_HEIGHT + 10]} />
+        <meshStandardMaterial
+          color="#0a1525"
+          emissive="#1a3a60"
+          emissiveIntensity={0.3}
+          transparent
+          opacity={0.35}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* Edge glow ring */}
+      <mesh position={[0, 0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[Math.min(MAP_HALF_W, MAP_HALF_H) - 5, Math.min(MAP_HALF_W, MAP_HALF_H) + 2, 96]} />
+        <meshStandardMaterial
+          color="#2060a0"
+          emissive="#3080cc"
+          emissiveIntensity={0.5}
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Terrain lighting */}
+      <pointLight position={[0, 15, 0]} intensity={0.6} color="#6090c0" distance={100} decay={2} />
+      <pointLight position={[60, 10, -40]} intensity={0.3} color="#d4a84b" distance={80} decay={2} />
+      <pointLight position={[-60, 10, 40]} intensity={0.3} color="#4080c0" distance={80} decay={2} />
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SCENE
 // ═══════════════════════════════════════════════════════════════
 function Scene({ showSubLayers }: { showSubLayers: boolean }) {
@@ -2220,6 +2399,7 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
       {/* Sub-layers — togglable */}
       {showSubLayers && (
         <group>
+          <StructureTerrain />
           <TheDrift />
           <TheFold />
           <ThePattern />
@@ -2280,6 +2460,7 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
           {[
             { color: '#d4a84b', label: 'The Everloop', sub: 'The Living World' },
             ...(showSubLayers ? [
+              { color: '#d4a060', label: 'The Structure', sub: 'Bone of the World' },
               { color: '#40a0ff', label: 'The Pattern', sub: 'Lattice of Intent' },
               { color: '#6080b0', label: 'The Fold', sub: 'Where Architects Weave' },
               { color: '#8040c0', label: 'The Drift', sub: 'Sea of Unformed Chaos' },
