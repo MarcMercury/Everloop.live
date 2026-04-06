@@ -470,6 +470,9 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                 {portraitLoading && (
                   <p className="text-[10px] text-parchment-muted text-center">~15 seconds...</p>
                 )}
+                {portraitError && (
+                  <p className="text-[10px] text-red-400 text-center">{portraitError}</p>
+                )}
               </div>
             )}
           </div>
