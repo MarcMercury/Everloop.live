@@ -219,3 +219,64 @@ The world is reorganizing itself around the Shards. People think they are chasin
 ### One-Line Philosophy
 
 *"Every story in the Everloop begins somewhere else… but it never ends there."*
+
+---
+
+## Shard Build Spec (4-Layer System)
+
+Every shard MUST be built using these 4 layers:
+
+### Layer 1: STATE (What form is it in?)
+
+| State | Meaning |
+|-------|---------|
+| Raw | Unstable, exposed |
+| Embedded | Fused into object/environment |
+| Bound | Attached to a person |
+| Buried | Hidden/inactive |
+| Fractured | Multiple pieces |
+
+### Layer 2: LOCATION (Where is it?)
+
+**8 Regions** (11 shards each = 88 total):
+- Virelay Coast (Trade / Civilization / Instability)
+- Deyune Steps (Mountains / Stone / Permanence)
+- Varnhalt Frontier (Ruins / Expansion / Conflict)
+- Virelay Deep Forests (Growth / Mutation / Nature)
+- Polar / Tundra Region
+- Ocean / Deep Water
+- Fray Zones (Active Collapse Regions)
+- Unknown / Deep Regions
+
+### Layer 3: EXPRESSION (What is it doing?)
+
+Categories: Stability, Time, Memory, Reality Distortion, Life/Biological, Energy/Power, Emotional/Psychological, Perception, Environment, Shard Behavior. Pick 1-2 per shard.
+
+### Layer 4: SITUATION (Why is this a story?)
+
+Categories: Control/Ownership, Ignorance, Protection, Environment Challenge, Instability/Urgency, Moral Conflict, Chain Dependency, NPC-Centered, Hidden/Discovery, Conflict/War, Fray-Linked, Movement/Convergence. Pick 1-2 per shard.
+
+### Core Design Rules
+
+1. Shards are NOT artifacts or magic items — they are pieces of stabilized existence
+2. Shards attempt to stabilize reality, but imperfectly — fixing one thing destabilizes another
+3. Shards behave like gravity — they pull toward each other (slow, indirect, influenced by environment)
+4. Every story leads to a Shard (directly or indirectly)
+5. Shards take form based on what they bind to (Structure → object, Mind → possession, Chaos → monster interaction, Isolation → raw shard)
+6. Nothing is a clean solution — using a shard fixes one thing and destabilizes another
+7. The end state is unknown — all shards will eventually converge; no one knows what happens when they do
+
+### Monster Integration Rule
+
+If a monster exists near a shard, you MUST define:
+- What broke here
+- How the Fray connects
+- Why the shard is involved
+
+### Quest Design Rule
+
+Every quest must result in one of:
+- Discovery of a shard
+- Movement toward a shard
+- Change in shard state
+- Conflict over a shard

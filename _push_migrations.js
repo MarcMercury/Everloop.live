@@ -21,8 +21,8 @@ if (!PROJECT_REF || !SBP_TOKEN) {
 }
 
 const migrations = [
-  'supabase/migrations/20260330_001_create_player_characters.sql',
-  'supabase/migrations/20260330_002_create_campaign_engine.sql',
+  'supabase/migrations/20260406_002_expand_shards_system.sql',
+  'supabase/migrations/20260406_003_seed_88_shards.sql',
 ];
 
 function executeSql(sql) {

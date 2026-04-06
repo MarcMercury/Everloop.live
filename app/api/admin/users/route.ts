@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import type { User } from '@supabase/supabase-js'
+import type { Profile } from '@/types/database'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
@@ -19,32 +23,28 @@ export async function GET() {
       return NextResponse.json({ error: 'Admin client not configured' }, { status: 500 })
     }
 
-    // Fetch auth users
-    const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({
-      perPage: 1000,
-    })
-
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 500 })
+    // Fetch all auth users (paginated)
+    const allAuthUsers: User[] = []
+    let page = 1
+    const perPage = 1000
+    while (true) {
+      const { data: authData, error: authError } = await adminClient.auth.admin.listUsers({
+        page,
+        perPage,
+      })
+      if (authError) {
+        return NextResponse.json({ error: authError.message }, { status: 500 })
+      }
+      allAuthUsers.push(...authData.users)
+      if (authData.users.length < perPage) break
+      page++
     }
 
     // Fetch profiles
     const { data: profiles, error: profileError } = await adminClient
       .from('profiles')
-      .select('id, username, display_name, avatar_url, role, is_admin, created_at, updated_at, last_sign_in_at') as {
-        data: Array<{
-          id: string
-          username: string
-          display_name: string | null
-          avatar_url: string | null
-          role: string
-          is_admin: boolean
-          created_at: string
-          updated_at: string
-          last_sign_in_at: string | null
-        }> | null
-        error: Error | null
-      }
+      .select('id, username, display_name, avatar_url, role, is_admin, created_at, updated_at, last_sign_in_at')
+      .returns<Profile[]>()
 
     if (profileError) {
       return NextResponse.json({ error: profileError.message }, { status: 500 })
@@ -53,7 +53,7 @@ export async function GET() {
     const profileMap = new Map(profiles?.map(p => [p.id, p]) || [])
 
     // Merge auth users with profiles
-    const users = authData.users.map(authUser => {
+    const users = allAuthUsers.map(authUser => {
       const profile = profileMap.get(authUser.id)
       // banned_until may not be in the TS type but exists in Supabase Auth
       const rawUser = authUser as unknown as Record<string, unknown>

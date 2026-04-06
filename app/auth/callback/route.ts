@@ -15,10 +15,14 @@ export async function GET(request: Request) {
     
     if (!error && data.user) {
       // Update last_sign_in_at for returning OAuth users
-      await supabase
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ last_sign_in_at: new Date().toISOString() } as never)
         .eq('id', data.user.id)
+      
+      if (updateError) {
+        console.error('Failed to update last_sign_in_at on OAuth callback:', updateError)
+      }
 
       // Ensure profile exists for OAuth users
       // The database trigger should handle this, but we verify here for robustness

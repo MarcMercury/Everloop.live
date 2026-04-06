@@ -341,6 +341,7 @@ export interface Database {
           is_admin: boolean
           reputation_score: number
           trust_score: number
+          last_sign_in_at: string | null
           created_at: string
           updated_at: string
         }
@@ -354,6 +355,7 @@ export interface Database {
           is_admin?: boolean
           reputation_score?: number
           trust_score?: number
+          last_sign_in_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -367,6 +369,7 @@ export interface Database {
           is_admin?: boolean
           reputation_score?: number
           trust_score?: number
+          last_sign_in_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -437,6 +440,7 @@ export interface Database {
         Row: {
           id: string
           name: string
+          shard_number: number | null
           description: string | null
           power_description: string | null
           current_holder_id: string | null
@@ -445,12 +449,20 @@ export interface Database {
           power_level: number
           history: Json
           visual_description: string | null
+          form_state: string | null
+          region: string | null
+          site_types: string[]
+          location_description: string | null
+          expressions: string[]
+          situations: string[]
+          monster_link: Json | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           name: string
+          shard_number?: number | null
           description?: string | null
           power_description?: string | null
           current_holder_id?: string | null
@@ -459,12 +471,20 @@ export interface Database {
           power_level?: number
           history?: Json
           visual_description?: string | null
+          form_state?: string | null
+          region?: string | null
+          site_types?: string[]
+          location_description?: string | null
+          expressions?: string[]
+          situations?: string[]
+          monster_link?: Json | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           name?: string
+          shard_number?: number | null
           description?: string | null
           power_description?: string | null
           current_holder_id?: string | null
@@ -473,6 +493,13 @@ export interface Database {
           power_level?: number
           history?: Json
           visual_description?: string | null
+          form_state?: string | null
+          region?: string | null
+          site_types?: string[]
+          location_description?: string | null
+          expressions?: string[]
+          situations?: string[]
+          monster_link?: Json | null
           created_at?: string
           updated_at?: string
         }
