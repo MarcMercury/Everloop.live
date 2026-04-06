@@ -32,6 +32,7 @@ interface RegionLocation {
   description: string | null
   stability: number
   tags: string[]
+  imageUrl: string | null
   x: number
   z: number
   createdAt: string
@@ -75,7 +76,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [locations, setLocations] = useState<RegionLocation[]>([])
   const [selectedLocation, setSelectedLocation] = useState<RegionLocation | null>(null)
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>(region.model3dPath ? '3d' : '2d')
+  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
   const [generated3dUrl, setGenerated3dUrl] = useState<string | null>(null)
   const [locationKeyOpen, setLocationKeyOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
@@ -396,6 +397,17 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                 ✕
               </button>
             </div>
+            {selectedLocation.imageUrl && (
+              <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3 border" style={{ borderColor: `${getTypeColor(selectedLocation.type)}30` }}>
+                <Image
+                  src={selectedLocation.imageUrl}
+                  alt={selectedLocation.name}
+                  fill
+                  className="object-cover"
+                  sizes="380px"
+                />
+              </div>
+            )}
             {selectedLocation.description && (
               <p className="text-sm text-parchment-muted leading-relaxed mb-3">
                 {selectedLocation.description.length > 200

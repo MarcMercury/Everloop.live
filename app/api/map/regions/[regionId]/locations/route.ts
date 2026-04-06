@@ -11,6 +11,7 @@ interface CanonEntityRow {
   stability_rating: number
   tags: string[]
   metadata: Record<string, unknown> | null
+  extended_lore: Record<string, unknown> | null
   created_at: string
 }
 
@@ -43,6 +44,7 @@ export async function GET(
       stability_rating,
       tags,
       metadata,
+      extended_lore,
       created_at
     `)
     .eq('status', 'canonical')
@@ -78,6 +80,11 @@ export async function GET(
     const coords = entity.metadata
     const hasCoords = coords?.map_x !== undefined && coords?.map_z !== undefined
 
+    const imageUrl =
+      (entity.metadata?.image_url as string | undefined) ??
+      (entity.extended_lore?.image_url as string | undefined) ??
+      null
+
     return {
       id: entity.id,
       name: entity.name,
@@ -86,6 +93,7 @@ export async function GET(
       description: entity.description,
       stability: entity.stability_rating,
       tags: entity.tags,
+      imageUrl,
       x: hasCoords ? Number(coords.map_x) : hashToCoord(entity.name, 0),
       z: hasCoords ? Number(coords.map_z) : hashToCoord(entity.name, 1),
       createdAt: entity.created_at,
