@@ -1832,18 +1832,7 @@ function TheSurface() {
   texture.anisotropy = 16
 
   const geometry = useMemo(() => {
-    const geo = new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT, 128, 128)
-    const positions = geo.attributes.position
-    for (let i = 0; i < positions.count; i++) {
-      const x = positions.getX(i) / MAP_HALF_W
-      const y = positions.getY(i) / MAP_HALF_H
-      const dist = Math.sqrt(x * x + y * y)
-      // Gentle dome curvature: max ~3 units at center, falling off toward edges
-      const dome = Math.max(0, (1 - dist * dist * 0.5)) * 3
-      positions.setZ(i, dome)
-    }
-    geo.computeVertexNormals()
-    return geo
+    return new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT)
   }, [])
 
   return (
@@ -2383,7 +2372,6 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
         /* Normal surface view — 2D textured map with overlays */
         <group>
           <TheSurface />
-          <FrayRifts />
           <SurfaceShards />
           <TravelRoutes />
           <SurfaceParticles />
@@ -2445,29 +2433,7 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
           ))}
         </div>
 
-        {!showSubLayers && (
-        <div className="mt-2 pt-2 border-t border-gold/10">
-          <h4 className="text-xs font-serif text-parchment mb-1.5 uppercase tracking-wider">Surface Markers</h4>
-          <div className="space-y-1.5">
-            {[
-              { color: '#60d0ff', label: 'Shard Sites', sub: 'Crystal Fragments', shape: 'diamond' as const },
-              { color: '#8040c0', label: 'Fray Rifts', sub: 'Reality Tears', shape: 'circle' as const },
-              { color: '#d4a84b', label: 'Travel Routes', sub: 'Safe Corridors', shape: 'line' as const },
-            ].map(({ color, label, sub, shape }) => (
-              <div key={label} className="flex items-center gap-2">
-                <div
-                  className={`w-2.5 h-2.5 ${shape === 'diamond' ? 'rotate-45' : shape === 'line' ? 'h-0.5 w-4 rounded' : 'rounded-full'}`}
-                  style={{ background: color, boxShadow: `0 0 6px ${color}80` }}
-                />
-                <div>
-                  <span className="text-xs text-parchment">{label}</span>
-                  <span className="text-[9px] text-parchment-muted ml-1.5">{sub}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        )}
+
 
         <div className="mt-2 pt-2 border-t border-gold/10">
           <p className="text-[9px] text-parchment-muted italic leading-tight">
