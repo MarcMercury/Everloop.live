@@ -1825,7 +1825,7 @@ function Hollows() {
 // LAYER 4 — THE EVERLOOP SURFACE (Image-Textured Map)
 // ═══════════════════════════════════════════════════════════════
 function TheSurface() {
-  const texture = useTexture('/everloop-map-base.png')
+  const texture = useTexture('/Maps/New Structure Map.png')
   texture.colorSpace = THREE.SRGBColorSpace
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
@@ -2227,8 +2227,8 @@ const TerrainVertexShader = `
     displaced.z += h * uDisplacement;
 
     // Subtle animation — gentle breathing of the terrain
-    displaced.z += sin(position.x * 0.02 + uTime * 0.3) * 0.3;
-    displaced.z += cos(position.y * 0.025 + uTime * 0.2) * 0.2;
+    displaced.z += sin(position.x * 0.02 + uTime * 0.3) * 0.15;
+    displaced.z += cos(position.y * 0.025 + uTime * 0.2) * 0.1;
 
     vec4 worldPos = modelMatrix * vec4(displaced, 1.0);
     vWorldPos = worldPos.xyz;
@@ -2239,7 +2239,7 @@ const TerrainVertexShader = `
     float hR = dot(texture2D(uHeightMap, uv + vec2(eps, 0.0)).rgb, vec3(0.299, 0.587, 0.114));
     float hD = dot(texture2D(uHeightMap, uv - vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114));
     float hU = dot(texture2D(uHeightMap, uv + vec2(0.0, eps)).rgb, vec3(0.299, 0.587, 0.114));
-    vec3 n = normalize(vec3(hL - hR, hD - hU, 2.0 / (uDisplacement * 0.1)));
+    vec3 n = normalize(vec3(hL - hR, hD - hU, 2.0 / max(uDisplacement * 0.1, 0.01)));
     vNormal = normalize(normalMatrix * n);
 
     gl_Position = projectionMatrix * viewMatrix * worldPos;
@@ -2260,23 +2260,23 @@ const TerrainFragmentShader = `
     // Sample the structure map as color — render it faithfully
     vec4 texColor = texture2D(uColorMap, vUv);
 
-    // Multi-directional lighting for realistic terrain feel
+    // Gentle directional lighting — preserve original map colors
     vec3 lightDir1 = normalize(vec3(0.4, 0.8, 0.3));
     vec3 lightDir2 = normalize(vec3(-0.3, 0.6, -0.4));
     float diff1 = max(dot(vNormal, lightDir1), 0.0);
     float diff2 = max(dot(vNormal, lightDir2), 0.0);
-    float ambient = 0.45;
-    float lighting = ambient + diff1 * 0.4 + diff2 * 0.15;
+    float ambient = 0.75;
+    float lighting = ambient + diff1 * 0.18 + diff2 * 0.07;
 
-    // Subtle shadow in valleys, highlight on ridges
-    float ao = smoothstep(0.0, 0.3, vHeight) * 0.3 + 0.7;
+    // Very subtle shadow in valleys
+    float ao = smoothstep(0.0, 0.3, vHeight) * 0.15 + 0.85;
     lighting *= ao;
 
-    // Apply lighting to texture color
+    // Apply gentle lighting to texture color — keep colors faithful
     vec3 color = texColor.rgb * lighting;
 
-    // Very subtle warm highlight on peaks
-    color += vec3(0.08, 0.06, 0.03) * smoothstep(0.6, 0.9, vHeight);
+    // Barely perceptible warm highlight on peaks
+    color += vec3(0.03, 0.02, 0.01) * smoothstep(0.6, 0.9, vHeight);
 
     // Gentle depth fog at edges
     float edgeDist = length(vWorldPos.xz) / 140.0;
@@ -2303,7 +2303,7 @@ function StructureTerrain() {
   const uniforms = useMemo(() => ({
     uHeightMap: { value: structureTexture },
     uColorMap: { value: structureTexture },
-    uDisplacement: { value: 25.0 },
+    uDisplacement: { value: 3.0 },
     uTime: { value: 0 },
     uOpacity: { value: 1.0 },
   }), [structureTexture])
