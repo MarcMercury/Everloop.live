@@ -562,6 +562,22 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                       transform: isLabelHovered ? 'scale(1.4)' : 'scale(1)',
                     }}
                   />
+                  {/* Persistent label name */}
+                  <div
+                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap pointer-events-none"
+                    style={{ top: dotSize + 2 }}
+                  >
+                    <span
+                      className="text-[10px] font-serif font-bold px-1 py-0.5 rounded"
+                      style={{
+                        color: dotColor,
+                        textShadow: '0 0 6px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.8)',
+                        background: isLabelHovered ? 'rgba(5,10,15,0.8)' : 'transparent',
+                      }}
+                    >
+                      {label.name}
+                    </span>
+                  </div>
                   {/* Description popup */}
                   {isLabelHovered && desc && (
                     <div
