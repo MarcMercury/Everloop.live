@@ -1825,7 +1825,7 @@ function Hollows() {
 // LAYER 4 — THE EVERLOOP SURFACE (Image-Textured Map)
 // ═══════════════════════════════════════════════════════════════
 function TheSurface() {
-  const texture = useTexture('/Maps/New Structure Map.png')
+  const texture = useTexture('/everloop-map-base.png')
   texture.colorSpace = THREE.SRGBColorSpace
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
