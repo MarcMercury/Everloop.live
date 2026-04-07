@@ -2345,6 +2345,31 @@ function StructureTerrain() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// STRUCTURE SURFACE — Flat 2D view of the Structure Map
+// ═══════════════════════════════════════════════════════════════
+function StructureSurface() {
+  const texture = useTexture('/Maps/New Structure Map.png')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.minFilter = THREE.LinearMipmapLinearFilter
+  texture.magFilter = THREE.LinearFilter
+  texture.anisotropy = 16
+
+  return (
+    <group position={[0, SURFACE_Y, 0]}>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[MAP_WIDTH, MAP_HEIGHT]} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.75}
+          metalness={0.02}
+          side={THREE.FrontSide}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SCENE
 // ═══════════════════════════════════════════════════════════════
 function Scene({ showSubLayers }: { showSubLayers: boolean }) {
@@ -2364,9 +2389,9 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
       <Stars radius={400} depth={200} count={8000} factor={6} saturation={0.3} fade speed={0.3} />
 
       {showSubLayers ? (
-        /* Sub-layer view — Structure Terrain only, no flat surface */
+        /* Sub-layer view — flat 2D Structure Map */
         <group>
-          <StructureTerrain />
+          <StructureSurface />
         </group>
       ) : (
         /* Normal surface view — 2D textured map with overlays */
