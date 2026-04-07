@@ -1843,7 +1843,7 @@ function TheSurface() {
           map={texture}
           roughness={0.75}
           metalness={0.02}
-          side={THREE.FrontSide}
+          side={THREE.DoubleSide}
         />
       </mesh>
 
@@ -2376,9 +2376,9 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
   return (
     <>
       {/* Warm lighting to match the parchment / painterly aesthetic */}
-      <ambientLight intensity={showSubLayers ? 0.6 : 0.45} color="#f0e8d0" />
+      <ambientLight intensity={showSubLayers ? 0.8 : 0.7} color="#f0e8d0" />
       <directionalLight
-        position={[100, 120, 60]} intensity={showSubLayers ? 1.2 : 1.0} color="#fff8e8" castShadow
+        position={[100, 120, 60]} intensity={showSubLayers ? 1.2 : 1.2} color="#fff8e8" castShadow
         shadow-mapSize={[2048, 2048]} shadow-camera-far={400}
         shadow-camera-left={-160} shadow-camera-right={160}
         shadow-camera-top={160} shadow-camera-bottom={-160}
@@ -2414,7 +2414,7 @@ function Scene({ showSubLayers }: { showSubLayers: boolean }) {
         enablePan
       />
 
-      <fog attach="fog" args={['#080810', 250, 500]} />
+      <fog attach="fog" args={['#080810', 400, 700]} />
     </>
   )
 }
