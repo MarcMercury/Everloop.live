@@ -35,6 +35,7 @@ const migrations = [
   'supabase/migrations/20260407_007_fix_overlapping_map_positions.sql',
   'supabase/migrations/20260407_008_fix_rookforge_position.sql',
   'supabase/migrations/20260407_009_fix_vell_glass_position.sql',
+  'supabase/migrations/20260407_010_move_coris_reach_and_vell_glass.sql',
 ];
 
 function executeSql(sql) {

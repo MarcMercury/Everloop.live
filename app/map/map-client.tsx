@@ -1,62 +1,112 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { WORLD_LOCATIONS } from '@/lib/data/region-locations'
 
-const EverloopMap3D = dynamic(() => import('@/components/map/everloop-map-3d'), {
-  ssr: false,
-  loading: () => (
-    <div className="absolute inset-0 flex items-center justify-center bg-charcoal">
-      <div className="text-center animate-pulse">
-        <div className="text-4xl mb-4">🗺️</div>
-        <h2 className="text-xl font-serif text-parchment mb-2">Rendering terrain...</h2>
-        <p className="text-parchment-muted text-sm">Loading 3D engine</p>
-      </div>
-    </div>
-  ),
-})
-
 export default function MapPageClient() {
-  const [view3D, setView3D] = useState(false)
-  const toggleView = useCallback(() => setView3D(prev => !prev), [])
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const isPanning = useRef(false)
+  const panStart = useRef({ x: 0, y: 0 })
+  const panOrigin = useRef({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (e.button !== 0) return
+    isPanning.current = true
+    panStart.current = { x: e.clientX, y: e.clientY }
+    panOrigin.current = { ...pan }
+    ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
+  }, [pan])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isPanning.current) return
+    const dx = e.clientX - panStart.current.x
+    const dy = e.clientY - panStart.current.y
+    setPan({ x: panOrigin.current.x + dx, y: panOrigin.current.y + dy })
+  }, [])
+
+  const handlePointerUp = useCallback(() => {
+    isPanning.current = false
+  }, [])
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    const cx = rect.width / 2
+    const cy = rect.height / 2
+
+    setZoom(prevZoom => {
+      const nextZoom = Math.min(8, Math.max(0.3, prevZoom - e.deltaY * 0.002))
+      const factor = 1 - nextZoom / prevZoom
+      setPan(p => ({
+        x: p.x + (mouseX - cx - p.x) * factor,
+        y: p.y + (mouseY - cy - p.y) * factor,
+      }))
+      return nextZoom
+    })
+  }, [])
+
+  const resetView = useCallback(() => {
+    setPan({ x: 0, y: 0 })
+    setZoom(1)
+  }, [])
 
   return (
-    <div className="relative h-[calc(100vh-60px)] bg-charcoal overflow-hidden">
-      {view3D ? (
-        <EverloopMap3D />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Image
-            src="/everloop-map-base.png"
-            alt="The Everloop — Interactive World Map"
-            fill
-            className="object-contain"
-            priority
-            quality={100}
-          />
-        </div>
+    <div
+      ref={containerRef}
+      className="relative h-[calc(100vh-60px)] bg-charcoal overflow-hidden"
+      style={{ cursor: isPanning.current ? 'grabbing' : 'grab', touchAction: 'none' }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onWheel={handleWheel}
+    >
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transformOrigin: 'center center',
+          transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
+        }}
+      >
+        <Image
+          src="/everloop-map-base.png"
+          alt="The Everloop — Interactive World Map"
+          fill
+          className="object-contain"
+          priority
+          quality={100}
+          draggable={false}
+        />
+      </div>
+
+      {/* Reset view button */}
+      {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+        <button
+          onClick={(e) => { e.stopPropagation(); resetView() }}
+          className="absolute bottom-20 right-4 z-20 px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+          style={{
+            background: 'rgba(5, 10, 15, 0.9)',
+            borderColor: 'rgba(212, 168, 75, 0.3)',
+            color: '#d4a84b',
+          }}
+        >
+          ↻ Reset View
+        </button>
       )}
 
       {/* Legend panel */}
       <div className="absolute top-4 left-4 z-10">
         <div className="rounded-lg p-3 backdrop-blur-xl border border-gold/20" style={{ background: 'rgba(5, 10, 15, 0.9)' }}>
           <h4 className="text-xs font-serif text-parchment mb-2 uppercase tracking-wider">Explore the Everloop</h4>
-
-          {/* 3D toggle */}
-          <button
-            onClick={toggleView}
-            className="w-full mb-2 px-2 py-1.5 rounded text-[10px] font-medium transition-all border"
-            style={{
-              background: view3D ? 'rgba(64, 160, 255, 0.15)' : 'rgba(212, 168, 75, 0.1)',
-              borderColor: view3D ? 'rgba(64, 160, 255, 0.3)' : 'rgba(212, 168, 75, 0.2)',
-              color: view3D ? '#40a0ff' : '#d4a84b',
-            }}
-          >
-            {view3D ? '◈ Return to 2D Map' : '◈ Explore in 3D'}
-          </button>
 
           <div className="flex items-center gap-2 mb-2">
             <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#d4a84b', boxShadow: '0 0 6px #d4a84b80' }} />
@@ -66,13 +116,11 @@ export default function MapPageClient() {
             </div>
           </div>
 
-          {view3D && (
-            <div className="mb-2 pt-1 border-t border-gold/10">
-              <p className="text-[9px] text-parchment-muted italic leading-tight">
-                Drag to orbit · Scroll to zoom · Right-drag to pan
-              </p>
-            </div>
-          )}
+          <div className="mb-2 pt-1 border-t border-gold/10">
+            <p className="text-[9px] text-parchment-muted italic leading-tight">
+              Drag to pan · Scroll to zoom
+            </p>
+          </div>
 
           {/* Region links */}
           <div className="pt-2 border-t border-gold/10">
