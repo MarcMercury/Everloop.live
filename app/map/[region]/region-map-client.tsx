@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import type { EverloopRegion } from '@/lib/data/regions'
 import { getRegionLocations } from '@/lib/data/region-locations'
+import { getMapLabels, type MapLabel } from '@/lib/data/map-labels'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 
 // Dynamic import to avoid SSR issues with Three.js
@@ -85,12 +86,15 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   // Pan & zoom state for 2D map
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
+  const [tilt, setTilt] = useState(20)
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0 })
   const panOrigin = useRef({ x: 0, y: 0 })
   const didDrag = useRef(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const regionDirectory = getRegionLocations(region.id)
+  const mapLabels = getMapLabels(region.id)
 
   // --- Pan & zoom handlers ---
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -117,12 +121,29 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault()
-    setZoom(prev => Math.min(5, Math.max(0.5, prev - e.deltaY * 0.001)))
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+    const cx = rect.width / 2
+    const cy = rect.height / 2
+
+    setZoom(prevZoom => {
+      const nextZoom = Math.min(8, Math.max(0.3, prevZoom - e.deltaY * 0.002))
+      const factor = 1 - nextZoom / prevZoom
+      setPan(p => ({
+        x: p.x + (mouseX - cx - p.x) * factor,
+        y: p.y + (mouseY - cy - p.y) * factor,
+      }))
+      return nextZoom
+    })
   }, [])
 
   const resetView = useCallback(() => {
     setPan({ x: 0, y: 0 })
     setZoom(1)
+    setTilt(20)
   }, [])
 
   const toggleCategory = useCallback((heading: string) => {
@@ -527,8 +548,14 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
       {/* 2D Map content */}
       {viewMode === '2d' && region.mapImage ? (
         <div
+          ref={containerRef}
           className="relative w-full h-[calc(100vh-60px)] overflow-hidden"
-          style={{ cursor: isPanning.current ? 'grabbing' : 'grab', touchAction: 'none' }}
+          style={{
+            cursor: isPanning.current ? 'grabbing' : 'grab',
+            touchAction: 'none',
+            perspective: tilt > 0 ? '1200px' : 'none',
+            perspectiveOrigin: '50% 60%',
+          }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -536,20 +563,45 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
           onWheel={handleWheel}
           onClick={(e) => { if (!didDrag.current) handleBackdropClick() }}
         >
-          {/* Reset view button */}
-          {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
-            <button
-              onClick={(e) => { e.stopPropagation(); resetView() }}
-              className="absolute bottom-28 right-4 z-30 px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+          {/* View controls */}
+          <div className="absolute bottom-28 right-4 z-30 flex flex-col items-end gap-2">
+            {/* Tilt slider */}
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-xl border"
               style={{
                 background: 'rgba(5, 10, 15, 0.9)',
                 borderColor: `${region.color}30`,
-                color: region.color,
               }}
             >
-              ↻ Reset View
-            </button>
-          )}
+              <span className="text-[10px] font-serif" style={{ color: region.color }}>Tilt</span>
+              <input
+                type="range"
+                min={0}
+                max={45}
+                value={tilt}
+                onChange={(e) => { e.stopPropagation(); setTilt(Number(e.target.value)) }}
+                className="w-20 h-1 cursor-pointer"
+                style={{ accentColor: region.color }}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <span className="text-[10px] tabular-nums w-6 text-right" style={{ color: `${region.color}80` }}>{tilt}°</span>
+            </div>
+
+            {/* Reset button */}
+            {(zoom !== 1 || pan.x !== 0 || pan.y !== 0 || tilt !== 20) && (
+              <button
+                onClick={(e) => { e.stopPropagation(); resetView() }}
+                className="px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
+                style={{
+                  background: 'rgba(5, 10, 15, 0.9)',
+                  borderColor: `${region.color}30`,
+                  color: region.color,
+                }}
+              >
+                ↻ Reset View
+              </button>
+            )}
+          </div>
 
           {/* Loading state */}
           {!imageLoaded && (
@@ -564,12 +616,13 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             </div>
           )}
 
-          {/* Region map image — pannable & zoomable */}
+          {/* Region map image — pannable, zoomable & tiltable */}
           <div
             className="relative w-full h-full"
             style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotateX(${tilt}deg)`,
               transformOrigin: 'center center',
+              transformStyle: 'preserve-3d',
               transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
             }}
           >
@@ -584,6 +637,47 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
               sizes="100vw"
               draggable={false}
             />
+
+            {/* Static map labels (location dots + names) */}
+            {imageLoaded && mapLabels.map((label) => {
+              const dotSize = label.size === 'city' ? 10 : label.size === 'town' ? 8 : label.size === 'landmark' ? 7 : 6
+              const fontSize = label.size === 'city' ? 12 : label.size === 'town' ? 11 : 10
+              const dotColor = label.size === 'city' ? '#f0d890' : label.size === 'town' ? '#d4a84b' : label.size === 'landmark' ? '#c090e0' : label.size === 'ruin' ? '#888' : label.size === 'tavern' ? '#d08040' : label.size === 'outpost' ? '#80b0d0' : '#b0c090'
+
+              return (
+                <div
+                  key={label.name}
+                  className="absolute z-10"
+                  style={{
+                    left: `${label.x}%`,
+                    top: `${label.z}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <div
+                    className="rounded-full"
+                    style={{
+                      width: dotSize,
+                      height: dotSize,
+                      background: dotColor,
+                      boxShadow: `0 0 ${dotSize}px ${dotColor}80, 0 0 ${dotSize * 2}px ${dotColor}30`,
+                      border: `1px solid ${dotColor}`,
+                    }}
+                  />
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-serif font-bold pointer-events-none"
+                    style={{
+                      top: dotSize + 2,
+                      fontSize,
+                      color: dotColor,
+                      textShadow: '0 0 6px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
+                    }}
+                  >
+                    {label.name}
+                  </span>
+                </div>
+              )
+            })}
 
             {/* Location pins overlaid on the map */}
             {imageLoaded && locations.map((loc) => {
