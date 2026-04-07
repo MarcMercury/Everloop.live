@@ -29,6 +29,7 @@ const migrations = [
   'supabase/migrations/20260407_002_glass_expanse_map_adjustments.sql',
   'supabase/migrations/20260407_003_luminous_fold_map_adjustments.sql',
   'supabase/migrations/20260407_003_varnhalt_map_cleanup.sql',
+  'supabase/migrations/20260407_004_map_duplicate_cleanup.sql',
 ];
 
 function executeSql(sql) {

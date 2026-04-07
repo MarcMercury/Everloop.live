@@ -3,27 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import type { EverloopRegion } from '@/lib/data/regions'
 import { getRegionLocations } from '@/lib/data/region-locations'
 import { getMapLabels, type MapLabel } from '@/lib/data/map-labels'
-import { Generate3DButton } from '@/components/3d/generate-3d-button'
-
-// Dynamic import to avoid SSR issues with Three.js
-const ModelViewer = dynamic(
-  () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-full flex items-center justify-center bg-charcoal">
-        <div className="text-center animate-pulse">
-          <div className="text-4xl mb-4">📦</div>
-          <p className="text-parchment-muted text-sm">Loading 3D terrain...</p>
-        </div>
-      </div>
-    ),
-  }
-)
 
 interface RegionLocation {
   id: string
@@ -77,8 +59,6 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [locations, setLocations] = useState<RegionLocation[]>([])
   const [selectedLocation, setSelectedLocation] = useState<RegionLocation | null>(null)
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d')
-  const [generated3dUrl, setGenerated3dUrl] = useState<string | null>(null)
   const [locationKeyOpen, setLocationKeyOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [regionInfoOpen, setRegionInfoOpen] = useState(true)
@@ -86,7 +66,6 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   // Pan & zoom state for 2D map
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [tilt, setTilt] = useState(20)
   const isPanning = useRef(false)
   const panStart = useRef({ x: 0, y: 0 })
   const panOrigin = useRef({ x: 0, y: 0 })
@@ -143,7 +122,6 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const resetView = useCallback(() => {
     setPan({ x: 0, y: 0 })
     setZoom(1)
-    setTilt(20)
   }, [])
 
   const toggleCategory = useCallback((heading: string) => {
@@ -480,82 +458,14 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
         </div>
       )}
 
-      {/* 2D / 3D View Toggle */}
-      {(region.model3dPath || region.mapImage) && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 rounded-lg overflow-hidden backdrop-blur-xl border"
-          style={{
-            background: 'rgba(5, 10, 15, 0.9)',
-            borderColor: `${region.color}30`,
-          }}
-        >
-          <button
-            onClick={() => setViewMode('2d')}
-            className={`px-4 py-2 text-sm font-medium transition-all ${
-              viewMode === '2d'
-                ? 'text-parchment'
-                : 'text-parchment-muted hover:text-parchment'
-            }`}
-            style={viewMode === '2d' ? { background: `${region.color}20`, color: region.color } : {}}
-          >
-            🗺️ 2D Map
-          </button>
-          <button
-            onClick={() => setViewMode('3d')}
-            className={`px-4 py-2 text-sm font-medium transition-all ${
-              viewMode === '3d'
-                ? 'text-parchment'
-                : 'text-parchment-muted hover:text-parchment'
-            }`}
-            style={viewMode === '3d' ? { background: `${region.color}20`, color: region.color } : {}}
-          >
-            📦 3D Terrain
-          </button>
-          {!region.model3dPath && !generated3dUrl && region.mapImage && (
-            <div className="px-2 border-l" style={{ borderColor: `${region.color}20` }}>
-              <Generate3DButton
-                mode="image-to-3d"
-                input={region.mapImage.startsWith('/') ? `${typeof window !== 'undefined' ? window.location.origin : ''}${region.mapImage}` : region.mapImage}
-                onComplete={(glbUrl) => {
-                  setGenerated3dUrl(glbUrl)
-                  setViewMode('3d')
-                }}
-                label="Generate"
-                size="sm"
-                options={{ enable_pbr: true }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 3D Terrain View */}
-      {viewMode === '3d' && (region.model3dPath || generated3dUrl) && (
-        <div className="relative w-full h-[calc(100vh-60px)]">
-          <ModelViewer
-            modelUrl={region.model3dPath || generated3dUrl!}
-            className="w-full h-full"
-            autoRotate={false}
-          />
-          {/* Atmospheric border glow */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              boxShadow: `inset 0 0 100px ${region.color}15`,
-            }}
-          />
-        </div>
-      )}
-
-      {/* 2D Map content */}
-      {viewMode === '2d' && region.mapImage ? (
+      {/* Map content */}
+      {region.mapImage ? (
         <div
           ref={containerRef}
           className="relative w-full h-[calc(100vh-60px)] overflow-hidden"
           style={{
             cursor: isPanning.current ? 'grabbing' : 'grab',
             touchAction: 'none',
-            perspective: tilt > 0 ? '1200px' : 'none',
-            perspectiveOrigin: '50% 60%',
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
@@ -564,45 +474,20 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
           onWheel={handleWheel}
           onClick={(e) => { if (!didDrag.current) handleBackdropClick() }}
         >
-          {/* View controls */}
-          <div className="absolute bottom-28 right-4 z-30 flex flex-col items-end gap-2">
-            {/* Tilt slider */}
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg backdrop-blur-xl border"
+          {/* Reset view button */}
+          {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
+            <button
+              onClick={(e) => { e.stopPropagation(); resetView() }}
+              className="absolute bottom-28 right-4 z-30 px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
               style={{
                 background: 'rgba(5, 10, 15, 0.9)',
                 borderColor: `${region.color}30`,
+                color: region.color,
               }}
             >
-              <span className="text-[10px] font-serif" style={{ color: region.color }}>Tilt</span>
-              <input
-                type="range"
-                min={0}
-                max={45}
-                value={tilt}
-                onChange={(e) => { e.stopPropagation(); setTilt(Number(e.target.value)) }}
-                className="w-20 h-1 cursor-pointer"
-                style={{ accentColor: region.color }}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <span className="text-[10px] tabular-nums w-6 text-right" style={{ color: `${region.color}80` }}>{tilt}°</span>
-            </div>
-
-            {/* Reset button */}
-            {(zoom !== 1 || pan.x !== 0 || pan.y !== 0 || tilt !== 20) && (
-              <button
-                onClick={(e) => { e.stopPropagation(); resetView() }}
-                className="px-3 py-2 rounded-lg text-xs font-medium backdrop-blur-xl border transition-all hover:brightness-125"
-                style={{
-                  background: 'rgba(5, 10, 15, 0.9)',
-                  borderColor: `${region.color}30`,
-                  color: region.color,
-                }}
-              >
-                ↻ Reset View
-              </button>
-            )}
-          </div>
+              ↻ Reset View
+            </button>
+          )}
 
           {/* Loading state */}
           {!imageLoaded && (
@@ -617,13 +502,12 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             </div>
           )}
 
-          {/* Region map image — pannable, zoomable & tiltable */}
+          {/* Region map image — pannable & zoomable */}
           <div
             className="relative w-full h-full"
             style={{
-              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotateX(${tilt}deg)`,
+              transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
-              transformStyle: 'preserve-3d',
               transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
             }}
           >
@@ -770,7 +654,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             }}
           />
         </div>
-      ) : viewMode === '2d' ? (
+      ) : (
         /* Placeholder for regions without map images yet */
         <div className="relative w-full h-[calc(100vh-60px)] flex items-center justify-center">
           <div
@@ -843,7 +727,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             </div>
           </div>
         </div>
-      ) : null}
+      )}
 
       {/* Bottom region navigation */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
