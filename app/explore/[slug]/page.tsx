@@ -213,6 +213,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
                     alt={entity.name}
                     fill
                     className="object-cover"
+                    unoptimized
                   />
                 </div>
               ) : (
