@@ -59,25 +59,18 @@ export async function GET(
 
   const rows = (data ?? []) as unknown as CanonEntityRow[]
 
-  // Filter entities that belong to this region:
-  // 1. metadata.region matches the region id (authoritative)
-  // 2. extended_lore.region matches the region id (authoritative — set by seed script)
-  // 3. For entities without an explicit region, fall back to tag/description matching
-  const regionName = region.name.toLowerCase().replace(/^the /, '')
+  // Filter entities that belong to this region using ONLY explicit assignments.
+  // Tag/description fallback was removed — it caused ghost pins from removed entities.
   const filtered = rows.filter((entity) => {
     const meta = entity.metadata
     const extLore = entity.extended_lore as Record<string, unknown> | null
-    // If the entity has an explicit region, only match on exact region
+    // Skip entities explicitly hidden from the map
+    if (meta?.hidden_from_map) return false
+    // Skip region-category entries (they are the region itself, not a location pin)
+    if (meta?.category === 'Region' || extLore?.category === 'Region') return false
+    // Only match on explicit region assignment
     if (meta?.region) return meta.region === regionId
     if (extLore?.region) return extLore.region === regionId
-    // Fallback: tags include the region id or region name
-    if (entity.tags?.some((tag: string) => {
-      const lower = tag.toLowerCase()
-      return lower === regionId || lower === regionName || lower.includes(regionId)
-    })) return true
-    // Fallback: description mentions the region
-    if (entity.description?.toLowerCase().includes(regionId)) return true
-    if (entity.description?.toLowerCase().includes(regionName)) return true
     return false
   })
 
