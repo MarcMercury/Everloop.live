@@ -24,6 +24,11 @@ const migrations = [
   'supabase/migrations/20260404_001_add_last_sign_in_to_profiles.sql',
   'supabase/migrations/20260406_002_expand_shards_system.sql',
   'supabase/migrations/20260406_003_seed_88_shards.sql',
+  'supabase/migrations/20260407_001_rearrange_virelay_map.sql',
+  'supabase/migrations/20260407_001_remove_merra_dune_map_pin.sql',
+  'supabase/migrations/20260407_002_glass_expanse_map_adjustments.sql',
+  'supabase/migrations/20260407_003_luminous_fold_map_adjustments.sql',
+  'supabase/migrations/20260407_003_varnhalt_map_cleanup.sql',
 ];
 
 function executeSql(sql) {

@@ -59,12 +59,15 @@ export async function GET(
 
   // Filter entities that belong to this region:
   // 1. metadata.region matches the region id (authoritative)
-  // 2. For entities without an explicit region, fall back to tag/description matching
+  // 2. extended_lore.region matches the region id (authoritative — set by seed script)
+  // 3. For entities without an explicit region, fall back to tag/description matching
   const regionName = region.name.toLowerCase().replace(/^the /, '')
   const filtered = rows.filter((entity) => {
     const meta = entity.metadata
+    const extLore = entity.extended_lore as Record<string, unknown> | null
     // If the entity has an explicit region, only match on exact region
     if (meta?.region) return meta.region === regionId
+    if (extLore?.region) return extLore.region === regionId
     // Fallback: tags include the region id or region name
     if (entity.tags?.some((tag: string) => {
       const lower = tag.toLowerCase()

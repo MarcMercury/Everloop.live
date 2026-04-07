@@ -147,7 +147,7 @@ const WORLD_LOCATIONS = [
       { heading: 'Towns', items: ['Kelport', 'Darnis Bay', 'Coris Reach'] },
       { heading: 'Cities', items: ['Virelay'] },
       { heading: 'Outposts / Forts', items: ['Cliffwatch', 'Harbor Post 3', 'Tide Gate'] },
-      { heading: 'Ruins / Anomalies', items: ['The Drowned City', 'The Well Site', 'Old Harbor'] },
+      { heading: 'Ruins / Anomalies', items: ['The Drowned City', 'Old Harbor'] },
       { heading: 'Taverns', items: ['The Salt House', 'Broken Mast', 'Low Lantern'] },
     ],
   },
