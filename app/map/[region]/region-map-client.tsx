@@ -426,6 +426,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                   fill
                   className="object-cover"
                   sizes="380px"
+                  unoptimized
                 />
               </div>
             )}
