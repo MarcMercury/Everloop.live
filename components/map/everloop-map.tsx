@@ -1830,20 +1830,17 @@ function TheSurface() {
   texture.minFilter = THREE.LinearMipmapLinearFilter
   texture.magFilter = THREE.LinearFilter
   texture.anisotropy = 16
-
-  const geometry = useMemo(() => {
-    return new THREE.PlaneGeometry(MAP_WIDTH, MAP_HEIGHT)
-  }, [])
+  texture.needsUpdate = true
 
   return (
     <group position={[0, SURFACE_Y, 0]}>
       {/* Main map surface with painted texture */}
-      <mesh geometry={geometry} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
-        <meshStandardMaterial
+      <mesh rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[MAP_WIDTH, MAP_HEIGHT]} />
+        <meshBasicMaterial
           map={texture}
-          roughness={0.75}
-          metalness={0.02}
           side={THREE.DoubleSide}
+          toneMapped={false}
         />
       </mesh>
 
@@ -1851,15 +1848,6 @@ function TheSurface() {
       <mesh position={[0, -1, 0]}>
         <boxGeometry args={[MAP_WIDTH + 4, 3, MAP_HEIGHT + 4]} />
         <meshStandardMaterial color="#2a2218" roughness={0.9} metalness={0.1} />
-      </mesh>
-
-      {/* Underside glow for sub-layer connection */}
-      <mesh position={[0, -3, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[MAP_WIDTH - 4, MAP_HEIGHT - 4]} />
-        <meshStandardMaterial
-          color="#1a3040" emissive="#2060a0" emissiveIntensity={0.3}
-          transparent opacity={0.4} side={THREE.DoubleSide} depthWrite={false}
-        />
       </mesh>
     </group>
   )
