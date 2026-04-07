@@ -30,6 +30,11 @@ const migrations = [
   'supabase/migrations/20260407_003_luminous_fold_map_adjustments.sql',
   'supabase/migrations/20260407_003_varnhalt_map_cleanup.sql',
   'supabase/migrations/20260407_004_map_duplicate_cleanup.sql',
+  'supabase/migrations/20260407_005_virelay_coast_position_moves.sql',
+  'supabase/migrations/20260407_006_virelay_halven_shore_move.sql',
+  'supabase/migrations/20260407_007_fix_overlapping_map_positions.sql',
+  'supabase/migrations/20260407_008_fix_rookforge_position.sql',
+  'supabase/migrations/20260407_009_fix_vell_glass_position.sql',
 ];
 
 function executeSql(sql) {

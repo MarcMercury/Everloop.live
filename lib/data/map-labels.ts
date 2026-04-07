@@ -42,12 +42,12 @@ export const REGION_MAP_LABELS: Partial<Record<RegionId, MapLabel[]>> = {
     { name: 'Lost Grove',         x: 75, z: 48, size: 'ruin' },
 
     // ─── Taverns ───
-    { name: 'The Quiet Bell',     x: 46, z: 52, size: 'tavern' },
-    { name: 'Root & Stone',       x: 56, z: 64, size: 'tavern' },
-    { name: 'The Low Fire',       x: 52, z: 80, size: 'tavern' },
+    { name: 'The Quiet Bell',     x: 46, z: 57, size: 'tavern' },
+    { name: 'Root & Stone',       x: 60, z: 68, size: 'tavern' },
+    { name: 'The Low Fire',       x: 47, z: 76, size: 'tavern' },
 
     // ─── Key Landmarks ───
-    { name: 'The Bell Tree',      x: 47, z: 46, size: 'landmark' },
+    { name: 'The Bell Tree',      x: 54, z: 40, size: 'landmark' },
   ],
 
   luminous: [
@@ -75,7 +75,7 @@ export const REGION_MAP_LABELS: Partial<Record<RegionId, MapLabel[]>> = {
 
     // ─── Ruins ───
     { name: 'Broken Line',       x: 15, z: 15, size: 'ruin' },
-    { name: 'Old Fold Node',     x: 58, z: 42, size: 'ruin' },
+    { name: 'Old Fold Node',     x: 62, z: 38, size: 'ruin' },
 
     // ─── Taverns ───
     { name: 'The Even Table',    x: 65, z: 50, size: 'tavern' },
@@ -84,7 +84,10 @@ export const REGION_MAP_LABELS: Partial<Record<RegionId, MapLabel[]>> = {
 
   varnhalt: [
     // ─── Towns ───
-    { name: 'Varnhalt',          x: 86, z: 86, size: 'town' },
+    { name: 'Varnhalt',          x: 45, z: 50, size: 'town' },
+
+    // ─── Villages ───
+    { name: 'Dry Creek',          x: 86, z: 86, size: 'village' },
   ],
 
   drowned: [
@@ -94,8 +97,8 @@ export const REGION_MAP_LABELS: Partial<Record<RegionId, MapLabel[]>> = {
     { name: 'Salt Edge',          x: 55, z: 24, size: 'village' },
 
     // ─── Towns ───
-    { name: 'New Harbor',         x: 76, z: 67, size: 'town' },    // moved to Drowned Reach pos
-    { name: 'West Reach',         x: 27, z: 64, size: 'town' },    // moved to Drowned Gate pos
+    { name: 'New Harbor',         x: 76, z: 67, size: 'town' },
+    { name: 'West Reach',         x: 27, z: 64, size: 'town' },
     { name: 'Floodmark',          x: 41, z: 17, size: 'town' },
 
     // ─── Cities ───
@@ -103,17 +106,17 @@ export const REGION_MAP_LABELS: Partial<Record<RegionId, MapLabel[]>> = {
     { name: 'Sunken Port',        x: 69, z: 60, size: 'city' },
 
     // ─── Outposts ───
-    { name: 'Tide Watch',         x: 39, z: 58, size: 'outpost' }, // moved to The Sunken City pos
+    { name: 'Tide Watch',         x: 39, z: 58, size: 'outpost' },
     { name: 'Flood Station',      x: 44, z: 28, size: 'outpost' },
 
     // ─── Ruins ───
-    { name: 'The Sunken City',    x: 86, z: 82, size: 'ruin' },    // moved to West Reach pos
+    { name: 'The Sunken City',    x: 86, z: 82, size: 'ruin' },
     { name: 'Old Reach',          x: 34, z: 90, size: 'ruin' },
-    { name: 'Drowned Gate',       x: 80, z: 56, size: 'ruin' },    // moved to Last Dock pos
+    { name: 'Drowned Gate',       x: 80, z: 56, size: 'ruin' },
 
     // ─── Taverns ───
     { name: 'The Wet Lantern',    x: 47, z: 65, size: 'tavern' },
-    { name: 'Last Dock',          x: 26, z: 15, size: 'tavern' },  // moved to Tide Watch pos
+    { name: 'Last Dock',          x: 32, z: 12, size: 'tavern' },
     { name: 'Salt Line',          x: 30, z: 80, size: 'tavern' },
   ],
 }

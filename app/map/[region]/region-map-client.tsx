@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { EverloopRegion } from '@/lib/data/regions'
 import { getRegionLocations } from '@/lib/data/region-locations'
 import { getMapLabels, type MapLabel } from '@/lib/data/map-labels'
+import { LOCATION_DESCRIPTIONS } from '@/lib/data/location-descriptions'
 
 interface RegionLocation {
   id: string
@@ -62,6 +63,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [locationKeyOpen, setLocationKeyOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [regionInfoOpen, setRegionInfoOpen] = useState(true)
+  const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
 
   // Pan & zoom state for 2D map
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -139,7 +141,13 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
         const res = await fetch(`/api/map/regions/${region.id}/locations`)
         if (!res.ok) return
         const data = await res.json()
-        setLocations(data.locations ?? [])
+        // Deduplicate: exclude API pins whose name already appears as a static map label
+        const labels = getMapLabels(region.id)
+        const labelNames = new Set(labels.map((l) => l.name.toLowerCase()))
+        const deduped = (data.locations ?? []).filter(
+          (loc: RegionLocation) => !labelNames.has(loc.name.toLowerCase())
+        )
+        setLocations(deduped)
       } catch {
         // Silently fail — locations are optional overlay
       }
@@ -526,40 +534,59 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
             {/* Static map labels (location dots + names) */}
             {imageLoaded && mapLabels.map((label) => {
               const dotSize = label.size === 'city' ? 10 : label.size === 'town' ? 8 : label.size === 'landmark' ? 7 : 6
-              const fontSize = label.size === 'city' ? 12 : label.size === 'town' ? 11 : 10
               const dotColor = label.size === 'city' ? '#f0d890' : label.size === 'town' ? '#d4a84b' : label.size === 'landmark' ? '#c090e0' : label.size === 'ruin' ? '#888' : label.size === 'tavern' ? '#d08040' : label.size === 'outpost' ? '#80b0d0' : '#b0c090'
+              const desc = LOCATION_DESCRIPTIONS[label.name]
+              const isLabelHovered = hoveredLabel === label.name
 
               return (
                 <div
                   key={label.name}
-                  className="absolute z-10"
+                  className="absolute z-10 cursor-pointer"
                   style={{
                     left: `${label.x}%`,
                     top: `${label.z}%`,
                     transform: 'translate(-50%, -50%)',
                   }}
+                  onMouseEnter={() => setHoveredLabel(label.name)}
+                  onMouseLeave={() => setHoveredLabel(null)}
+                  onClick={(e) => { e.stopPropagation(); setHoveredLabel(isLabelHovered ? null : label.name) }}
                 >
                   <div
-                    className="rounded-full"
+                    className="rounded-full transition-transform duration-150"
                     style={{
                       width: dotSize,
                       height: dotSize,
                       background: dotColor,
                       boxShadow: `0 0 ${dotSize}px ${dotColor}80, 0 0 ${dotSize * 2}px ${dotColor}30`,
                       border: `1px solid ${dotColor}`,
+                      transform: isLabelHovered ? 'scale(1.4)' : 'scale(1)',
                     }}
                   />
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-serif font-bold pointer-events-none"
-                    style={{
-                      top: dotSize + 2,
-                      fontSize,
-                      color: dotColor,
-                      textShadow: '0 0 6px rgba(0,0,0,0.95), 0 1px 4px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
-                    }}
-                  >
-                    {label.name}
-                  </span>
+                  {/* Description popup */}
+                  {isLabelHovered && desc && (
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+                      style={{ bottom: dotSize + 8 }}
+                    >
+                      <div
+                        className="rounded-lg px-3 py-2 backdrop-blur-xl border text-left"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.96), rgba(15, 30, 35, 0.93))',
+                          borderColor: `${dotColor}40`,
+                          boxShadow: `0 0 20px ${dotColor}15, 0 8px 24px rgba(0,0,0,0.5)`,
+                          width: '260px',
+                          maxWidth: '50vw',
+                        }}
+                      >
+                        <h4 className="text-xs font-serif font-bold mb-1" style={{ color: dotColor }}>
+                          {label.name}
+                        </h4>
+                        <p className="text-[10px] leading-relaxed text-parchment-muted">
+                          {desc}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )
             })}
