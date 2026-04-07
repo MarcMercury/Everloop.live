@@ -39,7 +39,7 @@ export async function POST() {
       return NextResponse.json({ error: 'No image generated' }, { status: 500 })
     }
 
-    return NextResponse.json({ imageUrl, revisedPrompt: response.data[0]?.revised_prompt })
+    return NextResponse.json({ imageUrl, revisedPrompt: response.data?.[0]?.revised_prompt })
   } catch (error) {
     console.error('Depth map generation error:', error)
     return NextResponse.json(
