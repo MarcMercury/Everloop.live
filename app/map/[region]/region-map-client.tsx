@@ -64,6 +64,8 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [regionInfoOpen, setRegionInfoOpen] = useState(true)
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null)
+  const [selectedLabel, setSelectedLabel] = useState<MapLabel | null>(null)
+  const [allLocations, setAllLocations] = useState<RegionLocation[]>([])
 
   // Pan & zoom state for 2D map
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -144,7 +146,9 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
         // Deduplicate: exclude API pins whose name already appears as a static map label
         const labels = getMapLabels(region.id)
         const labelNames = new Set(labels.map((l) => l.name.toLowerCase()))
-        const deduped = (data.locations ?? []).filter(
+        const all = data.locations ?? []
+        setAllLocations(all)
+        const deduped = all.filter(
           (loc: RegionLocation) => !labelNames.has(loc.name.toLowerCase())
         )
         setLocations(deduped)
@@ -157,11 +161,21 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
 
   const handlePinClick = useCallback((loc: RegionLocation) => {
     setSelectedLocation(prev => prev?.id === loc.id ? null : loc)
+    setSelectedLabel(null)
   }, [])
 
   const handleBackdropClick = useCallback(() => {
     setSelectedLocation(null)
+    setSelectedLabel(null)
   }, [])
+
+  // Helper: find the DB entity matching a static label by name
+  const getLabelEntity = useCallback((name: string): RegionLocation | undefined => {
+    return allLocations.find(loc => loc.name.toLowerCase() === name.toLowerCase())
+  }, [allLocations])
+
+  // Helper: generate a slug from a label name
+  const nameToSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
   return (
     <div className="min-h-[calc(100vh-60px)] bg-charcoal relative">
@@ -373,6 +387,89 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
         </div>
       )}
 
+      {/* Selected static-label detail panel */}
+      {selectedLabel && (() => {
+        const entity = getLabelEntity(selectedLabel.name)
+        const desc = LOCATION_DESCRIPTIONS[selectedLabel.name]
+        const dotColor = selectedLabel.size === 'city' ? '#f0d890' : selectedLabel.size === 'town' ? '#d4a84b' : selectedLabel.size === 'landmark' ? '#c090e0' : selectedLabel.size === 'ruin' ? '#888' : selectedLabel.size === 'tavern' ? '#d08040' : selectedLabel.size === 'outpost' ? '#80b0d0' : '#b0c090'
+        const imageUrl = entity?.imageUrl ?? null
+        const slug = entity?.slug ?? nameToSlug(selectedLabel.name)
+        return (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[380px] max-w-[calc(100vw-2rem)]">
+            <div
+              className="rounded-xl p-5 backdrop-blur-xl border"
+              style={{
+                background: 'linear-gradient(135deg, rgba(10, 20, 25, 0.96), rgba(15, 30, 35, 0.93))',
+                borderColor: `${dotColor}40`,
+                boxShadow: `0 0 40px ${dotColor}20, 0 20px 60px rgba(0,0,0,0.5)`,
+              }}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏛️</span>
+                  <div>
+                    <h3 className="text-lg font-serif font-bold" style={{ color: dotColor }}>
+                      {selectedLabel.name}
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider opacity-70" style={{ color: dotColor }}>
+                      {selectedLabel.size}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedLabel(null)}
+                  className="text-parchment-muted hover:text-parchment transition-colors p-1"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              {imageUrl && (
+                <div className="relative w-full h-40 rounded-lg overflow-hidden mb-3 border" style={{ borderColor: `${dotColor}30` }}>
+                  <Image
+                    src={imageUrl}
+                    alt={selectedLabel.name}
+                    fill
+                    className="object-cover"
+                    sizes="380px"
+                    unoptimized
+                  />
+                </div>
+              )}
+              {desc && (
+                <p className="text-sm text-parchment-muted leading-relaxed mb-3">
+                  {desc.length > 200 ? desc.slice(0, 200) + '…' : desc}
+                </p>
+              )}
+              {entity && (
+                <div className="flex items-center gap-3 mb-3">
+                  <div>
+                    <span className="text-[10px] text-parchment-muted">Stability</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: `${dotColor}20` }}>
+                        <div className="h-full rounded-full" style={{ width: `${entity.stability * 100}%`, background: dotColor }} />
+                      </div>
+                      <span className="text-[10px]" style={{ color: dotColor }}>{Math.round(entity.stability * 100)}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <a
+                href={`/explore/${slug}`}
+                className="block text-center px-4 py-2 rounded-lg text-sm font-medium transition-all hover:brightness-125"
+                style={{
+                  background: `${dotColor}20`,
+                  color: dotColor,
+                  border: `1px solid ${dotColor}40`,
+                }}
+              >
+                View Full Entry →
+              </a>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Selected location detail panel */}
       {selectedLocation && (
         <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 w-[380px] max-w-[calc(100vw-2rem)]">
@@ -549,7 +646,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                   }}
                   onMouseEnter={() => setHoveredLabel(label.name)}
                   onMouseLeave={() => setHoveredLabel(null)}
-                  onClick={(e) => { e.stopPropagation(); setHoveredLabel(isLabelHovered ? null : label.name) }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedLabel(selectedLabel?.name === label.name ? null : label); setSelectedLocation(null) }}
                 >
                   <div
                     className="rounded-full transition-transform duration-150"
