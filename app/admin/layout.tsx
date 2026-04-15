@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getUser, getIsAdmin } from '@/lib/supabase/cached'
 import Link from 'next/link'
 
 export default async function AdminLayout({
@@ -7,20 +7,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  
-  // Check authentication
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   
   if (!user) {
     redirect('/login')
   }
   
-  // Check admin status using RPC function (bypasses RLS)
-  const { data: isAdmin, error: rpcError } = await supabase.rpc('is_admin_check')
+  const isAdmin = await getIsAdmin()
   
-  if (rpcError || !isAdmin) {
-    console.error('[AdminLayout] Access denied:', rpcError?.message)
+  if (!isAdmin) {
     redirect('/explore')
   }
   

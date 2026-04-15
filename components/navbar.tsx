@@ -1,38 +1,14 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { getUser, getProfile, getIsAdmin } from '@/lib/supabase/cached'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { NavDropdown } from '@/components/nav-dropdown'
 import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map, PenLine, Search, Users, ScrollText } from 'lucide-react'
 
-interface ProfileData {
-  username: string | null
-  display_name: string | null
-  avatar_url: string | null
-}
-
 export async function Navbar() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  // Fetch profile if user exists
-  let profile: ProfileData | null = null
-  let isAdmin = false
-  
-  if (user) {
-    // Fetch profile data
-    const { data } = await supabase
-      .from('profiles')
-      .select('username, display_name, avatar_url')
-      .eq('id', user.id)
-      .single()
-    
-    profile = data as ProfileData | null
-    
-    // Use RPC to check admin status - bypasses RLS
-    const { data: adminCheck } = await supabase.rpc('is_admin_check')
-    isAdmin = adminCheck === true
-  }
+  const user = await getUser()
+  const profile = user ? await getProfile() : null
+  const isAdmin = user ? await getIsAdmin() : false
   
   return (
     <nav className="sticky top-0 z-50 glass">

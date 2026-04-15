@@ -14,7 +14,7 @@ export async function GET() {
       )
     }
 
-    // Require admin for debug endpoints
+    // Require admin for debug endpoints — single check
     const { data: isAdmin } = await supabase.rpc('is_admin_check')
     if (!isAdmin) {
       return NextResponse.json(
@@ -30,9 +30,6 @@ export async function GET() {
       .eq('id', user.id)
       .single()
     
-    // Use RPC to check admin status
-    const { data: isAdminRpc, error: rpcError } = await supabase.rpc('is_admin_check')
-    
     return NextResponse.json({
       status: 'ok',
       user: {
@@ -44,11 +41,7 @@ export async function GET() {
         message: profileError.message,
         code: profileError.code,
       } : null,
-      isAdminRpc: isAdminRpc,
-      rpcError: rpcError ? {
-        message: rpcError.message,
-        code: rpcError.code,
-      } : null,
+      isAdminRpc: isAdmin,
     })
   } catch (error) {
     return NextResponse.json({ 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AtmosphereEngine } from '@/components/campaign/atmosphere-engine'
+import { supabase } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 
@@ -71,20 +72,31 @@ export function DMControlPanelClient({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Poll for new messages
+  // Subscribe to new messages via Supabase Realtime (replaces polling)
   useEffect(() => {
     if (!session) return
-    const interval = setInterval(async () => {
-      const res = await fetch(`/api/campaigns/${campaign.id}/messages?session_id=${session.id}&after=${messages[messages.length - 1]?.created_at ?? ''}`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.messages?.length > 0) {
-          setMessages(prev => [...prev, ...data.messages])
+    const channel = supabase
+      .channel(`campaign-messages-${session.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'campaign_messages',
+          filter: `session_id=eq.${session.id}`,
+        },
+        (payload) => {
+          const newMsg = payload.new as CampaignMessage
+          setMessages(prev => {
+            // Avoid duplicates (from optimistic adds)
+            if (prev.some(m => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
         }
-      }
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [session, campaign.id, messages])
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [session])
 
   async function handleStartSession() {
     setLoading(true)

@@ -7,13 +7,13 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
  */
 export async function GET() {
   try {
-    // Auth + admin check
-    const authClient = await createClient()
-    const { data: { user } } = await authClient.auth.getUser()
+    // Auth + admin check — single client
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const { data: isAdmin } = await authClient.rpc('is_admin_check')
+    const { data: isAdmin } = await supabase.rpc('is_admin_check')
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
@@ -32,22 +32,34 @@ export async function GET() {
     results.adminClientCreated = !!adminClient
     
     if (adminClient) {
-      const { data: adminStories, error: adminError } = await adminClient
-        .from('stories')
-        .select('id, title, canon_status')
-        .limit(10) as { data: Array<{ id: string; title: string; canon_status: string }> | null; error: Error | null }
+      // Run admin queries in parallel
+      const [adminStoriesResult, entitiesResult] = await Promise.all([
+        adminClient
+          .from('stories')
+          .select('id, title, canon_status')
+          .limit(10),
+        adminClient
+          .from('canon_entities')
+          .select('id, name, status')
+          .limit(5),
+      ])
       
       results.adminQuery = {
-        success: !adminError,
-        error: adminError ? adminError.message : null,
-        count: adminStories?.length || 0,
-        stories: adminStories || []
+        success: !adminStoriesResult.error,
+        error: adminStoriesResult.error ? adminStoriesResult.error.message : null,
+        count: adminStoriesResult.data?.length || 0,
+        stories: adminStoriesResult.data || []
+      }
+      
+      results.entitiesQuery = {
+        success: !entitiesResult.error,
+        error: entitiesResult.error ? entitiesResult.error.message : null,
+        count: entitiesResult.data?.length || 0,
       }
     }
     
-    // Test 3: Try regular client
-    const regularClient = await createClient()
-    const { data: regularStories, error: regularError } = await regularClient
+    // Test 3: Regular client query (reuse the same client from auth)
+    const { data: regularStories, error: regularError } = await supabase
       .from('stories')
       .select('id, title, canon_status')
       .limit(10) as { data: Array<{ id: string; title: string; canon_status: string }> | null; error: Error | null }
@@ -59,24 +71,9 @@ export async function GET() {
       stories: regularStories || []
     }
     
-    // Test 4: Check auth status with regular client (user already established above)
     results.auth = {
       isLoggedIn: true,
       userId: user?.id || null,
-    }
-    
-    // Test 5: Try entities too
-    if (adminClient) {
-      const { data: entities, error: entityError } = await adminClient
-        .from('canon_entities')
-        .select('id, name, status')
-        .limit(5) as { data: Array<{ id: string; name: string; status: string }> | null; error: Error | null }
-      
-      results.entitiesQuery = {
-        success: !entityError,
-        error: entityError ? entityError.message : null,
-        count: entities?.length || 0,
-      }
     }
     
     return NextResponse.json(results, { status: 200 })

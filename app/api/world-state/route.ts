@@ -14,10 +14,7 @@ export async function GET(request: Request) {
 
   const supabase = await createClient()
 
-  // 1. Global convergence state
-  const { data: convergence } = await supabase.rpc('get_convergence_state')
-
-  // 2. Regional states
+  // Build queries
   let regionalQuery = supabase
     .from('regional_state')
     .select('*')
@@ -27,9 +24,6 @@ export async function GET(request: Request) {
     regionalQuery = regionalQuery.eq('region_id', regionId)
   }
 
-  const { data: regions } = await regionalQuery
-
-  // 3. Recent world events
   let eventsQuery = supabase
     .from('world_events')
     .select('id, title, description, event_type, severity, region_id, created_at')
@@ -41,13 +35,21 @@ export async function GET(request: Request) {
     eventsQuery = eventsQuery.eq('region_id', regionId)
   }
 
-  const { data: events } = await eventsQuery
-
-  // 4. Shard summary
-  const { data: shards } = await supabase
-    .from('shards')
-    .select('id, name, state, power_level')
-    .order('power_level', { ascending: false })
+  // Execute ALL queries in parallel instead of sequentially
+  const [
+    { data: convergence },
+    { data: regions },
+    { data: events },
+    { data: shards },
+  ] = await Promise.all([
+    supabase.rpc('get_convergence_state'),
+    regionalQuery,
+    eventsQuery,
+    supabase
+      .from('shards')
+      .select('id, name, state, power_level')
+      .order('power_level', { ascending: false }),
+  ])
 
   const shardsByState: Record<string, number> = {}
   if (shards) {

@@ -68,7 +68,11 @@ export async function GET() {
     }
   })
 
-  return NextResponse.json({ locations })
+  return NextResponse.json({ locations }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+    },
+  })
 }
 
 /** Simple string hash to generate deterministic coordinates in range [-40, 40] */

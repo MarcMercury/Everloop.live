@@ -81,9 +81,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3b: Fetch world state for context (Shards, regional Fray, convergence)
+    // Step 3b: Fetch world state context in parallel (Shards, regional Fray, convergence)
+    const [
+      { data: convergence },
+      { data: regionalStates },
+      { data: recentEvents },
+    ] = await Promise.all([
+      supabase.rpc('get_convergence_state'),
+      supabase
+        .from('regional_state')
+        .select('region_name, fray_intensity, stability_index, shards_known, shards_gathered')
+        .order('fray_intensity', { ascending: false })
+        .limit(8),
+      supabase
+        .from('world_events')
+        .select('title, description, event_type, severity, region_id')
+        .eq('is_visible', true)
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ])
+
     let worldStateContext = ''
-    const { data: convergence } = await supabase.rpc('get_convergence_state')
     if (convergence) {
       worldStateContext += `\nWorld Phase: ${(convergence as Record<string, unknown>).world_phase}`
       worldStateContext += `\nGlobal Fray Intensity: ${((convergence as Record<string, unknown>).global_fray_intensity as number * 100).toFixed(1)}%`
@@ -91,25 +109,12 @@ export async function POST(request: NextRequest) {
       worldStateContext += `\nConvergence: ${(convergence as Record<string, unknown>).convergence_percentage}%`
     }
 
-    const { data: regionalStates } = await supabase
-      .from('regional_state')
-      .select('region_name, fray_intensity, stability_index, shards_known, shards_gathered')
-      .order('fray_intensity', { ascending: false })
-      .limit(8)
-
     if (regionalStates && regionalStates.length > 0) {
       worldStateContext += '\n\nRegional Status:'
       for (const r of regionalStates as Array<{region_name: string; fray_intensity: number; stability_index: number; shards_known: number; shards_gathered: number}>) {
         worldStateContext += `\n- ${r.region_name}: Fray ${(r.fray_intensity * 100).toFixed(0)}%, Stability ${(r.stability_index * 100).toFixed(0)}%, Shards ${r.shards_gathered}/${r.shards_known} gathered`
       }
     }
-
-    const { data: recentEvents } = await supabase
-      .from('world_events')
-      .select('title, description, event_type, severity, region_id')
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-      .limit(5)
 
     if (recentEvents && recentEvents.length > 0) {
       worldStateContext += '\n\nRecent World Events:'

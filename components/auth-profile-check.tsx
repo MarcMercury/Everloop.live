@@ -1,36 +1,23 @@
-import { createClient } from '@/lib/supabase/server'
+import { getUser, getProfile } from '@/lib/supabase/cached'
 import { CompleteProfileModal } from './complete-profile-modal'
-
-interface ProfileRow {
-  id: string
-  username: string | null
-}
 
 /**
  * Auth wrapper that checks if a logged-in user has a profile.
  * If not, shows a modal to complete their profile.
  * 
- * This handles the "orphan" case where a user exists in auth
- * but their profile row is missing from the database.
+ * Uses cached helpers so getUser()/getProfile() are deduplicated
+ * with the Navbar — zero extra Supabase calls.
  */
 export async function AuthProfileCheck() {
-  const supabase = await createClient()
-  
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   
   // No user logged in - nothing to check
   if (!user) {
     return null
   }
   
-  // Check if profile exists
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id, username')
-    .eq('id', user.id)
-    .single()
-  
-  const profile = data as ProfileRow | null
+  // Check if profile exists (cached — same call as Navbar)
+  const profile = await getProfile()
   
   // Profile exists with username - all good
   if (profile && profile.username) {
