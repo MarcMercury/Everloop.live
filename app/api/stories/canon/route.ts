@@ -57,5 +57,9 @@ export async function GET() {
     author: story.profiles,
   }))
 
-  return NextResponse.json({ stories: transformedStories })
+  return NextResponse.json({ stories: transformedStories }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+    },
+  })
 }

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getUser, getProfile } from '@/lib/supabase/cached'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +27,8 @@ import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 import { GAME_MODE_INFO } from '@/types/campaign'
 import type { GameMode } from '@/types/campaign'
 import type { PlayerCharacter } from '@/types/player-character'
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
 
 export const metadata = {
   title: 'My Dashboard | Everloop',
@@ -65,9 +68,7 @@ interface UserStory {
   }>
 }
 
-async function getUserStories(userId: string): Promise<UserStory[]> {
-  const supabase = await createClient()
-  
+async function getUserStories(supabase: SupabaseServerClient, userId: string): Promise<UserStory[]> {
   const { data, error } = await supabase
     .from('stories')
     .select(`
@@ -99,9 +100,7 @@ async function getUserStories(userId: string): Promise<UserStory[]> {
   return data || []
 }
 
-async function getUserStats(userId: string) {
-  const supabase = await createClient()
-  
+async function getUserStats(supabase: SupabaseServerClient, userId: string) {
   const [drafts, submitted, approved, rejected] = await Promise.all([
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).eq('canon_status', 'draft'),
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).in('canon_status', ['submitted', 'under_review']),
@@ -238,9 +237,7 @@ function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'published' | 
 // PLAYING SECTION HELPERS
 // =====================================================
 
-async function getUserCampaigns(userId: string) {
-  const supabase = await createClient()
-
+async function getUserCampaigns(supabase: SupabaseServerClient, userId: string) {
   // Campaigns I DM
   const { data: dmCampaigns } = await supabase
     .from('campaigns')
@@ -274,8 +271,7 @@ async function getUserCampaigns(userId: string) {
   return { dmd, played }
 }
 
-async function getUserCharacters(userId: string) {
-  const supabase = await createClient()
+async function getUserCharacters(supabase: SupabaseServerClient, userId: string) {
   const { data } = await supabase
     .from('player_characters')
     .select('id, name, race, class, level, current_hp, max_hp, armor_class, is_active, portrait_url, theme_color, campaign_name, updated_at')
@@ -374,27 +370,24 @@ function CharacterRow({ character }: { character: Pick<PlayerCharacter, 'id' | '
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   
   if (!user) {
     redirect('/login?redirected=true')
   }
   
-  // Fetch profile for welcome message
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username, display_name')
-    .eq('id', user.id)
-    .single() as { data: { username: string | null, display_name: string | null } | null }
+  // Use cached profile (same as Navbar — zero extra calls)
+  const cachedProfile = await getProfile()
+  const displayName = cachedProfile?.display_name || cachedProfile?.username || 'Adventurer'
   
-  const displayName = profile?.display_name || profile?.username || 'Adventurer'
+  // Single shared client for all dashboard queries
+  const supabase = await createClient()
   
   const [stories, stats, campaigns, characters] = await Promise.all([
-    getUserStories(user.id),
-    getUserStats(user.id),
-    getUserCampaigns(user.id),
-    getUserCharacters(user.id),
+    getUserStories(supabase, user.id),
+    getUserStats(supabase, user.id),
+    getUserCampaigns(supabase, user.id),
+    getUserCharacters(supabase, user.id),
   ])
   
   // Categorize stories

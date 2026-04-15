@@ -17,5 +17,9 @@ export async function GET() {
     )
   }
 
-  return NextResponse.json({ entities })
+  return NextResponse.json({ entities }, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+    },
+  })
 }
