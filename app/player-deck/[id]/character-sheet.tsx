@@ -12,11 +12,12 @@ import {
   Skull, Eye, ArrowLeft, Pencil, Dices, Target,
   ChevronDown, ChevronUp, Timer, Brain,
   CircleDot, Wind, PawPrint, MessageCircle,
-  Loader2, Palette, X as XIcon
+  Loader2, Palette, X as XIcon, Info,
 } from 'lucide-react'
 import type { 
   PlayerCharacter, FeatureEntry, SpellEntry, WeaponEntry,
-  DndCondition, SkillName
+  DndCondition, SkillName, AbilityScore, InventoryItem,
+  ArmorEntry, MagicItemEntry,
 } from '@/types/player-character'
 import { 
   abilityModifier, formatModifier, hpPercentage, hpColor,
@@ -30,6 +31,30 @@ import {
 import { DiceRoller } from '@/components/player-deck/dice-roller'
 import { CelestialAdvisor } from '@/components/player-deck/celestial-advisor'
 import { lookupSpellDetail } from '@/lib/data/spell-details'
+import {
+  SKILL_INFO, ABILITY_INFO, STANDARD_ACTIONS, CONDITION_INFO,
+  WEAPON_PROPERTY_INFO, lookupWeaponProperty, DAMAGE_TYPE_INFO,
+  ARMOR_TYPE_INFO, RARITY_INFO, lookupGearInfo, lookupLanguageInfo,
+} from '@/lib/data/dnd-reference'
+import { InfoPopover, InfoSection, InfoBullets } from '@/components/player-deck/info-popover'
+
+type InfoTarget =
+  | { kind: 'skill'; skill: SkillName; modifier: number; advantage?: 'advantage' | 'disadvantage' }
+  | { kind: 'save'; ability: AbilityScore; modifier: number }
+  | { kind: 'ability'; ability: AbilityScore; modifier: number; saveModifier: number; saveProficient: boolean }
+  | { kind: 'condition'; condition: DndCondition }
+  | { kind: 'standardAction'; action: keyof typeof STANDARD_ACTIONS }
+  | { kind: 'weapon'; weapon: WeaponEntry; advantage?: 'advantage' | 'disadvantage' }
+  | { kind: 'item'; item: InventoryItem }
+  | { kind: 'magicItem'; item: MagicItemEntry }
+  | { kind: 'armor'; armor: ArmorEntry }
+  | { kind: 'language'; name: string }
+  | { kind: 'tool'; name: string }
+  | { kind: 'inspiration' }
+  | { kind: 'deathSave' }
+  | { kind: 'passive'; type: 'perception' | 'investigation' | 'insight'; value: number }
+  | { kind: 'damageType'; name: string }
+  | { kind: 'rarity'; name: string }
 
 export function CharacterSheet({ character: initial }: { character: PlayerCharacter }) {
   const [char, setChar] = useState(initial)
@@ -44,6 +69,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   const [portraitStyle, setPortraitStyle] = useState('fantasy-oil')
   const [portraitLoading, setPortraitLoading] = useState(false)
   const [portraitError, setPortraitError] = useState<string | null>(null)
+  const [info, setInfo] = useState<InfoTarget | null>(null)
   
   const classColor = CLASS_COLORS[char.class] || '#d4a84b'
   const hp = hpPercentage(char.current_hp, char.max_hp)
@@ -580,12 +606,19 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             const score = char[ability]
             const mod = abilityModifier(score)
             const abbr = ability.slice(0, 3).toUpperCase()
+            const isProficient = !!char.proficiencies?.saving_throws?.includes(abbr)
+            const saveMod = mod + (isProficient ? char.proficiency_bonus : 0)
             return (
-              <Card key={ability} className="text-center p-2 md:p-3 bg-charcoal-950/50 border-gold-500/10">
+              <button
+                key={ability}
+                onClick={() => setInfo({ kind: 'ability', ability, modifier: mod, saveModifier: saveMod, saveProficient: isProficient })}
+                className="text-center p-2 md:p-3 bg-charcoal-950/50 border border-gold-500/10 rounded-lg hover:border-gold-500/30 transition-colors touch-target-lg"
+                title={`${abbr} — tap for info`}
+              >
                 <div className="text-[10px] md:text-xs text-parchment-muted uppercase tracking-wider">{abbr}</div>
                 <div className="text-lg md:text-xl font-bold text-parchment">{formatModifier(mod)}</div>
                 <div className="text-xs text-parchment-muted">{score}</div>
-              </Card>
+              </button>
             )
           })}
         </div>
@@ -675,10 +708,20 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
               <div className="space-y-2">
                 {char.inventory?.weapons?.filter(w => w.equipped).map((weapon, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-charcoal-900/50 border border-gold-500/5 hover:border-gold-500/20 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <span className="text-parchment font-medium text-sm">{weapon.name}</span>
-                      <div className="text-[10px] text-parchment-muted">{weapon.properties?.join(', ')}</div>
-                    </div>
+                    <button
+                      onClick={() => setInfo({ kind: 'weapon', weapon, advantage: attackAdvantage })}
+                      className="flex-1 min-w-0 text-left"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-parchment font-medium text-sm">{weapon.name}</span>
+                        <Info className="w-3 h-3 text-parchment-muted/40" />
+                      </div>
+                      <div className="text-[10px] text-parchment-muted">
+                        {weapon.damage_type && <span className="text-amber-400/70">{weapon.damage_type}</span>}
+                        {weapon.damage_type && weapon.properties?.length > 0 && <span className="mx-1">·</span>}
+                        {weapon.properties?.join(', ')}
+                      </div>
+                    </button>
                     <button
                       onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus, attackAdvantage)}
                       className="flex flex-col items-center px-3 py-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-colors touch-target-lg cursor-pointer"
@@ -741,36 +784,51 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
               <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
                 <Target className="w-4 h-4 text-emerald-400" /> Standard Actions
+                <span className="text-[10px] text-parchment-muted/60 font-normal ml-auto">tap for details</span>
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {[
-                  { name: 'Dash', desc: 'Double movement speed', icon: '💨' },
-                  { name: 'Dodge', desc: 'Attacks against you have disadvantage', icon: '🛡️' },
-                  { name: 'Disengage', desc: 'Movement doesn\'t provoke opportunity attacks', icon: '↩️' },
-                  { name: 'Help', desc: 'Give an ally advantage on next check', icon: '🤝' },
-                  { name: 'Hide', desc: 'Make a Stealth check', icon: '👁️' },
-                  { name: 'Ready', desc: 'Prepare an action with a trigger', icon: '⏳' },
-                  { name: 'Use Object', desc: 'Interact with an object', icon: '📦' },
-                  { name: 'Grapple', desc: `Athletics: ${formatModifier(abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))}`, icon: '🤼' },
-                  { name: 'Shove', desc: `Athletics: ${formatModifier(abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))}`, icon: '👊' },
-                ].map(action => (
-                  <button
+                {([
+                  { name: 'Dash', actionKey: 'Dash', desc: 'Double movement speed', icon: '💨' },
+                  { name: 'Dodge', actionKey: 'Dodge', desc: 'Attacks against you have disadvantage', icon: '🛡️' },
+                  { name: 'Disengage', actionKey: 'Disengage', desc: 'Movement doesn\'t provoke opportunity attacks', icon: '↩️' },
+                  { name: 'Help', actionKey: 'Help', desc: 'Give an ally advantage on next check', icon: '🤝' },
+                  { name: 'Hide', actionKey: 'Hide', desc: 'Make a Stealth check', icon: '👁️' },
+                  { name: 'Ready', actionKey: 'Ready', desc: 'Prepare an action with a trigger', icon: '⏳' },
+                  { name: 'Use Object', actionKey: 'Use Object', desc: 'Interact with an object', icon: '📦' },
+                  { name: 'Grapple', actionKey: 'Grapple', desc: `Athletics: ${formatModifier(abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))}`, icon: '🤼' },
+                  { name: 'Shove', actionKey: 'Shove', desc: `Athletics: ${formatModifier(abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))}`, icon: '👊' },
+                ] as const).map(action => (
+                  <div
                     key={action.name}
-                    onClick={() => {
-                      if (action.name === 'Hide') {
-                        quickRoll('Stealth', abilityModifier(char.dexterity) + (char.proficiencies?.skills?.stealth ? char.proficiency_bonus : 0))
-                      } else if (action.name === 'Grapple' || action.name === 'Shove') {
-                        quickRoll(`${action.name} (Athletics)`, abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))
-                      }
-                    }}
-                    className="p-3 rounded-lg bg-charcoal-900/50 border border-gold-500/5 hover:border-emerald-500/30 transition-all text-left"
+                    className="p-3 rounded-lg bg-charcoal-900/50 border border-gold-500/5 hover:border-emerald-500/30 transition-all"
                   >
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-base">{action.icon}</span>
-                      <span className="text-xs text-parchment font-medium">{action.name}</span>
-                    </div>
-                    <p className="text-[10px] text-parchment-muted leading-snug">{action.desc}</p>
-                  </button>
+                    <button
+                      onClick={() => setInfo({ kind: 'standardAction', action: action.actionKey })}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-base">{action.icon}</span>
+                        <span className="text-xs text-parchment font-medium">{action.name}</span>
+                        <Info className="w-3 h-3 text-parchment-muted/40 ml-auto" />
+                      </div>
+                      <p className="text-[10px] text-parchment-muted leading-snug">{action.desc}</p>
+                    </button>
+                    {(action.name === 'Hide' || action.name === 'Grapple' || action.name === 'Shove') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (action.name === 'Hide') {
+                            quickRoll('Stealth', abilityModifier(char.dexterity) + (char.proficiencies?.skills?.stealth ? char.proficiency_bonus : 0))
+                          } else {
+                            quickRoll(`${action.name} (Athletics)`, abilityModifier(char.strength) + (char.proficiencies?.skills?.athletics ? char.proficiency_bonus : 0))
+                          }
+                        }}
+                        className="mt-2 text-[10px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/20 hover:bg-amber-500/25"
+                      >
+                        Roll
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             </Card>
@@ -897,24 +955,39 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
               <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
                 <Skull className="w-4 h-4 text-red-400" /> Conditions
+                <span className="text-[10px] text-parchment-muted/60 font-normal ml-auto">tap to apply · ⓘ for rules</span>
               </h3>
               <div className="flex flex-wrap gap-2">
-                {DND_CONDITIONS.map(condition => (
-                  <Button
-                    key={condition}
-                    variant={char.status?.conditions?.includes(condition) ? "default" : "outline"}
-                    size="sm"
-                    className={`text-xs capitalize touch-target ${
-                      char.status?.conditions?.includes(condition) 
-                        ? 'bg-red-500/20 text-red-300 border-red-500/40' 
-                        : 'text-parchment-muted border-gold-500/10 hover:border-red-500/20'
-                    }`}
-                    onClick={() => toggleCondition(condition)}
-                    title={CONDITION_EFFECTS[condition]?.description || condition}
-                  >
-                    {condition}
-                  </Button>
-                ))}
+                {DND_CONDITIONS.map(condition => {
+                  const active = char.status?.conditions?.includes(condition)
+                  return (
+                    <div key={condition} className="flex items-center">
+                      <Button
+                        variant={active ? "default" : "outline"}
+                        size="sm"
+                        className={`text-xs capitalize touch-target rounded-r-none border-r-0 ${
+                          active
+                            ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                            : 'text-parchment-muted border-gold-500/10 hover:border-red-500/20'
+                        }`}
+                        onClick={() => toggleCondition(condition)}
+                      >
+                        {condition}
+                      </Button>
+                      <button
+                        onClick={() => setInfo({ kind: 'condition', condition })}
+                        className={`px-2 py-1.5 rounded-r-md border touch-target ${
+                          active
+                            ? 'bg-red-500/10 text-red-300 border-red-500/40'
+                            : 'text-parchment-muted/60 border-gold-500/10 hover:text-parchment hover:border-red-500/20'
+                        }`}
+                        title={`What does ${condition} do?`}
+                      >
+                        <Info className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
               {char.status?.exhaustion_level > 0 && (
                 <div className="mt-3 text-sm text-amber-400">
@@ -958,14 +1031,24 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                 {char.inventory?.weapons?.length > 0 ? (
                   char.inventory.weapons.filter(w => w.equipped).map((weapon, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-charcoal-900/50 border border-gold-500/5">
-                      <div>
-                        <span className="text-parchment font-medium">{weapon.name}</span>
-                        <div className="text-xs text-parchment-muted">{weapon.properties?.join(', ')}</div>
-                      </div>
+                      <button
+                        onClick={() => setInfo({ kind: 'weapon', weapon, advantage: attackAdvantage })}
+                        className="flex-1 text-left min-w-0 pr-2"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-parchment font-medium">{weapon.name}</span>
+                          <Info className="w-3 h-3 text-parchment-muted/40" />
+                        </div>
+                        <div className="text-xs text-parchment-muted">
+                          {weapon.damage_type && <span className="text-amber-400/70">{weapon.damage_type}</span>}
+                          {weapon.damage_type && weapon.properties?.length > 0 && <span className="mx-1">·</span>}
+                          {weapon.properties?.join(', ')}
+                        </div>
+                      </button>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => quickRoll(`${weapon.name} Attack`, weapon.attack_bonus, attackAdvantage)}
-                          className="text-amber-400 font-mono px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                          className="text-amber-400 font-mono px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 transition-colors cursor-pointer touch-target"
                         >
                           {formatModifier(weapon.attack_bonus)} to hit
                           {attackAdvantage && (
@@ -976,7 +1059,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                         </button>
                         <button
                           onClick={() => quickDamageRoll(weapon.name, weapon.damage)}
-                          className="text-xs text-parchment-muted font-mono px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors cursor-pointer"
+                          className="text-xs text-parchment-muted font-mono px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition-colors cursor-pointer touch-target"
                         >
                           {weapon.damage}
                         </button>
@@ -1203,16 +1286,39 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           {/* SKILLS TAB */}
           <TabsContent value="skills" className="space-y-1">
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
-              <h3 className="text-sm font-serif text-parchment mb-3">Saving Throws</h3>
+              <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
+                Saving Throws
+                <span className="text-[10px] text-parchment-muted/60 font-normal">tap to roll</span>
+              </h3>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                 {(['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'] as const).map(ability => {
                   const isProficient = char.proficiencies?.saving_throws?.includes(ability.slice(0, 3).toUpperCase())
                   const mod = abilityModifier(char[ability]) + (isProficient ? char.proficiency_bonus : 0)
                   return (
-                    <div key={ability} className={`text-center p-2 rounded-lg ${isProficient ? 'bg-gold-500/10 border border-gold-500/20' : 'bg-charcoal-900/30'}`}>
-                      <div className="text-[10px] text-parchment-muted uppercase">{ability.slice(0, 3)}</div>
-                      <div className="text-lg font-mono text-parchment">{formatModifier(mod)}</div>
-                      {isProficient && <Star className="w-2.5 h-2.5 mx-auto text-gold-500 fill-gold-500" />}
+                    <div
+                      key={ability}
+                      className={`relative text-center p-2 rounded-lg cursor-pointer transition-all touch-target-lg ${
+                        isProficient
+                          ? 'bg-gold-500/10 border border-gold-500/20 hover:bg-gold-500/15 hover:border-gold-500/40'
+                          : 'bg-charcoal-900/30 hover:bg-charcoal-900/50 border border-transparent hover:border-gold-500/20'
+                      }`}
+                    >
+                      <button
+                        className="w-full"
+                        onClick={() => quickRoll(`${ability.slice(0, 3).toUpperCase()} Save`, mod)}
+                        title={`Roll ${ability.slice(0, 3).toUpperCase()} save`}
+                      >
+                        <div className="text-[10px] text-parchment-muted uppercase">{ability.slice(0, 3)}</div>
+                        <div className="text-lg font-mono text-parchment">{formatModifier(mod)}</div>
+                        {isProficient && <Star className="w-2.5 h-2.5 mx-auto text-gold-500 fill-gold-500" />}
+                      </button>
+                      <button
+                        className="absolute top-0.5 right-0.5 p-1 text-parchment-muted/50 hover:text-parchment"
+                        onClick={(e) => { e.stopPropagation(); setInfo({ kind: 'save', ability, modifier: mod }) }}
+                        title="What is this save?"
+                      >
+                        <Info className="w-3 h-3" />
+                      </button>
                     </div>
                   )
                 })}
@@ -1220,7 +1326,10 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             </Card>
 
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
-              <h3 className="text-sm font-serif text-parchment mb-3">Skills</h3>
+              <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
+                Skills
+                <span className="text-[10px] text-parchment-muted/60 font-normal">tap to roll · ⓘ for details</span>
+              </h3>
               <div className="space-y-1">
                 {(Object.entries(SKILL_ABILITY_MAP) as [SkillName, string][])
                   .sort(([a], [b]) => a.localeCompare(b))
@@ -1230,8 +1339,12 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                     const mod = abilityModifier(abilityScore) 
                       + (prof === 'expertise' ? char.proficiency_bonus * 2 : prof === 'proficient' ? char.proficiency_bonus : 0)
                     return (
-                      <div key={skill} className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-charcoal-900/30">
-                        <div className="flex items-center gap-2">
+                      <div key={skill} className="flex items-center justify-between rounded transition-colors hover:bg-charcoal-900/30">
+                        <button
+                          onClick={() => quickRoll(SKILL_INFO[skill].name, mod)}
+                          className="flex-1 flex items-center gap-2 py-2 px-2 text-left touch-target"
+                          title={`Roll ${SKILL_INFO[skill].name}`}
+                        >
                           {prof === 'expertise' ? (
                             <div className="flex">
                               <Star className="w-2.5 h-2.5 text-gold-500 fill-gold-500" />
@@ -1244,8 +1357,15 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                           )}
                           <span className="text-sm text-parchment capitalize">{skill.replace('_', ' ')}</span>
                           <span className="text-[10px] text-parchment-muted/50">({ability.slice(0, 3)})</span>
-                        </div>
-                        <span className="text-sm font-mono text-parchment">{formatModifier(mod)}</span>
+                        </button>
+                        <span className="text-sm font-mono text-parchment px-2">{formatModifier(mod)}</span>
+                        <button
+                          onClick={() => setInfo({ kind: 'skill', skill, modifier: mod })}
+                          className="p-2 text-parchment-muted/50 hover:text-parchment touch-target"
+                          title={`What is ${SKILL_INFO[skill].name}?`}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     )
                   })}
@@ -1255,7 +1375,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             {/* Proficiencies */}
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
               <h3 className="text-sm font-serif text-parchment mb-3">Proficiencies & Languages</h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 {char.proficiencies?.armor_proficiencies?.length > 0 && (
                   <div>
                     <span className="text-parchment-muted text-xs">Armor: </span>
@@ -1270,14 +1390,34 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                 )}
                 {char.proficiencies?.tool_proficiencies?.length > 0 && (
                   <div>
-                    <span className="text-parchment-muted text-xs">Tools: </span>
-                    <span className="text-parchment">{char.proficiencies.tool_proficiencies.join(', ')}</span>
+                    <span className="text-parchment-muted text-xs block mb-1">Tools:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {char.proficiencies.tool_proficiencies.map((t, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setInfo({ kind: 'tool', name: t })}
+                          className="text-xs px-2 py-1 rounded-md bg-charcoal-900/50 text-parchment border border-gold-500/10 hover:border-gold-500/30 transition-colors"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {char.proficiencies?.languages?.length > 0 && (
                   <div>
-                    <span className="text-parchment-muted text-xs">Languages: </span>
-                    <span className="text-parchment">{char.proficiencies.languages.join(', ')}</span>
+                    <span className="text-parchment-muted text-xs block mb-1">Languages:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {char.proficiencies.languages.map((lang, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setInfo({ kind: 'language', name: lang })}
+                          className="text-xs px-2 py-1 rounded-md bg-charcoal-900/50 text-parchment border border-gold-500/10 hover:border-gold-500/30 transition-colors"
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1311,10 +1451,16 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             {char.inventory?.armor && (
               <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
                 <h3 className="text-sm font-serif text-parchment mb-3">Equipped Armor</h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-parchment">{char.inventory.armor.name}</span>
+                <button
+                  onClick={() => setInfo({ kind: 'armor', armor: char.inventory.armor! })}
+                  className="w-full flex items-center justify-between hover:bg-charcoal-900/30 -m-2 p-2 rounded-md transition-colors"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-parchment">{char.inventory.armor.name}</span>
+                    <Info className="w-3 h-3 text-parchment-muted/40" />
+                  </div>
                   <span className="text-blue-400 font-mono">AC {char.inventory.armor.ac}</span>
-                </div>
+                </button>
               </Card>
             )}
 
@@ -1324,16 +1470,25 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                 <h3 className="text-sm font-serif text-parchment mb-3">Weapons</h3>
                 <div className="space-y-2">
                   {char.inventory.weapons.map((w, i) => (
-                    <div key={i} className={`flex items-center justify-between p-2 rounded-lg ${w.equipped ? 'bg-amber-500/5 border border-amber-500/10' : 'bg-charcoal-900/30'}`}>
-                      <div>
+                    <button
+                      key={i}
+                      onClick={() => setInfo({ kind: 'weapon', weapon: w, advantage: attackAdvantage })}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
+                        w.equipped
+                          ? 'bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10'
+                          : 'bg-charcoal-900/30 hover:bg-charcoal-900/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
                         <span className="text-parchment text-sm">{w.name}</span>
-                        {w.equipped && <Badge variant="outline" className="ml-2 text-[10px] py-0">equipped</Badge>}
+                        {w.equipped && <Badge variant="outline" className="text-[10px] py-0">equipped</Badge>}
+                        <Info className="w-3 h-3 text-parchment-muted/40" />
                       </div>
                       <div className="text-right text-xs">
                         <span className="text-amber-400 font-mono">{formatModifier(w.attack_bonus)}</span>
                         <span className="text-parchment-muted ml-2">{w.damage}</span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </Card>
@@ -1342,19 +1497,57 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             {/* Inventory Items */}
             {char.inventory?.items?.length > 0 && (
               <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
-                <h3 className="text-sm font-serif text-parchment mb-3">Items</h3>
+                <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
+                  Items
+                  <span className="text-[10px] text-parchment-muted/60 font-normal">tap for details</span>
+                </h3>
                 <div className="space-y-1">
                   {char.inventory.items.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between py-1.5 text-sm">
+                    <button
+                      key={i}
+                      onClick={() => setInfo({ kind: 'item', item })}
+                      className="w-full flex items-center justify-between py-1.5 px-2 -mx-2 rounded text-sm hover:bg-charcoal-900/40 transition-colors"
+                    >
                       <div className="flex items-center gap-2">
                         {item.magical && <Sparkles className="w-3 h-3 text-purple-400" />}
                         <span className={`text-parchment ${item.magical ? 'text-purple-300' : ''}`}>{item.name}</span>
+                        <Info className="w-3 h-3 text-parchment-muted/30" />
                       </div>
                       <div className="flex items-center gap-3 text-parchment-muted">
                         {item.quantity > 1 && <span>×{item.quantity}</span>}
                         {item.weight && <span>{item.weight} lb</span>}
                       </div>
-                    </div>
+                    </button>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Magic Items (rich) */}
+            {(char.inventory?.magic_items?.length ?? 0) > 0 && (
+              <Card className="p-4 bg-purple-500/5 border-purple-500/20">
+                <h3 className="text-sm font-serif text-purple-300 mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" /> Magic Items
+                  <span className="text-[10px] text-parchment-muted/60 font-normal ml-auto">tap for details</span>
+                </h3>
+                <div className="space-y-1.5">
+                  {char.inventory.magic_items!.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setInfo({ kind: 'magicItem', item })}
+                      className="w-full flex items-center justify-between py-1.5 px-2 rounded text-sm hover:bg-purple-500/10 transition-colors text-left"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                        <span className="text-purple-200 truncate">{item.name}</span>
+                        {item.attuned && <Badge variant="outline" className="text-[10px] py-0 border-purple-400/40 text-purple-300">attuned</Badge>}
+                      </div>
+                      {item.charges_max !== undefined && item.charges_max > 0 && (
+                        <span className="text-xs text-purple-300/70 font-mono">
+                          {item.charges_remaining ?? 0}/{item.charges_max}
+                        </span>
+                      )}
+                    </button>
                   ))}
                 </div>
               </Card>
@@ -1574,6 +1767,20 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           <CelestialAdvisor characterId={char.id} characterName={char.name} onClose={() => setShowCelestial(false)} />
         </div>
       )}
+
+      {/* Tap-to-Explain Popover */}
+      <CharacterInfoPopover
+        info={info}
+        onClose={() => setInfo(null)}
+        onRoll={(label, mod, adv) => {
+          quickRoll(label, mod, adv)
+          setInfo(null)
+        }}
+        onDamageRoll={(label, notation) => {
+          quickDamageRoll(label, notation)
+          setInfo(null)
+        }}
+      />
     </div>
   )
 }
@@ -1723,4 +1930,408 @@ function FeatureCard({ feature, onUse }: { feature: FeatureEntry; onUse: () => v
       )}
     </Card>
   )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tap-to-Explain Popover dispatcher — renders the right body for any InfoTarget
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CharacterInfoPopover({
+  info,
+  onClose,
+  onRoll,
+  onDamageRoll,
+}: {
+  info: InfoTarget | null
+  onClose: () => void
+  onRoll: (label: string, modifier: number, advantage?: 'advantage' | 'disadvantage') => void
+  onDamageRoll: (label: string, notation: string) => void
+}) {
+  if (!info) {
+    return (
+      <InfoPopover open={false} onOpenChange={onClose} title="">
+        <div />
+      </InfoPopover>
+    )
+  }
+
+  // SKILL
+  if (info.kind === 'skill') {
+    const skill = SKILL_INFO[info.skill]
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={skill.name}
+        subtitle={`${skill.ability} skill`}
+        accent="#d4a84b"
+        footer={
+          <Button
+            className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 gap-2"
+            onClick={() => onRoll(skill.name, info.modifier, info.advantage)}
+          >
+            <Dices className="w-4 h-4" />
+            Roll {skill.name} ({formatModifier(info.modifier)})
+          </Button>
+        }
+      >
+        <InfoSection label="What it does">
+          <p>{skill.description}</p>
+        </InfoSection>
+        <InfoSection label="When to use it">
+          <InfoBullets items={skill.examples} />
+        </InfoSection>
+      </InfoPopover>
+    )
+  }
+
+  // SAVING THROW
+  if (info.kind === 'save') {
+    const ab = ABILITY_INFO[info.ability]
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={`${ab.name} Save`}
+        subtitle="Saving Throw"
+        accent="#d4a84b"
+        footer={
+          <Button
+            className="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 gap-2"
+            onClick={() => onRoll(`${ab.name} Save`, info.modifier)}
+          >
+            <Dices className="w-4 h-4" />
+            Roll {ab.name} Save ({formatModifier(info.modifier)})
+          </Button>
+        }
+      >
+        <InfoSection label="When you roll it">
+          <p>
+            A {ab.name} save resists effects that target your {ab.description.toLowerCase()} The DM will
+            call for one when something tries to overcome you in that way.
+          </p>
+        </InfoSection>
+        <InfoSection label="Common triggers">
+          <InfoBullets items={ab.usedFor.filter(s => s.toLowerCase().includes('save'))} />
+        </InfoSection>
+      </InfoPopover>
+    )
+  }
+
+  // ABILITY SCORE
+  if (info.kind === 'ability') {
+    const ab = ABILITY_INFO[info.ability]
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={ab.name}
+        subtitle="Ability Score"
+        accent="#d4a84b"
+        footer={
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-500/30 gap-1.5"
+              onClick={() => onRoll(`${ab.name} Check`, info.modifier)}
+            >
+              <Dices className="w-3.5 h-3.5" />
+              Check ({formatModifier(info.modifier)})
+            </Button>
+            <Button
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 gap-1.5"
+              onClick={() => onRoll(`${ab.name} Save`, info.saveModifier)}
+            >
+              <Dices className="w-3.5 h-3.5" />
+              Save ({formatModifier(info.saveModifier)}{info.saveProficient ? ' ★' : ''})
+            </Button>
+          </div>
+        }
+      >
+        <InfoSection label="What it represents">
+          <p>{ab.description}</p>
+        </InfoSection>
+        <InfoSection label="Used for">
+          <InfoBullets items={ab.usedFor} />
+        </InfoSection>
+      </InfoPopover>
+    )
+  }
+
+  // CONDITION
+  if (info.kind === 'condition') {
+    const c = info.condition
+    const summary = CONDITION_EFFECTS[c]?.description
+    const bullets = CONDITION_INFO[c]
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={c[0].toUpperCase() + c.slice(1)}
+        subtitle="Condition"
+        accent="#ef4444"
+      >
+        {summary && (
+          <InfoSection label="In one line">
+            <p>{summary}</p>
+          </InfoSection>
+        )}
+        {bullets && (
+          <InfoSection label="Full effect">
+            <InfoBullets items={bullets} />
+          </InfoSection>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // STANDARD ACTION
+  if (info.kind === 'standardAction') {
+    const a = STANDARD_ACTIONS[info.action]
+    if (!a) return null
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={a.name}
+        subtitle={a.type}
+        accent="#10b981"
+      >
+        <InfoSection label="What it does">
+          <p>{a.description}</p>
+        </InfoSection>
+        <InfoSection label="Rules">
+          <InfoBullets items={a.rules} />
+        </InfoSection>
+      </InfoPopover>
+    )
+  }
+
+  // WEAPON
+  if (info.kind === 'weapon') {
+    const w = info.weapon
+    const propBullets = (w.properties ?? [])
+      .map(p => {
+        const propInfo = lookupWeaponProperty(p)
+        return propInfo ? `${p} — ${propInfo}` : p
+      })
+    const masteryInfo = w.weapon_mastery ? WEAPON_PROPERTY_INFO[w.weapon_mastery.toLowerCase()] : null
+    const dtKey = w.damage_type?.toLowerCase()
+    const damageInfo = dtKey ? DAMAGE_TYPE_INFO[dtKey] : null
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={w.name}
+        subtitle={w.equipped ? 'Equipped weapon' : 'Weapon'}
+        accent="#d97706"
+        footer={
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 gap-1.5"
+              onClick={() => onRoll(`${w.name} Attack`, w.attack_bonus, info.advantage)}
+            >
+              <Dices className="w-3.5 h-3.5" />
+              To Hit ({formatModifier(w.attack_bonus)})
+            </Button>
+            <Button
+              className="bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/30 gap-1.5"
+              onClick={() => onDamageRoll(w.name, w.damage)}
+            >
+              <Dices className="w-3.5 h-3.5" />
+              Damage ({w.damage})
+            </Button>
+          </div>
+        }
+      >
+        <InfoSection label="Stats">
+          <div className="grid grid-cols-2 gap-y-1 text-xs">
+            <span className="text-parchment-muted">Attack bonus:</span>
+            <span className="font-mono text-amber-300">{formatModifier(w.attack_bonus)}</span>
+            <span className="text-parchment-muted">Damage:</span>
+            <span className="font-mono text-red-300">{w.damage}{w.damage_type ? ` ${w.damage_type.toLowerCase()}` : ''}</span>
+            {w.range && (<>
+              <span className="text-parchment-muted">Range:</span>
+              <span>{w.range}</span>
+            </>)}
+            {w.weapon_mastery && (<>
+              <span className="text-parchment-muted">Mastery:</span>
+              <span className="text-purple-300">{w.weapon_mastery}</span>
+            </>)}
+          </div>
+        </InfoSection>
+        {propBullets.length > 0 && (
+          <InfoSection label="Properties">
+            <InfoBullets items={propBullets} />
+          </InfoSection>
+        )}
+        {masteryInfo && (
+          <InfoSection label={`Weapon Mastery: ${w.weapon_mastery}`}>
+            <p>{masteryInfo}</p>
+          </InfoSection>
+        )}
+        {damageInfo && (
+          <InfoSection label={`${w.damage_type} damage`}>
+            <p>{damageInfo}</p>
+          </InfoSection>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // ITEM
+  if (info.kind === 'item') {
+    const item = info.item
+    const fallback = lookupGearInfo(item.name)
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={item.name}
+        subtitle={item.magical ? 'Magical Item' : 'Item'}
+        accent={item.magical ? '#a855f7' : undefined}
+      >
+        <div className="flex flex-wrap gap-3 text-xs text-parchment-muted mb-3">
+          {item.quantity > 1 && <span>Quantity: <span className="text-parchment">×{item.quantity}</span></span>}
+          {item.weight !== undefined && <span>Weight: <span className="text-parchment">{item.weight} lb</span></span>}
+          {item.attuned && <span className="text-purple-300">★ Attuned</span>}
+        </div>
+        {item.description ? (
+          <InfoSection label="Description">
+            <p className="whitespace-pre-wrap">{item.description}</p>
+          </InfoSection>
+        ) : fallback ? (
+          <InfoSection label="What it does">
+            <p>{fallback}</p>
+          </InfoSection>
+        ) : (
+          <p className="text-parchment-muted italic text-xs">
+            No description set. You can add one in the character editor → Inventory.
+          </p>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // MAGIC ITEM
+  if (info.kind === 'magicItem') {
+    const item = info.item
+    const rarityInfo = item.rarity ? RARITY_INFO[item.rarity.toLowerCase()] : null
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={item.name}
+        subtitle={item.rarity || 'Magic Item'}
+        accent="#a855f7"
+      >
+        <div className="flex flex-wrap gap-3 text-xs text-parchment-muted mb-3">
+          {item.requires_attunement && (
+            <span className={item.attuned ? 'text-purple-300' : 'text-parchment-muted'}>
+              {item.attuned ? '★ Attuned' : 'Requires attunement'}
+            </span>
+          )}
+          {item.charges_max !== undefined && (
+            <span>Charges: <span className="font-mono text-purple-300">{item.charges_remaining ?? 0}/{item.charges_max}</span></span>
+          )}
+          {item.recharge && item.recharge !== 'none' && (
+            <span>Recharges: <span className="text-parchment">{item.recharge.replace('_', ' ')}</span></span>
+          )}
+        </div>
+        {item.description && (
+          <InfoSection label="Description">
+            <p className="whitespace-pre-wrap">{item.description}</p>
+          </InfoSection>
+        )}
+        {rarityInfo && (
+          <InfoSection label={`${item.rarity} item`}>
+            <p>{rarityInfo}</p>
+          </InfoSection>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // ARMOR
+  if (info.kind === 'armor') {
+    const a = info.armor
+    const tKey = a.type?.toLowerCase()
+    const typeInfo = tKey ? ARMOR_TYPE_INFO[tKey] : null
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={a.name}
+        subtitle={`${a.type} armor`}
+        accent="#3b82f6"
+      >
+        <InfoSection label="Stats">
+          <div className="grid grid-cols-2 gap-y-1 text-xs">
+            <span className="text-parchment-muted">Armor Class:</span>
+            <span className="font-mono text-blue-300">{a.ac}</span>
+            <span className="text-parchment-muted">Type:</span>
+            <span>{a.type}</span>
+            {a.stealth_disadvantage && (<>
+              <span className="text-parchment-muted">Stealth:</span>
+              <span className="text-red-300">Disadvantage</span>
+            </>)}
+          </div>
+        </InfoSection>
+        {typeInfo && (
+          <InfoSection label={`${a.type} armor rules`}>
+            <p>{typeInfo}</p>
+          </InfoSection>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // LANGUAGE
+  if (info.kind === 'language') {
+    const desc = lookupLanguageInfo(info.name)
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={info.name}
+        subtitle="Language"
+        accent="#06b6d4"
+      >
+        {desc ? (
+          <p>{desc}</p>
+        ) : (
+          <p className="text-parchment-muted italic text-xs">
+            A language you can read, write, and speak.
+          </p>
+        )}
+      </InfoPopover>
+    )
+  }
+
+  // TOOL
+  if (info.kind === 'tool') {
+    return (
+      <InfoPopover
+        open
+        onOpenChange={onClose}
+        title={info.name}
+        subtitle="Tool Proficiency"
+        accent="#a3a3a3"
+      >
+        <InfoSection label="What it means">
+          <p>
+            You add your proficiency bonus to ability checks the DM calls for when using {info.name}.
+            The ability used (STR/DEX/INT/WIS/CHA) depends on the task.
+          </p>
+        </InfoSection>
+        <InfoSection label="Common uses">
+          <p className="text-parchment-muted italic">
+            Ask your DM how this tool applies — e.g. Thieves&apos; Tools for locks &amp; traps,
+            Smith&apos;s Tools to repair armor, an instrument to perform.
+          </p>
+        </InfoSection>
+      </InfoPopover>
+    )
+  }
+
+  return null
 }
