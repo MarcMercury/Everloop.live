@@ -41,6 +41,18 @@ export function NavDropdown({ label, icon, items }: NavDropdownProps) {
     return () => document.removeEventListener('keydown', handleKey)
   }, [open])
 
+  // Close on outside click / tap (mobile + desktop click-toggle)
+  React.useEffect(() => {
+    if (!open) return
+    const handlePointer = (e: PointerEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handlePointer)
+    return () => document.removeEventListener('pointerdown', handlePointer)
+  }, [open])
+
   return (
     <div
       ref={containerRef}

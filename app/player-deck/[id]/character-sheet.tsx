@@ -233,10 +233,12 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   
   // Condition toggling
   function toggleCondition(condition: DndCondition) {
-    const conditions = char.status.conditions.includes(condition)
-      ? char.status.conditions.filter(c => c !== condition)
-      : [...char.status.conditions, condition]
-    const newStatus = { ...char.status, conditions }
+    const currentStatus = char.status ?? { conditions: [], inspiration: false } as PlayerCharacter['status']
+    const currentConditions = currentStatus.conditions ?? []
+    const conditions = currentConditions.includes(condition)
+      ? currentConditions.filter(c => c !== condition)
+      : [...currentConditions, condition]
+    const newStatus = { ...currentStatus, conditions }
     setChar(prev => ({ ...prev, status: newStatus }))
     startTransition(async () => {
       await updateCharacterStatus(char.id, newStatus)
@@ -245,7 +247,8 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   
   // Inspiration toggle
   function toggleInspiration() {
-    const newStatus = { ...char.status, inspiration: !char.status.inspiration }
+    const currentStatus = char.status ?? { conditions: [], inspiration: false } as PlayerCharacter['status']
+    const newStatus = { ...currentStatus, inspiration: !currentStatus.inspiration }
     setChar(prev => ({ ...prev, status: newStatus }))
     startTransition(async () => {
       await updateCharacterStatus(char.id, newStatus)

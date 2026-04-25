@@ -116,22 +116,6 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
 
   return (
     <div className="min-h-screen">
-      <header className="glass sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-xl font-serif">
-              <span className="text-parchment">Ever</span>
-              <span className="text-gold">loop</span>
-            </Link>
-            <nav className="flex items-center gap-6 text-sm">
-              <Link href="/explore" className="text-parchment-muted hover:text-parchment transition-colors">Archive</Link>
-              <Link href="/stories" className="text-gold">Library</Link>
-              <Link href="/write" className="text-parchment-muted hover:text-parchment transition-colors">Write</Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-
       <main className="container mx-auto px-6 py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-serif mb-4 text-parchment">

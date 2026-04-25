@@ -91,6 +91,10 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse
 }
 
+// Force Node.js runtime — Supabase SSR cookie handling is more reliable on Node
+// than Edge, and avoids subtle differences in cookie serialization.
+export const runtime = 'nodejs'
+
 export const config = {
   matcher: [
     /*

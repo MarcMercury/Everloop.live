@@ -1,12 +1,28 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
-const client = new OpenAI()
-
 export async function POST() {
+  // Auth gate — admin only (DALL-E 3 HD is expensive)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const { data: isAdmin } = await supabase.rpc('is_admin_check')
+  if (!isAdmin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OpenAI not configured' }, { status: 500 })
+  }
+
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
   try {
     const response = await client.images.generate({
       model: 'dall-e-3',
