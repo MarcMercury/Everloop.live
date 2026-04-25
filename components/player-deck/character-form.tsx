@@ -19,11 +19,13 @@ import type {
   SpellcastingData, ProficiencyData, InventoryData,
   FeatEntry, SensesData, SpeedsData, AcBreakdown,
   DamageModifiers, SavingThrowModifiers, TreasureData,
-  MagicItemEntry, Ammunition
+  MagicItemEntry, Ammunition,
+  SkillName
 } from '@/types/player-character'
 import { 
   DND_CLASSES, DND_RACES, DND_ALIGNMENTS, DND_BACKGROUNDS, DND_SIZES, DND_LIFESTYLES,
   DND_DAMAGE_TYPES, WEAPON_MASTERY_PROPERTIES,
+  SKILL_ABILITY_MAP, abilityModifier, formatModifier,
   defaultSpellcasting, defaultProficiencies, defaultInventory,
   defaultSenses, defaultSpeeds, defaultAcBreakdown,
   defaultDamageModifiers, defaultSavingThrowModifiers, defaultTreasure
@@ -741,6 +743,53 @@ export function CharacterForm({ character }: Props) {
                   {ability}
                 </Button>
               ))}
+            </div>
+          </Card>
+
+          {/* Skills */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Skills</h3>
+            <p className="text-xs text-parchment-muted">
+              Click a skill to cycle: <span className="text-parchment-muted">none</span> → <span className="text-gold-500">proficient (+prof)</span> → <span className="text-emerald-400">expertise (+2× prof)</span>.
+              The bonus auto-calculates from the linked ability + your proficiency bonus.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              {(Object.keys(SKILL_ABILITY_MAP) as SkillName[]).sort().map(skill => {
+                const ability = SKILL_ABILITY_MAP[skill]
+                const score = ({ strength: str, dexterity: dex, constitution: con, intelligence: int, wisdom: wis, charisma: cha }[ability])
+                const profState = proficiencies.skills[skill] ?? null
+                const profMult = profState === 'expertise' ? 2 : profState === 'proficient' ? 1 : 0
+                const bonus = abilityModifier(score) + profBonus * profMult
+                const label = skill.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+                const abbr = ability.slice(0, 3).toUpperCase()
+                const cycle = () => {
+                  setProficiencies(prev => {
+                    const cur = prev.skills[skill] ?? null
+                    const next = cur === null ? 'proficient' : cur === 'proficient' ? 'expertise' : null
+                    return { ...prev, skills: { ...prev.skills, [skill]: next } }
+                  })
+                }
+                const stateLabel = profState === 'expertise' ? 'EXP' : profState === 'proficient' ? 'PROF' : '—'
+                const stateColor =
+                  profState === 'expertise'
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    : profState === 'proficient'
+                    ? 'bg-gold-500/20 text-gold-500 border-gold-500/30'
+                    : 'bg-charcoal-950 text-parchment-muted border-gold-500/10'
+                return (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={cycle}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors hover:border-gold-500/30 ${stateColor}`}
+                  >
+                    <span className="font-mono w-10 text-center">{formatModifier(bonus)}</span>
+                    <span className="flex-1 text-left">{label}</span>
+                    <span className="text-[10px] text-parchment-muted">({abbr})</span>
+                    <span className="text-[10px] font-mono w-10 text-right">{stateLabel}</span>
+                  </button>
+                )
+              })}
             </div>
           </Card>
           
