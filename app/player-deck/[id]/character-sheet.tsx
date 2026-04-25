@@ -22,7 +22,7 @@ import type {
 import { 
   abilityModifier, formatModifier, hpPercentage, hpColor,
   CLASS_COLORS, DND_CONDITIONS, SKILL_ABILITY_MAP,
-  CONDITION_EFFECTS, conditionAttackModifier,
+  CONDITION_EFFECTS, conditionAttackModifier, defaultStatus,
 } from '@/types/player-character'
 import {
   updateCharacterHP, updateCharacterStatus, updateSpellSlots,
@@ -233,7 +233,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   
   // Condition toggling
   function toggleCondition(condition: DndCondition) {
-    const currentStatus = char.status ?? { conditions: [], inspiration: false } as PlayerCharacter['status']
+    const currentStatus = char.status ?? defaultStatus()
     const currentConditions = currentStatus.conditions ?? []
     const conditions = currentConditions.includes(condition)
       ? currentConditions.filter(c => c !== condition)
@@ -247,7 +247,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   
   // Inspiration toggle
   function toggleInspiration() {
-    const currentStatus = char.status ?? { conditions: [], inspiration: false } as PlayerCharacter['status']
+    const currentStatus = char.status ?? defaultStatus()
     const newStatus = { ...currentStatus, inspiration: !currentStatus.inspiration }
     setChar(prev => ({ ...prev, status: newStatus }))
     startTransition(async () => {
