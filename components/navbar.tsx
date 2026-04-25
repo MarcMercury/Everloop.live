@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getUser, getProfile, getIsAdmin } from '@/lib/supabase/cached'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -95,10 +96,12 @@ export async function Navbar() {
                     className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
                   >
                     {profile?.avatar_url ? (
-                      <img 
-                        src={profile.avatar_url} 
-                        alt={profile.display_name || profile.username || 'Profile'} 
-                        className="w-8 h-8 rounded-full border border-gold/20"
+                      <Image
+                        src={profile.avatar_url}
+                        alt={profile.display_name || profile.username || 'Profile'}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full border border-gold/20 object-cover"
                       />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-teal-rich border border-gold/20 flex items-center justify-center">
