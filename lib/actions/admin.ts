@@ -3,38 +3,39 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+type AdminGate =
+  | { ok: true; supabase: SupabaseClient; userId: string }
+  | { ok: false; error: string }
+
 /**
- * Helper to verify admin access using is_admin_check() RPC function.
- * This function BYPASSES RLS by using SECURITY DEFINER.
- * 
- * NEVER use direct table queries for permission checks - they will fail due to RLS.
+ * Single auth+admin gate for server actions in this file.
+ * Uses is_admin_check() RPC (SECURITY DEFINER) to bypass RLS.
  */
-async function verifyAdminAccess(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+async function gateAdmin(): Promise<AdminGate> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
   const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
-  
   if (error) {
-    console.error('[verifyAdminAccess] RPC error:', error.message)
-    return false
+    console.error('[gateAdmin] RPC error:', error.message)
+    return { ok: false, error: 'Admin access required' }
   }
-  
-  return isAdmin === true
+  if (isAdmin !== true) {
+    return { ok: false, error: 'Admin access required' }
+  }
+  return { ok: true, supabase, userId: user.id }
 }
 
 /**
  * Approve a story - sets status to 'approved' (or 'canonical')
  */
 export async function approveStory(storyId: string, reviewNotes?: string) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase, userId } = gate
+
   // Update story status
   const { error } = await supabase
     .from('stories')
@@ -52,7 +53,7 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
   // Create review record
   await supabase.from('story_reviews').insert({
     story_id: storyId,
-    reviewer_id: user.id,
+    reviewer_id: userId,
     decision: 'approve',
     feedback: reviewNotes || 'Approved by admin',
     is_ai_review: false,
@@ -68,17 +69,10 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
  * Reject a story - sets status to 'rejected'
  */
 export async function rejectStory(storyId: string, reason: string) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase, userId } = gate
+
   // Update story status
   const { error } = await supabase
     .from('stories')
@@ -96,7 +90,7 @@ export async function rejectStory(storyId: string, reason: string) {
   // Create review record
   await supabase.from('story_reviews').insert({
     story_id: storyId,
-    reviewer_id: user.id,
+    reviewer_id: userId,
     decision: 'reject',
     feedback: reason,
     is_ai_review: false,
@@ -121,17 +115,10 @@ export async function updateCanonEntity(
     stability_rating?: number
   }
 ) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase } = gate
+
   // Clear embedding if description changed (needs re-hydration)
   const updateData = {
     ...data,
@@ -158,17 +145,10 @@ export async function updateCanonEntity(
  * Delete a canon entity
  */
 export async function deleteCanonEntity(entityId: string) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase } = gate
+
   const { error } = await supabase
     .from('canon_entities')
     .delete()
@@ -195,24 +175,17 @@ export async function createCanonEntity(data: {
   status?: string
   stability_rating?: number
 }) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase, userId } = gate
+
   const { error } = await supabase
     .from('canon_entities')
     .insert({
       ...data,
       status: data.status || 'proposed',
       stability_rating: data.stability_rating || 50,
-      created_by: user.id,
+      created_by: userId,
     } as never)
   
   if (error) {
@@ -229,23 +202,16 @@ export async function createCanonEntity(data: {
  * Canonize a user-created entity - promotes from draft to canonical
  */
 export async function canonizeEntity(entityId: string) {
-  const supabase = await createClient()
-  
-  // Verify admin
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) {
-    return { success: false, error: 'Admin access required' }
-  }
-  
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase, userId } = gate
+
   // Update entity status to canonical
   const { error } = await supabase
     .from('canon_entities')
     .update({ 
       status: 'canonical',
-      approved_by: user.id,
+      approved_by: userId,
       updated_at: new Date().toISOString(),
     } as never)
     .eq('id', entityId)
@@ -265,17 +231,14 @@ export async function canonizeEntity(entityId: string) {
  * Hydrate a single entity with an embedding
  */
 export async function hydrateEntity(entityId: string) {
-  const supabase = await createClient()
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+
   const adminClient = createAdminClient()
-  
   if (!adminClient) {
     return { success: false, error: 'Admin client not available' }
   }
-  
-  // Verify user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-  
+
   // Fetch the entity using admin client
   const { data: entity, error: fetchError } = await adminClient
     .from('canon_entities')
@@ -354,14 +317,10 @@ export async function hydrateEntity(entityId: string) {
  * Freeze (ban) a user account. Sets a far-future ban duration.
  */
 export async function freezeUser(userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
 
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) return { success: false, error: 'Admin access required' }
-
-  if (userId === user.id) return { success: false, error: 'Cannot freeze your own account' }
+  if (userId === gate.userId) return { success: false, error: 'Cannot freeze your own account' }
 
   const adminClient = createAdminClient()
   if (!adminClient) return { success: false, error: 'Admin client not available' }
@@ -383,12 +342,8 @@ export async function freezeUser(userId: string) {
  * Unfreeze (unban) a user account.
  */
 export async function unfreezeUser(userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) return { success: false, error: 'Admin access required' }
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
 
   const adminClient = createAdminClient()
   if (!adminClient) return { success: false, error: 'Admin client not available' }
@@ -410,14 +365,10 @@ export async function unfreezeUser(userId: string) {
  * Delete a user account entirely (auth + profile).
  */
 export async function deleteUser(userId: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
 
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) return { success: false, error: 'Admin access required' }
-
-  if (userId === user.id) return { success: false, error: 'Cannot delete your own account' }
+  if (userId === gate.userId) return { success: false, error: 'Cannot delete your own account' }
 
   const adminClient = createAdminClient()
   if (!adminClient) return { success: false, error: 'Admin client not available' }
@@ -438,12 +389,8 @@ export async function deleteUser(userId: string) {
  * Generate a password reset link for a user.
  */
 export async function resetUserPassword(userId: string, email: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) return { success: false, error: 'Admin access required' }
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
 
   const adminClient = createAdminClient()
   if (!adminClient) return { success: false, error: 'Admin client not available' }
@@ -468,14 +415,10 @@ export async function resetUserPassword(userId: string, email: string) {
  * Toggle admin status for a user.
  */
 export async function toggleUserAdmin(userId: string, makeAdmin: boolean) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
 
-  const isAdmin = await verifyAdminAccess(supabase)
-  if (!isAdmin) return { success: false, error: 'Admin access required' }
-
-  if (userId === user.id) return { success: false, error: 'Cannot change your own admin status' }
+  if (userId === gate.userId) return { success: false, error: 'Cannot change your own admin status' }
 
   const adminClient = createAdminClient()
   if (!adminClient) return { success: false, error: 'Admin client not available' }

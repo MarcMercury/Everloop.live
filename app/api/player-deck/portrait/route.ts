@@ -5,8 +5,6 @@ import OpenAI from 'openai'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const client = new OpenAI()
-
 // Pre-defined art style prompts that get appended to the description
 const STYLE_PROMPTS: Record<string, string> = {
   'fantasy-oil': 'High fantasy oil painting style, rich colors, dramatic lighting, detailed brushwork, reminiscent of classic fantasy book covers',
@@ -39,6 +37,11 @@ export async function POST(request: NextRequest) {
 
   // Build the image generation prompt from character data
   const imagePrompt = buildImagePrompt(characterData, stylePrompt, customDetails)
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OpenAI not configured' }, { status: 500 })
+  }
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   try {
     const response = await client.images.generate({

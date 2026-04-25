@@ -1,9 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
+import { z } from 'zod'
+import { parseBody } from '@/lib/api/parse-body'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
+
+const LoreChatSchema = z.object({
+  question: z.string().min(1).max(2000),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().max(8000),
+      })
+    )
+    .max(20)
+    .optional(),
+})
 
 interface LoreEntity {
   id: string
@@ -26,18 +41,9 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const body = await request.json()
-  const { question, history } = body as {
-    question: string
-    history?: Array<{ role: 'user' | 'assistant'; content: string }>
-  }
-
-  if (!question || typeof question !== 'string' || question.length > 2000) {
-    return new Response(JSON.stringify({ error: 'Invalid question (max 2000 chars)' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
+  const parsed = await parseBody(request, LoreChatSchema)
+  if (!parsed.ok) return parsed.response
+  const { question, history } = parsed.data
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })

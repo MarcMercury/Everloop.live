@@ -4,16 +4,32 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { ShardInsert, ShardUpdate, ShardRecord, ShardRegion } from '@/types/shard'
 
+type ShardAdminGate =
+  | { ok: true; userId: string; adminClient: NonNullable<ReturnType<typeof createAdminClient>> }
+  | { ok: false; error: string }
+
 /**
- * Helper to verify admin/curator access
+ * Single auth+admin gate for shard mutations. All shard writes require admin
+ * access and use the service-role client to bypass RLS.
  */
-async function verifyElevatedAccess(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+async function gateShardAdmin(): Promise<ShardAdminGate> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false, error: 'Unauthorized' }
+
   const { data: isAdmin, error } = await supabase.rpc('is_admin_check')
   if (error) {
-    console.error('[verifyElevatedAccess] RPC error:', error.message)
-    return false
+    console.error('[gateShardAdmin] RPC error:', error.message)
+    return { ok: false, error: 'Admin access required' }
   }
-  return isAdmin === true
+  if (isAdmin !== true) {
+    return { ok: false, error: 'Admin access required' }
+  }
+
+  const adminClient = createAdminClient()
+  if (!adminClient) return { ok: false, error: 'Admin client unavailable' }
+
+  return { ok: true, userId: user.id, adminClient }
 }
 
 /**
@@ -69,16 +85,9 @@ export async function getShard(id: string): Promise<{ data: ShardRecord | null; 
  * Create a new shard (admin/curator only)
  */
 export async function createShard(input: ShardInsert): Promise<{ data: ShardRecord | null; error: string | null }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Unauthorized' }
-
-  const hasAccess = await verifyElevatedAccess(supabase)
-  if (!hasAccess) return { data: null, error: 'Admin access required' }
-
-  const adminClient = createAdminClient()
-  if (!adminClient) return { data: null, error: 'Admin client unavailable' }
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { data: null, error: gate.error }
+  const { adminClient } = gate
 
   const { data, error } = await adminClient
     .from('shards')
@@ -118,16 +127,9 @@ export async function createShard(input: ShardInsert): Promise<{ data: ShardReco
  * Update an existing shard (admin/curator only)
  */
 export async function updateShard(id: string, input: ShardUpdate): Promise<{ data: ShardRecord | null; error: string | null }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { data: null, error: 'Unauthorized' }
-
-  const hasAccess = await verifyElevatedAccess(supabase)
-  if (!hasAccess) return { data: null, error: 'Admin access required' }
-
-  const adminClient = createAdminClient()
-  if (!adminClient) return { data: null, error: 'Admin client unavailable' }
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { data: null, error: gate.error }
+  const { adminClient } = gate
 
   const updateData: Record<string, unknown> = {}
   if (input.name !== undefined) updateData.name = input.name
@@ -168,16 +170,9 @@ export async function updateShard(id: string, input: ShardUpdate): Promise<{ dat
  * Delete a shard (admin only)
  */
 export async function deleteShard(id: string): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-
-  const hasAccess = await verifyElevatedAccess(supabase)
-  if (!hasAccess) return { success: false, error: 'Admin access required' }
-
-  const adminClient = createAdminClient()
-  if (!adminClient) return { success: false, error: 'Admin client unavailable' }
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { adminClient } = gate
 
   const { error } = await adminClient
     .from('shards')
@@ -241,16 +236,9 @@ export async function recordShardEvent(input: {
   description: string
   world_impact?: string
 }): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Unauthorized' }
-
-  const hasAccess = await verifyElevatedAccess(supabase)
-  if (!hasAccess) return { success: false, error: 'Elevated access required' }
-
-  const adminClient = createAdminClient()
-  if (!adminClient) return { success: false, error: 'Admin client unavailable' }
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { adminClient, userId } = gate
 
   const { error } = await adminClient
     .from('shard_events')
@@ -258,7 +246,7 @@ export async function recordShardEvent(input: {
       shard_id: input.shard_id,
       event_type: input.event_type,
       region_id: input.region_id || null,
-      actor_id: user.id,
+      actor_id: userId,
       campaign_id: input.campaign_id || null,
       quest_id: input.quest_id || null,
       story_id: input.story_id || null,

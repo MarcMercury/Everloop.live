@@ -5,8 +5,6 @@ import OpenAI from 'openai'
 export const runtime = 'nodejs'
 export const maxDuration = 120
 
-const client = new OpenAI()
-
 // Detailed prompts per sublayer, grounded in the Everloop's visual and narrative identity
 const SUBLAYER_PROMPTS: Record<string, { prompt: string; size: '1024x1024' }> = {
   drift: {
@@ -80,6 +78,11 @@ export async function POST(request: NextRequest) {
   }
 
   const config = SUBLAYER_PROMPTS[layer]
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OpenAI not configured' }, { status: 500 })
+  }
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   try {
     const response = await client.images.generate({

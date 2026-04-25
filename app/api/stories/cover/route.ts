@@ -5,8 +5,6 @@ import OpenAI from 'openai'
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
-const client = new OpenAI()
-
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,6 +31,11 @@ export async function POST(request: NextRequest) {
     'Do NOT include any text or lettering in the image.',
     'Portrait orientation, vertical composition.',
   ].filter(Boolean).join(' ')
+
+  if (!process.env.OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OpenAI not configured' }, { status: 500 })
+  }
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   try {
     const response = await client.images.generate({
