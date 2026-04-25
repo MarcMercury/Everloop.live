@@ -36,6 +36,10 @@ export interface SpellEntry {
   duration: string
   description: string
   damage?: string
+  /** Save type column from MPMB sheet (e.g. 'Dex', 'Wis', or '—' for none). */
+  save?: string
+  /** Where the spell comes from (e.g. 'Warlock', 'Tiefling Innate', 'Tome Ritual'). */
+  source?: string
   prepared: boolean
   concentration: boolean
   ritual: boolean
@@ -50,11 +54,15 @@ export interface CantripEntry {
   duration: string
   description: string
   damage?: string
+  save?: string
+  source?: string
 }
 
 export interface SpellSlot {
   max: number
   used: number
+  /** Optional recharge type. Warlock Pact Magic recovers on short rest. */
+  recharge?: 'short_rest' | 'long_rest'
 }
 
 export interface SpellcastingData {
@@ -93,6 +101,12 @@ export interface WeaponEntry {
   damage: string
   properties: string[]
   equipped: boolean
+  /** e.g. 'Melee', 'Ranged', 'Melee, 20/60 ft'. */
+  range?: string
+  /** Damage type column (Slashing, Piercing, Fire, etc.). */
+  damage_type?: string
+  /** D&D 2024 weapon mastery property: Sap / Slow / Topple / Vex / etc. */
+  weapon_mastery?: string
 }
 
 // Armor
@@ -114,6 +128,24 @@ export interface InventoryItem {
   attuned?: boolean
 }
 
+// Rich magic item entry (Possessions panel — name + description + attunement + charges)
+export interface MagicItemEntry {
+  name: string
+  description?: string
+  rarity?: string
+  requires_attunement?: boolean
+  attuned?: boolean
+  charges_max?: number
+  charges_remaining?: number
+  recharge?: 'dawn' | 'dusk' | 'short_rest' | 'long_rest' | 'none'
+}
+
+// Ammunition tracker
+export interface Ammunition {
+  type: string
+  quantity: number
+}
+
 // Currency
 export interface Currency {
   cp: number
@@ -130,7 +162,11 @@ export interface InventoryData {
   shield: { name: string; ac_bonus: number; equipped: boolean } | null
   items: InventoryItem[]
   currency: Currency
+  /** Legacy free-form attunement names (kept for back-compat). */
   attunement: string[]
+  /** Rich magic items (preferred). Max 3 attuned simultaneously per RAW. */
+  magic_items?: MagicItemEntry[]
+  ammunition?: Ammunition[]
   encumbrance?: number
 }
 
@@ -138,7 +174,14 @@ export interface InventoryData {
 export interface CharacterStatus {
   conditions: DndCondition[]
   concentration_spell: string | null
+  /** Legacy boolean inspiration. */
   inspiration: boolean
+  /** 2024 PHB Heroic Inspiration is stackable; numeric tracker. */
+  inspiration_count?: number
+  /** Whether the per-round reaction has been spent. */
+  reaction_used?: boolean
+  /** Whether the per-round bonus action has been spent. */
+  bonus_action_used?: boolean
   exhaustion_level: number
   notes: string
 }
@@ -155,6 +198,103 @@ export interface SessionNote {
   date: string
   session: number
   notes: string
+}
+
+// Senses (passive scores + special vision)
+export interface SensesData {
+  passive_perception?: number
+  passive_investigation?: number
+  passive_insight?: number
+  darkvision?: number
+  blindsight?: number
+  tremorsense?: number
+  truesight?: number
+  notes?: string
+}
+
+// Multiple speeds (walk / fly / swim / climb / burrow / hover)
+export interface SpeedsData {
+  walk?: number
+  fly?: number
+  swim?: number
+  climb?: number
+  burrow?: number
+  hover?: boolean
+  encumbered?: number
+  heavily_encumbered?: number
+}
+
+// Display-only AC breakdown (canonical AC stays in armor_class column)
+export interface AcBreakdown {
+  base?: number
+  armor_bonus?: number
+  shield_bonus?: number
+  dex_mod?: number
+  magic_bonus?: number
+  misc_bonus?: number
+  notes?: string
+}
+
+// Damage / condition modifier lists
+export interface DamageModifiers {
+  resistances: string[]
+  immunities: string[]
+  vulnerabilities: string[]
+  condition_immunities: string[]
+}
+
+// Per-save advantage/disadvantage notes
+export interface SavingThrowModifiers {
+  advantages: string[]
+  disadvantages: string[]
+  notes?: string
+}
+
+// Feats (distinct from features/traits)
+export interface FeatEntry {
+  name: string
+  source?: string
+  level_acquired?: number
+  description: string
+}
+
+// Treasure / valuables
+export interface GemEntry {
+  name: string
+  value_gp?: number
+  quantity?: number
+}
+export interface ArtEntry {
+  name: string
+  value_gp?: number
+  description?: string
+}
+export interface TreasureData {
+  gems?: GemEntry[]
+  art?: ArtEntry[]
+  other_holdings?: string
+  total_value_gp?: number
+}
+
+// Wound / long-term injury
+export interface Wound {
+  description: string
+  severity?: 'minor' | 'major' | 'permanent'
+  healing_required?: string
+  date?: string
+}
+
+// Spell source bucket (Pact Magic / Racial / Ritual Tome / Multiclass)
+export interface SpellSource {
+  name: string
+  ability?: string
+  save_dc?: number
+  attack_bonus?: number
+  recharge?: 'short_rest' | 'long_rest'
+  spell_slots?: Record<string, SpellSlot>
+  spells?: SpellEntry[]
+  cantrips?: CantripEntry[]
+  notes?: string
 }
 
 // Companion / Familiar / Pet
@@ -174,6 +314,10 @@ export interface PlayerCharacter {
   id: string
   user_id: string
   name: string
+  player_name: string | null
+  size: string
+  gender: string | null
+  pronouns: string | null
   race: string
   subrace: string | null
   class: string
@@ -197,6 +341,12 @@ export interface PlayerCharacter {
   bonds: string | null
   flaws: string | null
   backstory: string | null
+  allies: string | null
+  enemies: string | null
+  organizations: string | null
+  organization_symbol_url: string | null
+  lifestyle: string | null
+  notes: string | null
   strength: number
   dexterity: number
   constitution: number
@@ -217,11 +367,20 @@ export interface PlayerCharacter {
   spellcasting: SpellcastingData
   proficiencies: ProficiencyData
   features: FeatureEntry[]
+  feats: FeatEntry[]
   inventory: InventoryData
   status: CharacterStatus
   multiclass: MulticlassEntry[]
   session_notes: SessionNote[]
   companions: CompanionEntry[]
+  senses: SensesData
+  speeds: SpeedsData
+  ac_breakdown: AcBreakdown
+  damage_modifiers: DamageModifiers
+  saving_throw_modifiers: SavingThrowModifiers
+  treasure: TreasureData
+  wounds: Wound[]
+  spell_sources: SpellSource[]
   theme_color: string
   is_active: boolean
   campaign_name: string | null
@@ -234,6 +393,10 @@ export interface PlayerCharacter {
 export interface PlayerCharacterInsert {
   user_id: string
   name: string
+  player_name?: string | null
+  size?: string
+  gender?: string | null
+  pronouns?: string | null
   race?: string
   subrace?: string | null
   class?: string
@@ -257,6 +420,12 @@ export interface PlayerCharacterInsert {
   bonds?: string | null
   flaws?: string | null
   backstory?: string | null
+  allies?: string | null
+  enemies?: string | null
+  organizations?: string | null
+  organization_symbol_url?: string | null
+  lifestyle?: string | null
+  notes?: string | null
   strength?: number
   dexterity?: number
   constitution?: number
@@ -275,11 +444,20 @@ export interface PlayerCharacterInsert {
   spellcasting?: Json
   proficiencies?: Json
   features?: Json
+  feats?: Json
   inventory?: Json
   status?: Json
   multiclass?: Json
   session_notes?: Json
   companions?: Json
+  senses?: Json
+  speeds?: Json
+  ac_breakdown?: Json
+  damage_modifiers?: Json
+  saving_throw_modifiers?: Json
+  treasure?: Json
+  wounds?: Json
+  spell_sources?: Json
   theme_color?: string
   is_active?: boolean
   campaign_name?: string | null
@@ -289,6 +467,10 @@ export interface PlayerCharacterInsert {
 // Update type (for editing characters)
 export interface PlayerCharacterUpdate {
   name?: string
+  player_name?: string | null
+  size?: string
+  gender?: string | null
+  pronouns?: string | null
   race?: string
   subrace?: string | null
   class?: string
@@ -312,6 +494,12 @@ export interface PlayerCharacterUpdate {
   bonds?: string | null
   flaws?: string | null
   backstory?: string | null
+  allies?: string | null
+  enemies?: string | null
+  organizations?: string | null
+  organization_symbol_url?: string | null
+  lifestyle?: string | null
+  notes?: string | null
   strength?: number
   dexterity?: number
   constitution?: number
@@ -332,11 +520,20 @@ export interface PlayerCharacterUpdate {
   spellcasting?: Json
   proficiencies?: Json
   features?: Json
+  feats?: Json
   inventory?: Json
   status?: Json
   multiclass?: Json
   session_notes?: Json
   companions?: Json
+  senses?: Json
+  speeds?: Json
+  ac_breakdown?: Json
+  damage_modifiers?: Json
+  saving_throw_modifiers?: Json
+  treasure?: Json
+  wounds?: Json
+  spell_sources?: Json
   theme_color?: string
   is_active?: boolean
   campaign_name?: string | null
@@ -371,6 +568,26 @@ export const DND_BACKGROUNDS = [
   'Acolyte', 'Charlatan', 'Criminal', 'Entertainer', 'Folk Hero',
   'Guild Artisan', 'Hermit', 'Noble', 'Outlander', 'Sage',
   'Sailor', 'Soldier', 'Urchin', 'Custom'
+] as const
+
+export const DND_SIZES = [
+  'Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'
+] as const
+
+export const DND_LIFESTYLES = [
+  'Wretched', 'Squalid', 'Poor', 'Modest', 'Comfortable', 'Wealthy', 'Aristocratic'
+] as const
+
+/** Standard D&D 5e damage types (used for resistances / immunities / vulnerabilities). */
+export const DND_DAMAGE_TYPES = [
+  'Acid', 'Bludgeoning', 'Cold', 'Fire', 'Force', 'Lightning', 'Necrotic',
+  'Piercing', 'Poison', 'Psychic', 'Radiant', 'Slashing', 'Thunder',
+  'Nonmagical Bludgeoning/Piercing/Slashing'
+] as const
+
+/** D&D 2024 weapon mastery properties. */
+export const WEAPON_MASTERY_PROPERTIES = [
+  'Cleave', 'Graze', 'Nick', 'Push', 'Sap', 'Slow', 'Topple', 'Vex'
 ] as const
 
 export const DND_CONDITIONS: DndCondition[] = [
@@ -568,7 +785,42 @@ export function defaultStatus(): CharacterStatus {
     conditions: [],
     concentration_spell: null,
     inspiration: false,
+    inspiration_count: 0,
+    reaction_used: false,
+    bonus_action_used: false,
     exhaustion_level: 0,
     notes: '',
   }
+}
+
+export function defaultSenses(): SensesData {
+  return {
+    passive_perception: 10,
+    passive_investigation: 10,
+    passive_insight: 10,
+    darkvision: 0,
+    blindsight: 0,
+    tremorsense: 0,
+    truesight: 0,
+  }
+}
+
+export function defaultSpeeds(): SpeedsData {
+  return { walk: 30, fly: 0, swim: 0, climb: 0, burrow: 0, hover: false }
+}
+
+export function defaultAcBreakdown(): AcBreakdown {
+  return { base: 10, armor_bonus: 0, shield_bonus: 0, dex_mod: 0, magic_bonus: 0, misc_bonus: 0 }
+}
+
+export function defaultDamageModifiers(): DamageModifiers {
+  return { resistances: [], immunities: [], vulnerabilities: [], condition_immunities: [] }
+}
+
+export function defaultSavingThrowModifiers(): SavingThrowModifiers {
+  return { advantages: [], disadvantages: [], notes: '' }
+}
+
+export function defaultTreasure(): TreasureData {
+  return { gems: [], art: [], other_holdings: '', total_value_gp: 0 }
 }
