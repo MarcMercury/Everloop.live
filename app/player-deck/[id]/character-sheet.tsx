@@ -42,7 +42,7 @@ type InfoTarget =
   | { kind: 'skill'; skill: SkillName; modifier: number; advantage?: 'advantage' | 'disadvantage' }
   | { kind: 'save'; ability: AbilityScore; modifier: number }
   | { kind: 'ability'; ability: AbilityScore; modifier: number; saveModifier: number; saveProficient: boolean }
-  | { kind: 'condition'; condition: DndCondition }
+  | { kind: 'condition'; condition: DndCondition; active: boolean }
   | { kind: 'standardAction'; action: keyof typeof STANDARD_ACTIONS }
   | { kind: 'weapon'; weapon: WeaponEntry; advantage?: 'advantage' | 'disadvantage' }
   | { kind: 'item'; item: InventoryItem }
@@ -955,33 +955,40 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
               <h3 className="text-sm font-serif text-parchment mb-3 flex items-center gap-2">
                 <Skull className="w-4 h-4 text-red-400" /> Conditions
-                <span className="text-[10px] text-parchment-muted/60 font-normal ml-auto">tap to apply · ⓘ for rules</span>
+                <span className="text-[10px] text-parchment-muted/60 font-normal ml-auto">tap to toggle · ⓘ for rules</span>
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {DND_CONDITIONS.map(condition => {
                   const active = char.status?.conditions?.includes(condition)
                   return (
-                    <div key={condition} className="flex items-center">
-                      <Button
-                        variant={active ? "default" : "outline"}
-                        size="sm"
-                        className={`text-xs capitalize touch-target rounded-r-none border-r-0 ${
-                          active
-                            ? 'bg-red-500/20 text-red-300 border-red-500/40'
-                            : 'text-parchment-muted border-gold-500/10 hover:border-red-500/20'
-                        }`}
-                        onClick={() => toggleCondition(condition)}
-                      >
-                        {condition}
-                      </Button>
+                    <div
+                      key={condition}
+                      className={`inline-flex items-stretch rounded-md overflow-hidden border transition-all ${
+                        active
+                          ? 'border-red-500/60 bg-red-500/15 shadow-[0_0_0_1px_rgba(239,68,68,0.25)]'
+                          : 'border-gold-500/15 bg-charcoal-900/40 hover:border-red-500/30 hover:bg-charcoal-900/70'
+                      }`}
+                    >
                       <button
-                        onClick={() => setInfo({ kind: 'condition', condition })}
-                        className={`px-2 py-1.5 rounded-r-md border touch-target ${
+                        type="button"
+                        onClick={() => toggleCondition(condition)}
+                        className={`px-3 py-1.5 text-xs capitalize touch-target font-medium transition-colors flex items-center gap-1.5 ${
+                          active ? 'text-red-200' : 'text-parchment-muted hover:text-parchment'
+                        }`}
+                      >
+                        {active && <span className="text-red-300">●</span>}
+                        {condition}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInfo({ kind: 'condition', condition, active: !!active })}
+                        className={`px-2 flex items-center border-l touch-target ${
                           active
-                            ? 'bg-red-500/10 text-red-300 border-red-500/40'
-                            : 'text-parchment-muted/60 border-gold-500/10 hover:text-parchment hover:border-red-500/20'
+                            ? 'border-red-500/40 text-red-300 hover:bg-red-500/10'
+                            : 'border-gold-500/15 text-parchment-muted/60 hover:text-parchment hover:bg-charcoal-900/80'
                         }`}
                         title={`What does ${condition} do?`}
+                        aria-label={`Info about ${condition}`}
                       >
                         <Info className="w-3 h-3" />
                       </button>
@@ -1780,6 +1787,10 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           quickDamageRoll(label, notation)
           setInfo(null)
         }}
+        onToggleCondition={(c) => {
+          toggleCondition(c)
+          setInfo(null)
+        }}
       />
     </div>
   )
@@ -1941,11 +1952,13 @@ function CharacterInfoPopover({
   onClose,
   onRoll,
   onDamageRoll,
+  onToggleCondition,
 }: {
   info: InfoTarget | null
   onClose: () => void
   onRoll: (label: string, modifier: number, advantage?: 'advantage' | 'disadvantage') => void
   onDamageRoll: (label: string, notation: string) => void
+  onToggleCondition: (condition: DndCondition) => void
 }) {
   if (!info) {
     return (
@@ -2067,8 +2080,20 @@ function CharacterInfoPopover({
         open
         onOpenChange={onClose}
         title={c[0].toUpperCase() + c.slice(1)}
-        subtitle="Condition"
+        subtitle={info.active ? 'Currently applied' : 'Condition'}
         accent="#ef4444"
+        footer={
+          <Button
+            className={
+              info.active
+                ? 'w-full bg-charcoal-900 hover:bg-charcoal-800 text-parchment border border-gold-500/20 gap-2'
+                : 'w-full bg-red-500/20 hover:bg-red-500/30 text-red-200 border border-red-500/40 gap-2'
+            }
+            onClick={() => onToggleCondition(c)}
+          >
+            {info.active ? 'Remove Condition' : 'Apply Condition'}
+          </Button>
+        }
       >
         {summary && (
           <InfoSection label="In one line">
