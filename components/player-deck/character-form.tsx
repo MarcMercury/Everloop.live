@@ -15,12 +15,18 @@ import Link from 'next/link'
 import type { 
   PlayerCharacter, PlayerCharacterInsert,
   SpellEntry, CantripEntry, FeatureEntry, WeaponEntry, InventoryItem,
-  CompanionEntry, SessionNote, MulticlassEntry,
-  SpellcastingData, ProficiencyData, InventoryData, CharacterStatus
+  CompanionEntry,
+  SpellcastingData, ProficiencyData, InventoryData,
+  FeatEntry, SensesData, SpeedsData, AcBreakdown,
+  DamageModifiers, SavingThrowModifiers, TreasureData,
+  MagicItemEntry, Ammunition
 } from '@/types/player-character'
 import { 
-  DND_CLASSES, DND_RACES, DND_ALIGNMENTS, DND_BACKGROUNDS,
-  defaultSpellcasting, defaultProficiencies, defaultInventory, defaultStatus
+  DND_CLASSES, DND_RACES, DND_ALIGNMENTS, DND_BACKGROUNDS, DND_SIZES, DND_LIFESTYLES,
+  DND_DAMAGE_TYPES, WEAPON_MASTERY_PROPERTIES,
+  defaultSpellcasting, defaultProficiencies, defaultInventory,
+  defaultSenses, defaultSpeeds, defaultAcBreakdown,
+  defaultDamageModifiers, defaultSavingThrowModifiers, defaultTreasure
 } from '@/types/player-character'
 import { createPlayerCharacter, updatePlayerCharacter, deletePlayerCharacter } from '@/lib/actions/player-characters'
 import dynamic from 'next/dynamic'
@@ -41,6 +47,10 @@ export function CharacterForm({ character }: Props) {
   
   // Core fields
   const [name, setName] = useState(character?.name || '')
+  const [playerName, setPlayerName] = useState(character?.player_name || '')
+  const [size, setSize] = useState(character?.size || 'Medium')
+  const [gender, setGender] = useState(character?.gender || '')
+  const [pronouns, setPronouns] = useState(character?.pronouns || '')
   const [race, setRace] = useState(character?.race || 'Human')
   const [subrace, setSubrace] = useState(character?.subrace || '')
   const [charClass, setCharClass] = useState(character?.class || 'Fighter')
@@ -84,6 +94,12 @@ export function CharacterForm({ character }: Props) {
   const [hair, setHair] = useState(character?.hair || '')
   const [skin, setSkin] = useState(character?.skin || '')
   const [faith, setFaith] = useState(character?.faith || '')
+  const [allies, setAllies] = useState(character?.allies || '')
+  const [enemies, setEnemies] = useState(character?.enemies || '')
+  const [organizations, setOrganizations] = useState(character?.organizations || '')
+  const [organizationSymbolUrl, setOrganizationSymbolUrl] = useState(character?.organization_symbol_url || '')
+  const [lifestyle, setLifestyle] = useState(character?.lifestyle || '')
+  const [notes, setNotes] = useState(character?.notes || '')
   const [modelUrl3d, setModelUrl3d] = useState<string | null>(null)
   
   // Spellcasting
@@ -106,12 +122,35 @@ export function CharacterForm({ character }: Props) {
   
   // Companions
   const [companions, setCompanions] = useState<CompanionEntry[]>(character?.companions || [])
+
+  // Feats (separate from features)
+  const [feats, setFeats] = useState<FeatEntry[]>(character?.feats || [])
+
+  // Senses / Speeds / AC breakdown
+  const [senses, setSenses] = useState<SensesData>(character?.senses || defaultSenses())
+  const [speeds, setSpeeds] = useState<SpeedsData>(character?.speeds || defaultSpeeds())
+  const [acBreakdown, setAcBreakdown] = useState<AcBreakdown>(character?.ac_breakdown || defaultAcBreakdown())
+
+  // Damage modifiers + save modifiers
+  const [damageModifiers, setDamageModifiers] = useState<DamageModifiers>(
+    character?.damage_modifiers || defaultDamageModifiers()
+  )
+  const [saveModifiers, setSaveModifiers] = useState<SavingThrowModifiers>(
+    character?.saving_throw_modifiers || defaultSavingThrowModifiers()
+  )
+
+  // Treasure
+  const [treasure, setTreasure] = useState<TreasureData>(character?.treasure || defaultTreasure())
   
   async function handleSubmit() {
     if (!name.trim()) return
     
     const data: Omit<PlayerCharacterInsert, 'user_id'> = {
       name: name.trim(),
+      player_name: playerName || null,
+      size,
+      gender: gender || null,
+      pronouns: pronouns || null,
       race,
       subrace: subrace || null,
       class: charClass,
@@ -124,6 +163,12 @@ export function CharacterForm({ character }: Props) {
       campaign_name: campaignName || null,
       dm_name: dmName || null,
       is_active: isActive,
+      allies: allies || null,
+      enemies: enemies || null,
+      organizations: organizations || null,
+      organization_symbol_url: organizationSymbolUrl || null,
+      lifestyle: lifestyle || null,
+      notes: notes || null,
       strength: str,
       dexterity: dex,
       constitution: con,
@@ -154,8 +199,15 @@ export function CharacterForm({ character }: Props) {
       spellcasting: JSON.parse(JSON.stringify(spellcasting)),
       proficiencies: JSON.parse(JSON.stringify(proficiencies)),
       features: JSON.parse(JSON.stringify(features)),
+      feats: JSON.parse(JSON.stringify(feats)),
       inventory: JSON.parse(JSON.stringify(inventory)),
       companions: JSON.parse(JSON.stringify(companions)),
+      senses: JSON.parse(JSON.stringify(senses)),
+      speeds: JSON.parse(JSON.stringify(speeds)),
+      ac_breakdown: JSON.parse(JSON.stringify(acBreakdown)),
+      damage_modifiers: JSON.parse(JSON.stringify(damageModifiers)),
+      saving_throw_modifiers: JSON.parse(JSON.stringify(saveModifiers)),
+      treasure: JSON.parse(JSON.stringify(treasure)),
     }
     
     startTransition(async () => {
@@ -290,6 +342,59 @@ export function CharacterForm({ character }: Props) {
   function removeCompanion(index: number) {
     setCompanions(prev => prev.filter((_, i) => i !== index))
   }
+
+  // Feats
+  function addFeat() {
+    setFeats(prev => [...prev, { name: '', source: '', description: '', level_acquired: level }])
+  }
+  function updateFeat(index: number, updates: Partial<FeatEntry>) {
+    setFeats(prev => prev.map((f, i) => i === index ? { ...f, ...updates } : f))
+  }
+  function removeFeat(index: number) {
+    setFeats(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Magic items (rich)
+  const magicItems: MagicItemEntry[] = inventory.magic_items || []
+  function addMagicItem() {
+    setInventory(prev => ({
+      ...prev,
+      magic_items: [...(prev.magic_items || []), { name: '', description: '', requires_attunement: false, attuned: false }]
+    }))
+  }
+  function updateMagicItem(index: number, updates: Partial<MagicItemEntry>) {
+    setInventory(prev => ({
+      ...prev,
+      magic_items: (prev.magic_items || []).map((m, i) => i === index ? { ...m, ...updates } : m)
+    }))
+  }
+  function removeMagicItem(index: number) {
+    setInventory(prev => ({
+      ...prev,
+      magic_items: (prev.magic_items || []).filter((_, i) => i !== index)
+    }))
+  }
+
+  // Ammunition
+  const ammunition: Ammunition[] = inventory.ammunition || []
+  function addAmmo() {
+    setInventory(prev => ({ ...prev, ammunition: [...(prev.ammunition || []), { type: '', quantity: 0 }] }))
+  }
+  function updateAmmo(index: number, updates: Partial<Ammunition>) {
+    setInventory(prev => ({
+      ...prev,
+      ammunition: (prev.ammunition || []).map((a, i) => i === index ? { ...a, ...updates } : a)
+    }))
+  }
+  function removeAmmo(index: number) {
+    setInventory(prev => ({ ...prev, ammunition: (prev.ammunition || []).filter((_, i) => i !== index) }))
+  }
+
+  // CSV string <-> string[] helper for damage/condition lists
+  function csvJoin(arr: string[] = []): string { return arr.join(', ') }
+  function csvSplit(value: string): string[] {
+    return value.split(',').map(s => s.trim()).filter(Boolean)
+  }
   
   return (
     <div className="space-y-6 pb-12">
@@ -340,6 +445,28 @@ export function CharacterForm({ character }: Props) {
               <div className="md:col-span-2">
                 <Label className="text-parchment-muted">Character Name *</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Thorin Oakenshield" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+
+              <div>
+                <Label className="text-parchment-muted">Player Name</Label>
+                <Input value={playerName} onChange={e => setPlayerName(e.target.value)} placeholder="Your real name (optional)" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Label className="text-parchment-muted">Size</Label>
+                  <select value={size} onChange={e => setSize(e.target.value)} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm">
+                    {DND_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Gender</Label>
+                  <Input value={gender} onChange={e => setGender(e.target.value)} placeholder="e.g. Female" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
+                <div>
+                  <Label className="text-parchment-muted">Pronouns</Label>
+                  <Input value={pronouns} onChange={e => setPronouns(e.target.value)} placeholder="e.g. she/her" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+                </div>
               </div>
               
               <div>
@@ -516,6 +643,47 @@ export function CharacterForm({ character }: Props) {
               </div>
             </div>
           </Card>
+
+          {/* Allies, Enemies & Organizations */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Allies, Enemies &amp; Organizations</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-parchment-muted">Allies</Label>
+                <textarea value={allies} onChange={e => setAllies(e.target.value)} rows={3} placeholder="Friends, mentors, NPCs who aid you" className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Enemies</Label>
+                <textarea value={enemies} onChange={e => setEnemies(e.target.value)} rows={3} placeholder="Rivals, antagonists, sworn foes" className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-parchment-muted">Organizations / Factions</Label>
+                <textarea value={organizations} onChange={e => setOrganizations(e.target.value)} rows={3} placeholder="Guilds, cults, orders, ranks held" className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-parchment-muted">Organization Symbol URL</Label>
+                <Input value={organizationSymbolUrl} onChange={e => setOrganizationSymbolUrl(e.target.value)} placeholder="https://..." className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+            </div>
+          </Card>
+
+          {/* Lifestyle & Notes */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Lifestyle &amp; Notes</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-parchment-muted">Lifestyle</Label>
+                <select value={lifestyle} onChange={e => setLifestyle(e.target.value)} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm">
+                  <option value="">Choose lifestyle...</option>
+                  {DND_LIFESTYLES.map(l => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-parchment-muted">Character Notes / Journal</Label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={4} placeholder="Free-form notes, journal entries, secrets, plans" className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+              </div>
+            </div>
+          </Card>
         </TabsContent>
 
         {/* COMBAT TAB */}
@@ -618,6 +786,148 @@ export function CharacterForm({ character }: Props) {
               </div>
             </div>
           </Card>
+
+          {/* Senses */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Senses</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { key: 'passive_perception', label: 'Passive Perception' },
+                { key: 'passive_investigation', label: 'Passive Investigation' },
+                { key: 'passive_insight', label: 'Passive Insight' },
+                { key: 'darkvision', label: 'Darkvision (ft)' },
+                { key: 'blindsight', label: 'Blindsight (ft)' },
+                { key: 'tremorsense', label: 'Tremorsense (ft)' },
+                { key: 'truesight', label: 'Truesight (ft)' },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <Label className="text-parchment-muted text-xs">{label}</Label>
+                  <Input
+                    type="number" min={0}
+                    value={(senses as unknown as Record<string, number | undefined>)[key] ?? 0}
+                    onChange={e => setSenses(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                    className="bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono"
+                  />
+                </div>
+              ))}
+            </div>
+            <div>
+              <Label className="text-parchment-muted text-xs">Sense Notes</Label>
+              <Input value={senses.notes || ''} onChange={e => setSenses(prev => ({ ...prev, notes: e.target.value }))} placeholder="e.g. Devil's Sight, can see through magical darkness" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+            </div>
+          </Card>
+
+          {/* Speeds */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Movement Speeds</h3>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {([
+                ['walk', 'Walk'],
+                ['fly', 'Fly'],
+                ['swim', 'Swim'],
+                ['climb', 'Climb'],
+                ['burrow', 'Burrow'],
+              ] as const).map(([key, label]) => (
+                <div key={key}>
+                  <Label className="text-parchment-muted text-xs">{label} (ft)</Label>
+                  <Input
+                    type="number" min={0}
+                    value={speeds[key] ?? 0}
+                    onChange={e => setSpeeds(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                    className="bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <label className="flex items-center gap-2 text-sm text-parchment-muted">
+                <input type="checkbox" checked={!!speeds.hover} onChange={e => setSpeeds(prev => ({ ...prev, hover: e.target.checked }))} />
+                Can hover (with fly speed)
+              </label>
+              <div>
+                <Label className="text-parchment-muted text-xs">Encumbered Speed (ft)</Label>
+                <Input type="number" min={0} value={speeds.encumbered ?? 0} onChange={e => setSpeeds(prev => ({ ...prev, encumbered: parseInt(e.target.value) || 0 }))} className="bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted text-xs">Heavily Encumbered Speed (ft)</Label>
+                <Input type="number" min={0} value={speeds.heavily_encumbered ?? 0} onChange={e => setSpeeds(prev => ({ ...prev, heavily_encumbered: parseInt(e.target.value) || 0 }))} className="bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono" />
+              </div>
+            </div>
+          </Card>
+
+          {/* AC Breakdown */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">AC Breakdown <span className="text-xs text-parchment-muted">(reference only)</span></h3>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+              {([
+                ['base', 'Base'],
+                ['armor_bonus', 'Armor'],
+                ['shield_bonus', 'Shield'],
+                ['dex_mod', 'Dex Mod'],
+                ['magic_bonus', 'Magic'],
+                ['misc_bonus', 'Misc'],
+              ] as const).map(([key, label]) => (
+                <div key={key}>
+                  <Label className="text-parchment-muted text-xs">{label}</Label>
+                  <Input
+                    type="number"
+                    value={acBreakdown[key] ?? 0}
+                    onChange={e => setAcBreakdown(prev => ({ ...prev, [key]: parseInt(e.target.value) || 0 }))}
+                    className="bg-charcoal-950 border-gold-500/10 text-parchment text-center font-mono"
+                  />
+                </div>
+              ))}
+            </div>
+            <div>
+              <Label className="text-parchment-muted text-xs">AC Notes</Label>
+              <Input value={acBreakdown.notes || ''} onChange={e => setAcBreakdown(prev => ({ ...prev, notes: e.target.value }))} placeholder="e.g. +2 from Cloak of Protection" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+            </div>
+          </Card>
+
+          {/* Damage / Condition Modifiers */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Damage &amp; Condition Modifiers</h3>
+            <p className="text-xs text-parchment-muted">
+              Standard damage types: {DND_DAMAGE_TYPES.slice(0, 13).join(', ')}.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-parchment-muted">Resistances (comma-separated)</Label>
+                <Input value={csvJoin(damageModifiers.resistances)} onChange={e => setDamageModifiers(prev => ({ ...prev, resistances: csvSplit(e.target.value) }))} placeholder="Fire, Cold" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Immunities (comma-separated)</Label>
+                <Input value={csvJoin(damageModifiers.immunities)} onChange={e => setDamageModifiers(prev => ({ ...prev, immunities: csvSplit(e.target.value) }))} placeholder="Poison" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Vulnerabilities (comma-separated)</Label>
+                <Input value={csvJoin(damageModifiers.vulnerabilities)} onChange={e => setDamageModifiers(prev => ({ ...prev, vulnerabilities: csvSplit(e.target.value) }))} placeholder="Radiant" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Condition Immunities (comma-separated)</Label>
+                <Input value={csvJoin(damageModifiers.condition_immunities)} onChange={e => setDamageModifiers(prev => ({ ...prev, condition_immunities: csvSplit(e.target.value) }))} placeholder="Charmed, Frightened" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+            </div>
+          </Card>
+
+          {/* Saving Throw Modifiers */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Saving Throw Modifiers</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-parchment-muted">Saves with Advantage (comma-separated)</Label>
+                <Input value={csvJoin(saveModifiers.advantages)} onChange={e => setSaveModifiers(prev => ({ ...prev, advantages: csvSplit(e.target.value) }))} placeholder="WIS, CHA vs spells" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div>
+                <Label className="text-parchment-muted">Saves with Disadvantage (comma-separated)</Label>
+                <Input value={csvJoin(saveModifiers.disadvantages)} onChange={e => setSaveModifiers(prev => ({ ...prev, disadvantages: csvSplit(e.target.value) }))} placeholder="" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-parchment-muted">Save Notes</Label>
+                <Input value={saveModifiers.notes || ''} onChange={e => setSaveModifiers(prev => ({ ...prev, notes: e.target.value }))} placeholder="e.g. Magic Resistance: advantage on saves vs spells" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
+              </div>
+            </div>
+          </Card>
           
           {/* Companions */}
           <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
@@ -669,29 +979,57 @@ export function CharacterForm({ character }: Props) {
           {/* Spell Slots */}
           <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
             <h3 className="text-lg font-serif text-parchment">Spell Slots</h3>
+            <p className="text-xs text-parchment-muted">
+              Set max slots per level and recharge type. Warlock Pact Magic recovers on a short rest; standard casters on a long rest.
+            </p>
             <div className="grid grid-cols-3 md:grid-cols-9 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => (
-                <div key={level} className="text-center">
-                  <Label className="text-parchment-muted text-xs">Lvl {level}</Label>
-                  <Input 
-                    type="number" 
-                    min={0} 
-                    max={9}
-                    value={spellcasting.spell_slots[String(level)]?.max || 0} 
-                    onChange={e => {
-                      const max = parseInt(e.target.value) || 0
-                      setSpellcasting(prev => ({
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(level => {
+                const slot = spellcasting.spell_slots[String(level)]
+                return (
+                  <div key={level} className="text-center space-y-1">
+                    <Label className="text-parchment-muted text-xs">Lvl {level}</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={9}
+                      value={slot?.max || 0}
+                      onChange={e => {
+                        const max = parseInt(e.target.value) || 0
+                        setSpellcasting(prev => ({
+                          ...prev,
+                          spell_slots: {
+                            ...prev.spell_slots,
+                            [String(level)]: {
+                              max,
+                              used: prev.spell_slots[String(level)]?.used || 0,
+                              recharge: prev.spell_slots[String(level)]?.recharge,
+                            }
+                          }
+                        }))
+                      }}
+                      className="bg-charcoal-950 border-gold-500/10 text-parchment text-center text-sm font-mono"
+                    />
+                    <select
+                      value={slot?.recharge || 'long_rest'}
+                      onChange={e => setSpellcasting(prev => ({
                         ...prev,
                         spell_slots: {
                           ...prev.spell_slots,
-                          [String(level)]: { max, used: prev.spell_slots[String(level)]?.used || 0 }
+                          [String(level)]: {
+                            max: prev.spell_slots[String(level)]?.max || 0,
+                            used: prev.spell_slots[String(level)]?.used || 0,
+                            recharge: e.target.value as 'short_rest' | 'long_rest',
+                          }
                         }
-                      }))
-                    }}
-                    className="bg-charcoal-950 border-gold-500/10 text-parchment text-center text-sm font-mono"
-                  />
-                </div>
-              ))}
+                      }))}
+                      className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded px-1 py-0.5 text-[10px]"
+                    >
+                      <option value="long_rest">LR</option>
+                      <option value="short_rest">SR</option>
+                    </select>
+                  </div>
+                )
+              })}
             </div>
           </Card>
           
@@ -717,6 +1055,11 @@ export function CharacterForm({ character }: Props) {
                   <Input value={cantrip.range} onChange={e => updateCantrip(i, { range: e.target.value })} placeholder="Range" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                   <Input value={cantrip.damage || ''} onChange={e => updateCantrip(i, { damage: e.target.value })} placeholder="Damage" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                   <Input value={cantrip.duration} onChange={e => updateCantrip(i, { duration: e.target.value })} placeholder="Duration" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input value={cantrip.components} onChange={e => updateCantrip(i, { components: e.target.value })} placeholder="V, S, M" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={cantrip.save || ''} onChange={e => updateCantrip(i, { save: e.target.value })} placeholder="Save (Dex/Wis/—)" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={cantrip.source || ''} onChange={e => updateCantrip(i, { source: e.target.value })} placeholder="Source (Warlock, Tiefling…)" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                 </div>
                 <textarea value={cantrip.description} onChange={e => updateCantrip(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs" />
               </div>
@@ -746,6 +1089,11 @@ export function CharacterForm({ character }: Props) {
                   <Input value={spell.range} onChange={e => updateSpell(i, { range: e.target.value })} placeholder="Range" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                   <Input value={spell.damage || ''} onChange={e => updateSpell(i, { damage: e.target.value })} placeholder="Damage" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                   <Input value={spell.duration} onChange={e => updateSpell(i, { duration: e.target.value })} placeholder="Duration" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input value={spell.components} onChange={e => updateSpell(i, { components: e.target.value })} placeholder="V, S, M" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={spell.save || ''} onChange={e => updateSpell(i, { save: e.target.value })} placeholder="Save (Dex/Wis/—)" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={spell.source || ''} onChange={e => updateSpell(i, { source: e.target.value })} placeholder="Source (Pact / Tiefling…)" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
                 </div>
                 <textarea value={spell.description} onChange={e => updateSpell(i, { description: e.target.value })} placeholder="Description" rows={2} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs" />
                 <div className="flex gap-3 text-xs">
@@ -807,6 +1155,35 @@ export function CharacterForm({ character }: Props) {
               <p className="text-sm text-parchment-muted text-center py-4">No features added yet.</p>
             )}
           </Card>
+
+          {/* Feats */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-serif text-parchment">Feats</h3>
+              <Button variant="outline" size="sm" onClick={addFeat} className="gap-1 text-xs border-gold-500/10">
+                <Plus className="w-3 h-3" /> Add Feat
+              </Button>
+            </div>
+            <p className="text-xs text-parchment-muted">
+              Distinct from class/race/background features. Includes 2024 Origin Feats, Fighting Style upgrades, ASI feats, Epic Boons.
+            </p>
+            {feats.map((feat, i) => (
+              <div key={i} className="p-3 bg-charcoal-900/30 rounded-lg space-y-2">
+                <div className="flex gap-2">
+                  <Input value={feat.name} onChange={e => updateFeat(i, { name: e.target.value })} placeholder="Feat name (e.g. Sharpshooter)" className="bg-charcoal-950 border-gold-500/10 text-parchment flex-1" />
+                  <Input value={feat.source || ''} onChange={e => updateFeat(i, { source: e.target.value })} placeholder="Source (PHB, XGtE...)" className="bg-charcoal-950 border-gold-500/10 text-parchment w-32" />
+                  <Input type="number" min={1} max={20} value={feat.level_acquired || 1} onChange={e => updateFeat(i, { level_acquired: parseInt(e.target.value) || 1 })} placeholder="Lvl" className="bg-charcoal-950 border-gold-500/10 text-parchment w-16 text-center" />
+                  <Button variant="ghost" size="sm" onClick={() => removeFeat(i)} className="text-red-400">
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                <textarea value={feat.description} onChange={e => updateFeat(i, { description: e.target.value })} placeholder="Description / mechanical effect" rows={2} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs" />
+              </div>
+            ))}
+            {feats.length === 0 && (
+              <p className="text-sm text-parchment-muted text-center py-4">No feats taken yet.</p>
+            )}
+          </Card>
         </TabsContent>
 
         {/* GEAR TAB */}
@@ -827,10 +1204,18 @@ export function CharacterForm({ character }: Props) {
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   <Input type="number" value={weapon.attack_bonus} onChange={e => updateWeapon(i, { attack_bonus: parseInt(e.target.value) || 0 })} placeholder="Atk bonus" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
-                  <Input value={weapon.damage} onChange={e => updateWeapon(i, { damage: e.target.value })} placeholder="1d8+4 slashing" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
-                  <Input value={weapon.properties.join(', ')} onChange={e => updateWeapon(i, { properties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="Properties" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={weapon.damage} onChange={e => updateWeapon(i, { damage: e.target.value })} placeholder="1d8+4" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={weapon.damage_type || ''} onChange={e => updateWeapon(i, { damage_type: e.target.value })} placeholder="Slashing" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <Input value={weapon.range || ''} onChange={e => updateWeapon(i, { range: e.target.value })} placeholder="Melee / 20/60 ft" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <Input value={weapon.properties.join(', ')} onChange={e => updateWeapon(i, { properties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="Properties (versatile, finesse...)" className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  <select value={weapon.weapon_mastery || ''} onChange={e => updateWeapon(i, { weapon_mastery: e.target.value })} className="bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs">
+                    <option value="">Weapon Mastery (2024)...</option>
+                    {WEAPON_MASTERY_PROPERTIES.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
                 </div>
                 <label className="flex items-center gap-1 text-xs text-parchment-muted">
                   <input type="checkbox" checked={weapon.equipped} onChange={e => updateWeapon(i, { equipped: e.target.checked })} />
@@ -915,7 +1300,7 @@ export function CharacterForm({ character }: Props) {
             ))}
           </Card>
           
-          {/* Attunement */}
+          {/* Attunement (legacy quick list) */}
           <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
             <h3 className="text-lg font-serif text-parchment">Attuned Items (max 3)</h3>
             <Input 
@@ -927,6 +1312,126 @@ export function CharacterForm({ character }: Props) {
               placeholder="Item 1, Item 2, Item 3"
               className="bg-charcoal-950 border-gold-500/10 text-parchment"
             />
+          </Card>
+
+          {/* Magic Items (rich) */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-serif text-parchment">Magic Items</h3>
+              <Button variant="outline" size="sm" onClick={addMagicItem} className="gap-1 text-xs border-gold-500/10">
+                <Plus className="w-3 h-3" /> Add Magic Item
+              </Button>
+            </div>
+            {magicItems.map((item, i) => (
+              <div key={i} className="p-3 bg-charcoal-900/30 rounded-lg space-y-2">
+                <div className="flex gap-2">
+                  <Input value={item.name} onChange={e => updateMagicItem(i, { name: e.target.value })} placeholder="Item name" className="bg-charcoal-950 border-gold-500/10 text-parchment flex-1" />
+                  <Input value={item.rarity || ''} onChange={e => updateMagicItem(i, { rarity: e.target.value })} placeholder="Rarity" className="bg-charcoal-950 border-gold-500/10 text-parchment w-32" />
+                  <Button variant="ghost" size="sm" onClick={() => removeMagicItem(i)} className="text-red-400">
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+                <textarea value={item.description || ''} onChange={e => updateMagicItem(i, { description: e.target.value })} placeholder="Description / properties" rows={2} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div>
+                    <Label className="text-parchment-muted text-xs">Charges Max</Label>
+                    <Input type="number" min={0} value={item.charges_max ?? 0} onChange={e => updateMagicItem(i, { charges_max: parseInt(e.target.value) || 0 })} className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-parchment-muted text-xs">Charges Now</Label>
+                    <Input type="number" min={0} value={item.charges_remaining ?? 0} onChange={e => updateMagicItem(i, { charges_remaining: parseInt(e.target.value) || 0 })} className="bg-charcoal-950 border-gold-500/10 text-parchment text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-parchment-muted text-xs">Recharge</Label>
+                    <select value={item.recharge || 'none'} onChange={e => updateMagicItem(i, { recharge: e.target.value as MagicItemEntry['recharge'] })} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-xs">
+                      <option value="none">None</option>
+                      <option value="dawn">Dawn</option>
+                      <option value="dusk">Dusk</option>
+                      <option value="short_rest">Short Rest</option>
+                      <option value="long_rest">Long Rest</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex gap-3 text-xs text-parchment-muted">
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" checked={!!item.requires_attunement} onChange={e => updateMagicItem(i, { requires_attunement: e.target.checked })} />
+                    Requires Attunement
+                  </label>
+                  <label className="flex items-center gap-1">
+                    <input type="checkbox" checked={!!item.attuned} onChange={e => updateMagicItem(i, { attuned: e.target.checked })} />
+                    Attuned
+                  </label>
+                </div>
+              </div>
+            ))}
+            {magicItems.length === 0 && (
+              <p className="text-sm text-parchment-muted text-center py-4">No magic items yet.</p>
+            )}
+          </Card>
+
+          {/* Ammunition */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-serif text-parchment">Ammunition</h3>
+              <Button variant="outline" size="sm" onClick={addAmmo} className="gap-1 text-xs border-gold-500/10">
+                <Plus className="w-3 h-3" /> Add Ammo
+              </Button>
+            </div>
+            {ammunition.map((ammo, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={ammo.type} onChange={e => updateAmmo(i, { type: e.target.value })} placeholder="Type (Arrows, Bolts, Bullets...)" className="bg-charcoal-950 border-gold-500/10 text-parchment flex-1" />
+                <Input type="number" min={0} value={ammo.quantity} onChange={e => updateAmmo(i, { quantity: parseInt(e.target.value) || 0 })} className="bg-charcoal-950 border-gold-500/10 text-parchment w-24 text-center" />
+                <Button variant="ghost" size="sm" onClick={() => removeAmmo(i)} className="text-red-400">
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+            {ammunition.length === 0 && (
+              <p className="text-sm text-parchment-muted text-center py-2">No ammunition tracked.</p>
+            )}
+          </Card>
+
+          {/* Treasure / Other Holdings */}
+          <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
+            <h3 className="text-lg font-serif text-parchment">Treasure &amp; Other Holdings</h3>
+            <div>
+              <Label className="text-parchment-muted">Gems &amp; Valuables (one per line: <span className="font-mono">Name | value gp | qty</span>)</Label>
+              <textarea
+                value={(treasure.gems || []).map(g => [g.name, g.value_gp ?? '', g.quantity ?? ''].join(' | ')).join('\n')}
+                onChange={e => setTreasure(prev => ({
+                  ...prev,
+                  gems: e.target.value.split('\n').map(line => {
+                    const [n, v, q] = line.split('|').map(s => s.trim())
+                    if (!n) return null
+                    return { name: n, value_gp: v ? parseFloat(v) || 0 : undefined, quantity: q ? parseInt(q) || 1 : undefined }
+                  }).filter(Boolean) as { name: string; value_gp?: number; quantity?: number }[]
+                }))}
+                rows={3}
+                placeholder="Sapphire | 1000 | 1&#10;Pearl | 100 | 4"
+                className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm font-mono focus-glow"
+              />
+            </div>
+            <div>
+              <Label className="text-parchment-muted">Art Objects (one per line: <span className="font-mono">Name | value gp | description</span>)</Label>
+              <textarea
+                value={(treasure.art || []).map(a => [a.name, a.value_gp ?? '', a.description ?? ''].join(' | ')).join('\n')}
+                onChange={e => setTreasure(prev => ({
+                  ...prev,
+                  art: e.target.value.split('\n').map(line => {
+                    const [n, v, d] = line.split('|').map(s => s.trim())
+                    if (!n) return null
+                    return { name: n, value_gp: v ? parseFloat(v) || 0 : undefined, description: d || undefined }
+                  }).filter(Boolean) as { name: string; value_gp?: number; description?: string }[]
+                }))}
+                rows={3}
+                placeholder="Gold-trimmed mask | 750 | Carved from lacquered wood"
+                className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm font-mono focus-glow"
+              />
+            </div>
+            <div>
+              <Label className="text-parchment-muted">Other Holdings (property, businesses, livestock)</Label>
+              <textarea value={treasure.other_holdings || ''} onChange={e => setTreasure(prev => ({ ...prev, other_holdings: e.target.value }))} rows={3} className="w-full bg-charcoal-950 border border-gold-500/10 text-parchment rounded-lg px-3 py-2 text-sm focus-glow" />
+            </div>
           </Card>
         </TabsContent>
       </Tabs>

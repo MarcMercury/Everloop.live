@@ -59,6 +59,8 @@
 | Heuristic | Added |
 |-----------|-------|
 | Entity form uses `extended_lore` JSONB for tagline, image_url - not separate columns | 2024-12-30 |
+| Player Character schema uses many JSONB columns (`spellcasting`, `inventory`, `senses`, `damage_modifiers`, `feats`, `treasure`, `spell_sources`...) — extend by adding optional fields to interfaces & default constructors so old rows hydrate without migration headaches | 2026-04-25 |
+| When extending the character form: keep 5 top-level tabs (Identity / Combat / Spells / Features / Gear) and add new cards inside existing tabs — adding tabs breaks mobile horizontal scroll | 2026-04-25 |
 | Story scope (tome/tale/scene) determines if chapters table is used | 2024-12-30 |
 | Always verify edit button links have corresponding handler code - edit params need to be read | 2024-12-30 |
 | Table name is `story_chapters` NOT `chapters` - always verify `.from()` table names against schema | 2025-01 |
