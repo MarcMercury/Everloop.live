@@ -5,11 +5,26 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { textToSpeech, textToSpeechStream, VoicePresetKey, EVERLOOP_VOICE_PRESETS } from '@/lib/elevenlabs'
+import { z } from 'zod'
+import { parseBody } from '@/lib/api/parse-body'
+import { textToSpeech, textToSpeechStream, EVERLOOP_VOICE_PRESETS, type VoicePresetKey } from '@/lib/elevenlabs'
 
 export const runtime = 'nodejs'
 
 const MAX_TEXT_LENGTH = 5000
+
+const PRESET_KEYS = Object.keys(EVERLOOP_VOICE_PRESETS) as [VoicePresetKey, ...VoicePresetKey[]]
+
+const TtsSchema = z
+  .object({
+    text: z.string().min(1).max(MAX_TEXT_LENGTH),
+    preset: z.enum(PRESET_KEYS).optional(),
+    voiceId: z.string().min(1).optional(),
+    stream: z.boolean().optional(),
+  })
+  .refine((d) => d.preset || d.voiceId, {
+    message: 'Either preset or voiceId is required',
+  })
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -19,38 +34,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json()
-  const { text, preset, voiceId, stream: useStream } = body as {
-    text?: string
-    preset?: VoicePresetKey
-    voiceId?: string
-    stream?: boolean
-  }
-
-  if (!text || text.length === 0) {
-    return NextResponse.json({ error: 'text is required' }, { status: 400 })
-  }
-
-  if (text.length > MAX_TEXT_LENGTH) {
-    return NextResponse.json(
-      { error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters` },
-      { status: 400 }
-    )
-  }
-
-  if (!preset && !voiceId) {
-    return NextResponse.json(
-      { error: 'Either preset or voiceId is required' },
-      { status: 400 }
-    )
-  }
-
-  if (preset && !(preset in EVERLOOP_VOICE_PRESETS)) {
-    return NextResponse.json(
-      { error: `Invalid preset. Options: ${Object.keys(EVERLOOP_VOICE_PRESETS).join(', ')}` },
-      { status: 400 }
-    )
-  }
+  const parsed = await parseBody(request, TtsSchema)
+  if (!parsed.ok) return parsed.response
+  const { text, preset, voiceId, stream: useStream } = parsed.data
 
   try {
     if (useStream) {

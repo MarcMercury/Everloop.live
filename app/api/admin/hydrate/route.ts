@@ -39,7 +39,6 @@ export async function POST() {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError || !user) {
-      console.log('Hydrate API - Auth error:', authError)
       return NextResponse.json(
         { error: 'Unauthorized - Please log in' },
         { status: 401 }
@@ -133,7 +132,6 @@ export async function POST() {
           errors.push(`Failed to update ${entity.name}: ${updateError.message}`)
         } else {
           hydratedCount++
-          console.log(`✓ Hydrated: ${entity.name}`)
         }
         
         // Small delay to avoid rate limiting
