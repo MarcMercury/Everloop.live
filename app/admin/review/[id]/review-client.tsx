@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { approveStory, rejectStory } from '@/lib/actions/admin'
+import { approveStory, rejectStory, requestRevisionStory } from '@/lib/actions/admin'
+import { getStoryStatusLabel } from '@/lib/utils'
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -16,7 +17,8 @@ import {
   FileText,
   Shield,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react'
 
 interface StoryReview {
@@ -96,9 +98,11 @@ function getScoreBg(score: number | null): string {
 export function ReviewClient({ story }: ReviewClientProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [action, setAction] = useState<'approve' | 'reject' | null>(null)
+  const [action, setAction] = useState<'approve' | 'reject' | 'revision' | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState(false)
+  const [revisionFeedback, setRevisionFeedback] = useState('')
+  const [showRevisionModal, setShowRevisionModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   const storyText = extractTextFromContent(story.content)
@@ -142,6 +146,27 @@ export function ReviewClient({ story }: ReviewClientProps) {
     })
   }
 
+  const handleRequestRevision = () => {
+    if (!revisionFeedback.trim()) {
+      setError('Please describe what needs to change')
+      return
+    }
+
+    setAction('revision')
+    setError(null)
+
+    startTransition(async () => {
+      const result = await requestRevisionStory(story.id, revisionFeedback)
+
+      if (!result.success) {
+        setError(result.error || 'Failed to request revisions')
+        setAction(null)
+      } else {
+        router.push('/admin')
+      }
+    })
+  }
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-8">
       {/* Back Link */}
@@ -174,7 +199,7 @@ export function ReviewClient({ story }: ReviewClientProps) {
                 <span>{story.word_count || 0} words</span>
               </div>
               <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
-                {story.canon_status}
+                {getStoryStatusLabel(story.canon_status)}
               </Badge>
             </div>
           </div>
@@ -288,6 +313,48 @@ export function ReviewClient({ story }: ReviewClientProps) {
                 )}
                 Approve for Canon
               </Button>
+
+              {!showRevisionModal ? (
+                <Button
+                  onClick={() => setShowRevisionModal(true)}
+                  variant="outline"
+                  className="w-full border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Request Revisions
+                </Button>
+              ) : (
+                <div className="space-y-3 p-3 rounded bg-charcoal-700/50">
+                  <textarea
+                    value={revisionFeedback}
+                    onChange={(e) => setRevisionFeedback(e.target.value)}
+                    placeholder="What does the author need to change?"
+                    className="w-full h-24 px-3 py-2 rounded bg-charcoal border border-charcoal-700 
+                               text-foreground placeholder:text-muted-foreground/50
+                               focus:border-amber-500/50 focus:outline-none resize-none text-sm"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleRequestRevision}
+                      disabled={isPending || !revisionFeedback.trim()}
+                      size="sm"
+                      className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    >
+                      {isPending && action === 'revision' ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
+                      Send Back to Author
+                    </Button>
+                    <Button
+                      onClick={() => setShowRevisionModal(false)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
               
               {!showRejectModal ? (
                 <Button

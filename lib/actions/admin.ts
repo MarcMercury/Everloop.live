@@ -29,27 +29,39 @@ async function gateAdmin(): Promise<AdminGate> {
 }
 
 /**
- * Approve a story - sets status to 'approved' (or 'canonical')
+ * Approve a story for canon. Writes the terminal `canonical` state
+ * directly (skipping the intermediate `approved` value) and flips
+ * `is_published` so the story is visible to the public Library and
+ * passes the RLS "Published stories are viewable by everyone" policy.
+ *
+ * Note: The `approved` enum value is intentionally not used as a
+ * destination. Earlier versions wrote `approved` here, which left
+ * stories invisible to the public Library (which filters on
+ * `canon_status = 'canonical' AND is_published = true`).
  */
 export async function approveStory(storyId: string, reviewNotes?: string) {
   const gate = await gateAdmin()
   if (!gate.ok) return { success: false, error: gate.error }
   const { supabase, userId } = gate
 
-  // Update story status
+  const now = new Date().toISOString()
+
+  // Promote directly to canonical and publish.
   const { error } = await supabase
     .from('stories')
-    .update({ 
-      canon_status: 'approved',
-      updated_at: new Date().toISOString(),
+    .update({
+      canon_status: 'canonical',
+      is_published: true,
+      published_at: now,
+      updated_at: now,
     } as never)
     .eq('id', storyId)
-  
+
   if (error) {
     console.error('Approve error:', error)
     return { success: false, error: error.message }
   }
-  
+
   // Create review record
   await supabase.from('story_reviews').insert({
     story_id: storyId,
@@ -58,10 +70,51 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
     feedback: reviewNotes || 'Approved by admin',
     is_ai_review: false,
   } as never)
-  
+
   revalidatePath('/admin')
   revalidatePath('/stories')
   revalidatePath('/explore')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+/**
+ * Send a story back to the author for revisions. Sets status to
+ * `revision_requested` and records the reviewer's feedback. The
+ * author can then edit and resubmit via submitStoryById().
+ */
+export async function requestRevisionStory(storyId: string, feedback: string) {
+  const gate = await gateAdmin()
+  if (!gate.ok) return { success: false, error: gate.error }
+  const { supabase, userId } = gate
+
+  if (!feedback || !feedback.trim()) {
+    return { success: false, error: 'Revision feedback is required.' }
+  }
+
+  const { error } = await supabase
+    .from('stories')
+    .update({
+      canon_status: 'revision_requested',
+      updated_at: new Date().toISOString(),
+    } as never)
+    .eq('id', storyId)
+
+  if (error) {
+    console.error('Request revision error:', error)
+    return { success: false, error: error.message }
+  }
+
+  await supabase.from('story_reviews').insert({
+    story_id: storyId,
+    reviewer_id: userId,
+    decision: 'revision_requested',
+    feedback: feedback.trim(),
+    is_ai_review: false,
+  } as never)
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
