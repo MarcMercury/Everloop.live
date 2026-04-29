@@ -174,38 +174,49 @@ export async function getUserEntityUsageStats(userId: string): Promise<{
 
   if (!entities || entities.length === 0) return []
 
-  const stats = []
+  const entityIds = entities.map(e => e.id)
 
-  for (const entity of entities) {
-    // Count stories referencing this entity
-    const { count: storyCount } = await supabase
+  // Fetch all referencing rows in parallel with just 3 queries (instead of N*3 sequential)
+  const [storiesRes, campaignsRes, questsRes] = await Promise.all([
+    supabase
       .from('stories')
-      .select('id', { count: 'exact', head: true })
-      .contains('referenced_entities', [entity.id])
-      .in('canon_status', ['approved', 'canonical'])
-
-    // Count campaigns referencing this entity
-    const { count: campaignCount } = await supabase
+      .select('referenced_entities')
+      .overlaps('referenced_entities', entityIds)
+      .in('canon_status', ['approved', 'canonical']),
+    supabase
       .from('campaigns')
-      .select('id', { count: 'exact', head: true })
-      .contains('referenced_entities', [entity.id])
-
-    // Count quests referencing this entity
-    const { count: questCount } = await supabase
+      .select('referenced_entities')
+      .overlaps('referenced_entities', entityIds),
+    supabase
       .from('quests')
-      .select('id', { count: 'exact', head: true })
-      .contains('referenced_entities', [entity.id])
+      .select('referenced_entities')
+      .overlaps('referenced_entities', entityIds),
+  ])
 
-    stats.push({
-      entityId: entity.id,
-      entityName: entity.name,
-      storyCount: storyCount ?? 0,
-      campaignCount: campaignCount ?? 0,
-      questCount: questCount ?? 0,
-    })
+  // Aggregate counts per entity in memory
+  const tally = (rows: { referenced_entities: string[] | null }[] | null) => {
+    const map = new Map<string, number>()
+    for (const row of rows ?? []) {
+      for (const id of row.referenced_entities ?? []) {
+        if (entityIds.includes(id)) {
+          map.set(id, (map.get(id) ?? 0) + 1)
+        }
+      }
+    }
+    return map
   }
 
-  return stats
+  const storyMap = tally(storiesRes.data as { referenced_entities: string[] | null }[] | null)
+  const campaignMap = tally(campaignsRes.data as { referenced_entities: string[] | null }[] | null)
+  const questMap = tally(questsRes.data as { referenced_entities: string[] | null }[] | null)
+
+  return entities.map(entity => ({
+    entityId: entity.id,
+    entityName: entity.name,
+    storyCount: storyMap.get(entity.id) ?? 0,
+    campaignCount: campaignMap.get(entity.id) ?? 0,
+    questCount: questMap.get(entity.id) ?? 0,
+  }))
 }
 
 /**

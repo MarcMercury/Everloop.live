@@ -235,11 +235,13 @@ export default async function RosterPage({
               const imageUrl = entity.extended_lore?.image_url
               const tagline = entity.extended_lore?.tagline
 
+              const detailHref = `/explore/${entity.slug}`
+
               return (
                 <Card key={entity.id} className="group overflow-hidden hover:border-gold/40 transition-colors">
                   <CardContent className="p-0">
-                    {/* Image */}
-                    <div className="aspect-square relative bg-teal-deep/50 overflow-hidden">
+                    {/* Image — click to view details */}
+                    <Link href={detailHref} className="block aspect-square relative bg-teal-deep/50 overflow-hidden cursor-pointer">
                       {imageUrl ? (
                         <img
                           src={imageUrl}
@@ -265,13 +267,16 @@ export default async function RosterPage({
                           Pending
                         </Badge>
                       )}
-                    </div>
+                    </Link>
 
                     {/* Content */}
                     <div className="p-4">
-                      <h3 className="font-serif text-lg text-parchment group-hover:text-gold transition-colors mb-1 line-clamp-1">
-                        {entity.name}
-                      </h3>
+                      {/* Name — click to view details */}
+                      <Link href={detailHref} className="block">
+                        <h3 className="font-serif text-lg text-parchment group-hover:text-gold transition-colors mb-1 line-clamp-1 cursor-pointer">
+                          {entity.name}
+                        </h3>
+                      </Link>
                       {tagline && (
                         <p className="text-parchment-muted text-sm italic line-clamp-2 mb-3">
                           &quot;{tagline}&quot;

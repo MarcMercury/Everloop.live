@@ -252,32 +252,71 @@ export async function createCanonEntity(data: {
 }
 
 /**
- * Canonize a user-created entity - promotes from draft to canonical
+ * Approve / canonize an entity — promotes any non-canonical entity
+ * (status: 'draft' or 'proposed') to 'canonical', stamps the approver,
+ * and immediately generates an embedding so the entity is searchable
+ * by AI memory and the lore chat. Uses the service-role admin client
+ * to bypass RLS so the write is reliable regardless of policy edge
+ * cases.
+ *
+ * Returns { success, hydrated, error? } so the UI can tell the user
+ * whether the embedding was also produced (it may fail independently
+ * if OPENAI_API_KEY is missing).
  */
-export async function canonizeEntity(entityId: string) {
+export async function canonizeEntity(entityId: string): Promise<{
+  success: boolean
+  hydrated?: boolean
+  error?: string
+}> {
   const gate = await gateAdmin()
   if (!gate.ok) return { success: false, error: gate.error }
-  const { supabase, userId } = gate
+  const { userId } = gate
 
-  // Update entity status to canonical
-  const { error } = await supabase
+  const adminClient = createAdminClient()
+  if (!adminClient) {
+    return { success: false, error: 'Admin client not available (service role key missing)' }
+  }
+
+  // Update entity status to canonical, return embedding column so we
+  // can decide whether to hydrate. .select() also verifies that a row
+  // was actually updated (otherwise the call would silently no-op).
+  const { data: updated, error } = await adminClient
     .from('canon_entities')
-    .update({ 
+    .update({
       status: 'canonical',
       approved_by: userId,
       updated_at: new Date().toISOString(),
     } as never)
     .eq('id', entityId)
-  
+    .select('id, embedding')
+    .maybeSingle() as {
+      data: { id: string; embedding: number[] | null } | null
+      error: Error | null
+    }
+
   if (error) {
     console.error('Canonize entity error:', error)
     return { success: false, error: error.message }
   }
-  
+  if (!updated) {
+    return { success: false, error: 'Entity not found' }
+  }
+
+  // Auto-hydrate if not already embedded.
+  let hydrated = updated.embedding !== null
+  if (!hydrated) {
+    const result = await hydrateEntity(entityId)
+    hydrated = !!result.success
+    if (!result.success) {
+      console.warn('[canonizeEntity] Auto-hydrate failed:', result.error)
+    }
+  }
+
   revalidatePath('/admin/entities')
+  revalidatePath('/admin')
   revalidatePath('/explore')
   revalidatePath('/roster')
-  return { success: true }
+  return { success: true, hydrated }
 }
 
 /**
@@ -341,21 +380,28 @@ export async function hydrateEntity(entityId: string) {
     })
     
     const embedding = embeddingResponse.data[0].embedding
-    
-    // Save embedding to database using admin client
-    const { error: updateError } = await adminClient
+
+    // Save embedding to database using admin client. .select() forces
+    // the call to return the affected rows so we can detect a silent
+    // no-op (which would otherwise look like a successful save).
+    const { data: updatedRows, error: updateError } = await adminClient
       .from('canon_entities')
-      .update({ 
+      .update({
         embedding: embedding,
         updated_at: new Date().toISOString(),
       } as never)
       .eq('id', entityId)
-    
+      .select('id') as { data: Array<{ id: string }> | null; error: Error | null }
+
     if (updateError) {
       console.error('[hydrateEntity] Update error:', updateError)
       return { success: false, error: 'Failed to save embedding' }
     }
-    
+    if (!updatedRows || updatedRows.length === 0) {
+      console.error('[hydrateEntity] Update affected 0 rows for entity', entityId)
+      return { success: false, error: 'Embedding write affected no rows' }
+    }
+
     revalidatePath('/admin/entities')
     return { success: true }
   } catch (err) {
