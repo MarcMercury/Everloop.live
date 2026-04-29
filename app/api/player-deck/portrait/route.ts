@@ -45,25 +45,28 @@ export async function POST(request: NextRequest) {
 
   try {
     const response = await client.images.generate({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt: imagePrompt,
       n: 1,
       size: '1024x1024',
-      quality: 'standard',
+      quality: 'medium',
     })
 
+    const b64 = response.data?.[0]?.b64_json
     const tempUrl = response.data?.[0]?.url
-    if (!tempUrl) {
+    let imageBuffer: ArrayBuffer
+    if (b64) {
+      imageBuffer = Buffer.from(b64, 'base64').buffer.slice(0) as ArrayBuffer
+    } else if (tempUrl) {
+      const imgRes = await fetch(tempUrl)
+      if (!imgRes.ok) {
+        return NextResponse.json({ error: 'Failed to download generated image' }, { status: 500 })
+      }
+      imageBuffer = await imgRes.arrayBuffer()
+    } else {
       return NextResponse.json({ error: 'No image generated' }, { status: 500 })
     }
 
-    // Download from DALL-E (temporary URL) and upload to Supabase Storage
-    const imgRes = await fetch(tempUrl)
-    if (!imgRes.ok) {
-      return NextResponse.json({ error: 'Failed to download generated image' }, { status: 500 })
-    }
-
-    const imageBuffer = await imgRes.arrayBuffer()
     const fileName = `${user.id}/portrait-${Date.now()}.png`
 
     const { error: uploadError } = await supabase.storage

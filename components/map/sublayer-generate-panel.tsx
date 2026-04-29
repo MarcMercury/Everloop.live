@@ -189,7 +189,7 @@ export default function SublayerGeneratePanel() {
         <label className="text-xs text-parchment-muted">Generation Mode</label>
         <div className="flex gap-2">
           {[
-            { id: 'texture' as const, label: 'DALL-E Texture' },
+            { id: 'texture' as const, label: 'AI Texture' },
             { id: 'text-to-3d' as const, label: 'Meshy Text→3D' },
             { id: 'image-to-3d' as const, label: 'Meshy Image→3D' },
           ].map((m) => (
