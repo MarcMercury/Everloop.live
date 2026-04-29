@@ -290,3 +290,49 @@ Every quest must result in one of:
 - Movement toward a shard
 - Change in shard state
 - Conflict over a shard
+
+---
+
+## Attunement System (April 2026)
+
+Two universal human attunements recur in every region of the Everloop. The
+function is identical; only the name changes.
+
+| Region | Vaultkeeper (perceive / preserve) | Dreamer (influence / alter) |
+|---|---|---|
+| Luminous Fold | Archivists | Iterants |
+| Deyune Steps | Pathkeepers | Windshapers |
+| Ashen Spine | Ember Scribes | Flamecallers |
+| Varnhalt Frontier | Ledger-Seers | Chancebinders |
+| Virelay Coastlands | Tidewatchers | Current-Speakers |
+| Bellroot Vale | Rootwardens | Weave-Tenders |
+| Drowned Reach | Depthwardens | Undertides |
+| Glass Expanse | Refractionists | Lightbreakers |
+
+The Luminous Fold treats this recurrence as proof of a universal constant.
+Other regions accept the pairing without claiming it is the only shape
+attunement could take.
+
+## Time, Space, and the Loosening
+
+- **Time Instability**: Outside the Luminous Fold, there is no shared standard
+  for time. Some regions disagree on the length of a Cycle, some ignore time
+  entirely, and others measure it through environment or movement.
+  Key insight: *"We do not all inhabit the same Loop, even when we share the
+  same hour."*
+- **The Loosening**: A spatial instability between regions where direction
+  fails, paths do not retrace, and distance behaves inconsistently. Treated
+  by later Vaultkeepers as an early manifestation of the same weakening that
+  produces the Hollows and the Fray.
+- **Knowledge Fragmentation Principle**: No region — not even the Luminous
+  Fold — holds total truth. Reality is distributed, not centralised. Any
+  account of the world that erases the others is a forgery.
+
+## Notable Characters
+
+- **Archael Viremont** — Senior Archivist of the Luminous Fold. Most travelled
+  Vaultkeeper of his generation. Begins certain that reality can be
+  catalogued; ends recognising the limits of classification. His field
+  journals are the canonical source for the Attunement System table, the
+  Loosening, and the Knowledge Fragmentation Principle. Writes letters to his
+  own future self — a Vaultkeeper's dread of cognitive drift made habit.

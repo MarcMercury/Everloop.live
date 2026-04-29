@@ -13,6 +13,13 @@ export type RegionId =
   | 'luminous'
   | 'drowned'
 
+export interface AttunementRoles {
+  /** Local name for the Vaultkeeper attunement (perceive / preserve / interpret) */
+  vaultkeeper: string
+  /** Local name for the Dreamer attunement (influence / alter outcomes) */
+  dreamer: string
+}
+
 export interface EverloopRegion {
   id: RegionId
   name: string
@@ -23,6 +30,12 @@ export interface EverloopRegion {
   model3dPath: string | null
   x: number
   z: number
+  /** Local names for the universal Vaultkeeper / Dreamer attunement pair */
+  attunementRoles?: AttunementRoles
+  /** Short cultural / philosophical concepts that distinguish the region */
+  culturalConcepts?: string[]
+  /** How the region relates to (or refuses) standardised time */
+  timeNote?: string
 }
 
 export const REGIONS: EverloopRegion[] = [
@@ -37,6 +50,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/bellroot-vale.glb',
     x: 28,
     z: -3,
+    attunementRoles: { vaultkeeper: 'Rootwardens', dreamer: 'Weave-Tenders' },
+    culturalConcepts: [
+      'No formal distinction between roles',
+      'Knowledge is instinctive, not formalised',
+      'Systems exist without language',
+    ],
+    timeNote: 'Time is felt through growth, decay, and the bell-tones of the canopy — rarely counted.',
   },
   {
     id: 'luminous',
@@ -49,6 +69,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/luminous-expanse.glb',
     x: 55,
     z: -40,
+    attunementRoles: { vaultkeeper: 'Archivists', dreamer: 'Iterants' },
+    culturalConcepts: [
+      'Order is constructed, not discovered',
+      'Reality can be measured, catalogued, and understood',
+      'Mistakes consistency for truth',
+    ],
+    timeNote: 'The Fold runs on Seconds, Minutes, Hours, Cycles (days), and Loops (years) — and assumes the rest of the world does too.',
   },
   {
     id: 'ashen',
@@ -61,6 +88,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/ashen-spine.glb',
     x: 0,
     z: -45,
+    attunementRoles: { vaultkeeper: 'Ember Scribes', dreamer: 'Flamecallers' },
+    culturalConcepts: [
+      'Knowledge must be immediately useful',
+      'Theory is rejected unless practical',
+      'Everything is rebuilt — nothing endures untouched',
+    ],
+    timeNote: 'Time is measured by eruption, cooling, and the next forced relocation.',
   },
   {
     id: 'drowned',
@@ -73,6 +107,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/drowned-reach.glb',
     x: 0,
     z: 45,
+    attunementRoles: { vaultkeeper: 'Depthwardens', dreamer: 'Undertides' },
+    culturalConcepts: [
+      'Naming prevents loss',
+      'Fragmentary knowledge is still used',
+      'Orientation and memory degrade — and must be rehearsed',
+    ],
+    timeNote: 'Tides and silt-lines are the only reliable clocks; surface measurements are treated as suspect.',
   },
   {
     id: 'glass',
@@ -85,6 +126,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/glass-expanse.glb',
     x: 75,
     z: -5,
+    attunementRoles: { vaultkeeper: 'Refractionists', dreamer: 'Lightbreakers' },
+    culturalConcepts: [
+      'Truth is unstable',
+      'Agreement is temporary',
+      'Perception overrides measurement',
+    ],
+    timeNote: 'Time is local to whichever reflection you are standing in — and the next one rarely agrees.',
   },
   {
     id: 'virelay',
@@ -97,6 +145,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/virelay-coastlands.glb',
     x: -70,
     z: 30,
+    attunementRoles: { vaultkeeper: 'Tidewatchers', dreamer: 'Current-Speakers' },
+    culturalConcepts: [
+      'Trust in repetition and cycles',
+      'Resistance to acknowledging deviation',
+      'Emotional stability tied to predictability',
+    ],
+    timeNote: 'Time is the tide returning. Anything that breaks the pattern is recorded but rarely spoken aloud.',
   },
   {
     id: 'varnhalt',
@@ -109,6 +164,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/varnhalt-frontier.glb',
     x: -80,
     z: -5,
+    attunementRoles: { vaultkeeper: 'Ledger-Seers', dreamer: 'Chancebinders' },
+    culturalConcepts: [
+      'Probability is commodified',
+      'Agreements are outcome-based',
+      'Reality is negotiable',
+    ],
+    timeNote: 'Time is whatever the contract says it is — and the contract may be renegotiated.',
   },
   {
     id: 'deyune',
@@ -121,6 +183,13 @@ export const REGIONS: EverloopRegion[] = [
     model3dPath: '/Maps/3D/deyune-steps.glb',
     x: -55,
     z: -35,
+    attunementRoles: { vaultkeeper: 'Pathkeepers', dreamer: 'Windshapers' },
+    culturalConcepts: [
+      'Movement over permanence',
+      'Memory over written record',
+      'Knowledge tied to motion',
+    ],
+    timeNote: 'Time is measured in distance walked, herds met, and winds that have already passed.',
   },
 ]
 
