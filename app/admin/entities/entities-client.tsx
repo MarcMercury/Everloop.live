@@ -188,7 +188,9 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
   }
   
   const handleCanonize = (entity: CanonEntity) => {
-    if (!confirm(`Promote "${entity.name}" to official canon? This will make it publicly visible.`)) {
+    const isProposed = entity.status === 'proposed'
+    const verb = isProposed ? 'Approve' : 'Promote'
+    if (!confirm(`${verb} "${entity.name}" and add it to canon? This will publish it and generate its AI embedding.`)) {
       return
     }
     
@@ -198,6 +200,9 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       
       if (!result.success) {
         alert(result.error || 'Failed to canonize')
+      } else if (result.hydrated === false) {
+        alert(`"${entity.name}" was added to canon, but embedding generation failed. Click the Hydrate button to retry.`)
+        router.refresh()
       } else {
         router.refresh()
       }
@@ -213,6 +218,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       if (!result.success) {
         alert(result.error || 'Failed to hydrate')
       } else {
+        alert(`Embedding generated for "${entity.name}".`)
         router.refresh()
       }
       setHydratingId(null)
@@ -425,20 +431,25 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                         </Button>
                       )}
                       
-                      {/* Canonize button - show for user drafts */}
-                      {activeTab === 'drafts' && entity.status === 'draft' && (
+                      {/* Approve / Canonize button - show for any non-canonical entity */}
+                      {(entity.status === 'proposed' || entity.status === 'draft') && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleCanonize(entity)}
                           disabled={isPending || canonizingId === entity.id}
-                          className="h-8 px-2 text-gold hover:text-gold/80 hover:bg-gold/10"
-                          title="Promote to Canon"
+                          className="h-8 px-2 text-gold hover:text-gold/80 hover:bg-gold/10 gap-1"
+                          title={entity.status === 'proposed' ? 'Approve & add to Canon' : 'Promote to Canon'}
                         >
                           {canonizingId === entity.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Crown className="w-4 h-4" />
+                            <>
+                              <Crown className="w-4 h-4" />
+                              <span className="text-xs">
+                                {entity.status === 'proposed' ? 'Approve' : 'Canonize'}
+                              </span>
+                            </>
                           )}
                         </Button>
                       )}
