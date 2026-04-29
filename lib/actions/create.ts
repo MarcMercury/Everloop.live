@@ -133,7 +133,10 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
       character: 'fantasy character portrait, detailed face and upper body, dramatic lighting, painterly style, high fantasy art',
       location: 'fantasy landscape illustration, atmospheric, mystical lighting, detailed environment, concept art style',
       creature: 'fantasy creature design, detailed anatomy, magical aura, concept art style, dramatic pose',
-      monster: 'dark fantasy horror creature, unstable form, reality distortion, eldritch design, fractured anatomy, concept art style, dramatic lighting, atmospheric dread',
+      // Keep monster style descriptors restrained — overly graphic horror language
+      // ("eldritch", "fractured anatomy", "dread") triggers DALL-E 3 content-policy
+      // refusals when combined with description text.
+      monster: 'dark fantasy creature concept art, otherworldly silhouette, painterly style, dramatic moody lighting, atmospheric',
     }
 
     // Description-led prompt: the image must depict what the Description says.
@@ -145,19 +148,68 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
     const noTextDirective =
       'IMPORTANT: pure illustration only. Absolutely no text, no letters, no words, no captions, no labels, no titles, no signatures, no watermarks, no logos, no UI, no borders, no frames, no banners. Image only.'
 
-    const imagePrompt =
+    const buildPrompt = (desc: string) =>
       input.type === 'monster'
-        ? `${noTextDirective} Depict the following creature exactly as described: ${safeDescription}. Style: ${stylePrompts.monster}. ${noTextDirective}`
-        : `${noTextDirective} ${input.name}: ${safeDescription}. Style: ${stylePrompts[input.type]}. ${noTextDirective}`
+        ? `${noTextDirective} Depict the following creature exactly as described: ${desc}. Style: ${stylePrompts.monster}. ${noTextDirective}`
+        : `${noTextDirective} ${input.name}: ${desc}. Style: ${stylePrompts[input.type]}. ${noTextDirective}`
 
-    // Generate image with DALL-E 3
-    const response = await getOpenAIClient().images.generate({
-      model: 'dall-e-3',
-      prompt: imagePrompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-    })
+    // Sanitize description for a safety-fallback retry: remove or soften words
+    // that frequently trigger DALL-E 3 content-policy refusals on creature art.
+    const sanitizeDescription = (desc: string): string => {
+      const replacements: Array<[RegExp, string]> = [
+        [/\bgore\b|\bgory\b|\bbloody\b|\bblood-soaked\b|\bbloodied\b/gi, 'shadowed'],
+        [/\bblood\b/gi, 'crimson light'],
+        [/\bflesh\b/gi, 'form'],
+        [/\bcorpse(s)?\b|\bdead body\b|\bcadaver(s)?\b/gi, 'still figure'],
+        [/\bdismember(ed|ing)?\b|\bmutilat(ed|ion)\b|\bdisembowel(ed|ing)?\b/gi, 'broken'],
+        [/\bsever(ed)?\b/gi, 'detached'],
+        [/\bskin(ned|less)?\b/gi, 'surface'],
+        [/\bbone(s)?\b/gi, 'pale ridges'],
+        [/\bskull(s)?\b/gi, 'mask'],
+        [/\bdecay(ed|ing)?\b|\brott(en|ing)\b|\bputrid\b/gi, 'weathered'],
+        [/\bhorror\b|\bhorrific\b|\bgrotesque\b|\bgruesome\b|\bdisturbing\b/gi, 'unsettling'],
+        [/\bnaked\b|\bnude\b/gi, 'cloaked'],
+      ]
+      let out = desc
+      for (const [re, sub] of replacements) out = out.replace(re, sub)
+      return out
+    }
+
+    const generate = async (prompt: string) =>
+      getOpenAIClient().images.generate({
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'standard',
+      })
+
+    let response
+    try {
+      response = await generate(buildPrompt(safeDescription))
+    } catch (err: unknown) {
+      const e = err as { status?: number; code?: string; message?: string }
+      const isPolicy =
+        e?.code === 'content_policy_violation' ||
+        /content[_ ]policy|safety system/i.test(e?.message || '')
+      if (!isPolicy) {
+        console.error('DALL-E error:', e?.message || err)
+        return { success: false, error: e?.message || 'Failed to generate image. Please try again.' }
+      }
+      // One automatic retry with sanitized description.
+      console.warn('DALL-E content policy refusal — retrying with sanitized description')
+      try {
+        response = await generate(buildPrompt(sanitizeDescription(safeDescription)))
+      } catch (err2: unknown) {
+        const e2 = err2 as { message?: string }
+        console.error('DALL-E retry error:', e2?.message || err2)
+        return {
+          success: false,
+          error:
+            'The image service rejected this description. Try softening graphic or violent wording in the description and regenerate.',
+        }
+      }
+    }
 
     const generatedImageUrl = response.data?.[0]?.url
     if (!generatedImageUrl) {
