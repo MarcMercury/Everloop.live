@@ -99,7 +99,7 @@ async function StoryGrid({ search }: { search?: string }) {
         <p className="text-parchment-muted">
           {search
             ? `No canon stories match "${search}".`
-            : 'The library is waiting for its next approved tale.'}
+            : 'The library is waiting for its next canonical tale.'}
         </p>
       </div>
     )

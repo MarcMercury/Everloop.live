@@ -9,27 +9,37 @@
 Stories progress through these states:
 
 ```
-draft → submitted → under_review → approved/rejected → canonical
+                       ┌──────────────────────┐
+                       ▼                      │
+draft → submitted → under_review ──┬─→ canonical (published)
+                                   ├─→ revision_requested ─┘
+                                   └─→ rejected
 ```
 
 - **draft**: Author is still editing
 - **submitted**: Ready for review
 - **under_review**: Being reviewed by AI + admin
-- **approved**: Accepted into canon, awaiting final publish
+- **revision_requested**: Lorekeeper asked for changes; the author can edit and
+  resubmit (which moves it back to `submitted`)
 - **rejected**: Did not pass canon review
-- **canonical**: Published and part of the official lore
+- **canonical**: Published. Visible in the public Library.
+- **approved** *(legacy)*: An older intermediate state. `approveStory()` no
+  longer writes this value — admin approval transitions directly to
+  `canonical` and sets `is_published = true`. The enum value is kept so any
+  pre-existing rows continue to work, but no code path produces it.
 
 ---
 
 ## Public Visibility Rules
 
-| Content Type | Visible to Public? | Criteria |
-|--------------|-------------------|----------|
-| Stories | Yes | `canon_status IN ('canon', 'canonical')` AND `is_published = true` |
-| Canon Entities | Yes | `status = 'canonical'` |
-| User Profiles | Yes | Always (public author pages) |
-| Drafts | No | Only visible to author |
-| Submitted Stories | No | Only visible to author + admins |
+| Content Type      | Visible to Public? | Criteria                                                 |
+|-------------------|--------------------|----------------------------------------------------------|
+| Stories           | Yes                | `canon_status = 'canonical'` AND `is_published = true`   |
+| Canon Entities    | Yes                | `status = 'canonical'`                                   |
+| User Profiles     | Yes                | Always (public author pages)                             |
+| Drafts            | No                 | Only visible to author                                   |
+| Submitted/Review  | No                 | Only visible to author + admins                          |
+| Revisions Requested | No               | Only visible to author + admins                          |
 
 ---
 

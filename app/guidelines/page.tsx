@@ -219,6 +219,7 @@ export default function GuidelinesPage() {
                 <h3 className="font-semibold text-parchment">Curator Review</h3>
                 <p className="text-parchment-muted text-sm">
                   Lorekeepers review submissions, considering both quality and canon alignment.
+                  They may approve, reject, or send the story back with notes for revision.
                 </p>
               </div>
             </div>
@@ -227,9 +228,22 @@ export default function GuidelinesPage() {
                 4
               </div>
               <div>
+                <h3 className="font-semibold text-parchment">Revisions (if requested)</h3>
+                <p className="text-parchment-muted text-sm">
+                  If a Lorekeeper requests changes, your story returns to your dashboard with feedback.
+                  Make your edits and resubmit — it will return to the review queue.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center text-gold font-semibold shrink-0">
+                5
+              </div>
+              <div>
                 <h3 className="font-semibold text-parchment">Canon Status</h3>
                 <p className="text-parchment-muted text-sm">
-                  Approved stories become part of the Everloop canon, accessible in the Archive forever.
+                  Approved stories are published directly into the Library, where they become
+                  permanent canon and remain readable forever.
                 </p>
               </div>
             </div>

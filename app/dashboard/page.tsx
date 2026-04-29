@@ -101,19 +101,28 @@ async function getUserStories(supabase: SupabaseServerClient, userId: string): P
 }
 
 async function getUserStats(supabase: SupabaseServerClient, userId: string) {
-  const [drafts, submitted, approved, rejected] = await Promise.all([
+  const [drafts, submitted, revisions, approved, rejected] = await Promise.all([
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).eq('canon_status', 'draft'),
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).in('canon_status', ['submitted', 'under_review']),
+    supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).eq('canon_status', 'revision_requested'),
+    // `approved` is a legacy state; surface it alongside `canonical` so any
+    // pre-existing rows still show up under Published.
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).in('canon_status', ['approved', 'canonical']),
     supabase.from('stories').select('*', { count: 'exact', head: true }).eq('author_id', userId).eq('canon_status', 'rejected'),
   ])
-  
+
   return {
     drafts: drafts.count || 0,
     submitted: submitted.count || 0,
+    revisions: revisions.count || 0,
     approved: approved.count || 0,
     rejected: rejected.count || 0,
-    total: (drafts.count || 0) + (submitted.count || 0) + (approved.count || 0) + (rejected.count || 0),
+    total:
+      (drafts.count || 0) +
+      (submitted.count || 0) +
+      (revisions.count || 0) +
+      (approved.count || 0) +
+      (rejected.count || 0),
   }
 }
 
@@ -137,7 +146,7 @@ function formatDate(dateString: string) {
   })
 }
 
-function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pending' | 'published' | 'rejected' }) {
+function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pending' | 'revision' | 'published' | 'rejected' }) {
   const latestReview = story.reviews
     .filter(r => r.is_ai_review)
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
@@ -170,6 +179,21 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
             </div>
           </div>
         )}
+
+        {/* Show revision-request feedback */}
+        {variant === 'revision' && (adminReview?.feedback || latestReview?.feedback) && (
+          <div className="mt-3 p-3 rounded bg-amber-500/10 border border-amber-500/20 text-sm">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <span className="text-amber-400 font-medium">Revisions requested: </span>
+                <span className="text-parchment-muted">
+                  {adminReview?.feedback || latestReview?.feedback}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
       <div className="flex items-center gap-2 ml-4">
@@ -191,7 +215,16 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
             In Review
           </Badge>
         )}
-        
+
+        {variant === 'revision' && (
+          <Link href={`/write?id=${story.id}`}>
+            <Button variant="outline" size="sm" className="gap-1 border-amber-500/40 text-amber-300 hover:bg-amber-500/10">
+              <PenLine className="w-3 h-3" />
+              Revise & Resubmit
+            </Button>
+          </Link>
+        )}
+
         {variant === 'published' && (
           <Link href={`/stories/${story.slug}`}>
             <Button variant="outline" size="sm" className="gap-1">
@@ -214,11 +247,12 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
   )
 }
 
-function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'published' | 'rejected' }) {
+function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'revision' | 'published' | 'rejected' }) {
   const messages = {
     draft: { icon: FileText, title: 'No Drafts', message: 'Use the Write button in the navigation to start your first story!' },
     pending: { icon: Clock, title: 'Nothing Pending', message: 'Submit a story for review to see it here.' },
-    published: { icon: Award, title: 'No Published Stories', message: 'Get your stories approved to become canon!' },
+    revision: { icon: AlertCircle, title: 'No Revision Requests', message: 'When a Lorekeeper asks for changes, those stories appear here.' },
+    published: { icon: Award, title: 'No Published Stories', message: 'Once a Lorekeeper approves a story it is published straight to the Library and shows up here.' },
     rejected: { icon: CheckCircle, title: 'No Rejections', message: "Great news! None of your stories have been rejected." },
   }
   
@@ -393,6 +427,9 @@ export default async function DashboardPage() {
   // Categorize stories
   const drafts = stories.filter(s => s.canon_status === 'draft')
   const pending = stories.filter(s => ['submitted', 'under_review'].includes(s.canon_status))
+  const revisions = stories.filter(s => s.canon_status === 'revision_requested')
+  // `approved` is a legacy status that pre-dates the direct approve→canonical
+  // transition. Keep it grouped with `canonical` so old rows still appear here.
   const published = stories.filter(s => ['approved', 'canonical'].includes(s.canon_status))
   const rejected = stories.filter(s => s.canon_status === 'rejected')
 
@@ -470,7 +507,7 @@ export default async function DashboardPage() {
 
       {/* Story Tabs */}
       <Tabs defaultValue="drafts" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-teal-deep/50 border border-gold/10">
+        <TabsList className="grid w-full grid-cols-5 bg-teal-deep/50 border border-gold/10">
           <TabsTrigger value="drafts" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
             <PenLine className="w-4 h-4" />
             <span className="hidden sm:inline">Drafts</span>
@@ -480,6 +517,11 @@ export default async function DashboardPage() {
             <Clock className="w-4 h-4" />
             <span className="hidden sm:inline">Pending</span>
             <Badge variant="secondary" className="ml-1">{pending.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="revisions" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
+            <AlertCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Revisions</span>
+            <Badge variant="secondary" className="ml-1">{revisions.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="published" className="gap-2 data-[state=active]:bg-teal-rich data-[state=active]:text-gold">
             <CheckCircle className="w-4 h-4" />
@@ -510,6 +552,16 @@ export default async function DashboardPage() {
             ))
           ) : (
             <EmptyState variant="pending" />
+          )}
+        </TabsContent>
+
+        <TabsContent value="revisions" className="space-y-3">
+          {revisions.length > 0 ? (
+            revisions.map(story => (
+              <StoryRow key={story.id} story={story} variant="revision" />
+            ))
+          ) : (
+            <EmptyState variant="revision" />
           )}
         </TabsContent>
 

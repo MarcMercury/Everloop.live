@@ -136,7 +136,19 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
       monster: 'dark fantasy horror creature, unstable form, reality distortion, eldritch design, fractured anatomy, concept art style, dramatic lighting, atmospheric dread',
     }
 
-    const imagePrompt = `${input.name}: ${input.description.slice(0, 300)}. Style: ${stylePrompts[input.type]}. No text, no watermarks.`
+    // Description-led prompt: the image must depict what the Description says.
+    // For monsters we deliberately omit the name from the prompt — DALL-E 3
+    // frequently renders proper nouns as text labels in the image. We also
+    // front-load and repeat strong negative constraints, since DALL-E 3
+    // ignores weak single-mention negatives.
+    const safeDescription = input.description.slice(0, 800).trim()
+    const noTextDirective =
+      'IMPORTANT: pure illustration only. Absolutely no text, no letters, no words, no captions, no labels, no titles, no signatures, no watermarks, no logos, no UI, no borders, no frames, no banners. Image only.'
+
+    const imagePrompt =
+      input.type === 'monster'
+        ? `${noTextDirective} Depict the following creature exactly as described: ${safeDescription}. Style: ${stylePrompts.monster}. ${noTextDirective}`
+        : `${noTextDirective} ${input.name}: ${safeDescription}. Style: ${stylePrompts[input.type]}. ${noTextDirective}`
 
     // Generate image with DALL-E 3
     const response = await getOpenAIClient().images.generate({

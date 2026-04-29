@@ -265,10 +265,10 @@ export async function submitStoryById(storyId: string): Promise<SubmitStoryResul
     }
   }
   
-  if (story.canon_status !== 'draft') {
+  if (story.canon_status !== 'draft' && story.canon_status !== 'revision_requested') {
     return {
       success: false,
-      error: 'Only draft stories can be submitted for review.',
+      error: 'Only drafts or stories with revision requests can be submitted for review.',
     }
   }
   
@@ -333,9 +333,9 @@ export async function deleteStory(storyId: string): Promise<{ success: boolean; 
     return { success: false, error: 'You can only delete your own stories.' }
   }
   
-  // Only allow deletion of drafts and rejected stories
-  if (!['draft', 'rejected'].includes(story.canon_status)) {
-    return { success: false, error: 'You can only delete drafts or rejected stories.' }
+  // Only allow deletion of drafts, revision-requested, and rejected stories
+  if (!['draft', 'revision_requested', 'rejected'].includes(story.canon_status)) {
+    return { success: false, error: 'You can only delete drafts, stories awaiting revision, or rejected stories.' }
   }
   
   // Delete associated records first (order matters for foreign key constraints)
