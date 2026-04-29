@@ -24,6 +24,10 @@ import {
   type EntityType 
 } from '@/lib/actions/create'
 import dynamic from 'next/dynamic'
+import {
+  ENTITY_ART_STYLE_OPTIONS,
+  type EntityArtStyleId,
+} from '@/lib/data/entity-art-styles'
 
 const ThreeDPreviewPanel = dynamic(
   () => import('@/components/3d/three-d-preview-panel').then((mod) => mod.ThreeDPreviewPanel),
@@ -170,6 +174,10 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [artStyle, setArtStyle] = useState<EntityArtStyleId>(
+    type === 'monster' || type === 'creature' ? 'dark-fantasy' : 'fantasy-oil'
+  )
+  const [imageCustomDetails, setImageCustomDetails] = useState('')
 
   // Rotate through description hints as inspiration
   const [hintIndex, setHintIndex] = useState(0)
@@ -218,6 +226,8 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
         name,
         type,
         description,
+        style: artStyle,
+        customDetails: imageCustomDetails.trim() || undefined,
       })
       
       if (result.success && result.imageUrl) {
@@ -399,6 +409,52 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
                       Generate Art
                     </Button>
                   )}
+                </div>
+
+                {/* Style Picker */}
+                <div className="space-y-2">
+                  <Label className="text-parchment-muted text-xs">Art Style</Label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {ENTITY_ART_STYLE_OPTIONS.map((style) => {
+                      const selected = artStyle === style.id
+                      return (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setArtStyle(style.id as EntityArtStyleId)}
+                          disabled={isGeneratingImage}
+                          className={`relative p-2.5 rounded-lg border text-left transition-all ${
+                            selected
+                              ? 'border-gold/50 bg-gold/10 ring-1 ring-gold/30'
+                              : 'border-gold/10 bg-teal-deep/40 hover:border-gold/25'
+                          }`}
+                        >
+                          {selected && (
+                            <div className="absolute top-1.5 right-1.5">
+                              <Check className="w-3.5 h-3.5 text-gold" />
+                            </div>
+                          )}
+                          <div className="text-base mb-0.5">{style.preview}</div>
+                          <div className="text-parchment text-xs font-medium">{style.label}</div>
+                          <div className="text-parchment-muted text-[10px]">{style.description}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Optional refinement */}
+                <div className="space-y-1">
+                  <Label className="text-parchment-muted text-xs">
+                    Extra Details <span className="text-parchment-muted/60">(optional)</span>
+                  </Label>
+                  <textarea
+                    value={imageCustomDetails}
+                    onChange={(e) => setImageCustomDetails(e.target.value)}
+                    placeholder="Pose, framing, mood, lighting…"
+                    disabled={isGeneratingImage}
+                    className="w-full bg-teal-deep/50 border border-gold/10 rounded-md text-parchment text-sm p-2.5 h-16 resize-none placeholder:text-parchment-muted/40"
+                  />
                 </div>
 
                 {/* Image Preview Area */}

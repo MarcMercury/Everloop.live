@@ -26,6 +26,10 @@ import {
 } from '@/lib/actions/create'
 import dynamic from 'next/dynamic'
 import { REGIONS, type RegionId } from '@/lib/data/regions'
+import {
+  ENTITY_ART_STYLE_OPTIONS,
+  type EntityArtStyleId,
+} from '@/lib/data/entity-art-styles'
 
 const ThreeDPreviewPanel = dynamic(
   () => import('@/components/3d/three-d-preview-panel').then((mod) => mod.ThreeDPreviewPanel),
@@ -181,6 +185,8 @@ export function MonsterCampaignWizard() {
   // Image & 3D
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [modelUrl, setModelUrl] = useState<string | null>(null)
+  const [artStyle, setArtStyle] = useState<EntityArtStyleId>('dark-fantasy')
+  const [imageCustomDetails, setImageCustomDetails] = useState('')
 
   // UI state
   const [isGeneratingText, setIsGeneratingText] = useState(false)
@@ -226,7 +232,13 @@ export function MonsterCampaignWizard() {
     setError(null)
     setIsGeneratingImage(true)
     try {
-      const result = await generateEntityImage({ name, type: 'monster', description })
+      const result = await generateEntityImage({
+        name,
+        type: 'monster',
+        description,
+        style: artStyle,
+        customDetails: imageCustomDetails.trim() || undefined,
+      })
       if (result.success && result.imageUrl) {
         setImageUrl(result.imageUrl)
       } else {
@@ -848,6 +860,56 @@ export function MonsterCampaignWizard() {
                   Generate Art
                 </Button>
               )}
+            </div>
+
+            {/* Style Picker */}
+            <div className="space-y-2">
+              <Label className="text-parchment-muted text-xs">Art Style</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {ENTITY_ART_STYLE_OPTIONS.map((style) => {
+                  const selected = artStyle === style.id
+                  return (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => setArtStyle(style.id as EntityArtStyleId)}
+                      disabled={isGeneratingImage}
+                      className={`relative p-2.5 rounded-lg border text-left transition-all ${
+                        selected
+                          ? 'border-gold/50 bg-gold/10 ring-1 ring-gold/30'
+                          : 'border-gold/10 bg-teal-deep/40 hover:border-gold/25'
+                      }`}
+                    >
+                      {selected && (
+                        <div className="absolute top-1.5 right-1.5">
+                          <Check className="w-3.5 h-3.5 text-gold" />
+                        </div>
+                      )}
+                      <div className="text-base mb-0.5">{style.preview}</div>
+                      <div className="text-parchment text-xs font-medium">{style.label}</div>
+                      <div className="text-parchment-muted text-[10px]">{style.description}</div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Optional refinement */}
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">
+                Extra Details <span className="text-parchment-muted/60">(optional)</span>
+              </Label>
+              <textarea
+                value={imageCustomDetails}
+                onChange={(e) => setImageCustomDetails(e.target.value)}
+                placeholder="e.g. crouched mid-stalk, glowing crimson sigils on its hide, fog rolling from its joints"
+                disabled={isGeneratingImage}
+                className="w-full bg-teal-deep/50 border border-gold/10 rounded-md text-parchment text-sm p-2.5 h-16 resize-none placeholder:text-parchment-muted/40"
+              />
+              <p className="text-parchment-muted/60 text-[10px]">
+                The description above is the source of truth for what the creature looks like.
+                Use this field only to nudge pose, mood, or framing.
+              </p>
             </div>
 
             <div className="aspect-square rounded-lg border border-gold/20 bg-teal-deep/30 overflow-hidden relative">

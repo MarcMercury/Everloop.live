@@ -110,10 +110,46 @@ interface GenerateImageInput {
   name: string
   type: EntityType
   description: string
+  /** Optional art style id (see ENTITY_ART_STYLES). Defaults vary by type. */
+  style?: string
+  /** Optional extra user-supplied detail to weave in (e.g. pose, mood). */
+  customDetails?: string
+}
+
+// Shared art-style prompts. Mirrors the approach used by the Player/Roster
+// portrait generator so users get the same controllable style picker for
+// every kind of AI-generated concept art.
+const ENTITY_ART_STYLES: Record<string, string> = {
+  'fantasy-oil':
+    'High fantasy oil painting, rich saturated colors, dramatic lighting, painterly brushwork, classic fantasy book cover quality',
+  'dark-fantasy':
+    'Dark fantasy concept art, moody atmospheric lighting, deep shadows with selective highlights, gothic and brooding, muted palette with crimson or violet accents',
+  'realistic':
+    'Hyperrealistic digital painting, photorealistic detail, natural cinematic lighting, shallow depth of field, physically grounded materials',
+  'watercolor':
+    'Ethereal watercolor illustration, soft washes of color, delicate brushstrokes, translucent layers, dreamy atmosphere',
+  'ink-wash':
+    'Black-and-white ink wash illustration, expressive linework, sumi-e influence, high contrast, sparse use of color',
+  'comic-book':
+    'Comic book illustration, bold ink outlines, cel-shading, vivid colors, dynamic composition, modern Western comic aesthetic',
+  'storybook':
+    'Storybook illustration, hand-painted texture, gentle warm lighting, charming and intricate detail',
+}
+
+const DEFAULT_STYLE_BY_TYPE: Record<EntityType, string> = {
+  character: 'fantasy-oil',
+  location: 'fantasy-oil',
+  creature: 'dark-fantasy',
+  monster: 'dark-fantasy',
 }
 
 /**
- * Generate concept art using DALL-E 3 and upload to Supabase Storage
+ * Generate concept art using gpt-image-1 and upload to Supabase Storage.
+ *
+ * gpt-image-1 follows long descriptions far more faithfully than DALL-E 3
+ * and does not hallucinate caption text on the canvas, which is critical
+ * for the monster wizard where the description specifies size, anatomy,
+ * and atmosphere precisely.
  */
 export async function generateEntityImage(input: GenerateImageInput): Promise<{
   success: boolean
@@ -123,111 +159,88 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return { success: false, error: 'You must be logged in to use AI features' }
     }
 
-    // Build a focused prompt for DALL-E
-    const stylePrompts = {
-      character: 'fantasy character portrait, detailed face and upper body, dramatic lighting, painterly style, high fantasy art',
-      location: 'fantasy landscape illustration, atmospheric, mystical lighting, detailed environment, concept art style',
-      creature: 'fantasy creature design, detailed anatomy, magical aura, concept art style, dramatic pose',
-      // Keep monster style descriptors restrained — overly graphic horror language
-      // ("eldritch", "fractured anatomy", "dread") triggers DALL-E 3 content-policy
-      // refusals when combined with description text.
-      monster: 'dark fantasy creature concept art, otherworldly silhouette, painterly style, dramatic moody lighting, atmospheric',
+    const styleId = input.style && ENTITY_ART_STYLES[input.style]
+      ? input.style
+      : DEFAULT_STYLE_BY_TYPE[input.type]
+    const stylePrompt = ENTITY_ART_STYLES[styleId]
+
+    const compositionByType: Record<EntityType, string> = {
+      character: 'Single figure portrait, full body or chest-up, clearly framed, fantasy environment behind.',
+      location: 'Wide environmental establishing shot, atmospheric perspective, no figures unless described.',
+      creature: 'Single creature portrait, full body, three-quarter angle, environment readable but secondary.',
+      monster:
+        'Single creature subject, full body in frame, three-quarter angle, scale and anatomy must match the description exactly. Environment should be atmospheric but secondary to the creature.',
     }
 
-    // Description-led prompt: the image must depict what the Description says.
-    // For monsters we deliberately omit the name from the prompt — DALL-E 3
-    // frequently renders proper nouns as text labels in the image. We also
-    // front-load and repeat strong negative constraints, since DALL-E 3
-    // ignores weak single-mention negatives.
-    const safeDescription = input.description.slice(0, 800).trim()
-    const noTextDirective =
-      'IMPORTANT: pure illustration only. Absolutely no text, no letters, no words, no captions, no labels, no titles, no signatures, no watermarks, no logos, no UI, no borders, no frames, no banners. Image only.'
+    const safeDescription = input.description.slice(0, 1500).trim()
 
-    const buildPrompt = (desc: string) =>
-      input.type === 'monster'
-        ? `${noTextDirective} Depict the following creature exactly as described: ${desc}. Style: ${stylePrompts.monster}. ${noTextDirective}`
-        : `${noTextDirective} ${input.name}: ${desc}. Style: ${stylePrompts[input.type]}. ${noTextDirective}`
-
-    // Sanitize description for a safety-fallback retry: remove or soften words
-    // that frequently trigger DALL-E 3 content-policy refusals on creature art.
-    const sanitizeDescription = (desc: string): string => {
-      const replacements: Array<[RegExp, string]> = [
-        [/\bgore\b|\bgory\b|\bbloody\b|\bblood-soaked\b|\bbloodied\b/gi, 'shadowed'],
-        [/\bblood\b/gi, 'crimson light'],
-        [/\bflesh\b/gi, 'form'],
-        [/\bcorpse(s)?\b|\bdead body\b|\bcadaver(s)?\b/gi, 'still figure'],
-        [/\bdismember(ed|ing)?\b|\bmutilat(ed|ion)\b|\bdisembowel(ed|ing)?\b/gi, 'broken'],
-        [/\bsever(ed)?\b/gi, 'detached'],
-        [/\bskin(ned|less)?\b/gi, 'surface'],
-        [/\bbone(s)?\b/gi, 'pale ridges'],
-        [/\bskull(s)?\b/gi, 'mask'],
-        [/\bdecay(ed|ing)?\b|\brott(en|ing)\b|\bputrid\b/gi, 'weathered'],
-        [/\bhorror\b|\bhorrific\b|\bgrotesque\b|\bgruesome\b|\bdisturbing\b/gi, 'unsettling'],
-        [/\bnaked\b|\bnude\b/gi, 'cloaked'],
-      ]
-      let out = desc
-      for (const [re, sub] of replacements) out = out.replace(re, sub)
-      return out
+    // Description-led prompt. The description is the source of truth — style
+    // and composition are constraints, not subject matter. We deliberately
+    // omit the entity name from the prompt body for monsters so the model
+    // does not try to render the name as a caption.
+    const promptParts: string[] = [
+      'Concept art illustration. The image must accurately depict the subject described below — anatomy, scale, proportions, color, and described features must match the description.',
+      `Subject description: ${safeDescription}`,
+    ]
+    if (input.customDetails?.trim()) {
+      promptParts.push(`Additional details: ${input.customDetails.trim()}`)
     }
+    promptParts.push(`Composition: ${compositionByType[input.type]}`)
+    promptParts.push(`Style: ${stylePrompt}.`)
+    promptParts.push(
+      'Strictly no text, no letters, no words, no captions, no titles, no labels, no signatures, no watermarks, no logos, no UI elements, no borders or frames. Pure illustration only.'
+    )
 
-    const generate = async (prompt: string) =>
-      getOpenAIClient().images.generate({
-        model: 'dall-e-3',
-        prompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'standard',
-      })
+    const prompt = promptParts.join('\n\n')
 
     let response
     try {
-      response = await generate(buildPrompt(safeDescription))
+      response = await getOpenAIClient().images.generate({
+        model: 'gpt-image-1',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'medium',
+      })
     } catch (err: unknown) {
       const e = err as { status?: number; code?: string; message?: string }
+      console.error('gpt-image-1 error:', e?.message || err)
       const isPolicy =
         e?.code === 'content_policy_violation' ||
-        /content[_ ]policy|safety system/i.test(e?.message || '')
-      if (!isPolicy) {
-        console.error('DALL-E error:', e?.message || err)
-        return { success: false, error: e?.message || 'Failed to generate image. Please try again.' }
-      }
-      // One automatic retry with sanitized description.
-      console.warn('DALL-E content policy refusal — retrying with sanitized description')
-      try {
-        response = await generate(buildPrompt(sanitizeDescription(safeDescription)))
-      } catch (err2: unknown) {
-        const e2 = err2 as { message?: string }
-        console.error('DALL-E retry error:', e2?.message || err2)
-        return {
-          success: false,
-          error:
-            'The image service rejected this description. Try softening graphic or violent wording in the description and regenerate.',
-        }
+        /content[_ ]policy|safety system|moderation/i.test(e?.message || '')
+      return {
+        success: false,
+        error: isPolicy
+          ? 'The image service rejected this description. Try softening graphic or violent wording in the description and regenerate.'
+          : e?.message || 'Failed to generate image. Please try again.',
       }
     }
 
-    const generatedImageUrl = response.data?.[0]?.url
-    if (!generatedImageUrl) {
+    // gpt-image-1 returns base64-encoded PNG in `b64_json`.
+    const b64 = response.data?.[0]?.b64_json
+    const tempUrl = response.data?.[0]?.url
+    let imageBuffer: ArrayBuffer
+    if (b64) {
+      imageBuffer = Buffer.from(b64, 'base64').buffer.slice(0) as ArrayBuffer
+    } else if (tempUrl) {
+      const imageResponse = await fetch(tempUrl)
+      if (!imageResponse.ok) {
+        return { success: false, error: 'Failed to download generated image' }
+      }
+      imageBuffer = await imageResponse.arrayBuffer()
+    } else {
       return { success: false, error: 'No image was generated' }
     }
 
-    // Download the image
-    const imageResponse = await fetch(generatedImageUrl)
-    if (!imageResponse.ok) {
-      return { success: false, error: 'Failed to download generated image' }
-    }
-    
-    const imageBuffer = await imageResponse.arrayBuffer()
-    
     // Upload to Supabase Storage
     const fileName = `${user.id}/${input.type}-${Date.now()}.png`
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
+
+    const { error: uploadError } = await supabase.storage
       .from('entity-images')
       .upload(fileName, imageBuffer, {
         contentType: 'image/png',
