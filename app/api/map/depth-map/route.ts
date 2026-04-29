@@ -25,7 +25,7 @@ export async function POST() {
 
   try {
     const response = await client.images.generate({
-      model: 'dall-e-3',
+      model: 'gpt-image-1',
       prompt: [
         'Create a grayscale heightmap/depth map for a fantasy world terrain map.',
         'The image should be a top-down grayscale elevation map where:',
@@ -46,16 +46,43 @@ export async function POST() {
         'Seamless edges that fade to mid-gray at borders.',
       ].join(' '),
       size: '1024x1024',
-      quality: 'hd',
+      quality: 'high',
       n: 1,
     })
 
-    const imageUrl = response.data?.[0]?.url
-    if (!imageUrl) {
+    // gpt-image-1 returns base64. Persist to Supabase Storage so the admin
+    // gets a stable URL instead of an expiring temp URL.
+    const b64 = response.data?.[0]?.b64_json
+    const tempUrl = response.data?.[0]?.url
+    let imageBuffer: ArrayBuffer
+    if (b64) {
+      imageBuffer = Buffer.from(b64, 'base64').buffer.slice(0) as ArrayBuffer
+    } else if (tempUrl) {
+      const imgRes = await fetch(tempUrl)
+      if (!imgRes.ok) {
+        return NextResponse.json({ error: 'Failed to download generated image' }, { status: 500 })
+      }
+      imageBuffer = await imgRes.arrayBuffer()
+    } else {
       return NextResponse.json({ error: 'No image generated' }, { status: 500 })
     }
 
-    return NextResponse.json({ imageUrl, revisedPrompt: response.data?.[0]?.revised_prompt })
+    const fileName = `map/depth-map-${Date.now()}.png`
+    const { error: uploadError } = await supabase.storage
+      .from('entity-images')
+      .upload(fileName, imageBuffer, {
+        contentType: 'image/png',
+        upsert: false,
+      })
+    if (uploadError) {
+      console.error('Depth map upload error:', uploadError)
+      return NextResponse.json({ error: 'Failed to save depth map' }, { status: 500 })
+    }
+    const { data: { publicUrl } } = supabase.storage
+      .from('entity-images')
+      .getPublicUrl(fileName)
+
+    return NextResponse.json({ imageUrl: publicUrl })
   } catch (error) {
     console.error('Depth map generation error:', error)
     return NextResponse.json(
