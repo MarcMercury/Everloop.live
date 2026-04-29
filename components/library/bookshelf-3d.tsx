@@ -23,6 +23,7 @@ interface LoreBook {
   slug: string
   href: string
   description: string
+  external?: boolean
 }
 
 /* ───────── hardcoded lore books ───────── */
@@ -34,6 +35,24 @@ const LORE_BOOKS: LoreBook[] = [
     slug: 'narrative-history',
     href: '/stories/narrative-history',
     description: 'The foundational history of the world — from the Drift to the Pattern, from the First Architects to the unraveling.',
+  },
+  {
+    id: 'lore-four-loops-of-curiosities',
+    title: 'Four Loops',
+    subtitle: 'of Curiosities',
+    slug: 'four-loops-of-curiosities',
+    href: '/books/four-loops-of-curiosities.pdf',
+    description: 'A curated collection of oddities, marvels, and unexplained phenomena gathered across the four great loops of the world.',
+    external: true,
+  },
+  {
+    id: 'lore-known-wonders',
+    title: 'Known Wonders',
+    subtitle: 'of the Everloop',
+    slug: 'known-wonders-of-the-everloop',
+    href: '/books/known-wonders-of-the-everloop.pdf',
+    description: 'A traveler’s register of the named wonders that still endure — each a thread the Pattern refuses to let go.',
+    external: true,
   },
 ]
 
@@ -740,14 +759,27 @@ function LoreBookOverlay({
           <h3 className="text-xl font-serif text-parchment mb-1">{loreBook.title}: {loreBook.subtitle}</h3>
           <p className="text-sm text-parchment-muted">{loreBook.description}</p>
 
-          <Link
-            href={loreBook.href}
-            className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 rounded-lg bg-gold/20 border border-gold/40
-                       text-gold hover:bg-gold/30 hover:border-gold/60 transition-all text-sm font-medium"
-          >
-            <BookOpen className="w-4 h-4" />
-            Begin Reading
-          </Link>
+          {loreBook.external ? (
+            <a
+              href={loreBook.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 rounded-lg bg-gold/20 border border-gold/40
+                         text-gold hover:bg-gold/30 hover:border-gold/60 transition-all text-sm font-medium"
+            >
+              <BookOpen className="w-4 h-4" />
+              Begin Reading
+            </a>
+          ) : (
+            <Link
+              href={loreBook.href}
+              className="inline-flex items-center gap-2 mt-4 px-6 py-2.5 rounded-lg bg-gold/20 border border-gold/40
+                         text-gold hover:bg-gold/30 hover:border-gold/60 transition-all text-sm font-medium"
+            >
+              <BookOpen className="w-4 h-4" />
+              Begin Reading
+            </Link>
+          )}
         </div>
       </div>
     </div>

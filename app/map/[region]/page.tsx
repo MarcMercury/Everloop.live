@@ -92,6 +92,57 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
           </div>
         )}
 
+        {/* Cultural Lens — Attunement roles, regional concepts, time note */}
+        {(region.attunementRoles || region.culturalConcepts || region.timeNote) && (
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-2">
+            <h3 className="text-xs font-serif text-gold">Cultural Lens</h3>
+
+            {region.attunementRoles && (
+              <div className="space-y-1">
+                <p className="text-[9px] uppercase tracking-wider text-parchment-muted">Attunements</p>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div>
+                    <span className="text-parchment-muted">Vaultkeeper:</span>{' '}
+                    <span className="text-parchment">{region.attunementRoles.vaultkeeper}</span>
+                  </div>
+                  <div>
+                    <span className="text-parchment-muted">Dreamer:</span>{' '}
+                    <span className="text-parchment">{region.attunementRoles.dreamer}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {region.culturalConcepts && region.culturalConcepts.length > 0 && (
+              <div className="space-y-1 pt-1 border-t border-gold/5">
+                <p className="text-[9px] uppercase tracking-wider text-parchment-muted">Regional Truths</p>
+                <ul className="text-[10px] text-parchment space-y-0.5">
+                  {region.culturalConcepts.map((concept) => (
+                    <li key={concept} className="flex gap-1.5">
+                      <span className="text-gold/60">•</span>
+                      <span>{concept}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {region.timeNote && (
+              <div className="space-y-1 pt-1 border-t border-gold/5">
+                <p className="text-[9px] uppercase tracking-wider text-parchment-muted">On Time</p>
+                <p className="text-[10px] text-parchment-muted italic leading-snug">{region.timeNote}</p>
+              </div>
+            )}
+
+            <p className="text-[9px] text-parchment-muted/60 pt-1 italic">
+              Every region holds a valid but incomplete truth.{' '}
+              <Link href="/explore?type=concept" className="text-gold/70 hover:text-gold">
+                Read the principle →
+              </Link>
+            </p>
+          </div>
+        )}
+
         {/* Canon Stories set here */}
         {stories.length > 0 && (
           <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-1.5">
