@@ -43,9 +43,8 @@ const LORE_BOOKS: LoreBook[] = [
     title: 'Four Loops',
     subtitle: 'of Curiosities',
     slug: 'four-loops-of-curiosities',
-    href: '/books/four-loops-of-curiosities.pdf',
+    href: '/stories/four-loops-of-curiosities',
     description: 'A curated collection of oddities, marvels, and unexplained phenomena gathered across the four great loops of the world.',
-    external: true,
     coverImage: '/covers/four-loops-of-curiosities.png',
   },
   {
@@ -53,9 +52,8 @@ const LORE_BOOKS: LoreBook[] = [
     title: 'Known Wonders',
     subtitle: 'of the Everloop',
     slug: 'known-wonders-of-the-everloop',
-    href: '/books/known-wonders-of-the-everloop.pdf',
+    href: '/stories/known-wonders-of-the-everloop',
     description: 'A traveler’s register of the named wonders that still endure — each a thread the Pattern refuses to let go.',
-    external: true,
     coverImage: '/covers/known-wonders-of-the-everloop.png',
   },
 ]
