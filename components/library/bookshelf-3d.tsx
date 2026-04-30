@@ -566,8 +566,12 @@ function SelectedBookOverlay({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Book cover with 3D effect */}
-        <div className="book-cover-3d relative">
+        {/* Book cover with 3D effect — click to open story */}
+        <Link
+          href={`/stories/${story.slug}`}
+          className="book-cover-3d relative cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+          aria-label={`Begin reading ${story.title}`}
+        >
           {/* Spine edge */}
           <div
             className="absolute left-0 top-0 bottom-0 w-4"
