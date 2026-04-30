@@ -624,7 +624,7 @@ function SelectedBookOverlay({
               }}
             />
           </div>
-        </div>
+        </Link>
 
         {/* Book info */}
         <div className="mt-6 text-center max-w-xs">
@@ -649,6 +649,98 @@ function SelectedBookOverlay({
         </div>
       </div>
     </div>
+  )
+}
+
+/* ───────── lore book cover (shared by overlay link wrappers) ───────── */
+function LoreBookCover({ loreBook }: { loreBook: LoreBook }) {
+  return (
+    <>
+      {/* Spine edge */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-4"
+        style={{
+          background: 'linear-gradient(90deg, #4a3118 0%, #6b4c2a 40%, #5c3d1e 100%)',
+          transform: 'perspective(600px) rotateY(-15deg)',
+          transformOrigin: 'right center',
+          borderRadius: '2px 0 0 2px',
+          boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.3)',
+          zIndex: 1,
+        }}
+      />
+
+      {/* Cover — image when provided, otherwise gold-themed stylized cover */}
+      <div
+        className="relative ml-3 rounded-r-sm overflow-hidden flex flex-col items-center justify-center"
+        style={{
+          width: 280,
+          height: 400,
+          background: loreBook.coverImage
+            ? '#000'
+            : 'linear-gradient(160deg, #1a1410 0%, #0d1f1f 30%, #0a1818 60%, #1a1410 100%)',
+          boxShadow: `
+            4px 4px 20px rgba(0,0,0,0.6),
+            -2px 0 8px rgba(0,0,0,0.3),
+            inset 0 0 0 1px rgba(212,168,75,0.15),
+            inset 0 0 80px rgba(212,168,75,0.04)
+          `,
+        }}
+      >
+        {loreBook.coverImage ? (
+          <Image
+            src={loreBook.coverImage}
+            alt={`${loreBook.title}: ${loreBook.subtitle}`}
+            fill
+            className="object-cover"
+            sizes="280px"
+            priority
+          />
+        ) : (
+          <>
+            <div
+              className="absolute inset-3 rounded-sm"
+              style={{
+                border: '1px solid rgba(212,168,75,0.2)',
+                boxShadow: 'inset 0 0 20px rgba(212,168,75,0.03)',
+              }}
+            />
+            <div
+              className="absolute inset-5 rounded-sm"
+              style={{ border: '1px solid rgba(212,168,75,0.1)' }}
+            />
+
+            <Sparkles className="w-8 h-8 text-gold/50 mb-6" />
+
+            <h3 className="text-2xl font-serif text-gold text-center px-8 leading-tight">
+              {loreBook.title}
+            </h3>
+            <p className="text-sm font-serif text-gold/60 text-center mt-2 tracking-wider uppercase">
+              {loreBook.subtitle}
+            </p>
+
+            <div className="mt-6 w-16 h-px bg-gold/30" />
+
+            <p className="mt-6 text-xs text-parchment-muted/50 tracking-[0.15em] uppercase">
+              Foundational Lore
+            </p>
+          </>
+        )}
+
+        {/* Page edges effect (right side) */}
+        <div
+          className="absolute top-1 right-0 bottom-1 w-[3px]"
+          style={{
+            background: `repeating-linear-gradient(
+              180deg,
+              #f5f0e8 0px,
+              #e8dcc4 1px,
+              #ddd2b8 2px
+            )`,
+            boxShadow: 'inset -1px 0 1px rgba(0,0,0,0.15)',
+          }}
+        />
+      </div>
+    </>
   )
 }
 
@@ -678,100 +770,26 @@ function LoreBookOverlay({
           <X className="w-4 h-4" />
         </button>
 
-        {/* Book cover with 3D effect */}
-        <div className="book-cover-3d relative">
-          {/* Spine edge */}
-          <div
-            className="absolute left-0 top-0 bottom-0 w-4"
-            style={{
-              background: 'linear-gradient(90deg, #4a3118 0%, #6b4c2a 40%, #5c3d1e 100%)',
-              transform: 'perspective(600px) rotateY(-15deg)',
-              transformOrigin: 'right center',
-              borderRadius: '2px 0 0 2px',
-              boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.3)',
-              zIndex: 1,
-            }}
-          />
-
-          {/* Cover — image when provided, otherwise gold-themed stylized cover */}
-          <div
-            className="relative ml-3 rounded-r-sm overflow-hidden flex flex-col items-center justify-center"
-            style={{
-              width: 280,
-              height: 400,
-              background: loreBook.coverImage
-                ? '#000'
-                : 'linear-gradient(160deg, #1a1410 0%, #0d1f1f 30%, #0a1818 60%, #1a1410 100%)',
-              boxShadow: `
-                4px 4px 20px rgba(0,0,0,0.6),
-                -2px 0 8px rgba(0,0,0,0.3),
-                inset 0 0 0 1px rgba(212,168,75,0.15),
-                inset 0 0 80px rgba(212,168,75,0.04)
-              `,
-            }}
+        {/* Book cover with 3D effect — click to open */}
+        {loreBook.external ? (
+          <a
+            href={loreBook.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="book-cover-3d relative cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+            aria-label={`Begin reading ${loreBook.title}: ${loreBook.subtitle}`}
           >
-            {loreBook.coverImage ? (
-              <Image
-                src={loreBook.coverImage}
-                alt={`${loreBook.title}: ${loreBook.subtitle}`}
-                fill
-                className="object-cover"
-                sizes="280px"
-                priority
-              />
-            ) : (
-              <>
-                {/* Decorative border frame */}
-                <div
-                  className="absolute inset-3 rounded-sm"
-                  style={{
-                    border: '1px solid rgba(212,168,75,0.2)',
-                    boxShadow: 'inset 0 0 20px rgba(212,168,75,0.03)',
-                  }}
-                />
-                <div
-                  className="absolute inset-5 rounded-sm"
-                  style={{
-                    border: '1px solid rgba(212,168,75,0.1)',
-                  }}
-                />
-
-                {/* Sparkle icon */}
-                <Sparkles className="w-8 h-8 text-gold/50 mb-6" />
-
-                {/* Title */}
-                <h3 className="text-2xl font-serif text-gold text-center px-8 leading-tight">
-                  {loreBook.title}
-                </h3>
-                <p className="text-sm font-serif text-gold/60 text-center mt-2 tracking-wider uppercase">
-                  {loreBook.subtitle}
-                </p>
-
-                {/* Decorative line */}
-                <div className="mt-6 w-16 h-px bg-gold/30" />
-
-                {/* Foundational text badge */}
-                <p className="mt-6 text-xs text-parchment-muted/50 tracking-[0.15em] uppercase">
-                  Foundational Lore
-                </p>
-              </>
-            )}
-
-            {/* Page edges effect (right side) */}
-            <div
-              className="absolute top-1 right-0 bottom-1 w-[3px]"
-              style={{
-                background: `repeating-linear-gradient(
-                  180deg,
-                  #f5f0e8 0px,
-                  #e8dcc4 1px,
-                  #ddd2b8 2px
-                )`,
-                boxShadow: 'inset -1px 0 1px rgba(0,0,0,0.15)',
-              }}
-            />
-          </div>
-        </div>
+            <LoreBookCover loreBook={loreBook} />
+          </a>
+        ) : (
+          <Link
+            href={loreBook.href}
+            className="book-cover-3d relative cursor-pointer transition-transform duration-300 hover:-translate-y-1"
+            aria-label={`Begin reading ${loreBook.title}: ${loreBook.subtitle}`}
+          >
+            <LoreBookCover loreBook={loreBook} />
+          </Link>
+        )}
 
         {/* Book info */}
         <div className="mt-6 text-center max-w-xs">
