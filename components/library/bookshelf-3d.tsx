@@ -24,6 +24,8 @@ interface LoreBook {
   href: string
   description: string
   external?: boolean
+  /** Optional cover image path (under /public). When set, the overlay shows this instead of the gold placeholder. */
+  coverImage?: string
 }
 
 /* ───────── hardcoded lore books ───────── */
@@ -44,6 +46,7 @@ const LORE_BOOKS: LoreBook[] = [
     href: '/books/four-loops-of-curiosities.pdf',
     description: 'A curated collection of oddities, marvels, and unexplained phenomena gathered across the four great loops of the world.',
     external: true,
+    coverImage: '/covers/four-loops-of-curiosities.png',
   },
   {
     id: 'lore-known-wonders',
@@ -53,6 +56,7 @@ const LORE_BOOKS: LoreBook[] = [
     href: '/books/known-wonders-of-the-everloop.pdf',
     description: 'A traveler’s register of the named wonders that still endure — each a thread the Pattern refuses to let go.',
     external: true,
+    coverImage: '/covers/known-wonders-of-the-everloop.png',
   },
 ]
 
@@ -689,13 +693,15 @@ function LoreBookOverlay({
             }}
           />
 
-          {/* Cover — gold-themed stylized cover */}
+          {/* Cover — image when provided, otherwise gold-themed stylized cover */}
           <div
             className="relative ml-3 rounded-r-sm overflow-hidden flex flex-col items-center justify-center"
             style={{
               width: 280,
               height: 400,
-              background: 'linear-gradient(160deg, #1a1410 0%, #0d1f1f 30%, #0a1818 60%, #1a1410 100%)',
+              background: loreBook.coverImage
+                ? '#000'
+                : 'linear-gradient(160deg, #1a1410 0%, #0d1f1f 30%, #0a1818 60%, #1a1410 100%)',
               boxShadow: `
                 4px 4px 20px rgba(0,0,0,0.6),
                 -2px 0 8px rgba(0,0,0,0.3),
@@ -704,39 +710,52 @@ function LoreBookOverlay({
               `,
             }}
           >
-            {/* Decorative border frame */}
-            <div
-              className="absolute inset-3 rounded-sm"
-              style={{
-                border: '1px solid rgba(212,168,75,0.2)',
-                boxShadow: 'inset 0 0 20px rgba(212,168,75,0.03)',
-              }}
-            />
-            <div
-              className="absolute inset-5 rounded-sm"
-              style={{
-                border: '1px solid rgba(212,168,75,0.1)',
-              }}
-            />
+            {loreBook.coverImage ? (
+              <Image
+                src={loreBook.coverImage}
+                alt={`${loreBook.title}: ${loreBook.subtitle}`}
+                fill
+                className="object-cover"
+                sizes="280px"
+                priority
+              />
+            ) : (
+              <>
+                {/* Decorative border frame */}
+                <div
+                  className="absolute inset-3 rounded-sm"
+                  style={{
+                    border: '1px solid rgba(212,168,75,0.2)',
+                    boxShadow: 'inset 0 0 20px rgba(212,168,75,0.03)',
+                  }}
+                />
+                <div
+                  className="absolute inset-5 rounded-sm"
+                  style={{
+                    border: '1px solid rgba(212,168,75,0.1)',
+                  }}
+                />
 
-            {/* Sparkle icon */}
-            <Sparkles className="w-8 h-8 text-gold/50 mb-6" />
+                {/* Sparkle icon */}
+                <Sparkles className="w-8 h-8 text-gold/50 mb-6" />
 
-            {/* Title */}
-            <h3 className="text-2xl font-serif text-gold text-center px-8 leading-tight">
-              {loreBook.title}
-            </h3>
-            <p className="text-sm font-serif text-gold/60 text-center mt-2 tracking-wider uppercase">
-              {loreBook.subtitle}
-            </p>
+                {/* Title */}
+                <h3 className="text-2xl font-serif text-gold text-center px-8 leading-tight">
+                  {loreBook.title}
+                </h3>
+                <p className="text-sm font-serif text-gold/60 text-center mt-2 tracking-wider uppercase">
+                  {loreBook.subtitle}
+                </p>
 
-            {/* Decorative line */}
-            <div className="mt-6 w-16 h-px bg-gold/30" />
+                {/* Decorative line */}
+                <div className="mt-6 w-16 h-px bg-gold/30" />
 
-            {/* Foundational text badge */}
-            <p className="mt-6 text-xs text-parchment-muted/50 tracking-[0.15em] uppercase">
-              Foundational Lore
-            </p>
+                {/* Foundational text badge */}
+                <p className="mt-6 text-xs text-parchment-muted/50 tracking-[0.15em] uppercase">
+                  Foundational Lore
+                </p>
+              </>
+            )}
 
             {/* Page edges effect (right side) */}
             <div
