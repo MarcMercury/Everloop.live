@@ -44,7 +44,7 @@ const LORE_BOOKS: LoreBook[] = [
     subtitle: 'of Curiosities',
     slug: 'four-loops-of-curiosities',
     href: '/stories/four-loops-of-curiosities',
-    description: 'A curated collection of oddities, marvels, and unexplained phenomena gathered across the four great loops of the world.',
+    description: 'Private Entries from the Journal of Archael Viremont — Senior Archivist of the Luminous Fold, Fellow of the Seventh Circle, Honorary Member of the Cartographic Society of Iterants. Copied and Preserved in the Grand Archive of the Luminous Fold, One Hundred and Twelve Loops After Their Composition.',
     coverImage: '/covers/four-loops-of-curiosities.png',
   },
   {
@@ -53,7 +53,7 @@ const LORE_BOOKS: LoreBook[] = [
     subtitle: 'of the Everloop',
     slug: 'known-wonders-of-the-everloop',
     href: '/stories/known-wonders-of-the-everloop',
-    description: 'A traveler’s register of the named wonders that still endure — each a thread the Pattern refuses to let go.',
+    description: 'Being a Survey, Classification, and Personal Account of the Notable Regions, Peoples, and Phenomena of the Everloop. By Archael Viremont, Senior Archivist of the Luminous Fold, Fellow of the Seventh Circle, Honorary Member of the Cartographic Society of Iterants.',
     coverImage: '/covers/known-wonders-of-the-everloop.png',
   },
 ]
