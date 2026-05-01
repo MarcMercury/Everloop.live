@@ -7,9 +7,10 @@ import type { QuestType, DifficultyPreset } from '@/types/campaign'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Compass, Users, Globe, Bot, MapPin } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Compass, Users, Globe, Bot, MapPin, Workflow, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { REGIONS } from '@/lib/data/regions'
+import QuestFlowBuilder, { defaultGraph, type QuestFlowGraph } from '@/components/quests/quest-flow-builder'
 
 const QUEST_TYPE_OPTIONS: { value: QuestType; label: string; icon: React.ReactNode; desc: string; min: number; max: number }[] = [
   { value: 'solo', label: 'Solo Quest', icon: <Compass className="w-5 h-5" />, desc: 'Just you and the narrative', min: 1, max: 1 },
@@ -29,8 +30,11 @@ const DIFFICULTY_OPTIONS: { value: DifficultyPreset; label: string; icon: string
 const NARRATOR_STYLES = ['atmospheric', 'cinematic', 'minimalist', 'verbose', 'poetic'] as const
 const PACING_OPTIONS = ['slow', 'moderate', 'fast', 'frenetic'] as const
 
+type Step = 'foundation' | 'flow'
+
 export default function CreateQuestPage() {
   const router = useRouter()
+  const [step, setStep] = useState<Step>('foundation')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,13 +51,13 @@ export default function CreateQuestPage() {
     narrator_pacing: 'moderate' as string,
     branching_narrative: true,
     tags: '',
-    // Region & Location
     regions: [] as string[],
     location_ids: [] as string[],
   })
 
-  // Fetch canonical locations for the location picker
-  const [locations, setLocations] = useState<Array<{id: string; name: string; type: string; tags: string[]}>>([])  
+  const [graph, setGraph] = useState<QuestFlowGraph>(() => defaultGraph())
+
+  const [locations, setLocations] = useState<Array<{id: string; name: string; type: string; tags: string[]}>>([])
   useEffect(() => {
     fetch('/api/map/locations')
       .then(r => r.json())
@@ -80,15 +84,48 @@ export default function CreateQuestPage() {
     }))
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleAdvance(e: React.FormEvent) {
     e.preventDefault()
     if (!form.title.trim()) {
       setError('Quest title is required')
       return
     }
+    setError(null)
+    setStep('flow')
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
+  async function handleCreate() {
     setLoading(true)
     setError(null)
+
+    const quest_structure = {
+      acts: [],
+      encounters: graph.nodes
+        .filter(n => n.data.kind === 'encounter')
+        .map(n => ({ id: n.id, label: n.data.label, monsters: n.data.monsters ?? '' })),
+      rewards: graph.nodes
+        .filter(n => n.data.kind === 'reward')
+        .map(n => ({ id: n.id, label: n.data.label, reward: n.data.reward ?? '' })),
+      branching_points: graph.nodes
+        .filter(n => n.data.kind === 'choice')
+        .map(n => ({ id: n.id, label: n.data.label, outcomes: n.data.outcomes ?? '' })),
+      flow: {
+        nodes: graph.nodes.map(n => ({
+          id: n.id,
+          kind: n.data.kind,
+          position: n.position,
+          data: n.data,
+        })),
+        edges: graph.edges.map(e => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          sourceHandle: e.sourceHandle ?? null,
+          targetHandle: e.targetHandle ?? null,
+        })),
+      },
+    }
 
     const result = await createQuest({
       title: form.title.trim(),
@@ -112,6 +149,7 @@ export default function CreateQuestPage() {
       ],
       referenced_entities: form.location_ids,
       metadata: { regions: form.regions, location_ids: form.location_ids },
+      quest_structure,
     })
 
     if (result.success && result.quest) {
@@ -122,9 +160,9 @@ export default function CreateQuestPage() {
     }
   }
 
-  return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
-      <Link href="/quests" className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-8">
+  const StepHeader = (
+    <div className="mb-8">
+      <Link href="/quests" className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-6">
         <ArrowLeft className="w-4 h-4" />
         Back to Quest Portal
       </Link>
@@ -133,11 +171,79 @@ export default function CreateQuestPage() {
         <span className="text-parchment">Create a</span>{' '}
         <span className="canon-text">Quest</span>
       </h1>
-      <p className="text-parchment-muted mb-8">
+      <p className="text-parchment-muted mb-6">
         Design an Everloop experience for players. Every quest in the Everloop ultimately bends toward a Shard — what hidden force shapes yours?
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="flex items-center gap-2 text-xs">
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+          step === 'foundation' ? 'border-gold/60 bg-gold/10 text-gold' : 'border-gold/30 text-parchment-muted'
+        }`}>
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>1. Foundation</span>
+        </div>
+        <div className="flex-1 h-px bg-gold/20 max-w-[60px]" />
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
+          step === 'flow' ? 'border-gold/60 bg-gold/10 text-gold' : 'border-gold/30 text-parchment-muted'
+        }`}>
+          <Workflow className="w-3.5 h-3.5" />
+          <span>2. Quest Flow</span>
+        </div>
+      </div>
+    </div>
+  )
+
+  if (step === 'flow') {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {StepHeader}
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-serif text-parchment mb-1">
+            Design <span className="text-gold">{form.title || 'your quest'}</span>
+          </h2>
+          <p className="text-sm text-parchment-muted max-w-3xl">
+            Lay out the quest as a flow of beats. Drag from the palette, then connect each beat from
+            its lower handle to the next beat&apos;s upper handle. Branches that fork from a Choice
+            should rejoin the main thread before the Goal — every path needs a way back to the heart of the quest.
+          </p>
+        </div>
+
+        <QuestFlowBuilder initial={graph} onChange={setGraph} />
+
+        {error && (
+          <div className="mt-6 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between mt-6">
+          <button
+            type="button"
+            onClick={() => setStep('foundation')}
+            className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Foundation
+          </button>
+          <div className="flex items-center gap-3">
+            <Link href="/quests" className="text-sm text-parchment-muted hover:text-parchment transition-colors">
+              Cancel
+            </Link>
+            <Button onClick={handleCreate} disabled={loading} className="btn-fantasy">
+              {loading ? 'Weaving the Loop...' : '✦ Create Quest'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12">
+      {StepHeader}
+
+      <form onSubmit={handleAdvance} className="space-y-8">
         {/* Quest Type */}
         <div>
           <Label className="text-parchment mb-3 block text-lg font-serif">Quest Type</Label>
@@ -318,21 +424,20 @@ export default function CreateQuestPage() {
           <Input id="tags" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="mystery, horror, short, beginner-friendly" className="mt-1 bg-teal-rich/50 border-gold/20 text-parchment placeholder:text-parchment-muted/50" />
         </div>
 
-        {/* Error */}
         {error && (
           <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        {/* Submit */}
-        <div className="flex items-center gap-4">
-          <Button type="submit" disabled={loading} className="btn-fantasy">
-            {loading ? 'Creating...' : '✦ Create Quest'}
-          </Button>
+        <div className="flex items-center justify-between pt-2">
           <Link href="/quests" className="text-sm text-parchment-muted hover:text-parchment transition-colors">
             Cancel
           </Link>
+          <Button type="submit" className="btn-fantasy flex items-center gap-2">
+            Continue to Quest Flow
+            <ArrowRight className="w-4 h-4" />
+          </Button>
         </div>
       </form>
     </div>

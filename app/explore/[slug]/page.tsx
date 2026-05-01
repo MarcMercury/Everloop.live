@@ -92,8 +92,23 @@ export default async function EntityPage({ params }: EntityPageProps) {
 
   const crossRefs = await getEntityCrossReferences(entity.id)
   const stabilityPercent = entity.stability_rating * 100
-  const entityImage = (entity.metadata as { image_url?: string })?.image_url
-  const extendedLore = entity.extended_lore as Record<string, unknown> | null
+  const extendedLoreRaw = entity.extended_lore as Record<string, unknown> | null
+  // Image may live in metadata.image_url (admin/seeded entities) or
+  // extended_lore.image_url (user-created entities via the writing roster).
+  const entityImage =
+    (entity.metadata as { image_url?: string })?.image_url ||
+    (extendedLoreRaw?.image_url as string | undefined) ||
+    undefined
+  // Hide internal/structural keys from the Extended Lore section so we
+  // don't render a raw image URL or flags as lore text.
+  const HIDDEN_LORE_KEYS = new Set(['image_url', 'is_user_created'])
+  const extendedLore = extendedLoreRaw
+    ? Object.fromEntries(
+        Object.entries(extendedLoreRaw).filter(
+          ([k, v]) => !HIDDEN_LORE_KEYS.has(k) && v !== null && v !== ''
+        )
+      )
+    : null
   const regionMeta = (entity.metadata as { region?: string })?.region
 
   // Format dates

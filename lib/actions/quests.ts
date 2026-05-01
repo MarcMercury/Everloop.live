@@ -181,6 +181,7 @@ export async function createQuest(input: {
   tags?: string[]
   referenced_entities?: string[]
   metadata?: Record<string, unknown>
+  quest_structure?: Record<string, unknown>
 }): Promise<{ success: boolean; quest?: Quest; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -214,6 +215,12 @@ export async function createQuest(input: {
       tags: input.tags ?? [],
       referenced_entities: input.referenced_entities ?? [],
       metadata: input.metadata ?? {},
+      quest_structure: input.quest_structure ?? {
+        acts: [],
+        encounters: [],
+        rewards: [],
+        branching_points: [],
+      },
       created_by: user.id,
       status: 'draft',
     })
