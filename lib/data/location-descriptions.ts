@@ -345,6 +345,25 @@ export const LOCATION_DESCRIPTIONS: Record<string, string> = {
   'The Bell Tree':
     'A manifestation that appeared in Drelmere\'s town square — part tree, part something else entirely. Its bark shimmered with patterns that matched the threading of the Pattern itself, and it produced a sound that was not quite ringing, not quite singing. The Bell Tree was the vessel of the Second Shard. When the Shard was recovered, the tree transformed — smaller, quieter, still present but diminished, as if it had fulfilled its purpose and was waiting.',
 
+  // Landmarks (Story 1)
+  "Watcher's Hill":
+    'A wooded rise above Drelmere reached only by a crooked stair of nine uneven steps and three sideways ones, where a leaning gate creaks open by itself and the symbols carved across its frame rearrange themselves the moment you look away. At the summit sits a hut that resembles a mushroom that gave up halfway into becoming a cottage — bookshelves stacked on chairs, a map pinned to the ceiling, and an interior larger than the outside has any right to be. This was the home of Eidon the Folder, the last Dreamer to remain after Drelmere\'s sanctuary collapsed. Travelers report that the hill is quieter now that he has unfolded.',
+
+  'The Gorge':
+    'A dry, narrow ravine outside Drelmere that yawns deeper than its banks suggest. To the casual eye it is empty stone and stirred dust, yet anything thrown into it returns the soft, distant chime of a bell. When the Bell Tree manifested, its true roots traced through the ground and converged here, marking the gorge as the Tree\'s hidden trunk. Tucked into the far wall behind a fold of jagged stone is a slit of an entrance ringed with iron bars and silver-veined carvings — sealed by the riddle "Together, unfold what was folded," which opens to those who simply spell out "TO ENTER."',
+
+  'The Bound Chamber':
+    'A vast subterranean cavern beneath the Drelmere Gorge where time grows heavy and the seconds press down like stone. Coal-black roots as thick as limbs climb the walls into a ceiling that fades into shadow, and beneath their bark are etched twenty-two silver spirals — the same spirals that pattern the Bell Tree\'s bells. This is the chamber where Eidon the Folder unfolded into the man he had always been, and where Kerr, Mira, and Thom first read the sequence that would call the Second Shard into the world. The tunnel that leads here does not always lead back.',
+
+  'The Hollow Vale':
+    'A wild, low-lying basin west of the family cottage where the canopy closes overhead and the streams forget their direction by midday. Kaerlin and Mira scouted the Hollow Vale on their earliest expeditions, mapping the first Fray distortions their father had marked but never reached. Locals avoid it because compasses spin slowly here, as though the threads beneath the soil have not yet decided which way is north.',
+
+  'The Bramble Hills':
+    'A thorned ridge country that once lay between Drelmere and the southern Vale, where the brambles grow thick enough to swallow paths and reroute caravans by morning. Older maps still show a four-day route through the Hills to Drelmere; current travel rarely matches what the maps promise. Hunters speak of crossing the same gully twice in a single afternoon, then arriving somewhere they had not been heading.',
+
+  'Triumvirate Chapel':
+    'A moss-swallowed shrine at the edge of Drelmere bearing a cracked statue of the Triumvirate — Time, Memory, and Flesh — whose hollow eyes still face the path into town. The chapel was a place of quiet observance for the Dreamers who once gathered in Drelmere, and its cold stone is said to retain the impressions of their meditations. Now half-collapsed and shadow-veined, it is the first ruin travelers pass when entering the valley, and the last thing they remember when they leave.',
+
 
   // ─── GLASS EXPANSE — Crystal Desert ───────────────────────
 
