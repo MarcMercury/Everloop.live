@@ -156,3 +156,33 @@ export async function getEntityDetails(entityId: string): Promise<EntityMatch | 
   
   return data
 }
+
+/**
+ * Returns canonical archive entities grouped/filterable for the flow builders.
+ * Lightweight — only fields needed for the picker UI.
+ */
+export async function getArchiveForPicker(): Promise<{
+  success: boolean
+  entities?: Array<{
+    id: string
+    name: string
+    type: string
+    description: string | null
+  }>
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('canon_entities')
+    .select('id, name, type, description')
+    .eq('status', 'canonical')
+    .order('type', { ascending: true })
+    .order('name', { ascending: true })
+    .limit(500)
+
+  if (error) {
+    console.error('Error fetching archive entities:', error)
+    return { success: false, error: error.message }
+  }
+  return { success: true, entities: data ?? [] }
+}
