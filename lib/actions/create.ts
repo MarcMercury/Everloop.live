@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import OpenAI from 'openai'
@@ -642,13 +642,21 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
       return { success: false, error: 'You can only edit your own entities' }
     }
 
-    if (existing.status !== 'draft') {
-      return { success: false, error: 'Only draft entities can be edited' }
-    }
+    // Creators can edit their own entities at any status. Canonical entities
+    // remain editable by their author so they can refine descriptions and
+    // refresh images post-approval; admins control promotion/demotion.
+    //
+    // RLS on canon_entities only permits creators to UPDATE rows whose
+    // status is 'draft'. To allow creators to edit their proposed/canonical
+    // entries (after we've manually verified ownership above) we route the
+    // write through the service-role admin client. If the service role key
+    // is unavailable we fall back to the user-scoped client, which still
+    // works for drafts.
+    const adminClient = createAdminClient()
+    const writeClient = adminClient ?? supabase
 
-    // Update the entity
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: updateError } = await (supabase as any)
+    const { error: updateError } = await (writeClient as any)
       .from('canon_entities')
       .update({
         name: input.name,
@@ -658,6 +666,7 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
           image_url: input.imageUrl || null,
           is_user_created: true,
         },
+        updated_at: new Date().toISOString(),
       })
       .eq('id', input.id)
       .eq('created_by', user.id)
@@ -669,6 +678,8 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
 
     revalidatePath('/roster')
     revalidatePath(`/create`)
+    revalidatePath('/explore')
+    revalidatePath(`/explore/${input.id}`)
 
     return { success: true }
   } catch (error) {
