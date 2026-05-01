@@ -82,8 +82,13 @@ export function CanonCard({ entity, className }: CanonCardProps) {
     })
   }
 
-  // Get entity image from metadata if available
-  const entityImage = (entity.metadata as { image_url?: string })?.image_url
+  // Get entity image. Admin/seeded entities store it in metadata.image_url;
+  // user-created entities (via the writing roster) store it in
+  // extended_lore.image_url. Fall back through both.
+  const entityImage =
+    (entity.metadata as { image_url?: string })?.image_url ||
+    (entity.extended_lore as { image_url?: string } | null)?.image_url ||
+    undefined
 
   return (
     <HoverCard openDelay={300} closeDelay={100}>
