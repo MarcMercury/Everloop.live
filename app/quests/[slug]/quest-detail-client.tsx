@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { joinQuest, leaveQuest } from '@/lib/actions/quests'
+import { joinQuest, leaveQuest, publishQuest } from '@/lib/actions/quests'
 import { Button } from '@/components/ui/button'
-import { Play, LogOut, Sword } from 'lucide-react'
+import { Play, LogOut, Sword, Send } from 'lucide-react'
 import Link from 'next/link'
 
 interface Props {
@@ -64,6 +64,18 @@ export default function QuestDetailClient({
     setLoading(false)
   }
 
+  async function handlePublish() {
+    setLoading(true)
+    setError(null)
+    const result = await publishQuest(questId)
+    if (result.success) {
+      router.refresh()
+    } else {
+      setError(result.error ?? 'Failed to publish quest')
+    }
+    setLoading(false)
+  }
+
   if (!isLoggedIn) {
     return (
       <div className="story-card p-6 text-center">
@@ -71,6 +83,34 @@ export default function QuestDetailClient({
         <Button onClick={() => router.push('/login')} className="btn-fantasy">
           Sign In to Play
         </Button>
+      </div>
+    )
+  }
+
+  // Creator-only: draft publish flow
+  if (isCreator && questStatus === 'draft') {
+    return (
+      <div className="story-card p-6 border-amber-500/30 bg-amber-500/5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-serif text-parchment flex items-center gap-2">
+              <span className="text-amber-400">Draft</span>
+              <span className="text-parchment">— ready to publish?</span>
+            </h3>
+            <p className="text-sm text-parchment-muted mt-1 max-w-lg">
+              This quest is saved but not yet visible to other players. Publish it to make it joinable from the Quest Portal.
+            </p>
+          </div>
+          <Button onClick={handlePublish} disabled={loading} className="btn-fantasy flex items-center gap-2 shrink-0">
+            <Send className="w-4 h-4" />
+            {loading ? 'Publishing...' : 'Publish Quest'}
+          </Button>
+        </div>
+        {error && (
+          <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            {error}
+          </div>
+        )}
       </div>
     )
   }

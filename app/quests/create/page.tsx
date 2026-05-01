@@ -53,6 +53,7 @@ export default function CreateQuestPage() {
     tags: '',
     regions: [] as string[],
     location_ids: [] as string[],
+    publish_now: true,
   })
 
   const [graph, setGraph] = useState<QuestFlowGraph>(() => defaultGraph())
@@ -150,6 +151,7 @@ export default function CreateQuestPage() {
       referenced_entities: form.location_ids,
       metadata: { regions: form.regions, location_ids: form.location_ids },
       quest_structure,
+      status: form.publish_now ? 'available' : 'draft',
     })
 
     if (result.success && result.quest) {
@@ -210,6 +212,27 @@ export default function CreateQuestPage() {
         </div>
 
         <QuestFlowBuilder initial={graph} onChange={setGraph} />
+
+        {/* Publish toggle */}
+        <div className="mt-6 p-4 rounded-lg border border-gold/20 bg-teal-rich/30 flex items-start gap-3">
+          <input
+            id="publish_now"
+            type="checkbox"
+            checked={form.publish_now}
+            onChange={e => setForm(f => ({ ...f, publish_now: e.target.checked }))}
+            className="mt-1 rounded border-gold/30 bg-teal-rich text-gold focus:ring-gold/40"
+          />
+          <label htmlFor="publish_now" className="flex-1 cursor-pointer">
+            <div className="text-sm text-parchment font-medium">
+              {form.publish_now ? 'Publish now — quest is immediately playable' : 'Save as draft — only you can see it'}
+            </div>
+            <div className="text-xs text-parchment-muted mt-0.5">
+              {form.publish_now
+                ? 'Other players will be able to find and join this quest from the Quest Portal.'
+                : 'You can refine the flow later and publish from the quest detail page when ready.'}
+            </div>
+          </label>
+        </div>
 
         {error && (
           <div className="mt-6 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">

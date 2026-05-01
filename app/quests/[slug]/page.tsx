@@ -75,6 +75,11 @@ export default async function QuestDetailPage({ params }: { params: Promise<{ sl
           {quest.is_official && (
             <span className="text-xs text-gold">Official</span>
           )}
+          {quest.status === 'draft' && (
+            <span className="px-2 py-0.5 text-xs rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400">
+              Draft
+            </span>
+          )}
         </div>
 
         <h1 className="text-4xl font-serif text-parchment mb-3">{quest.title}</h1>
