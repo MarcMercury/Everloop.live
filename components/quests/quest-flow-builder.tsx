@@ -601,8 +601,8 @@ function NodeInspector({
         <textarea
           value={node.data.description ?? ''}
           onChange={e => onChange({ description: e.target.value })}
-          rows={3}
-          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-none focus:outline-none focus:ring-2 focus:ring-gold/40"
+          rows={10}
+          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-gold/40"
           placeholder="What happens here? What should the narrator emphasize?"
         />
       </Field>
