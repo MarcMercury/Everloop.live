@@ -3,7 +3,16 @@ import { createClient } from '@/lib/supabase/server'
 import { CreateEntityForm } from './create-form'
 import { getEntity, type EntityType } from '@/lib/actions/create'
 
-const validTypes = ['character', 'location', 'creature', 'monster'] as const
+const validTypes = [
+  'character',
+  'location',
+  'creature',
+  'monster',
+  'artifact',
+  'faction',
+  'event',
+  'concept',
+] as const
 
 const typeConfig: Record<EntityType, { title: string; editTitle: string; description: string }> = {
   character: {
@@ -25,6 +34,26 @@ const typeConfig: Record<EntityType, { title: string; editTitle: string; descrip
     title: 'Create a Monster',
     editTitle: 'Edit Monster',
     description: 'Manifest a Drift-born horror — something that should not exist, but the Fray made real.',
+  },
+  artifact: {
+    title: 'Create an Artifact',
+    editTitle: 'Edit Artifact',
+    description: 'Forge a relic, weapon, or object of power that carries the weight of the Pattern.',
+  },
+  faction: {
+    title: 'Create a Faction',
+    editTitle: 'Edit Faction',
+    description: 'Bind a guild, order, cult, or movement to the Everloop\u2019s shifting alliances.',
+  },
+  event: {
+    title: 'Create an Event',
+    editTitle: 'Edit Event',
+    description: 'Mark a moment that fractured or reshaped the world \u2014 a cataclysm, a treaty, a vanishing.',
+  },
+  concept: {
+    title: 'Create a Concept',
+    editTitle: 'Edit Concept',
+    description: 'Define an idea, force, or principle that threads through the Everloop\u2019s deeper logic.',
   },
 }
 

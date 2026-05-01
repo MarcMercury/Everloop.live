@@ -30,7 +30,7 @@ function generateSlug(name: string): string {
   return `${baseSlug}-${timestamp}`
 }
 
-export type EntityType = 'character' | 'location' | 'creature' | 'monster'
+export type EntityType = 'character' | 'location' | 'creature' | 'monster' | 'artifact' | 'faction' | 'event' | 'concept'
 
 interface GenerateDescriptionInput {
   name: string
@@ -55,11 +55,26 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
       return { success: false, error: 'You must be logged in to use AI features' }
     }
 
-    const typeDescriptions = {
+    const typeDescriptions: Record<EntityType, string> = {
       character: 'a character in the Everloop, a world where reality is fractured into Shards — broken remnants of the Anchors that once held everything together. Characters are shaped by their relationship to the Shards: seeking them, protecting them, being changed by them, or drawn toward them without understanding why',
       location: 'a location in the Everloop, a world where the Pattern frays and reality fractures. Locations exist in tension with the forces beneath them — some still stand because a Shard holds them together, others crumble because the Fray runs deep. Monsters born from the Drift may haunt places where reality has broken',
       creature: 'a creature in the Everloop — a being that appeared only after the Fray, when the Rogue Architects broke the world. Creatures are manifestations of the Drift leaking through fractured reality: Pure Drift Intrusions (alien, unstable), Corrupted Reality (warped by Drift exposure), or Echo Constructs (formed from memory). If a creature exists, something broke in reality to let it through',
       monster: 'a monster in the Everloop — an uncontrolled manifestation of the Drift entering through the Fray. Monsters are NOT native to the Everloop. They appeared only after the Rogue Architects shattered the Anchors and the Fray cut from the Everloop through the Pattern, through the Fold, all the way to the Drift. They are raw existence forcing itself into form without rules — broken combinations of matter, memory, and intent. They lack consistent structure, stable identity, logical biology, or predictable behavior. If a monster exists, reality broke there for a reason tied to a Shard or the Fray',
+      artifact: 'an artifact in the Everloop — an object that has outlasted what was meant to hold it. Artifacts carry the residue of the Pattern, the Shards, or the Drift, and their power is rarely free of cost',
+      faction: 'a faction in the Everloop — an order, guild, cult, or movement bound by purpose. Factions are defined by what they protect, hunt, or remember about the Shards and the Fray',
+      event: 'an event in the Everloop — a moment that fractured, reshaped, or exposed the world. Events are remembered for what they took and what they made possible, and they trace back to the Shards, the Anchors, or the Fray',
+      concept: 'a concept in the Everloop — a force, idea, or recurrence that threads through the world\'s deeper logic. Concepts are felt through their consequences, surfacing in people, places, and Monsters alike',
+    }
+
+    const guidanceByType: Record<EntityType, string> = {
+      character: 'Suggests how this person relates to the Shards — are they seeking, guarding, changed by, or unknowingly drawn toward one?',
+      location: 'Hints at what hidden force holds this place together or tears it apart — a buried Shard, a Fray zone, the pull of something deeper',
+      creature: 'Implies what broke in reality to let this through — connect it to the Fray, the Drift, or a Shard. It is a consequence of instability, not a random being',
+      monster: 'Implies what broke in reality to let this through — connect it to the Fray, the Drift, or a Shard. It is a consequence of instability, not a random being',
+      artifact: 'Hints at the artifact\'s origin and the cost of using it — its tie to the Shards, the Anchors, or the Drift',
+      faction: 'Suggests how this group relates to the Shards, the Anchors, or the Fray — what they protect, hunt, or refuse to forget',
+      event: 'Implies what fractured to make this moment possible — a Shard event, a Fray bleed, a mortal choice with cosmic weight',
+      concept: 'Hints at how this idea manifests through the Pattern, the Shards, or the Drift — what becomes legible only because this concept exists',
     }
 
     const prompt = input.existingDescription
@@ -74,7 +89,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          - Expands on the existing description
          - Adds sensory details and atmosphere
          - Hints at connections to the deeper forces shaping the world (Shards, the Fray, the Pattern)
-         - ${input.type === 'creature' || input.type === 'monster' ? 'Implies what broke in reality to let this through — connect it to the Fray, the Drift, or a Shard. It is a consequence of instability, not a random being' : input.type === 'character' ? 'Suggests how this person relates to the Shards — are they seeking, guarding, changed by, or unknowingly drawn toward one?' : 'Hints at what hidden force holds this place together or tears it apart — a buried Shard, a Fray zone, the pull of something deeper'}
+         - ${guidanceByType[input.type]}
          - Maintains a contemplative, atmospheric tone appropriate for ${typeDescriptions[input.type]}
          
          Return ONLY the description text, no headers or labels.`
@@ -88,7 +103,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          - Captures the essence of the name and tagline
          - Includes sensory details and atmosphere
          - Hints at connections to the deeper forces of the Everloop — Shards, the Fray, the Pattern
-         - ${input.type === 'creature' || input.type === 'monster' ? 'Implies what fractured in reality to birth this being. Monsters are consequences of the Fray, not random beings. Connect it to the Drift, the Fray, or a Shard' : input.type === 'character' ? 'Suggests their relationship to the hidden forces shaping the world — the Shards that pull everything toward convergence' : 'Hints at what remains beneath this place — a Shard, a Fray zone, an instability that draws or repels'}
+         - ${guidanceByType[input.type]}
          - Maintains a contemplative, atmospheric tone
          
          Return ONLY the description text, no headers or labels.`
@@ -141,6 +156,10 @@ const DEFAULT_STYLE_BY_TYPE: Record<EntityType, string> = {
   location: 'fantasy-oil',
   creature: 'dark-fantasy',
   monster: 'dark-fantasy',
+  artifact: 'fantasy-oil',
+  faction: 'fantasy-oil',
+  event: 'fantasy-oil',
+  concept: 'ethereal-watercolor',
 }
 
 /**
@@ -175,6 +194,14 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
       creature: 'Single creature portrait, full body, three-quarter angle, environment readable but secondary.',
       monster:
         'Single creature subject, full body in frame, three-quarter angle, scale and anatomy must match the description exactly. Environment should be atmospheric but secondary to the creature.',
+      artifact:
+        'Centered object study of a single artifact, three-quarter angle, soft directional lighting against a moody backdrop, no figures.',
+      faction:
+        'Iconic group composition — a banner, sigil, or representative gathering of members in their environment, evoking the faction\'s identity.',
+      event:
+        'Cinematic moment-of-event composition, dynamic action or aftermath, atmospheric lighting that conveys scale and consequence.',
+      concept:
+        'Abstract evocative illustration that visualises the idea symbolically — no literal figures unless described, dreamlike and atmospheric.',
     }
 
     const safeDescription = input.description.slice(0, 1500).trim()
