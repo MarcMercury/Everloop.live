@@ -48,6 +48,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Participation does not match quest' }, { status: 403 })
   }
 
+  // Load the designer's quest_structure so the narrator can follow the intended flow
+  const { data: questRow } = await supabase
+    .from('quests')
+    .select('quest_structure')
+    .eq('id', questId)
+    .single()
+  const questStructure = (questRow as { quest_structure?: Record<string, unknown> } | null)?.quest_structure ?? null
+
   // Build narrator style
   const style = config?.style ?? 'atmospheric'
   const pacing = config?.pacing ?? 'moderate'
@@ -146,6 +154,40 @@ Weave these into the narration naturally. If a trait would reveal extra informat
 
 ## Everloop Mode Active
 The world has Everloop elements: reality can fracture, time loops exist, the Fray permeates everything. Weave subtle hints of the Loop's instability into the environment. Monsters — manifestations of the Drift leaking through broken reality — may appear where the Fray is strongest. They are never random; they are symptoms of something deeper. Everything in this quest should quietly pull toward a Shard, even if the player doesn't know it yet.`
+  }
+
+  // Append the designer's quest flow as narrative scaffolding (without exposing it verbatim)
+  if (questStructure && typeof questStructure === 'object') {
+    const flow = (questStructure as { flow?: { nodes?: Array<{ id: string; kind: string; data?: Record<string, unknown> }>; edges?: Array<{ source: string; target: string }> } }).flow
+    if (flow?.nodes?.length) {
+      const beats = flow.nodes
+        .map(n => {
+          const d = n.data ?? {}
+          const label = (d.label as string) ?? n.kind
+          const desc = (d.description as string) ?? ''
+          const extras: string[] = []
+          if (n.kind === 'encounter' && d.monsters) extras.push(`monsters: ${d.monsters}`)
+          if (n.kind === 'npc' && d.npc_name) extras.push(`npc: ${d.npc_name}`)
+          if (n.kind === 'skill_check' && d.ability) extras.push(`check: ${d.ability}${d.dc ? ` DC ${d.dc}` : ''}`)
+          if (n.kind === 'choice' && d.outcomes) extras.push(`outcomes: ${(d.outcomes as string).replace(/\n/g, ' / ')}`)
+          if (n.kind === 'reward' && d.reward) extras.push(`reward: ${d.reward}`)
+          const tail = extras.length ? ` [${extras.join('; ')}]` : ''
+          return `- (${n.id}) ${n.kind.toUpperCase()} :: ${label}${desc ? ` — ${desc}` : ''}${tail}`
+        })
+        .join('\n')
+      const edges = (flow.edges ?? []).map(e => `${e.source} -> ${e.target}`).join(', ')
+      systemPrompt += `
+
+## Designer's Quest Outline (CRITICAL — follow this flow)
+The designer has authored this quest as a directed graph of beats. Use this as your skeleton: introduce these beats in roughly this order, honor the branches, and steer the player back to the main thread when they wander. NEVER read this list aloud — it is your private outline.
+
+Beats:
+${beats}
+
+Connections: ${edges || '(none yet)'}
+
+Use the Hook beat as the opening, weave through Scenes and Encounters, present Choices as genuine forks, narrate Skill Checks with appropriate tension, deliver Rewards meaningfully, and culminate in the Goal. The Goal should reveal the Shard-tied truth at the heart of the quest.`
+    }
   }
 
   // Build messages from history

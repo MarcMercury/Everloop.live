@@ -182,6 +182,7 @@ export async function createQuest(input: {
   referenced_entities?: string[]
   metadata?: Record<string, unknown>
   quest_structure?: Record<string, unknown>
+  status?: 'draft' | 'available'
 }): Promise<{ success: boolean; quest?: Quest; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -222,7 +223,7 @@ export async function createQuest(input: {
         branching_points: [],
       },
       created_by: user.id,
-      status: 'draft',
+      status: input.status ?? 'available',
     })
     .select()
     .single()
@@ -233,6 +234,32 @@ export async function createQuest(input: {
   }
 
   revalidatePath('/quests')
+  return { success: true, quest: data as unknown as Quest }
+}
+
+export async function publishQuest(idOrSlug: string): Promise<{ success: boolean; quest?: Quest; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
+  const column = isUuid ? 'id' : 'slug'
+
+  const { data, error } = await supabase
+    .from('quests')
+    .update({ status: 'available', updated_at: new Date().toISOString() })
+    .eq(column, idOrSlug)
+    .eq('created_by', user.id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error publishing quest:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/quests')
+  revalidatePath(`/quests/${data.slug}`)
   return { success: true, quest: data as unknown as Quest }
 }
 

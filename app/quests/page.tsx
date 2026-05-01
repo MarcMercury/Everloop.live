@@ -55,6 +55,7 @@ export default async function QuestsPage() {
 
   // Fetch my active quest participations
   let myActiveQuests: QuestRow[] = []
+  let myCreatedQuests: QuestRow[] = []
   if (user) {
     const { data: participations } = await supabase
       .from('quest_participants')
@@ -70,6 +71,14 @@ export default async function QuestsPage() {
         .in('id', activeIds)
       myActiveQuests = (data ?? []) as unknown as QuestRow[]
     }
+
+    // Quests this user created (any status — including drafts) so they can find and publish them
+    const { data: created } = await supabase
+      .from('quests')
+      .select('*, creator:profiles!quests_created_by_fkey(id, username, display_name, avatar_url)')
+      .eq('created_by', user.id)
+      .order('updated_at', { ascending: false })
+    myCreatedQuests = (created ?? []) as unknown as QuestRow[]
   }
 
   const featured = quests.filter(q => q.status === 'featured')
@@ -128,6 +137,21 @@ export default async function QuestsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myActiveQuests.map(quest => (
               <QuestCard key={quest.id} quest={quest} isActive />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* My Created Quests (drafts + published) */}
+      {myCreatedQuests.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-serif text-parchment mb-4">
+            <Plus className="w-5 h-5 inline mr-2 text-gold" />
+            My Quests
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {myCreatedQuests.map(quest => (
+              <QuestCard key={quest.id} quest={quest} />
             ))}
           </div>
         </section>
@@ -228,6 +252,12 @@ function QuestCard({ quest, isActive }: { quest: QuestRow; isActive?: boolean })
       {isActive && (
         <div className="mt-3 px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-xs text-center">
           In Progress
+        </div>
+      )}
+
+      {quest.status === 'draft' && (
+        <div className="mt-3 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs text-center">
+          Draft — not yet published
         </div>
       )}
 

@@ -31,23 +31,29 @@ const typeColors: Record<string, string> = {
   creature: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
 }
 
-async function getUserEntities(userId: string, statusFilter?: 'draft' | 'proposed' | 'all') {
+async function getUserEntities(
+  userId: string,
+  statusFilter?: 'draft' | 'proposed' | 'canonical' | 'all',
+) {
   const supabase = await createClient()
-  
+
   let query = supabase
     .from('canon_entities')
     .select('id, name, slug, type, status, description, extended_lore, created_at')
     .eq('created_by', userId)
     .order('created_at', { ascending: false })
 
-  // Filter by status
+  // Filter by status. The roster is the creator's view of *everything*
+  // they've made, including entities that have been promoted to canon —
+  // the creator should still see and manage their own work.
   if (statusFilter === 'draft') {
     query = query.eq('status', 'draft')
   } else if (statusFilter === 'proposed') {
     query = query.eq('status', 'proposed')
+  } else if (statusFilter === 'canonical') {
+    query = query.eq('status', 'canonical')
   } else {
-    // 'all' - show both draft and proposed (not canonical, those are in explore)
-    query = query.in('status', ['draft', 'proposed'])
+    query = query.in('status', ['draft', 'proposed', 'canonical'])
   }
 
   const { data, error } = await query
@@ -86,7 +92,7 @@ export default async function RosterPage({
 
   const params = await searchParams
   const typeFilter = params.type as 'character' | 'location' | 'creature' | undefined
-  const statusFilter = (params.status || 'all') as 'draft' | 'proposed' | 'all'
+  const statusFilter = (params.status || 'all') as 'draft' | 'proposed' | 'canonical' | 'all'
 
   const allEntities = await getUserEntities(user.id, statusFilter)
   const usageStats = await getUserEntityUsageStats(user.id)
@@ -107,6 +113,7 @@ export default async function RosterPage({
     all: allEntities.length,
     draft: allEntities.filter(e => e.status === 'draft').length,
     proposed: allEntities.filter(e => e.status === 'proposed').length,
+    canonical: allEntities.filter(e => e.status === 'canonical').length,
   }
 
   return (
@@ -202,6 +209,15 @@ export default async function RosterPage({
                 Pending Review ({statusCounts.proposed})
               </Button>
             </Link>
+            <Link href={`/roster?${typeFilter ? `type=${typeFilter}&` : ''}status=canonical`}>
+              <Button
+                variant={statusFilter === 'canonical' ? "default" : "ghost"}
+                size="sm"
+              >
+                <Sparkles className="w-3 h-3 mr-1" />
+                Canonical ({statusCounts.canonical})
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -265,6 +281,12 @@ export default async function RosterPage({
                         <Badge className="absolute top-3 right-3 bg-amber-500/20 text-amber-400 border-amber-500/30">
                           <Clock className="w-3 h-3 mr-1" />
                           Pending
+                        </Badge>
+                      )}
+                      {entity.status === 'canonical' && (
+                        <Badge className="absolute top-3 right-3 bg-gold/20 text-gold border-gold/30">
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Canonical
                         </Badge>
                       )}
                     </Link>
