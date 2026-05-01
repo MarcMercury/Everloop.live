@@ -1,8 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createCampaign } from '@/lib/actions/campaigns'
+import { getQuestsForPicker } from '@/lib/actions/quests'
+import CampaignFlowBuilder, {
+  defaultGraph as defaultCampaignGraph,
+  type CampaignFlowGraph,
+  type QuestSummary,
+} from '@/components/campaign/campaign-flow-builder'
 import { GAME_MODE_INFO } from '@/types/campaign'
 import type {
   GameMode,
@@ -31,6 +37,7 @@ const STEPS = [
   'Narrative',
   'World',
   'Players',
+  'Story Flow',
   'Review',
 ] as const
 
@@ -143,7 +150,39 @@ export default function CreateCampaignPage() {
     regions: [] as string[],
     location_ids: [] as string[],
     location_names: [] as string[],
+    // Publish toggle (false = save as draft, true = open lobby)
+    publish_now: false,
   })
+
+  // Story flow graph (designed in step 8)
+  const [graph, setGraph] = useState<CampaignFlowGraph>(defaultCampaignGraph())
+  const handleGraphChange = useCallback((g: CampaignFlowGraph) => setGraph(g), [])
+
+  // Quest pool for the flow builder
+  const [availableQuests, setAvailableQuests] = useState<QuestSummary[]>([])
+  useEffect(() => {
+    let cancelled = false
+    getQuestsForPicker()
+      .then(res => {
+        if (cancelled) return
+        if (res.success && res.quests) {
+          setAvailableQuests(
+            res.quests.map(q => ({
+              id: q.id,
+              slug: q.slug,
+              title: q.title,
+              quest_type: q.quest_type,
+              difficulty: q.difficulty,
+              status: q.status,
+            })),
+          )
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Track which region is expanded in the location picker
   const [activeLocationRegion, setActiveLocationRegion] = useState<string | null>(null)
@@ -271,8 +310,17 @@ export default function CreateCampaignPage() {
       fray_intensity: form.fray_intensity,
       tags: form.regions.map(r => `region:${r}`),
       referenced_entities: form.location_ids,
-      metadata: { regions: form.regions, location_ids: form.location_ids, location_names: form.location_names },
-      status: 'draft',
+      metadata: {
+        regions: form.regions,
+        location_ids: form.location_ids,
+        location_names: form.location_names,
+        flow: { nodes: graph.nodes, edges: graph.edges },
+        embedded_quest_ids: graph.nodes
+          .filter(n => n.data?.kind === 'quest' && n.data?.quest_id)
+          .map(n => n.data.quest_id as string),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      status: form.publish_now ? 'lobby' : 'draft',
     })
 
     if (result.success && result.campaign) {
@@ -892,6 +940,9 @@ export default function CreateCampaignPage() {
   }
 
   function renderReview() {
+    const embeddedCount = graph.nodes.filter(
+      n => n.data?.kind === 'quest' && n.data?.quest_id,
+    ).length
     return (
       <div className="space-y-4">
         <h2 className="text-xl font-serif text-parchment">Campaign Summary</h2>
@@ -972,15 +1023,78 @@ export default function CreateCampaignPage() {
               <p className="text-sm text-parchment mt-1">{form.description}</p>
             </div>
           )}
+          <div className="border-t border-gold/10 pt-3">
+            <span className="text-xs text-parchment-muted">Story Flow</span>
+            <p className="text-sm text-parchment mt-1">
+              {graph.nodes.length} beat{graph.nodes.length === 1 ? '' : 's'},{' '}
+              {graph.edges.length} connection{graph.edges.length === 1 ? '' : 's'}
+              {embeddedCount > 0 ? ` · ${embeddedCount} embedded quest${embeddedCount === 1 ? '' : 's'}` : ''}
+            </p>
+          </div>
+        </div>
+
+        {/* Publish toggle */}
+        <div className="story-card p-5 border-fuchsia-400/20">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.publish_now}
+              onChange={e => setForm(f => ({ ...f, publish_now: e.target.checked }))}
+              className="mt-1 rounded border-gold/30 bg-teal-rich text-gold focus:ring-gold/40"
+            />
+            <div>
+              <div className="text-sm text-parchment font-medium">
+                Open the lobby now (recruit players)
+              </div>
+              <p className="text-xs text-parchment-muted mt-0.5">
+                If unchecked, the campaign saves as a draft only you can see —
+                you can publish it later from the campaign page.
+              </p>
+            </div>
+          </label>
         </div>
       </div>
     )
   }
 
-  const stepRenderers = [renderIdentity, renderStructure, renderDifficulty, renderRules, renderNarrative, renderWorld, renderPlayers, renderReview]
+  function renderStoryFlow() {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-serif text-parchment mb-1">
+            Story Flow
+          </h2>
+          <p className="text-sm text-parchment-muted">
+            Design the narrative spine of your campaign as a flow chart. Add
+            chapters, scenes, encounters, NPCs, branching choices — and embed{' '}
+            <span className="text-fuchsia-300">entire saved quests</span> as
+            full layers of the campaign. Each Quest beat carries its own flow
+            into your campaign.
+          </p>
+        </div>
+
+        <CampaignFlowBuilder
+          initial={graph}
+          onChange={handleGraphChange}
+          availableQuests={availableQuests}
+        />
+
+        <p className="text-xs text-parchment-muted/80 italic">
+          Tip: drag from the bottom dot of one node to the top dot of the next
+          to connect them. Click a node to edit it. The Director / AI co-DM
+          uses this flow as a private outline during play — never read aloud.
+        </p>
+      </div>
+    )
+  }
+
+  const stepRenderers = [renderIdentity, renderStructure, renderDifficulty, renderRules, renderNarrative, renderWorld, renderPlayers, renderStoryFlow, renderReview]
+
+  // Wider container on the flow step (canvas needs room)
+  const isFlowStep = STEPS[step] === 'Story Flow'
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-12">
+    <div className={`${isFlowStep ? 'max-w-7xl' : 'max-w-3xl'} mx-auto px-6 py-12`}>
       <Link href="/campaigns" className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" />
         Back to Campaigns

@@ -458,3 +458,53 @@ export async function getEverloopNarrativeTags(): Promise<{
 
   return { success: true, tags: data ?? [] }
 }
+
+// =====================================================
+// QUEST PICKER (for campaign flow builder)
+// Returns a lightweight list of quests the current user can embed
+// into a campaign: their own quests (any status) + published ones.
+// =====================================================
+export async function getQuestsForPicker(): Promise<{
+  success: boolean
+  quests?: Array<{
+    id: string
+    slug: string
+    title: string
+    quest_type: string | null
+    difficulty: string | null
+    status: string | null
+  }>
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // User's own quests (any status)
+  let mine: any[] = []
+  if (user) {
+    const { data } = await supabase
+      .from('quests')
+      .select('id, slug, title, quest_type, difficulty, status')
+      .eq('created_by', user.id)
+      .order('updated_at', { ascending: false })
+    mine = data ?? []
+  }
+
+  // Public/published quests
+  const { data: published } = await supabase
+    .from('quests')
+    .select('id, slug, title, quest_type, difficulty, status')
+    .in('status', ['available', 'featured'])
+    .order('updated_at', { ascending: false })
+    .limit(50)
+
+  const all = [...mine, ...(published ?? [])]
+  const seen = new Set<string>()
+  const unique = all.filter(q => {
+    if (seen.has(q.id)) return false
+    seen.add(q.id)
+    return true
+  })
+
+  return { success: true, quests: unique }
+}
