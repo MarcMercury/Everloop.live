@@ -265,7 +265,7 @@ export async function publishQuest(idOrSlug: string): Promise<{ success: boolean
 
 export async function updateQuest(
   id: string,
-  updates: Partial<Pick<Quest, 'title' | 'description' | 'quest_type' | 'difficulty' | 'estimated_duration' | 'min_participants' | 'max_participants' | 'everloop_overlay' | 'ai_narrator_config' | 'quest_structure' | 'status' | 'tags'>>
+  updates: Partial<Pick<Quest, 'title' | 'description' | 'quest_type' | 'difficulty' | 'estimated_duration' | 'min_participants' | 'max_participants' | 'everloop_overlay' | 'ai_narrator_config' | 'quest_structure' | 'status' | 'tags' | 'referenced_entities' | 'metadata'>>
 ): Promise<{ success: boolean; quest?: Quest; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -273,7 +273,7 @@ export async function updateQuest(
 
   const { data, error } = await supabase
     .from('quests')
-    .update(updates)
+    .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('created_by', user.id)
     .select()
@@ -286,7 +286,44 @@ export async function updateQuest(
 
   revalidatePath('/quests')
   revalidatePath(`/quests/${id}`)
+  if (data?.slug) revalidatePath(`/quests/${data.slug}`)
   return { success: true, quest: data as unknown as Quest }
+}
+
+export async function deleteQuest(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Verify ownership and that the quest is still a draft (we don't allow deleting published quests)
+  const { data: quest, error: fetchErr } = await supabase
+    .from('quests')
+    .select('id, status, created_by')
+    .eq('id', id)
+    .single()
+
+  if (fetchErr || !quest) return { success: false, error: 'Quest not found' }
+  if (quest.created_by !== user.id) return { success: false, error: 'Not authorized' }
+  if (quest.status !== 'draft') {
+    return { success: false, error: 'Only draft quests can be deleted' }
+  }
+
+  // Clean up any participants (drafts shouldn't have any, but be safe)
+  await supabase.from('quest_participants').delete().eq('quest_id', id)
+
+  const { error } = await supabase
+    .from('quests')
+    .delete()
+    .eq('id', id)
+    .eq('created_by', user.id)
+
+  if (error) {
+    console.error('Error deleting quest:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath('/quests')
+  return { success: true }
 }
 
 // =====================================================
