@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getConvergenceState } from '@/lib/data/world-state'
 import { Plus, Users, Clock, Sparkles, Compass, Zap, Globe, Bot } from 'lucide-react'
 import { WorldPulse } from '@/components/world-pulse'
+import MyQuestCard from '@/components/quests/my-quest-card'
 
 interface QuestRow {
   id: string
@@ -151,7 +152,7 @@ export default async function QuestsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {myCreatedQuests.map(quest => (
-              <QuestCard key={quest.id} quest={quest} />
+              <MyQuestCard key={quest.id} quest={quest} />
             ))}
           </div>
         </section>
