@@ -47,7 +47,10 @@ import {
   Plus,
   AlertTriangle,
   CheckCircle2,
+  Wand2,
+  Copy,
 } from 'lucide-react'
+import { ArchivePicker, autoLayout, type ArchiveRef } from '@/components/flow/flow-shared'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,6 +77,8 @@ export interface QuestNodeData {
   dc?: number
   reward?: string
   outcomes?: string
+  /** Linked canonical entities from the Archive. */
+  archive_refs?: ArchiveRef[]
 }
 
 export interface QuestFlowGraph {
@@ -185,9 +190,22 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
   const Icon = meta.icon
   const isTerminal = data.kind === 'hook' || data.kind === 'goal'
 
+  // Branch handles for Choice node: one per outcome line.
+  const branches = useMemo(() => {
+    if (data.kind !== 'choice') return [] as { id: string; label: string }[]
+    const lines = (data.outcomes ?? '')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+    if (lines.length === 0) return [{ id: 'b0', label: 'Branch 1' }]
+    return lines.map((label, i) => ({ id: `b${i}`, label }))
+  }, [data.kind, data.outcomes])
+
+  const archiveRefs = data.archive_refs ?? []
+
   return (
     <div
-      className={`relative rounded-lg border-2 bg-gradient-to-br ${meta.bg} ${meta.color} backdrop-blur-sm shadow-lg transition-all min-w-[180px] max-w-[220px] ${
+      className={`relative rounded-lg border-2 bg-gradient-to-br ${meta.bg} ${meta.color} backdrop-blur-sm shadow-lg transition-all min-w-[200px] max-w-[240px] ${
         selected ? 'ring-2 ring-gold/70 scale-[1.02]' : ''
       }`}
     >
@@ -225,6 +243,43 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
             {data.monsters}
           </div>
         )}
+        {/* Archive chips */}
+        {archiveRefs.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {archiveRefs.slice(0, 4).map(r => (
+              <span
+                key={r.id}
+                className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/10 border border-gold/30 text-gold/90"
+                title={`${r.type}: ${r.name}`}
+              >
+                {r.name}
+              </span>
+            ))}
+            {archiveRefs.length > 4 && (
+              <span className="text-[9px] text-parchment-muted">
+                +{archiveRefs.length - 4}
+              </span>
+            )}
+          </div>
+        )}
+        {/* Branch labels for Choice */}
+        {data.kind === 'choice' && branches.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-purple-400/20 space-y-0.5">
+            {branches.map((b, i) => (
+              <div
+                key={b.id}
+                className="text-[10px] text-purple-200/90 flex items-center gap-1"
+                style={{ paddingRight: 6 }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400/80 shrink-0" />
+                <span className="truncate">{b.label}</span>
+                <span className="ml-auto text-[9px] text-purple-300/60">
+                  {String.fromCharCode(65 + i)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         {isTerminal && (
           <div className="text-[10px] text-gold/60 mt-1 italic">
             {data.kind === 'hook' ? 'Quest entry' : 'Quest culmination'}
@@ -232,8 +287,23 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
         )}
       </div>
 
-      {/* Bottom handle (source) — goal has none */}
-      {data.kind !== 'goal' && (
+      {/* Bottom handle(s) */}
+      {data.kind === 'goal' ? null : data.kind === 'choice' ? (
+        // One labeled handle per outcome, evenly distributed across the bottom edge.
+        branches.map((b, i) => {
+          const left = ((i + 1) / (branches.length + 1)) * 100
+          return (
+            <Handle
+              key={b.id}
+              id={b.id}
+              type="source"
+              position={Position.Bottom}
+              style={{ left: `${left}%` }}
+              className="!w-3 !h-3 !bg-purple-400 !border-2 !border-teal-deep"
+            />
+          )
+        })
+      ) : (
         <Handle
           type="source"
           position={Position.Bottom}
@@ -365,20 +435,37 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
     [],
   )
   const onConnect = useCallback(
-    (conn: Connection) =>
+    (conn: Connection) => {
+      // Find the source node — if it's a Choice, label the edge with the branch outcome.
+      let label: string | undefined
+      const src = conn.source ? nodes.find(n => n.id === conn.source) : null
+      if (src && src.data.kind === 'choice' && conn.sourceHandle) {
+        const idx = parseInt(conn.sourceHandle.replace(/\D/g, '')) || 0
+        const lines = (src.data.outcomes ?? '')
+          .split('\n')
+          .map(l => l.trim())
+          .filter(Boolean)
+        label = lines[idx] ?? undefined
+      }
       setEdges(es =>
         addEdge(
           {
             ...conn,
             type: 'smoothstep',
             animated: true,
+            label,
+            labelStyle: { fill: '#e9d5ff', fontSize: 11, fontWeight: 500 },
+            labelBgStyle: { fill: 'rgba(76,29,149,0.7)' },
+            labelBgPadding: [4, 2],
+            labelBgBorderRadius: 4,
             style: { stroke: '#d4af37', strokeWidth: 2 },
             markerEnd: { type: MarkerType.ArrowClosed, color: '#d4af37' },
           },
           es,
         ),
-      ),
-    [],
+      )
+    },
+    [nodes],
   )
 
   // Add a node from the palette at a sensible position
@@ -416,6 +503,45 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
     setEdges(es => es.filter(e => e.source !== selectedId && e.target !== selectedId))
     setSelectedId(null)
   }
+
+  function duplicateSelected() {
+    if (!selectedId) return
+    const node = nodes.find(n => n.id === selectedId)
+    if (!node || node.data.kind === 'hook' || node.data.kind === 'goal') return
+    const id = `n${idCounter.current++}`
+    const copy: Node<QuestNodeData> = {
+      ...node,
+      id,
+      position: { x: node.position.x + 40, y: node.position.y + 40 },
+      data: { ...node.data, label: node.data.label + ' (copy)' },
+      selected: false,
+    }
+    setNodes(ns => [...ns, copy])
+    setSelectedId(id)
+  }
+
+  function autoLayoutGraph() {
+    setNodes(ns => autoLayout(ns, edges, ['hook']))
+  }
+
+  // Keyboard: Delete / Backspace removes selected node (when not typing).
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+        e.preventDefault()
+        deleteSelected()
+      }
+      if ((e.key === 'd' || e.key === 'D') && (e.metaKey || e.ctrlKey) && selectedId) {
+        e.preventDefault()
+        duplicateSelected()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, nodes, edges])
 
   function updateSelected(patch: Partial<QuestNodeData>) {
     if (!selectedId) return
@@ -464,6 +590,12 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
         <div className="text-[10px] text-parchment-muted/70 italic mt-3 leading-relaxed">
           Drag onto the canvas, or click to add. Connect nodes by dragging from
           the bottom dot to the top dot of the next beat.
+        </div>
+        <div className="text-[10px] text-parchment-muted/70 italic mt-2 leading-relaxed">
+          <kbd className="px-1 rounded bg-teal-deep/60 border border-gold/15">Del</kbd>{' '}
+          remove ·{' '}
+          <kbd className="px-1 rounded bg-teal-deep/60 border border-gold/15">⌘D</kbd>{' '}
+          duplicate
         </div>
       </aside>
 
@@ -519,6 +651,33 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
             maskColor="rgba(0,0,0,0.6)"
           />
         </ReactFlow>
+
+        {/* Toolbar (top-left) */}
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={autoLayoutGraph}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur text-xs transition-colors"
+            title="Tidy the flow into a clean top-down layout"
+          >
+            <Wand2 className="w-3.5 h-3.5" />
+            Auto Layout
+          </button>
+          <button
+            type="button"
+            onClick={duplicateSelected}
+            disabled={
+              !selectedNode ||
+              selectedNode.data.kind === 'hook' ||
+              selectedNode.data.kind === 'goal'
+            }
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title="Duplicate the selected beat (⌘D)"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            Duplicate
+          </button>
+        </div>
 
         {/* Validation banner */}
         <div className="absolute top-3 right-3 max-w-xs z-10">
@@ -675,6 +834,37 @@ function NodeInspector({
           />
         </Field>
       )}
+
+      {/* Archive linker — wire this beat to canon entities */}
+      {(() => {
+        const allowedByKind: Record<QuestNodeKind, string[] | undefined> = {
+          hook: undefined,
+          scene: ['location', 'faction', 'event'],
+          encounter: ['monster', 'creature', 'location'],
+          choice: undefined,
+          npc: ['character', 'faction'],
+          skill_check: undefined,
+          reward: ['artifact', 'concept'],
+          goal: undefined,
+        }
+        const allowed = allowedByKind[node.data.kind]
+        const hintByKind: Partial<Record<QuestNodeKind, string>> = {
+          scene: 'Locations, factions, or events from the Archive that anchor this scene.',
+          encounter: 'Monsters or creatures from the Archive — their stats & lore are pulled in by the narrator.',
+          npc: 'Canon characters or factions this NPC belongs to.',
+          reward: 'Canon artifacts or concepts gained here.',
+        }
+        return (
+          <div className="pt-3 mt-3 border-t border-gold/10">
+            <ArchivePicker
+              value={node.data.archive_refs ?? []}
+              onChange={refs => onChange({ archive_refs: refs })}
+              allowedTypes={allowed}
+              hint={hintByKind[node.data.kind] ?? 'Pull anything from the Archive into this beat.'}
+            />
+          </div>
+        )
+      })()}
 
       {canDelete && (
         <button
