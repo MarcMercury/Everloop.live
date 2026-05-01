@@ -143,6 +143,94 @@ const typeConfigs: Record<EntityType, TypeConfig> = {
     ],
     emptyImageHint: 'Describe the monster\'s unstable form and the wrongness of reality around it, then generate its visual design',
   },
+
+  artifact: {
+    label: 'Artifact',
+    namePlaceholder: 'The Hollow Crown, Verisday\u2019s Compass...',
+    nameHint: 'Artifacts in the Everloop carry names worn smooth by hands long gone.',
+    taglinePlaceholder: 'A relic that remembers more than its bearer...',
+    taglineHint: 'What does it whisper to those who hold it?',
+    taglineExample: '"It hums when truth is spoken near it"',
+    descriptionPlaceholder: `Describe this object. Consider:
+
+\u2022 Its origin \u2014 who forged it, and what was lost in the making?
+\u2022 Its power \u2014 subtle or absolute? What does it cost to use?
+\u2022 Its tie to the Pattern \u2014 is it a Shard fragment, a Drift residue, or a relic of the Anchors?
+\u2022 What it has done \u2014 names it bears, blood it has touched.`,
+    descriptionHints: [
+      'Why does this artifact still exist when so much else has not?',
+      'Who hunts it, and who hides it?',
+      'What is the cost of using it?',
+      'How is it tied to a Shard or to the Fray?',
+    ],
+    emptyImageHint: 'Describe the artifact\u2019s form and aura, then generate its concept art',
+  },
+
+  faction: {
+    label: 'Faction',
+    namePlaceholder: 'The Order of the Last Hour, The Hollow Pact...',
+    nameHint: 'Factions are remembered by what they stood against as much as what they stood for.',
+    taglinePlaceholder: 'They keep the watch no one else will...',
+    taglineHint: 'What do outsiders say about them in a single line?',
+    taglineExample: '"They guard the seams the world forgot to stitch"',
+    descriptionPlaceholder: `Describe this group. Consider:
+
+\u2022 Their purpose \u2014 what do they exist to protect, destroy, or remember?
+\u2022 Their structure \u2014 hierarchical, scattered, secret?
+\u2022 Their relationship to the Shards, the Anchors, or the Fray
+\u2022 Their rituals, symbols, and the cost of joining`,
+    descriptionHints: [
+      'What truth do they hold that the world rejects?',
+      'Who are their rivals, and why?',
+      'What happens to those who leave?',
+      'How are they tied to the deeper forces of the Everloop?',
+    ],
+    emptyImageHint: 'Describe their banner, sigil, or a representative scene, then generate the image',
+  },
+
+  event: {
+    label: 'Event',
+    namePlaceholder: 'The Sundering, The Long Silence...',
+    nameHint: 'Events become legends in the Everloop \u2014 named for what they took, not what they were.',
+    taglinePlaceholder: 'The night the sky split open...',
+    taglineHint: 'A single line that captures the moment\u2019s weight.',
+    taglineExample: '"For three days, no one could remember their own name"',
+    descriptionPlaceholder: `Describe what happened. Consider:
+
+\u2022 The trigger \u2014 a Shard fracture, a Fray bleed, a mortal\u2019s choice?
+\u2022 The unfolding \u2014 hours, years, simultaneous everywhere?
+\u2022 The cost \u2014 lives, memory, geography, identity
+\u2022 The aftermath \u2014 what changed in the world, and what was hidden`,
+    descriptionHints: [
+      'What broke, and what was made by the breaking?',
+      'Who survived, and what did they pay to survive?',
+      'What is still unfolding from that moment?',
+      'How is this event tied to a Shard or the Fray?',
+    ],
+    emptyImageHint: 'Describe the event\u2019s defining image, then generate the cinematic moment',
+  },
+
+  concept: {
+    label: 'Concept',
+    namePlaceholder: 'The Endless Rebirth, The Pattern\u2019s Ache...',
+    nameHint: 'Concepts in the Everloop name the forces beneath naming.',
+    taglinePlaceholder: 'A truth the world keeps almost remembering...',
+    taglineHint: 'A line that hints at the idea without containing it.',
+    taglineExample: '"The grief that holds the world together"',
+    descriptionPlaceholder: `Describe this idea. Consider:
+
+\u2022 What it is \u2014 a force, a pattern, a recurrence, a wound?
+\u2022 How it manifests in the Everloop \u2014 in people, places, monsters, weather
+\u2022 Its relationship to the Pattern, the Drift, the Shards
+\u2022 Why it matters \u2014 what does its presence (or absence) shape?`,
+    descriptionHints: [
+      'How would someone notice this concept without naming it?',
+      'What does it cost to truly see this?',
+      'How does it bend toward the Shards or the Fray?',
+      'What other things in the Everloop only make sense because of this?',
+    ],
+    emptyImageHint: 'Describe a symbol or moment that evokes the concept, then generate an evocative image',
+  },
 }
 
 interface InitialData {
