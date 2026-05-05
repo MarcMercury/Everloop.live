@@ -25,6 +25,7 @@ import {
   Check,
   Crown,
   CrownIcon,
+  Wrench,
 } from 'lucide-react'
 
 interface UserRow {
@@ -56,6 +57,7 @@ export function UsersClient() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [resetLink, setResetLink] = useState<string | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [reconciling, setReconciling] = useState(false)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -180,6 +182,26 @@ export function UsersClient() {
     }
   }
 
+  const handleReconcile = async () => {
+    setReconciling(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/users/reconcile', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Reconcile failed')
+      showSuccess(
+        data.fixed > 0
+          ? `Reconciled ${data.fixed} orphan profile${data.fixed === 1 ? '' : 's'}`
+          : 'No orphan profiles found',
+      )
+      await fetchUsers()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Reconcile failed')
+    } finally {
+      setReconciling(false)
+    }
+  }
+
   // Filter users
   const filtered = users.filter(u => {
     const matchesSearch =
@@ -201,6 +223,7 @@ export function UsersClient() {
     active: users.filter(u => !u.is_banned).length,
     frozen: users.filter(u => u.is_banned).length,
     admins: users.filter(u => u.is_admin).length,
+    orphans: users.filter(u => !u.has_profile).length,
   }
 
   const formatDate = (d: string | null) => {
@@ -314,6 +337,27 @@ export function UsersClient() {
           className="text-parchment-muted"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleReconcile}
+          disabled={reconciling}
+          className="text-parchment-muted"
+          title={
+            stats.orphans > 0
+              ? `Backfill ${stats.orphans} missing profile${stats.orphans === 1 ? '' : 's'}`
+              : 'Backfill any auth users that are missing profiles'
+          }
+        >
+          {reconciling ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Wrench className="w-4 h-4" />
+          )}
+          <span className="ml-1 hidden sm:inline">
+            Reconcile{stats.orphans > 0 ? ` (${stats.orphans})` : ''}
+          </span>
         </Button>
       </div>
 

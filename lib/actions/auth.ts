@@ -61,19 +61,38 @@ export async function login(formData: FormData): Promise<AuthResult> {
     .single()
   
   if (profileError || !profile) {
-    // Profile missing - create one with fallback username from email
-    const fallbackUsername = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') + Date.now().toString(36).slice(-4)
-    const { error: createError } = await supabase
-      .from('profiles')
-      .insert({
-        id: data.user.id,
-        username: fallbackUsername,
-        display_name: data.user.user_metadata?.display_name || fallbackUsername,
-      } as never)
-    
-    if (createError) {
-      console.error('Failed to create missing profile on login:', createError)
-      // Don't fail login - user can fix profile later
+    // Profile missing - create one with a collision-safe fallback username.
+    // We try a few suffixes; if all collide we let the user proceed and rely
+    // on the admin reconcile_orphan_profiles() RPC to clean up.
+    const sanitized = email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '') || 'user'
+    const base = sanitized.length >= 3 ? sanitized : `user_${sanitized}`
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate =
+        attempt === 0
+          ? base
+          : `${base}_${Date.now().toString(36).slice(-4)}${attempt}`
+
+      const { error: createError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          username: candidate,
+          display_name: data.user.user_metadata?.display_name || candidate,
+        } as never)
+
+      if (!createError) break
+
+      const msg = createError.message.toLowerCase()
+      if (msg.includes('duplicate') && msg.includes('id')) {
+        // Trigger or another request beat us to it — that's fine.
+        break
+      }
+      if (!msg.includes('duplicate') && !msg.includes('unique')) {
+        console.error('[login] Failed to create missing profile:', createError)
+        break
+      }
+      // Username collision — loop and try a new suffix.
     }
   }
   
@@ -176,30 +195,32 @@ export async function signup(formData: FormData): Promise<AuthResult> {
     }
   }
   
-  // STEP 2: Explicitly create the profile (backup to database trigger)
-  // The database trigger should handle this, but we ensure it here for robustness
-  const { error: profileError } = await supabase
+  // STEP 2: Backstop profile creation only if the DB trigger missed it.
+  // We never overwrite a trigger-generated row — that could clobber a
+  // username the trigger had to suffix to resolve a collision and re-
+  // introduce the conflict for whoever owns the original name.
+  const { data: triggerProfile } = await supabase
     .from('profiles')
-    .upsert({
-      id: data.user.id,
-      username: username.toLowerCase(),
-      display_name: username,
-      role: 'writer',
-      reputation_score: 0,
-    } as never, { 
-      onConflict: 'id',
-      ignoreDuplicates: false 
-    })
-  
-  if (profileError) {
-    console.error('Error creating profile (trigger may handle):', profileError)
-    // Check if it's a genuine error vs duplicate (trigger already created it)
-    if (!profileError.message.includes('duplicate') && !profileError.message.includes('unique')) {
-      // Genuine error - but don't fail signup, the trigger should have handled it
-      console.error('Profile creation failed, relying on trigger:', profileError)
+    .select('id')
+    .eq('id', data.user.id)
+    .maybeSingle()
+
+  if (!triggerProfile) {
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: data.user.id,
+        username: username.toLowerCase(),
+        display_name: username,
+        role: 'writer',
+        reputation_score: 0,
+      } as never)
+
+    if (profileError && !profileError.message.toLowerCase().includes('duplicate')) {
+      console.error('[signup] Backstop profile insert failed:', profileError)
     }
   }
-  
+
   // STEP 3: Verify profile was created
   const { data: verifyProfile, error: verifyError } = await supabase
     .from('profiles')
