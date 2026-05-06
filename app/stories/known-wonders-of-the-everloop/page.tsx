@@ -29,7 +29,7 @@ const SECTIONS: Section[] = [
     paragraphs: [
       'It is the position of the Luminous Fold that a world not properly observed is a world only half-existing.',
       'For generations, our scholars have catalogued the measurable, the repeatable, and the provable. Yet beyond our ordered centers—beyond the radial cities and the known geometries—there lies a broader Everloop, one less inclined toward compliance.',
-      'This volume is the result of a forty-year expedition undertaken in the interest of correcting that imbalance.',
+      'This volume is the result of a four-Loop expedition undertaken in the interest of correcting that imbalance.',
       'What follows is not myth, nor rumor, nor the unreliable testimony of frightened villagers. It is record. It is classification. It is, insofar as such a thing is possible in a world of shifting structure, truth.',
       'That the reader may find certain interpretations… provincial, or that the peoples described herein may disagree with their classification, is both expected and, in many cases, unavoidable.',
       'The world is not required to understand itself.',

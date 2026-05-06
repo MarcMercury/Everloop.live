@@ -47,7 +47,7 @@ BEGIN
         'The Luminous Fold (Civilisation)',
         'the-luminous-fold-civilisation',
         'faction',
-        'The most ordered civilisation in the Everloop — a society built upon the conviction that reality may be measured, catalogued, and ultimately understood through structured systems. The Fold runs on Seconds, Minutes, Hours, Cycles (days), and Loops (years), and its institutions assume that those measurements describe a universal truth. Two great offices uphold the order: the Archivists (Vaultkeepers), who record and preserve structure, and the Iterants (Dreamers), whose controlled manipulation of probability is treated as a technical discipline rather than an art. The Fold''s philosophy holds that order is constructed, not discovered. Its limitation, slowly revealed by Archael Viremont''s journals, is that it mistakes consistency for truth.',
+        'The most ordered civilisation in the Everloop — a society built upon the conviction that reality may be measured, catalogued, and ultimately understood through structured systems. The Fold runs on Seconds, Minutes, Hours, Days, Cycles (30 Days), and Loops (10 Cycles), and its institutions assume that those measurements describe a universal truth. Two great offices uphold the order: the Archivists (Vaultkeepers), who record and preserve structure, and the Iterants (Dreamers), whose controlled manipulation of probability is treated as a technical discipline rather than an art. The Fold''s philosophy holds that order is constructed, not discovered. Its limitation, slowly revealed by Archael Viremont''s journals, is that it mistakes consistency for truth.',
         'canonical',
         0.85,
         ARRAY['civilisation', 'institution', 'luminous-fold', 'vaultkeepers', 'dreamers'],
