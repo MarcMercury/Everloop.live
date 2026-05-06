@@ -742,6 +742,82 @@ interface SaveCampaignMonsterInput {
   description: string
   imageUrl?: string
   monsterStats: CampaignMonsterStats
+  /**
+   * Optional. If provided, the existing canon_entities row will be updated
+   * (converted from story → campaign) instead of creating a new entity.
+   * The user must own this entity.
+   */
+  sourceEntityId?: string
+}
+
+/**
+ * List user-created Story Monsters — i.e. canon_entities of type='monster'
+ * created by the current user that do NOT yet have a monster_stats stat block.
+ * Used by the Campaign Monster wizard to "load / convert" a story monster.
+ */
+export async function getUserStoryMonsters(): Promise<{
+  success: boolean
+  monsters?: Array<{
+    id: string
+    name: string
+    tagline: string
+    description: string | null
+    imageUrl: string | null
+    createdAt: string
+  }>
+  error?: string
+}> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'You must be logged in' }
+    }
+
+    type Row = {
+      id: string
+      name: string
+      description: string | null
+      extended_lore: Record<string, unknown> | null
+      created_at: string
+    }
+
+    const { data, error } = await supabase
+      .from('canon_entities')
+      .select('id, name, description, extended_lore, created_at')
+      .eq('created_by', user.id)
+      .eq('type', 'monster')
+      .order('created_at', { ascending: false }) as { data: Row[] | null; error: Error | null }
+
+    if (error) {
+      console.error('Get story monsters error:', error)
+      return { success: false, error: 'Failed to load monsters' }
+    }
+
+    // Filter out monsters that already have a campaign stat block
+    const monsters = (data || [])
+      .filter((row) => {
+        const lore = row.extended_lore || {}
+        return !lore.monster_stats
+      })
+      .map((row) => {
+        const lore = row.extended_lore || {}
+        return {
+          id: row.id,
+          name: row.name,
+          tagline: (lore.tagline as string) || '',
+          description: row.description,
+          imageUrl: (lore.image_url as string | null) || null,
+          createdAt: row.created_at,
+        }
+      })
+
+    return { success: true, monsters }
+  } catch (error) {
+    console.error('Error listing story monsters:', error)
+    return { success: false, error: 'Failed to load monsters. Please try again.' }
+  }
 }
 
 /**
@@ -765,6 +841,95 @@ export async function saveCampaignMonster(input: SaveCampaignMonsterInput): Prom
     const slug = generateSlug(input.name)
     const stats = input.monsterStats
 
+    const extendedLore = {
+      tagline: input.tagline,
+      image_url: input.imageUrl || null,
+      is_user_created: true,
+      monster_stats: {
+        role: stats.role,
+        cr: stats.cr,
+        hp: stats.hp,
+        ac: stats.ac,
+        damage_per_round: stats.damagePerRound,
+        movements: stats.movements,
+        actions: stats.actions,
+        traits: stats.traits,
+        weaknesses: stats.weaknesses,
+      },
+      everloop_lore: {
+        what_broke_here: stats.whatBrokeHere,
+        what_leaked_through: stats.whatLeakedThrough,
+        drawn_to: stats.drawnTo,
+      },
+      region_id: stats.regionId,
+      is_one_off: stats.isOneOff,
+    }
+
+    const baseMetadata = {
+      created_via: 'campaign_monster_wizard',
+      monster_purpose: 'campaign',
+      region_id: stats.regionId,
+      is_one_off: stats.isOneOff,
+    }
+
+    // ─── CONVERT MODE: update an existing Story Monster in place ───
+    if (input.sourceEntityId) {
+      // Verify ownership and that it's actually a monster
+      const { data: existing, error: fetchErr } = await supabase
+        .from('canon_entities')
+        .select('id, type, created_by, metadata')
+        .eq('id', input.sourceEntityId)
+        .single() as {
+          data: { id: string; type: string; created_by: string; metadata: Record<string, unknown> | null } | null
+          error: Error | null
+        }
+
+      if (fetchErr || !existing) {
+        return { success: false, error: 'Source monster not found' }
+      }
+      if (existing.created_by !== user.id) {
+        return { success: false, error: 'You can only convert your own monsters' }
+      }
+      if (existing.type !== 'monster') {
+        return { success: false, error: 'Source entity is not a monster' }
+      }
+
+      const mergedMetadata = {
+        ...(existing.metadata || {}),
+        ...baseMetadata,
+        converted_from_story: true,
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase
+        .from('canon_entities') as any)
+        .update({
+          name: input.name,
+          slug,
+          description: input.description,
+          extended_lore: extendedLore,
+          metadata: mergedMetadata,
+        })
+        .eq('id', input.sourceEntityId)
+        .select('id, slug')
+        .single()
+
+      if (error) {
+        console.error('Convert story monster error:', error)
+        const errorMessage = error.code === '42501'
+          ? 'Permission denied - please contact support'
+          : error.message || 'Failed to convert monster'
+        return { success: false, error: errorMessage }
+      }
+
+      revalidatePath('/roster')
+      revalidatePath('/create')
+      revalidatePath(`/explore/${data.id}`)
+
+      return { success: true, entityId: data.id, slug: data.slug }
+    }
+
+    // ─── CREATE MODE: insert a brand new campaign monster ───
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase
       .from('canon_entities') as any)
@@ -775,35 +940,8 @@ export async function saveCampaignMonster(input: SaveCampaignMonsterInput): Prom
         description: input.description,
         status: 'draft',
         created_by: user.id,
-        extended_lore: {
-          tagline: input.tagline,
-          image_url: input.imageUrl || null,
-          is_user_created: true,
-          monster_stats: {
-            role: stats.role,
-            cr: stats.cr,
-            hp: stats.hp,
-            ac: stats.ac,
-            damage_per_round: stats.damagePerRound,
-            movements: stats.movements,
-            actions: stats.actions,
-            traits: stats.traits,
-            weaknesses: stats.weaknesses,
-          },
-          everloop_lore: {
-            what_broke_here: stats.whatBrokeHere,
-            what_leaked_through: stats.whatLeakedThrough,
-            drawn_to: stats.drawnTo,
-          },
-          region_id: stats.regionId,
-          is_one_off: stats.isOneOff,
-        },
-        metadata: {
-          created_via: 'campaign_monster_wizard',
-          monster_purpose: 'campaign',
-          region_id: stats.regionId,
-          is_one_off: stats.isOneOff,
-        },
+        extended_lore: extendedLore,
+        metadata: baseMetadata,
       })
       .select('id, slug')
       .single()

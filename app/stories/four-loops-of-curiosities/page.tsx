@@ -26,11 +26,11 @@ const FRONT_MATTER: string[] = [
 const ENTRIES: Entry[] = [
   {
     number: 'I',
-    title: 'Cycle 12 (contested), Third Quarter (approximate), Loop 1 — Departure from the Luminous Fold',
+    title: 'Cycle 8 (contested), Third Quarter (approximate), Loop 1 — Departure from the Luminous Fold',
     paragraphs: [
       'If these pages are opened by any hand other than mine in due return, then let it be understood: this was not composed for record, but for remembrance.',
       'I departed this morning from the outer ring of the Luminous Fold. The geometry of it remains exact in memory—the way light strikes stone in measured planes, the absence of scent beyond mineral and intent, the quiet certainty that each Hour belongs to the one that follows.',
-      'I note the time—Cycle 12, Third Quarter, Loop 1—with the understanding that such notation will not endure.',
+      'I note the time—Cycle 8, Third Quarter, Loop 1—with the understanding that such notation will not endure.',
       'Within Hours, I encountered three travelers. Each offered a different Cycle. None disputed the others.',
       '“The day moves correctly,” one said.',
       'I begin here, so that if I do not return, you will understand:',
@@ -76,7 +76,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'V',
-    title: 'Cycle 19, Loop 2 — Approaching the Ashen Spine',
+    title: 'Cycle 2, Loop 2 — Approaching the Ashen Spine',
     paragraphs: [
       'The air changes before the land.',
       'It grows dry, then sharp, carrying the taste of ash long before the first blackened ridge appears.',
@@ -88,7 +88,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'VI',
-    title: 'Cycle 23, Loop 2 — Interior of the Ashen Spine',
+    title: 'Cycle 4, Loop 2 — Interior of the Ashen Spine',
     paragraphs: [
       'Sleep is not easily achieved.',
       'The ground radiates heat well into darkness. The air trembles—visibly—distorting edges of stone and tool alike.',
@@ -113,7 +113,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'VIII',
-    title: 'Cycle 27, Late Quarter, Loop 2 — Varnhalt Frontier',
+    title: 'Cycle 7, Late Quarter, Loop 2 — Varnhalt Frontier',
     paragraphs: [
       'Varnhalt is noise.',
       'Metal striking wood. Voices overlapping. Animals calling. The air smells of sweat, iron, smoke, and fermented grain.',
@@ -209,7 +209,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'XVI',
-    title: 'Cycle 11 (estimated), Loop 3 — Bellroot Interior',
+    title: 'Cycle 10 (estimated), Loop 3 — Bellroot Interior',
     paragraphs: [
       'Two individuals worked side by side—one tending exposed roots, the other redirecting water flow.',
       'They did not speak.',
@@ -221,7 +221,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'XVII',
-    title: 'Cycle 41 (estimated), Loop 4 — Drowned Reach',
+    title: 'Cycle 5 (estimated), Loop 4 — Drowned Reach',
     paragraphs: [
       'Water obscures more than sight.',
       'Sound carries unevenly. Distant voices arrive as whispers. Nearby movement is muted.',
@@ -234,7 +234,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'XVIII',
-    title: 'Cycle 47 (approximate), Loop 4 — Beneath the Surface',
+    title: 'Cycle 8 (approximate), Loop 4 — Beneath the Surface',
     paragraphs: [
       'I descended briefly.',
       'Orientation failed immediately. Light fractured. Direction dissolved.',
@@ -278,7 +278,7 @@ const ENTRIES: Entry[] = [
   },
   {
     number: 'XXII',
-    title: 'Cycle 40, Final Quarter, Loop 4 — Closing Entry',
+    title: 'Cycle 10, Final Quarter, Loop 4 — Closing Entry',
     paragraphs: [
       'If these pages are read in my absence—',
       'Let them stand not as conclusions, but as interruption.',

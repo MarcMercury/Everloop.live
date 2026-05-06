@@ -75,7 +75,7 @@ export const REGIONS: EverloopRegion[] = [
       'Reality can be measured, catalogued, and understood',
       'Mistakes consistency for truth',
     ],
-    timeNote: 'The Fold runs on Seconds, Minutes, Hours, Cycles (days), and Loops (years) — and assumes the rest of the world does too.',
+    timeNote: 'The Fold runs on Seconds, Minutes, Hours, Days, Cycles (30 Days), and Loops (10 Cycles) — and assumes the rest of the world does too.',
   },
   {
     id: 'ashen',
