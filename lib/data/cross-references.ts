@@ -83,6 +83,48 @@ export async function getEntityCrossReferences(entityId: string): Promise<Entity
     }))
   }
 
+  // 1b. Static lore books (hand-authored pages in /app/stories/<slug>) that
+  // mention this entity. These have no row in `stories`; the Lore Agent
+  // populates `lore_book_references` after each canonization. We also fall
+  // back to the file-generated map so the Archive works before the first
+  // agent run completes.
+  const { data: loreRefs } = await supabase
+    .from('lore_book_references')
+    .select('book_slug, book_title, book_subtitle, book_author')
+    .eq('entity_id', entityId)
+
+  if (loreRefs && loreRefs.length > 0) {
+    result.stories.push(
+      ...(loreRefs as Array<{
+        book_slug: string
+        book_title: string
+        book_subtitle: string | null
+        book_author: string | null
+      }>).map((b) => ({
+        id: `lore-${b.book_slug}`,
+        title: b.book_subtitle ? `${b.book_title} — ${b.book_subtitle}` : b.book_title,
+        slug: b.book_slug,
+        canon_status: 'canonical',
+        author_username: b.book_author ?? 'Everloop Archive',
+      }))
+    )
+  } else {
+    // Fallback to static map if the DB table is empty (pre-agent state).
+    const { getLoreBooksForEntity } = await import('@/lib/data/lore-book-references')
+    const loreBooks = getLoreBooksForEntity(entityId)
+    if (loreBooks.length > 0) {
+      result.stories.push(
+        ...loreBooks.map((b) => ({
+          id: b.id,
+          title: `${b.title} — ${b.subtitle}`,
+          slug: b.slug,
+          canon_status: 'canonical',
+          author_username: b.author,
+        }))
+      )
+    }
+  }
+
   // 2. Quests that reference this entity
   // Note: After the campaigns→quests rename, there is only one table.
   // The legacy `campaigns` array on EntityCrossRef is kept empty for backwards

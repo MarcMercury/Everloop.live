@@ -131,22 +131,59 @@ export default async function EntityPage({ params }: EntityPageProps) {
     : null
 
   // Pre-linkify every string-valued extended-lore entry so that JSX render
-  // stays synchronous below. Object values are still rendered as JSON.
+  // stays synchronous below. Objects/arrays are rendered as nested lists.
+  const formatLoreKey = (k: string) =>
+    k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+
+  const renderLoreValue = async (value: unknown, depth: number): Promise<ReactNode> => {
+    if (value === null || value === undefined || value === '') return null
+    if (typeof value === 'string') {
+      return await linkifyEntities(value, {
+        excludeId: entity.id,
+        maxLinks: 10,
+        maxLinksPerEntity: 1,
+      })
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value)
+    }
+    if (Array.isArray(value)) {
+      const items = await Promise.all(value.map((v) => renderLoreValue(v, depth + 1)))
+      return (
+        <ul className="list-disc pl-5 space-y-1">
+          {items.map((node, i) => (
+            <li key={i} className="text-parchment-muted">
+              {node}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+    if (typeof value === 'object') {
+      const entries = Object.entries(value as Record<string, unknown>).filter(
+        ([, v]) => v !== null && v !== undefined && v !== ''
+      )
+      const rendered = await Promise.all(
+        entries.map(async ([k, v]) => ({ k, node: await renderLoreValue(v, depth + 1) }))
+      )
+      return (
+        <dl className={`space-y-2 ${depth > 0 ? 'pl-4 border-l border-gold/10' : ''}`}>
+          {rendered.map(({ k, node }) => (
+            <div key={k}>
+              <dt className="text-sm font-medium text-gold/80">{formatLoreKey(k)}</dt>
+              <dd className="text-parchment-muted mt-1">{node}</dd>
+            </div>
+          ))}
+        </dl>
+      )
+    }
+    return null
+  }
+
   const linkifiedExtendedLore: { key: string; value: ReactNode }[] = []
   if (extendedLore) {
     for (const [key, value] of Object.entries(extendedLore)) {
-      if (typeof value === 'string') {
-        linkifiedExtendedLore.push({
-          key,
-          value: await linkifyEntities(value, {
-            excludeId: entity.id,
-            maxLinks: 10,
-            maxLinksPerEntity: 1,
-          }),
-        })
-      } else {
-        linkifiedExtendedLore.push({ key, value: JSON.stringify(value, null, 2) })
-      }
+      linkifiedExtendedLore.push({ key, value: await renderLoreValue(value, 0) })
     }
   }
   const regionMeta = (entity.metadata as { region?: string })?.region
@@ -292,9 +329,9 @@ export default async function EntityPage({ params }: EntityPageProps) {
                       <h3 className="text-lg font-medium text-parchment capitalize mb-2">
                         {key.replace(/_/g, ' ')}
                       </h3>
-                      <p className="text-parchment-muted whitespace-pre-line">
+                      <div className="text-parchment-muted whitespace-pre-line">
                         {value}
-                      </p>
+                      </div>
                     </div>
                   ))}
                 </div>
