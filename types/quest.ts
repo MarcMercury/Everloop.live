@@ -64,6 +64,56 @@ export type IdolStatus = 'available' | 'held' | 'used' | 'destroyed' | 'corrupte
 export type NpcType = 'ally' | 'enemy' | 'neutral' | 'merchant' | 'quest_giver' | 'boss' | 'mysterious'
 
 // =====================================================
+// NARRATIVE FOUNDATION (Session Zero, Compass, Tone, Cogs)
+// =====================================================
+
+export type ScenePacing = 'slow' | 'medium' | 'fast'
+
+export interface SensoryAnchor {
+  label: string
+  note?: string | null
+}
+
+export type MessageTone = 'hushed' | 'steady' | 'urgent' | 'grim' | 'wondrous'
+
+export type TonePreference = 'light' | 'mixed' | 'dark'
+
+export interface HeartAnchor {
+  label: string
+  note?: string | null
+}
+
+export type CogTempo = 'crawl' | 'steady' | 'rushing'
+
+export interface WorldCog {
+  id: string
+  quest_id: string
+  faction: string
+  goal: string
+  tempo: CogTempo
+  current_state: string | null
+  next_beat: string | null
+  visible_to_players: boolean
+  shard_ref: number | null
+  fray_ref: string | null
+  last_advanced_at: string
+  created_at: string
+  updated_at: string
+}
+
+export interface WorldCogInsert {
+  quest_id: string
+  faction: string
+  goal: string
+  tempo?: CogTempo
+  current_state?: string | null
+  next_beat?: string | null
+  visible_to_players?: boolean
+  shard_ref?: number | null
+  fray_ref?: string | null
+}
+
+// =====================================================
 // CAMPAIGN SETTINGS
 // =====================================================
 
@@ -122,10 +172,27 @@ export interface ProgressionConfig {
 // NARRATIVE ENGINE SETTINGS
 // =====================================================
 
+export type NarrationStyle = 'dm_only' | 'narrator_only' | 'narrator_and_dm'
+
+export interface NarratorConfig {
+  /** Use a physical (or virtual) bell as a ritual cue between Narrator and DM. */
+  bell_ritual: boolean
+  /** Encourage the Narrator to stand, move, whisper, and physically embody NPCs. */
+  embodiment: boolean
+  /** Allow Narrator to whisper privately to individual players (split knowledge). */
+  private_whispers: boolean
+  /** Narrator handles atmosphere/NPCs; DM remains impartial mechanics arbiter. */
+  dm_neutral_arbiter: boolean
+}
+
 export interface NarrativeSettings {
   hidden_info_level: 'off' | 'light' | 'heavy'
   event_engine_intensity: 'off' | 'light' | 'active' | 'dominant'
   scene_based_mode: boolean
+  /** Who runs the session: a DM, a Narrator, or both (Live-Play split). */
+  narration_style?: NarrationStyle
+  /** Extra rules when a Narrator is at the table. Only used when narration_style includes a Narrator. */
+  narrator_config?: NarratorConfig
 }
 
 // =====================================================
@@ -297,6 +364,11 @@ export interface Quest {
   total_play_time_minutes: number
   tags: string[]
   metadata: Json
+  // Narrative foundation
+  hook: string | null
+  stakes_personal: string | null
+  stakes_world: string | null
+  stakes_mystery: string | null
   created_at: string
   updated_at: string
   // Joined data
@@ -346,6 +418,11 @@ export interface QuestInsert {
   join_code?: string | null
   tags?: string[]
   metadata?: Json
+  // Narrative foundation
+  hook?: string | null
+  stakes_personal?: string | null
+  stakes_world?: string | null
+  stakes_mystery?: string | null
 }
 
 export interface QuestUpdate {
@@ -380,6 +457,11 @@ export interface QuestUpdate {
   tags?: string[]
   session_count?: number
   total_play_time_minutes?: number
+  // Narrative foundation
+  hook?: string | null
+  stakes_personal?: string | null
+  stakes_world?: string | null
+  stakes_mystery?: string | null
 }
 
 export interface QuestPlayer {
@@ -413,6 +495,13 @@ export interface QuestPlayer {
   joined_at: string | null
   created_at: string
   updated_at: string
+  // Session Zero (safety + connection)
+  lines_text: string | null
+  veils_text: string | null
+  tone_preference: TonePreference | null
+  session_zero_completed_at: string | null
+  heart_anchors: HeartAnchor[]
+  player_wish: string | null
   // Joined data
   user?: {
     id: string
@@ -453,6 +542,12 @@ export interface QuestScene {
   status: SceneStatus
   linked_entities: string[]
   metadata: Json
+  // Narrative compass
+  feeling: string | null
+  reveal: string | null
+  choice: string | null
+  sensory_anchors: SensoryAnchor[]
+  pacing: ScenePacing | null
   created_at: string
   updated_at: string
 }
@@ -471,6 +566,12 @@ export interface QuestSceneInsert {
   dm_notes?: string | null
   narration?: string | null
   linked_entities?: string[]
+  // Narrative compass
+  feeling?: string | null
+  reveal?: string | null
+  choice?: string | null
+  sensory_anchors?: SensoryAnchor[]
+  pacing?: ScenePacing | null
 }
 
 export interface QuestSceneUpdate {
@@ -489,6 +590,12 @@ export interface QuestSceneUpdate {
   narration?: string | null
   status?: SceneStatus
   linked_entities?: string[]
+  // Narrative compass
+  feeling?: string | null
+  reveal?: string | null
+  choice?: string | null
+  sensory_anchors?: SensoryAnchor[]
+  pacing?: ScenePacing | null
 }
 
 export interface QuestSession {
@@ -509,6 +616,11 @@ export interface QuestSession {
   summary: string | null
   highlights: Json
   metadata: Json
+  // Live-play rituals
+  quill_holder: string | null
+  spotlight_player_ids: string[]
+  surprise_moment: string | null
+  party_lesson: string | null
   created_at: string
   updated_at: string
 }
@@ -525,6 +637,7 @@ export interface QuestMessage {
   reference_data: Json | null
   character_name: string | null
   is_hidden: boolean
+  tone: MessageTone | null
   created_at: string
   // Joined data
   sender?: {
@@ -593,6 +706,13 @@ export interface QuestNpc {
   is_visible: boolean
   current_scene_id: string | null
   metadata: Json
+  // Narrative depth
+  wants: string | null
+  wont: string | null
+  quirk: string | null
+  voice_note: string | null
+  why_here: string | null
+  shard_ref: number | null
   created_at: string
   updated_at: string
 }

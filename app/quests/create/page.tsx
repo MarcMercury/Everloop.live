@@ -9,6 +9,7 @@ import QuestFlowBuilder, {
   type QuestFlowGraph,
   type QuestSummary,
 } from '@/components/quests/quest-flow-builder'
+import DmCraftPanel from '@/components/quests/dm-craft-panel'
 import { GAME_MODE_INFO } from '@/types/quest'
 import type {
   GameMode,
@@ -20,6 +21,7 @@ import type {
   WorldPersistence,
   AiAssistLevel,
   CharacterEntryMode,
+  NarrationStyle,
 } from '@/types/quest'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -89,6 +91,12 @@ const ENTRY_MODE_OPTIONS: { value: CharacterEntryMode; label: string; desc: stri
   { value: 'dm_approval', label: 'DM Approval Required', desc: 'All characters must be approved' },
 ]
 
+const NARRATION_STYLE_OPTIONS: { value: NarrationStyle; label: string; icon: string; desc: string }[] = [
+  { value: 'dm_only', label: 'DM Only', icon: '🎲', desc: 'A single DM runs mechanics, narration, NPCs, and arbitration.' },
+  { value: 'narrator_only', label: 'Narrator Only', icon: '📖', desc: 'A storyteller drives the world. Mechanics are loose, theatrical, and freeform.' },
+  { value: 'narrator_and_dm', label: 'Narrator + DM (Live-Play)', icon: '🔔', desc: 'A Narrator weaves atmosphere & NPCs. A separate DM arbitrates mechanics. Storytelling is split from reality.' },
+]
+
 export default function CreateQuestPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -99,6 +107,10 @@ export default function CreateQuestPage() {
     // Step 1: Identity
     title: '',
     description: '',
+    hook: '',
+    stakes_personal: '',
+    stakes_world: '',
+    stakes_mystery: '',
     game_mode: 'classic' as GameMode,
     setting_name: 'everloop_world' as SettingName,
     tone: 'light_adventure' as QuestTone,
@@ -123,6 +135,13 @@ export default function CreateQuestPage() {
     progression_speed: 'standard' as 'fast' | 'standard' | 'slow',
     feats_enabled: true,
     multiclassing_enabled: true,
+    // Step 1 (cont): Narration mode
+    narration_style: 'dm_only' as NarrationStyle,
+    // Narrator-only / Narrator+DM live-play rituals
+    narrator_bell_ritual: false,
+    narrator_embodiment: false,
+    narrator_private_whispers: false,
+    narrator_dm_neutral_arbiter: false,
     // Step 5: Narrative
     hidden_info_level: 'off' as 'off' | 'light' | 'heavy',
     event_engine_intensity: 'off' as 'off' | 'light' | 'active' | 'dominant',
@@ -242,6 +261,10 @@ export default function CreateQuestPage() {
     const result = await createQuest({
       title: form.title.trim(),
       description: form.description.trim() || null,
+      hook: form.hook.trim() || null,
+      stakes_personal: form.stakes_personal.trim() || null,
+      stakes_world: form.stakes_world.trim() || null,
+      stakes_mystery: form.stakes_mystery.trim() || null,
       game_mode: form.game_mode,
       setting_name: 'everloop_world',
       tone: form.tone,
@@ -275,6 +298,13 @@ export default function CreateQuestPage() {
         hidden_info_level: form.hidden_info_level,
         event_engine_intensity: form.event_engine_intensity,
         scene_based_mode: form.scene_based_mode,
+        narration_style: form.narration_style,
+        narrator_config: form.narration_style === 'dm_only' ? undefined : {
+          bell_ritual: form.narrator_bell_ritual,
+          embodiment: form.narrator_embodiment,
+          private_whispers: form.narrator_private_whispers,
+          dm_neutral_arbiter: form.narration_style === 'narrator_and_dm' ? form.narrator_dm_neutral_arbiter : false,
+        },
       },
       idol_settings: {
         enabled: form.idol_enabled,
@@ -402,6 +432,62 @@ export default function CreateQuestPage() {
             <Label htmlFor="description" className="text-parchment">Description</Label>
             <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What pulls your players into this story? What is the local problem, the contained issue, the thing that feels bigger than it should? In the Everloop, every campaign begins somewhere ordinary... but never ends there." rows={3} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
           </div>
+
+          {/* Narrative Compass: Hook + Stakes Triad */}
+          <div className="rounded-lg border border-gold/20 bg-teal-rich/30 p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-serif text-gold uppercase tracking-wide">Narrative Compass</h3>
+              <p className="text-xs text-parchment-muted mt-1">
+                Optional, but powerful. A clear hook and three layers of stakes give your players (and Quill) gravity to pull against.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="hook" className="text-parchment text-sm">The Hook</Label>
+              <textarea
+                id="hook"
+                value={form.hook}
+                onChange={e => setForm(f => ({ ...f, hook: e.target.value }))}
+                placeholder="One sentence. What grabs the party in the first ten minutes? (A burning letter. A child's empty bed. A bell ringing where no bell hangs.)"
+                rows={2}
+                className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40 font-serif italic"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <Label htmlFor="stakes_personal" className="text-rose-300/90 text-xs uppercase tracking-wide">Personal</Label>
+                <textarea
+                  id="stakes_personal"
+                  value={form.stakes_personal}
+                  onChange={e => setForm(f => ({ ...f, stakes_personal: e.target.value }))}
+                  placeholder="What does someone in the party stand to lose or become?"
+                  rows={3}
+                  className="w-full mt-1 rounded-lg bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+                />
+              </div>
+              <div>
+                <Label htmlFor="stakes_world" className="text-amber-300/90 text-xs uppercase tracking-wide">World</Label>
+                <textarea
+                  id="stakes_world"
+                  value={form.stakes_world}
+                  onChange={e => setForm(f => ({ ...f, stakes_world: e.target.value }))}
+                  placeholder="What changes in the region if no one acts?"
+                  rows={3}
+                  className="w-full mt-1 rounded-lg bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                />
+              </div>
+              <div>
+                <Label htmlFor="stakes_mystery" className="text-indigo-300/90 text-xs uppercase tracking-wide">Mystery</Label>
+                <textarea
+                  id="stakes_mystery"
+                  value={form.stakes_mystery}
+                  onChange={e => setForm(f => ({ ...f, stakes_mystery: e.target.value }))}
+                  placeholder="What truth — Shard, Fray, or older — sits behind the surface problem?"
+                  rows={3}
+                  className="w-full mt-1 rounded-lg bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -439,6 +525,35 @@ export default function CreateQuestPage() {
                   <span className="text-sm text-parchment font-medium">{opt.label}</span>
                 </div>
                 <p className="text-xs text-parchment-muted mt-1">{opt.desc}</p>
+              </OptionCard>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-parchment mb-3 block text-lg font-serif">Who Runs This Quest?</Label>
+          <p className="text-xs text-parchment-muted mb-3">
+            Choose the storytelling structure. Live-Play splits storytelling from reality — the Narrator embodies atmosphere, the DM remains an impartial arbiter of mechanics.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {NARRATION_STYLE_OPTIONS.map(opt => (
+              <OptionCard
+                key={opt.value}
+                selected={form.narration_style === opt.value}
+                onClick={() => setForm(f => ({
+                  ...f,
+                  narration_style: opt.value,
+                  // Sensible defaults when a Narrator is involved
+                  narrator_embodiment: opt.value !== 'dm_only' ? true : f.narrator_embodiment,
+                  narrator_private_whispers: opt.value !== 'dm_only' ? true : f.narrator_private_whispers,
+                  narrator_dm_neutral_arbiter: opt.value === 'narrator_and_dm' ? true : f.narrator_dm_neutral_arbiter,
+                }))}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span>{opt.icon}</span>
+                  <span className="text-sm text-parchment font-medium">{opt.label}</span>
+                </div>
+                <p className="text-xs text-parchment-muted">{opt.desc}</p>
               </OptionCard>
             ))}
           </div>
@@ -611,6 +726,43 @@ export default function CreateQuestPage() {
         </div>
 
         <Toggle label="Scene-Based Mode (story-driven instead of map-based)" checked={form.scene_based_mode} onChange={v => setForm(f => ({ ...f, scene_based_mode: v }))} />
+
+        {form.narration_style !== 'dm_only' && (
+          <div className="border-t border-gold/10 pt-6">
+            <Label className="text-parchment mb-1 block text-lg font-serif">
+              {form.narration_style === 'narrator_and_dm' ? 'Narrator + DM Live-Play Rituals' : 'Narrator Rituals'}
+            </Label>
+            <p className="text-xs text-parchment-muted mb-3">
+              {form.narration_style === 'narrator_and_dm'
+                ? 'The Narrator embodies atmosphere; the DM enforces reality. The Narrator and players both appeal to the DM for resolution.'
+                : 'A single storyteller drives every voice and scene. Use these rituals to anchor immersion at the table.'}
+            </p>
+            <div className="space-y-2">
+              <Toggle
+                label="Bell Ritual — a physical bell anchors the table; when struck, all conversation freezes until the sound dies."
+                checked={form.narrator_bell_ritual}
+                onChange={v => setForm(f => ({ ...f, narrator_bell_ritual: v }))}
+              />
+              <Toggle
+                label="Embodiment — the Narrator stands, moves, whispers, and physically becomes NPCs and creatures."
+                checked={form.narrator_embodiment}
+                onChange={v => setForm(f => ({ ...f, narrator_embodiment: v }))}
+              />
+              <Toggle
+                label="Private Whispers — the Narrator may approach players individually and reveal info only they hear."
+                checked={form.narrator_private_whispers}
+                onChange={v => setForm(f => ({ ...f, narrator_private_whispers: v }))}
+              />
+              {form.narration_style === 'narrator_and_dm' && (
+                <Toggle
+                  label="DM as Neutral Arbiter — the DM stays calm, measured, impartial. Mechanics, time, and consequences only."
+                  checked={form.narrator_dm_neutral_arbiter}
+                  onChange={v => setForm(f => ({ ...f, narrator_dm_neutral_arbiter: v }))}
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-gold/10 pt-6">
           <Label className="text-parchment mb-3 block text-lg font-serif">Narrative Idols</Label>
@@ -1053,6 +1205,15 @@ export default function CreateQuestPage() {
             </div>
           </label>
         </div>
+
+        <DmCraftPanel
+          hook={form.hook}
+          description={form.description}
+          stakesPersonal={form.stakes_personal}
+          stakesWorld={form.stakes_world}
+          stakesMystery={form.stakes_mystery}
+          graph={graph}
+        />
       </div>
     )
   }
