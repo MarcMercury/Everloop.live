@@ -685,7 +685,7 @@ export default async function DashboardPage() {
                   Create Quest
                 </Button>
               </Link>
-              <Link href="/campaigns">
+              <Link href="/quests">
                 <Button variant="outline" className="gap-1">
                   <Users className="w-4 h-4" />
                   Browse Quests

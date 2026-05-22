@@ -6,7 +6,7 @@ import { getEntityCrossReferences } from '@/lib/data/cross-references'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { FrayIndicator } from '@/components/world-pulse'
-import { ArrowLeft, User, Calendar, Sparkles, BookOpen, Swords, Scroll, Link2, Diamond } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Sparkles, BookOpen, Swords, Link2, Diamond } from 'lucide-react'
 import type { CanonEntityType } from '@/types/database'
 import { MonsterStatBlock } from '@/components/quests/monster-stat-block'
 import { hydrateMonsterStats } from '@/lib/dnd-rules/monster-hydrate'
@@ -398,37 +398,10 @@ export default async function EntityPage({ params }: EntityPageProps) {
             </div>
 
             {/* Quests */}
-            {crossRefs.campaigns.length > 0 && (
-              <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
-                <h3 className="text-lg font-serif text-gold flex items-center gap-2">
-                  <Swords className="w-4 h-4" />
-                  Active Quests
-                </h3>
-                <ul className="space-y-2">
-                  {crossRefs.campaigns.map((campaign) => (
-                    <li key={campaign.id}>
-                      <Link
-                        href={`/quests/${campaign.slug}`}
-                        className="block p-2 rounded hover:bg-gold/5 transition-colors"
-                      >
-                        <span className="text-sm text-parchment hover:text-gold transition-colors">
-                          {campaign.title}
-                        </span>
-                        <span className="text-xs text-parchment-muted block mt-0.5">
-                          {campaign.game_mode.replace('_', ' ')} · {campaign.status}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Quests */}
             {crossRefs.quests.length > 0 && (
               <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
                 <h3 className="text-lg font-serif text-gold flex items-center gap-2">
-                  <Scroll className="w-4 h-4" />
+                  <Swords className="w-4 h-4" />
                   Active Quests
                 </h3>
                 <ul className="space-y-2">
