@@ -1,4 +1,3 @@
-// @ts-nocheck — Pre-existing tech debt: missing imports (crEntry, CR_TABLE, hitDice/setHitDice state hooks) need refactor.
 'use client'
 
 import { useState } from 'react'
@@ -41,48 +40,42 @@ import {
   ENTITY_ART_STYLE_OPTIONS,
   type EntityArtStyleId,
 } from '@/lib/data/entity-art-styles'
+import {
+  type Ability,
+  type CreatureSize,
+  type CreatureType,
+  type MonsterAbilityScores,
+  type MonsterAction,
+  type MonsterMovement,
+  type MonsterRole,
+  type MonsterSenses,
+  type MonsterStats,
+  type MonsterTrait,
+  type MovementType,
+  ABILITY_ORDER,
+  ABILITY_LABELS,
+  CREATURE_SIZES,
+  CREATURE_TYPES,
+  CR_TABLE,
+  DAMAGE_TYPES,
+  DND_CONDITIONS,
+  STANDARD_ALIGNMENTS,
+  STANDARD_SKILLS,
+  abilityMod,
+  crEntry,
+  defaultAbilityScores,
+  defaultSenses,
+  formatMod,
+  passivePerception,
+} from '@/lib/dnd-rules/monsters'
+import { MonsterStatBlock } from '@/components/quests/monster-stat-block'
+
+export type { MonsterRole, MovementType }
 
 const ThreeDPreviewPanel = dynamic(
   () => import('@/components/3d/three-d-preview-panel').then((mod) => mod.ThreeDPreviewPanel),
   { ssr: false }
 )
-
-// ═══════════════════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════════════════
-
-export type MonsterRole = 'brute' | 'striker' | 'tank' | 'controller' | 'support'
-export type MovementType = 'walk' | 'fly' | 'climb' | 'swim' | 'burrow'
-
-export interface MonsterAction {
-  name: string
-  description: string
-  damage?: string
-  actionType: 'action' | 'bonus_action' | 'reaction' | 'legendary'
-}
-
-export interface MonsterMovement {
-  type: MovementType
-  speed: number
-}
-
-export interface MonsterStats {
-  role: MonsterRole
-  cr: number
-  hp: number
-  ac: number
-  damagePerRound: string
-  movements: MonsterMovement[]
-  actions: MonsterAction[]
-  traits: string[]
-  weaknesses: string[]
-  regionId: RegionId
-  isOneOff: boolean
-  // Everloop-specific
-  whatBrokeHere: string
-  whatLeakedThrough: string
-  drawnTo: string
-}
 
 // ═══════════════════════════════════════════════════════════
 // CONSTANTS
@@ -179,13 +172,51 @@ export function MonsterQuestWizard() {
   // Movement
   const [movements, setMovements] = useState<MonsterMovement[]>([{ type: 'walk', speed: 30 }])
 
+  // Identity (canonical 5e fields)
+  const [size, setSize] = useState<CreatureSize>('medium')
+  const [creatureType, setCreatureType] = useState<CreatureType>('aberration')
+  const [subtype, setSubtype] = useState('')
+  const [alignment, setAlignment] = useState<string>('unaligned')
+
+  // Defenses
+  const [hitDice, setHitDice] = useState('')
+  const [acSource, setAcSource] = useState('')
+
+  // Ability scores & proficiencies
+  const [abilities, setAbilities] = useState<MonsterAbilityScores>(defaultAbilityScores())
+  const [savingThrows, setSavingThrows] = useState<Partial<Record<Ability, number>>>({})
+  const [skills, setSkills] = useState<Array<{ name: string; bonus: number }>>([])
+
+  // Damage / condition handling
+  const [damageVulnerabilities, setDamageVulnerabilities] = useState<string[]>([])
+  const [damageResistances, setDamageResistances] = useState<string[]>([])
+  const [damageImmunities, setDamageImmunities] = useState<string[]>([])
+  const [conditionImmunities, setConditionImmunities] = useState<string[]>([])
+
+  // Senses & languages
+  const [senses, setSenses] = useState<MonsterSenses>(defaultSenses())
+  const [languages, setLanguages] = useState<string[]>([])
+  const [telepathy, setTelepathy] = useState<number | undefined>(undefined)
+
+  // Combat behavior
+  const [multiattack, setMultiattack] = useState('')
+  const [bonusActions, setBonusActions] = useState<MonsterAction[]>([])
+  const [reactions, setReactions] = useState<MonsterAction[]>([])
+  const [hasLegendary, setHasLegendary] = useState(false)
+  const [legendaryActions, setLegendaryActions] = useState<{
+    count: number
+    description?: string
+    actions: MonsterAction[]
+  }>({ count: 3, actions: [] })
+  const [tactics, setTactics] = useState('')
+
   // Actions
   const [actions, setActions] = useState<MonsterAction[]>([
     { name: '', description: '', damage: '', actionType: 'action' },
   ])
 
   // Traits & Weaknesses
-  const [traits, setTraits] = useState<string[]>([''])
+  const [traits, setTraits] = useState<MonsterTrait[]>([{ name: '', description: '' }])
   const [weaknesses, setWeaknesses] = useState<string[]>([''])
 
   // Everloop
@@ -293,9 +324,13 @@ export function MonsterQuestWizard() {
     setIsSaving(true)
 
     try {
+      const entry = crEntry(cr)
       const cleanActions = actions.filter((a) => a.name.trim())
-      const cleanTraits = traits.filter((t) => t.trim())
+      const cleanBonusActions = bonusActions.filter((a) => a.name.trim())
+      const cleanReactions = reactions.filter((a) => a.name.trim())
+      const cleanTraits = traits.filter((t) => t.name.trim() || t.description.trim())
       const cleanWeaknesses = weaknesses.filter((w) => w.trim())
+      const cleanLanguages = languages.filter((l) => l.trim())
 
       const result = await saveCampaignMonster({
         name,
@@ -304,14 +339,43 @@ export function MonsterQuestWizard() {
         imageUrl: imageUrl || undefined,
         sourceEntityId: sourceEntityId || undefined,
         monsterStats: {
+          size,
+          creatureType,
+          subtype: subtype.trim() || undefined,
+          alignment,
           role,
           cr,
+          xp: entry.xp,
+          proficiencyBonus: entry.proficiencyBonus,
           hp,
+          hitDice: hitDice.trim() || undefined,
           ac,
-          damagePerRound,
+          acSource: acSource.trim() || undefined,
           movements,
-          actions: cleanActions,
+          abilities,
+          savingThrows,
+          skills,
+          damageVulnerabilities,
+          damageResistances,
+          damageImmunities,
+          conditionImmunities,
+          senses,
+          languages: cleanLanguages,
+          telepathy,
+          damagePerRound,
+          multiattack: multiattack.trim() || undefined,
           traits: cleanTraits,
+          actions: cleanActions,
+          bonusActions: cleanBonusActions,
+          reactions: cleanReactions,
+          legendaryActions: hasLegendary
+            ? {
+                count: legendaryActions.count,
+                description: legendaryActions.description,
+                actions: legendaryActions.actions.filter((a) => a.name.trim()),
+              }
+            : { count: 0, actions: [] },
+          tactics: tactics.trim() || undefined,
           weaknesses: cleanWeaknesses,
           regionId,
           isOneOff,
@@ -395,10 +459,52 @@ export function MonsterQuestWizard() {
   const updateAction = (i: number, a: Partial<MonsterAction>) =>
     setActions((prev) => prev.map((act, idx) => (idx === i ? { ...act, ...a } : act)))
 
-  const addTrait = () => setTraits((prev) => [...prev, ''])
+  const addTrait = () => setTraits((prev) => [...prev, { name: '', description: '' }])
   const removeTrait = (i: number) => setTraits((prev) => prev.filter((_, idx) => idx !== i))
-  const updateTrait = (i: number, v: string) =>
-    setTraits((prev) => prev.map((t, idx) => (idx === i ? v : t)))
+  const updateTrait = (i: number, patch: Partial<MonsterTrait>) =>
+    setTraits((prev) => prev.map((t, idx) => (idx === i ? { ...t, ...patch } : t)))
+
+  const blankAction = (kind: MonsterAction['actionType']): MonsterAction => ({
+    name: '',
+    description: '',
+    damage: '',
+    actionType: kind,
+  })
+
+  const addBonusAction = () => setBonusActions((prev) => [...prev, blankAction('bonus_action')])
+  const removeBonusAction = (i: number) =>
+    setBonusActions((prev) => prev.filter((_, idx) => idx !== i))
+  const updateBonusAction = (i: number, a: Partial<MonsterAction>) =>
+    setBonusActions((prev) => prev.map((act, idx) => (idx === i ? { ...act, ...a } : act)))
+
+  const addReaction = () => setReactions((prev) => [...prev, blankAction('reaction')])
+  const removeReaction = (i: number) =>
+    setReactions((prev) => prev.filter((_, idx) => idx !== i))
+  const updateReaction = (i: number, a: Partial<MonsterAction>) =>
+    setReactions((prev) => prev.map((act, idx) => (idx === i ? { ...act, ...a } : act)))
+
+  const addLegendaryAction = () =>
+    setLegendaryActions((prev) => ({ ...prev, actions: [...prev.actions, blankAction('legendary')] }))
+  const removeLegendaryAction = (i: number) =>
+    setLegendaryActions((prev) => ({
+      ...prev,
+      actions: prev.actions.filter((_, idx) => idx !== i),
+    }))
+  const updateLegendaryAction = (i: number, a: Partial<MonsterAction>) =>
+    setLegendaryActions((prev) => ({
+      ...prev,
+      actions: prev.actions.map((act, idx) => (idx === i ? { ...act, ...a } : act)),
+    }))
+
+  const addSkill = () =>
+    setSkills((prev) => [...prev, { name: 'Perception', bonus: 0 }])
+  const removeSkill = (i: number) =>
+    setSkills((prev) => prev.filter((_, idx) => idx !== i))
+  const updateSkill = (i: number, patch: Partial<{ name: string; bonus: number }>) =>
+    setSkills((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)))
+
+  const toggleInList = (list: string[], item: string): string[] =>
+    list.includes(item) ? list.filter((x) => x !== item) : [...list, item]
 
   const addWeakness = () => setWeaknesses((prev) => [...prev, ''])
   const removeWeakness = (i: number) =>
