@@ -6,6 +6,10 @@ import type { GameMode, QuestPlayer, QuestScene, QuestSession } from '@/types/qu
 import { Users, Clock, Flame, Shield, Swords, Play, Settings, Map, Plus, Crown, UserPlus } from 'lucide-react'
 import { QuestLobbyClient } from './quest-lobby-client'
 
+// Always render on-request so scenes/sessions reflect the latest DB state.
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Row shapes for Supabase type assertions
 interface QuestRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
 interface PlayerRow { id: string; quest_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; approval_state?: string; readiness_state?: string; party_role?: string; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null; [key: string]: unknown }
