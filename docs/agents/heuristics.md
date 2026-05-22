@@ -89,3 +89,17 @@
 | Admin pages that approve/reject must `revalidatePath` on public-facing pages (/stories, /explore) | 2025-01 |
 | Hardcoded tokens in scripts must use env vars ($SUPABASE_MANAGEMENT_TOKEN) even if gitignored | 2025-01 |
 | `dangerouslySetInnerHTML` must always escape user content before applying formatting | 2025-01 |
+
+---
+
+## Quest System (post-Unification, 2026-05)
+
+| Heuristic | Added |
+|-----------|-------|
+| The Everloop is **quest-only** at the UI layer. Do NOT add Campaign-named routes or surfaces. | 2026-05 |
+| Internally, "Quest" data still lives in the `campaigns*` DB tables. Renaming is gated on `supabase/migrations/PENDING_quest_rename.sql`. Use the campaign table names in `from()` calls until the migration runs. | 2026-05 |
+| D&D rules live in `lib/dnd-rules/` (actions, conditions, combat, rest, spellcasting, encounters, scene-templates). Import from `@/lib/dnd-rules` — do not redefine constants in components. | 2026-05 |
+| Quest printable HTML: `GET /api/quests/[id]/print` (add `?print=1` to auto-open print dialog). Backed by `lib/quest-print.ts`. | 2026-05 |
+| Quest scene map generation: `POST /api/quests/[id]/map` with `{ sceneId, prompt?, style? }`. Only the quest's `dm_id` can call it. | 2026-05 |
+| `/campaigns*` redirects to `/quests*` via `next.config.mjs`. Do not relink to `/campaigns` anywhere. | 2026-05 |
+| PDF source material for rules assimilation is in `docs/DandDcontext/extracted/` (text dumps via `pdftotext -layout`). Re-run extraction with `pdftotext -layout docs/DandDcontext/*.pdf docs/DandDcontext/extracted/`. | 2026-05 |
