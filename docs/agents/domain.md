@@ -336,3 +336,39 @@ attunement could take.
   journals are the canonical source for the Attunement System table, the
   Loosening, and the Knowledge Fragmentation Principle. Writes letters to his
   own future self — a Vaultkeeper's dread of cognitive drift made habit.
+
+---
+
+## Play Construct: Quest-Only Arena
+
+The Everloop is a **quest-based playing arena**. There is no "Campaign" concept
+exposed to users. Every play construct is a **Quest**: independent,
+individually playable, with its own scenes, NPCs, idols, sessions, and (when
+designed) printable handout.
+
+- A Quest can be solo, paired, party, public, or AI-guided.
+- Quests do not roll up to campaigns. They can however share NPCs, regions,
+  and shards via the canon entity system.
+- Quest outcomes feed `shard_events` and `world_events` to advance the world
+  state — see `lib/data/world-state.ts`.
+- Internal DB note: as of 2026-05, the data model is still backed by the
+  `campaigns*` tables. The user-facing rename is queued in
+  `supabase/migrations/PENDING_quest_rename.sql`.
+
+## Quest Source Material
+
+The folder `docs/DandDcontext/` contains 23 reference PDFs:
+
+- **Rulebooks (OGL / free):** `SRD-OGL_V5.1.pdf`, `DnD_BasicRules_2018.pdf`,
+  `EE_PlayersCompanion.pdf`.
+- **Published adventures (structural templates only — text is copyrighted):**
+  Curse of Strahd intro, DDEX1-3/4/6/9/10, DRA series, HoardDragonQueen,
+  Princes of the Apocalypse supplement, Elfhunt, armyofthedamned.
+- **Community-licensed one-shots:** Clam Island, Frostglade Tundra, Goldfish
+  Archipelago, Frog Idol, Frozen Sick.
+
+Extracted text dumps live in `docs/DandDcontext/extracted/*.txt`. The rules
+themselves are encoded in `lib/dnd-rules/`; the structural scene grammar is
+encoded in `lib/dnd-rules/scene-templates.ts`. Do not paste copyrighted
+adventure text into the codebase or surfaces; use only the structural
+patterns and OGL content.

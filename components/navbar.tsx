@@ -4,7 +4,7 @@ import { getUser, getProfile, getIsAdmin } from '@/lib/supabase/cached'
 import { signout } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { NavDropdown } from '@/components/nav-dropdown'
-import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Globe, Gamepad2, Map, PenLine, Search, Users, ScrollText } from 'lucide-react'
+import { User, LogOut, BookOpen, LayoutDashboard, Palette, Shield, Library, Sparkles, Swords, Flame, Compass, Gamepad2, Map, PenLine, Search, Users, ScrollText } from 'lucide-react'
 
 export async function Navbar() {
   const user = await getUser()
@@ -59,14 +59,14 @@ export async function Navbar() {
                   ]}
                 />
 
-                {/* Play — Player Deck, Campaigns & Quests */}
+                {/* Play — Player Deck & Quests (the Everloop is quest-based only) */}
                 <NavDropdown
                   label="Play"
                   icon={<Gamepad2 className="w-4 h-4" />}
                   items={[
                     { href: '/player-deck', label: 'Player Deck', icon: <Swords className="w-4 h-4" />, description: 'Your playable characters' },
-                    { href: '/campaigns', label: 'Campaigns', icon: <Flame className="w-4 h-4" />, description: 'Run or join live campaigns' },
-                    { href: '/quests', label: 'Quests', icon: <Compass className="w-4 h-4" />, description: 'Solo & party adventures' },
+                    { href: '/quests', label: 'Quests', icon: <Compass className="w-4 h-4" />, description: 'Build, run, or join independent quests' },
+                    { href: '/quests/create', label: 'Build a Quest', icon: <Flame className="w-4 h-4" />, description: 'Open the Quest Builder' },
                     { href: '/players-guide', label: "Player's Guide", icon: <BookOpen className="w-4 h-4" />, description: 'What players need to know' },
                   ]}
                 />

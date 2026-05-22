@@ -54,3 +54,6 @@ scripts/
 # Large binary files
 public/DandDStuff/*.png
 public/DandDStuff/MarekAzurePact_*.pdf
+
+# D&D source material (copyrighted, do not commit)
+docs/DandDcontext/
