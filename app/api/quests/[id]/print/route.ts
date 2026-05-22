@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { renderQuestPrintHtml } from '@/lib/quest-print'
-import type { Campaign, CampaignScene, CampaignNpc, NarrativeIdol } from '@/types/campaign'
+import type { Quest, QuestScene, QuestNpc, NarrativeIdol } from '@/types/quest'
 
 export const runtime = 'nodejs'
 
@@ -28,10 +28,10 @@ export async function GET(
   // Allow lookup by UUID or slug.
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   // Supabase generated types treat the campaigns table row as broader than
-  // our Campaign interface — cast through unknown for the narrow fields we need.
+  // our Quest interface — cast through unknown for the narrow fields we need.
   const query = supabase.from('quests').select('*')
   const { data, error } = await (isUuid ? query.eq('id', id) : query.eq('slug', id)).maybeSingle()
-  const quest = (data ?? null) as unknown as Campaign | null
+  const quest = (data ?? null) as unknown as Quest | null
 
   if (error || !quest) {
     return NextResponse.json({ error: 'Quest not found' }, { status: 404 })
@@ -48,9 +48,9 @@ export async function GET(
   ])
 
   const html = renderQuestPrintHtml({
-    quest: quest as unknown as Campaign,
-    scenes: (scenes ?? []) as unknown as CampaignScene[],
-    npcs: (npcs ?? []) as unknown as CampaignNpc[],
+    quest: quest as unknown as Quest,
+    scenes: (scenes ?? []) as unknown as QuestScene[],
+    npcs: (npcs ?? []) as unknown as QuestNpc[],
     idols: (idols ?? []) as unknown as NarrativeIdol[],
   })
 

@@ -2,7 +2,7 @@
  * D&D 5e Monster Reference — CR table, ability/skill math, stat-block types.
  * Source: SRD 5.1 + DMG.
  *
- * Used by the Campaign Monster wizard and the MonsterStatBlock renderer so a
+ * Used by the Quest Monster wizard and the MonsterStatBlock renderer so a
  * monster authored in Everloop is mechanically usable at a real D&D table.
  */
 

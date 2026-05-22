@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { joinCampaign, selectCharacter, updateCampaign, updatePlayerStatus } from '@/lib/actions/quests'
+import { joinQuest, selectCharacter, updateQuest, updatePlayerStatus } from '@/lib/actions/quests'
 import { Button } from '@/components/ui/button'
-import type { CampaignPlayer } from '@/types/campaign'
+import type { QuestPlayer } from '@/types/quest'
 import { UserPlus, Swords, Settings, Check, X, Shield, Copy } from 'lucide-react'
 
 interface QuestLobbyClientProps {
@@ -16,9 +16,9 @@ interface QuestLobbyClientProps {
   joinCode: string | null
   isDM: boolean
   isPlayer: boolean
-  myPlayer?: CampaignPlayer
+  myPlayer?: QuestPlayer
   myCharacters: { id: string; name: string; class: string; level: number; race: string }[]
-  pendingPlayers?: CampaignPlayer[]
+  pendingPlayers?: QuestPlayer[]
   userId?: string
 }
 
@@ -44,7 +44,7 @@ export function QuestLobbyClient({
   async function handleJoin() {
     setLoading(true)
     setError(null)
-    const result = await joinCampaign(campaignId)
+    const result = await joinQuest(campaignId)
     if (result.success) {
       router.refresh()
     } else {
@@ -63,7 +63,7 @@ export function QuestLobbyClient({
 
   async function handleStatusChange(status: string) {
     setLoading(true)
-    await updateCampaign(campaignId, { status: status as 'draft' | 'lobby' | 'ready' | 'active' })
+    await updateQuest(campaignId, { status: status as 'draft' | 'lobby' | 'ready' | 'active' })
     router.refresh()
     setLoading(false)
   }
@@ -124,17 +124,17 @@ export function QuestLobbyClient({
             )}
             {(campaignStatus === 'ready' || campaignStatus === 'lobby') && (
               <Button onClick={() => handleStatusChange('active')} disabled={loading} className="w-full btn-fantasy">
-                Launch Campaign
+                Launch Quest
               </Button>
             )}
             {campaignStatus === 'active' && (
               <Button onClick={() => handleStatusChange('paused')} disabled={loading} variant="ghost" className="w-full text-parchment-muted">
-                Pause Campaign
+                Pause Quest
               </Button>
             )}
             {campaignStatus === 'paused' && (
               <Button onClick={() => handleStatusChange('active')} disabled={loading} className="w-full btn-fantasy">
-                Resume Campaign
+                Resume Quest
               </Button>
             )}
             {/* Backward compat */}
@@ -272,7 +272,7 @@ export function QuestLobbyClient({
     <div className="story-card p-4">
       <h3 className="text-lg font-serif text-parchment mb-4 flex items-center gap-2">
         <UserPlus className="w-4 h-4 text-gold" />
-        Join Campaign
+        Join Quest
       </h3>
       {canJoin ? (
         <>

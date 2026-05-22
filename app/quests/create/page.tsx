@@ -2,25 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { createCampaign } from '@/lib/actions/quests'
+import { createQuest } from '@/lib/actions/quests'
 import { getQuestsForPicker } from '@/lib/actions/quests'
 import QuestFlowBuilder, {
-  defaultGraph as defaultCampaignGraph,
-  type CampaignFlowGraph,
+  defaultGraph as defaultQuestGraph,
+  type QuestFlowGraph,
   type QuestSummary,
 } from '@/components/quests/quest-flow-builder'
-import { GAME_MODE_INFO } from '@/types/campaign'
+import { GAME_MODE_INFO } from '@/types/quest'
 import type {
   GameMode,
-  CampaignTone,
-  CampaignLength,
+  QuestTone,
+  QuestLength,
   DifficultyPreset,
   SettingName,
   WorldStructure,
   WorldPersistence,
   AiAssistLevel,
   CharacterEntryMode,
-} from '@/types/campaign'
+} from '@/types/quest'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,17 +41,17 @@ const STEPS = [
   'Review',
 ] as const
 
-const TONE_OPTIONS: { value: CampaignTone; label: string; icon: string; desc: string }[] = [
+const TONE_OPTIONS: { value: QuestTone; label: string; icon: string; desc: string }[] = [
   { value: 'light_adventure', label: 'Light / Adventure', icon: '☀️', desc: 'Heroic, hopeful, fun' },
   { value: 'dark_horror', label: 'Dark / Horror', icon: '🌑', desc: 'Dread, survival, fear' },
   { value: 'political_intrigue', label: 'Political / Intrigue', icon: '🗡️', desc: 'Deception, power plays' },
   { value: 'chaotic_experimental', label: 'Chaotic / Experimental', icon: '🌀', desc: 'Unpredictable, wild' },
 ]
 
-const LENGTH_OPTIONS: { value: CampaignLength; label: string; icon: string; sessions: string; desc: string }[] = [
+const LENGTH_OPTIONS: { value: QuestLength; label: string; icon: string; sessions: string; desc: string }[] = [
   { value: 'one_shot', label: 'One-Shot', icon: '🟢', sessions: '1 session', desc: 'Pre-built pacing, fast onboarding, minimal progression' },
   { value: 'short_arc', label: 'Short Arc', icon: '🟡', sessions: '3–6 sessions', desc: 'Light progression, defined narrative arc' },
-  { value: 'full_campaign', label: 'Full Campaign', icon: '🔵', sessions: '10–30 sessions', desc: 'Full leveling, deep world persistence' },
+  { value: 'full_campaign', label: 'Full Quest', icon: '🔵', sessions: '10–30 sessions', desc: 'Full leveling, deep world persistence' },
   { value: 'endless', label: 'Endless / Sandbox', icon: '🔴', sessions: 'Ongoing', desc: 'Drop-in/out, persistent consequences' },
 ]
 
@@ -63,7 +63,7 @@ const DIFFICULTY_OPTIONS: { value: DifficultyPreset; label: string; icon: string
 ]
 
 const WORLD_STRUCTURE_OPTIONS: { value: WorldStructure; label: string; desc: string }[] = [
-  { value: 'linear', label: 'Linear Campaign', desc: 'Guided, chapter-by-chapter' },
+  { value: 'linear', label: 'Linear Quest', desc: 'Guided, chapter-by-chapter' },
   { value: 'branching', label: 'Branching Story', desc: 'Player choices create forks' },
   { value: 'open_world', label: 'Open World', desc: 'Full sandbox exploration' },
   { value: 'looping', label: 'Looping Reality', desc: 'Everloop-style time loops' },
@@ -89,7 +89,7 @@ const ENTRY_MODE_OPTIONS: { value: CharacterEntryMode; label: string; desc: stri
   { value: 'dm_approval', label: 'DM Approval Required', desc: 'All characters must be approved' },
 ]
 
-export default function CreateCampaignPage() {
+export default function CreateQuestPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,9 +101,9 @@ export default function CreateCampaignPage() {
     description: '',
     game_mode: 'classic' as GameMode,
     setting_name: 'everloop_world' as SettingName,
-    tone: 'light_adventure' as CampaignTone,
+    tone: 'light_adventure' as QuestTone,
     // Step 2: Structure
-    campaign_length: 'full_campaign' as CampaignLength,
+    campaign_length: 'full_campaign' as QuestLength,
     // Step 3: Difficulty
     difficulty_preset: 'standard' as DifficultyPreset,
     combat_lethality: 50,
@@ -155,8 +155,8 @@ export default function CreateCampaignPage() {
   })
 
   // Story flow graph (designed in step 8)
-  const [graph, setGraph] = useState<CampaignFlowGraph>(defaultCampaignGraph())
-  const handleGraphChange = useCallback((g: CampaignFlowGraph) => setGraph(g), [])
+  const [graph, setGraph] = useState<QuestFlowGraph>(defaultQuestGraph())
+  const handleGraphChange = useCallback((g: QuestFlowGraph) => setGraph(g), [])
 
   // Quest pool for the flow builder
   const [availableQuests, setAvailableQuests] = useState<QuestSummary[]>([])
@@ -218,7 +218,7 @@ export default function CreateCampaignPage() {
 
   function nextStep() {
     if (step === 0 && !form.title.trim()) {
-      setError('Campaign title is required')
+      setError('Quest title is required')
       return
     }
     setError(null)
@@ -232,14 +232,14 @@ export default function CreateCampaignPage() {
 
   async function handleSubmit() {
     if (!form.title.trim()) {
-      setError('Campaign title is required')
+      setError('Quest title is required')
       return
     }
 
     setLoading(true)
     setError(null)
 
-    const result = await createCampaign({
+    const result = await createQuest({
       title: form.title.trim(),
       description: form.description.trim() || null,
       game_mode: form.game_mode,
@@ -395,7 +395,7 @@ export default function CreateCampaignPage() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="title" className="text-parchment">Campaign Title</Label>
+            <Label htmlFor="title" className="text-parchment">Quest Title</Label>
             <Input id="title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="The Shattered Convergence..." className="mt-1 bg-teal-rich/50 border-gold/20 text-parchment placeholder:text-parchment-muted/50" />
           </div>
           <div>
@@ -451,7 +451,7 @@ export default function CreateCampaignPage() {
     return (
       <div className="space-y-6">
         <div>
-          <Label className="text-parchment mb-3 block text-lg font-serif">Campaign Length</Label>
+          <Label className="text-parchment mb-3 block text-lg font-serif">Quest Length</Label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {LENGTH_OPTIONS.map(opt => (
               <OptionCard key={opt.value} selected={form.campaign_length === opt.value} onClick={() => setForm(f => ({ ...f, campaign_length: opt.value }))}>
@@ -466,7 +466,7 @@ export default function CreateCampaignPage() {
           </div>
         </div>
         <p className="text-sm text-parchment-muted">
-          Campaign length determines XP pacing, event frequency, narrative complexity, resource scarcity, and AI involvement level.
+          Quest length determines XP pacing, event frequency, narrative complexity, resource scarcity, and AI involvement level.
         </p>
         <div className="p-4 rounded-lg border border-gold/10 bg-teal-rich/20 mt-2">
           <p className="text-xs text-parchment-muted italic leading-relaxed">
@@ -945,7 +945,7 @@ export default function CreateCampaignPage() {
     ).length
     return (
       <div className="space-y-4">
-        <h2 className="text-xl font-serif text-parchment">Campaign Summary</h2>
+        <h2 className="text-xl font-serif text-parchment">Quest Summary</h2>
         <div className="story-card p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -1097,11 +1097,11 @@ export default function CreateCampaignPage() {
     <div className={`${isFlowStep ? 'max-w-7xl' : 'max-w-3xl'} mx-auto px-6 py-12`}>
       <Link href="/quests" className="flex items-center gap-2 text-sm text-parchment-muted hover:text-parchment transition-colors mb-8">
         <ArrowLeft className="w-4 h-4" />
-        Back to Campaigns
+        Back to Quests
       </Link>
 
       <h1 className="text-4xl font-serif mb-2">
-        <span className="text-parchment">Campaign</span>{' '}
+        <span className="text-parchment">Quest</span>{' '}
         <span className="canon-text">Forge</span>
       </h1>
       <p className="text-parchment-muted mb-8">
@@ -1153,7 +1153,7 @@ export default function CreateCampaignPage() {
           </Button>
         ) : (
           <Button type="button" onClick={handleSubmit} disabled={loading} className="btn-fantasy">
-            {loading ? 'Forging...' : '✦ Forge Campaign'}
+            {loading ? 'Forging...' : '✦ Forge Quest'}
           </Button>
         )}
       </div>

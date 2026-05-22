@@ -59,7 +59,7 @@ import { ArchivePicker, autoLayout, type ArchiveRef } from '@/components/flow/fl
 // Types
 // ---------------------------------------------------------------------------
 
-export type CampaignNodeKind =
+export type QuestNodeKind =
   | 'start'
   | 'chapter'
   | 'scene'
@@ -79,8 +79,8 @@ export interface QuestSummary {
   status?: string | null
 }
 
-export interface CampaignNodeData {
-  kind: CampaignNodeKind
+export interface QuestNodeData {
+  kind: QuestNodeKind
   label: string
   description?: string
   // Type-specific fields
@@ -98,14 +98,14 @@ export interface CampaignNodeData {
   archive_refs?: ArchiveRef[]
 }
 
-export interface CampaignFlowGraph {
-  nodes: Node<CampaignNodeData>[]
+export interface QuestFlowGraph {
+  nodes: Node<QuestNodeData>[]
   edges: Edge[]
 }
 
 interface QuestFlowBuilderProps {
-  initial?: CampaignFlowGraph
-  onChange?: (graph: CampaignFlowGraph) => void
+  initial?: QuestFlowGraph
+  onChange?: (graph: QuestFlowGraph) => void
   /** Pool of quests the designer can embed as quest-nodes. */
   availableQuests?: QuestSummary[]
 }
@@ -115,7 +115,7 @@ interface QuestFlowBuilderProps {
 // ---------------------------------------------------------------------------
 
 const KIND_META: Record<
-  CampaignNodeKind,
+  QuestNodeKind,
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
@@ -199,7 +199,7 @@ const KIND_META: Record<
   },
 }
 
-const PALETTE_KINDS: CampaignNodeKind[] = [
+const PALETTE_KINDS: QuestNodeKind[] = [
   'chapter',
   'scene',
   'encounter',
@@ -213,7 +213,7 @@ const PALETTE_KINDS: CampaignNodeKind[] = [
 // Custom node renderer
 // ---------------------------------------------------------------------------
 
-function CampaignNode({ data, selected }: NodeProps<CampaignNodeData>) {
+function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
   const meta = KIND_META[data.kind]
   const Icon = meta.icon
   const isTerminal = data.kind === 'start' || data.kind === 'climax'
@@ -327,7 +327,7 @@ function CampaignNode({ data, selected }: NodeProps<CampaignNodeData>) {
         )}
         {isTerminal && (
           <div className="text-[10px] text-gold/60 mt-1 italic">
-            {data.kind === 'start' ? 'Campaign entry' : 'Campaign culmination'}
+            {data.kind === 'start' ? 'Quest entry' : 'Quest culmination'}
           </div>
         )}
       </div>
@@ -357,13 +357,13 @@ function CampaignNode({ data, selected }: NodeProps<CampaignNodeData>) {
   )
 }
 
-const NODE_TYPES = { campaign: CampaignNode }
+const NODE_TYPES = { campaign: QuestNode }
 
 // ---------------------------------------------------------------------------
 // Default graph (Start → Climax scaffold)
 // ---------------------------------------------------------------------------
 
-function defaultGraph(): CampaignFlowGraph {
+function defaultGraph(): QuestFlowGraph {
   return {
     nodes: [
       {
@@ -396,7 +396,7 @@ function defaultGraph(): CampaignFlowGraph {
 // Validation
 // ---------------------------------------------------------------------------
 
-function validateGraph(graph: CampaignFlowGraph): {
+function validateGraph(graph: QuestFlowGraph): {
   ok: boolean
   warnings: string[]
 } {
@@ -466,7 +466,7 @@ function BuilderInner({
   onChange,
   availableQuests,
 }: QuestFlowBuilderProps) {
-  const [nodes, setNodes] = useState<Node<CampaignNodeData>[]>(
+  const [nodes, setNodes] = useState<Node<QuestNodeData>[]>(
     initial?.nodes?.length ? initial.nodes : defaultGraph().nodes,
   )
   const [edges, setEdges] = useState<Edge[]>(initial?.edges ?? [])
@@ -486,7 +486,7 @@ function BuilderInner({
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) =>
-      setNodes(ns => applyNodeChanges(changes, ns) as Node<CampaignNodeData>[]),
+      setNodes(ns => applyNodeChanges(changes, ns) as Node<QuestNodeData>[]),
     [],
   )
   const onEdgesChange = useCallback(
@@ -526,10 +526,10 @@ function BuilderInner({
     [nodes],
   )
 
-  function addNode(kind: CampaignNodeKind, position?: { x: number; y: number }) {
+  function addNode(kind: QuestNodeKind, position?: { x: number; y: number }) {
     const id = `n${idCounter.current++}`
     const meta = KIND_META[kind]
-    const newNode: Node<CampaignNodeData> = {
+    const newNode: Node<QuestNodeData> = {
       id,
       type: 'campaign',
       position:
@@ -548,7 +548,7 @@ function BuilderInner({
     e.preventDefault()
     const kind = e.dataTransfer.getData(
       'application/campaign-node',
-    ) as CampaignNodeKind
+    ) as QuestNodeKind
     if (!kind) return
     const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     addNode(kind, position)
@@ -570,7 +570,7 @@ function BuilderInner({
     const node = nodes.find(n => n.id === selectedId)
     if (!node || node.data.kind === 'start' || node.data.kind === 'climax') return
     const id = `n${idCounter.current++}`
-    const copy: Node<CampaignNodeData> = {
+    const copy: Node<QuestNodeData> = {
       ...node,
       id,
       position: { x: node.position.x + 40, y: node.position.y + 40 },
@@ -603,7 +603,7 @@ function BuilderInner({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, nodes, edges])
 
-  function updateSelected(patch: Partial<CampaignNodeData>) {
+  function updateSelected(patch: Partial<QuestNodeData>) {
     if (!selectedId) return
     setNodes(ns =>
       ns.map(n =>
@@ -693,8 +693,8 @@ function BuilderInner({
             zoomable
             className="!bg-teal-deep/80 !border !border-gold/20"
             nodeColor={n => {
-              const k = (n.data as CampaignNodeData)?.kind ?? 'scene'
-              const map: Record<CampaignNodeKind, string> = {
+              const k = (n.data as QuestNodeData)?.kind ?? 'scene'
+              const map: Record<QuestNodeKind, string> = {
                 start: '#fbbf24',
                 chapter: '#818cf8',
                 scene: '#5eead4',
@@ -793,8 +793,8 @@ function NodeInspector({
   canDelete,
   availableQuests,
 }: {
-  node: Node<CampaignNodeData>
-  onChange: (patch: Partial<CampaignNodeData>) => void
+  node: Node<QuestNodeData>
+  onChange: (patch: Partial<QuestNodeData>) => void
   onDelete: () => void
   canDelete: boolean
   availableQuests: QuestSummary[]
@@ -968,7 +968,7 @@ function NodeInspector({
 
       {/* Archive linker */}
       {(() => {
-        const allowedByKind: Partial<Record<CampaignNodeKind, string[]>> = {
+        const allowedByKind: Partial<Record<QuestNodeKind, string[]>> = {
           chapter: ['location', 'event', 'faction'],
           scene: ['location', 'faction', 'event'],
           encounter: ['monster', 'creature', 'location'],
@@ -976,7 +976,7 @@ function NodeInspector({
           reward: ['artifact', 'concept'],
         }
         const allowed = allowedByKind[node.data.kind]
-        const hintByKind: Partial<Record<CampaignNodeKind, string>> = {
+        const hintByKind: Partial<Record<QuestNodeKind, string>> = {
           chapter: 'Locations, factions, or events that anchor this chapter.',
           scene: 'Locations, factions, or events that anchor this scene.',
           encounter: 'Monsters or creatures from the Archive — their stats & lore are pulled in.',

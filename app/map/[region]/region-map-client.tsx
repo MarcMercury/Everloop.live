@@ -77,7 +77,14 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   const regionDirectory = getRegionLocations(region.id)
-  const mapLabels = getMapLabels(region.id)
+  const staticMapLabels = getMapLabels(region.id)
+  const [labelOverrides, setLabelOverrides] = useState<Record<string, { x: number; z: number }>>({})
+
+  // Apply admin Map Maker position overrides on top of the static label data.
+  const mapLabels = staticMapLabels.map((l) => {
+    const ov = labelOverrides[l.name]
+    return ov ? { ...l, x: ov.x, z: ov.z } : l
+  })
 
   // --- Pan & zoom handlers ---
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -157,6 +164,21 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
       }
     }
     fetchLocations()
+  }, [region.id])
+
+  // Fetch admin Map Maker label position overrides (admin can drag labels in /admin/map-maker)
+  useEffect(() => {
+    async function fetchOverrides() {
+      try {
+        const res = await fetch(`/api/map/regions/${region.id}/label-overrides`)
+        if (!res.ok) return
+        const data = await res.json()
+        setLabelOverrides(data.overrides ?? {})
+      } catch {
+        // Optional overlay — silent fail
+      }
+    }
+    fetchOverrides()
   }, [region.id])
 
   const handlePinClick = useCallback((loc: RegionLocation) => {

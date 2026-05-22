@@ -24,8 +24,8 @@ import {
 import { DeleteStoryButton } from './delete-story-button'
 import { WritingStatsCard } from '@/components/dashboard/writing-stats-card'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
-import { GAME_MODE_INFO } from '@/types/campaign'
-import type { GameMode } from '@/types/campaign'
+import { GAME_MODE_INFO } from '@/types/quest'
+import type { GameMode } from '@/types/quest'
 import type { PlayerCharacter } from '@/types/player-character'
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>
@@ -35,7 +35,7 @@ export const metadata = {
   description: 'Manage your stories and track your progress in the Everloop universe',
 }
 
-interface DashboardCampaign {
+interface DashboardQuest {
   id: string
   title: string
   slug: string
@@ -271,22 +271,22 @@ function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'revision' | '
 // PLAYING SECTION HELPERS
 // =====================================================
 
-async function getUserCampaigns(supabase: SupabaseServerClient, userId: string) {
-  // Campaigns I DM
-  const { data: dmCampaigns } = await supabase
+async function getUserQuests(supabase: SupabaseServerClient, userId: string) {
+  // Quests I DM
+  const { data: dmQuests } = await supabase
     .from('quests')
     .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('dm_id', userId)
     .order('updated_at', { ascending: false })
 
-  // Campaigns I'm a player in
+  // Quests I'm a player in
   const { data: playerEntries } = await supabase
     .from('quest_players')
     .select('quest_id')
     .eq('user_id', userId)
     .in('status', ['pending', 'accepted'])
 
-  let playerCampaigns: DashboardCampaign[] = []
+  let playerQuests: DashboardQuest[] = []
   if (playerEntries && playerEntries.length > 0) {
     const ids = (playerEntries as unknown as { quest_id: string }[]).map(p => p.quest_id)
     const { data } = await supabase
@@ -294,13 +294,13 @@ async function getUserCampaigns(supabase: SupabaseServerClient, userId: string) 
       .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .in('id', ids)
       .order('updated_at', { ascending: false })
-    playerCampaigns = (data ?? []) as unknown as DashboardCampaign[]
+    playerQuests = (data ?? []) as unknown as DashboardQuest[]
   }
 
-  const dmList = (dmCampaigns ?? []) as unknown as DashboardCampaign[]
+  const dmList = (dmQuests ?? []) as unknown as DashboardQuest[]
   // Tag which are DM'd vs played
   const dmd = dmList.map(c => ({ ...c, isDm: true }))
-  const played = playerCampaigns.filter(c => !dmList.some(d => d.id === c.id)).map(c => ({ ...c, isDm: false }))
+  const played = playerQuests.filter(c => !dmList.some(d => d.id === c.id)).map(c => ({ ...c, isDm: false }))
 
   return { dmd, played }
 }
@@ -332,7 +332,7 @@ function getStatusBadge(status: string) {
   return <Badge className={info.color}>{info.label}</Badge>
 }
 
-function CampaignRow({ campaign, isDm }: { campaign: DashboardCampaign; isDm: boolean }) {
+function QuestRow({ campaign, isDm }: { campaign: DashboardQuest; isDm: boolean }) {
   const modeInfo = GAME_MODE_INFO[campaign.game_mode as GameMode]
   return (
     <div className="flex items-center justify-between p-4 rounded-lg bg-teal-rich/30 border border-gold/10 hover:border-gold/20 transition-colors">
@@ -420,7 +420,7 @@ export default async function DashboardPage() {
   const [stories, stats, campaigns, characters] = await Promise.all([
     getUserStories(supabase, user.id),
     getUserStats(supabase, user.id),
-    getUserCampaigns(supabase, user.id),
+    getUserQuests(supabase, user.id),
     getUserCharacters(supabase, user.id),
   ])
   
@@ -433,7 +433,7 @@ export default async function DashboardPage() {
   const published = stories.filter(s => ['approved', 'canonical'].includes(s.canon_status))
   const rejected = stories.filter(s => s.canon_status === 'rejected')
 
-  const allCampaigns = [...campaigns.dmd, ...campaigns.played]
+  const allQuests = [...campaigns.dmd, ...campaigns.played]
   const totalCharacters = characters.length
 
   // =====================================================
@@ -602,8 +602,8 @@ export default async function DashboardPage() {
                 <Swords className="w-5 h-5 text-gold" />
               </div>
               <div>
-                <p className="text-2xl font-serif text-parchment">{allCampaigns.length}</p>
-                <p className="text-xs text-parchment-muted">Total Campaigns</p>
+                <p className="text-2xl font-serif text-parchment">{allQuests.length}</p>
+                <p className="text-xs text-parchment-muted">Total Quests</p>
               </div>
             </div>
           </CardContent>
@@ -652,43 +652,43 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
-      {/* Campaigns Section */}
+      {/* Quests Section */}
       <div className="mb-10">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-serif text-parchment">My Campaigns</h2>
+          <h2 className="text-xl font-serif text-parchment">My Quests</h2>
           <Link href="/quests/create">
             <Button variant="outline" size="sm" className="gap-1">
               <Plus className="w-3 h-3" />
-              New Campaign
+              New Quest
             </Button>
           </Link>
         </div>
         
-        {allCampaigns.length > 0 ? (
+        {allQuests.length > 0 ? (
           <div className="space-y-3">
             {campaigns.dmd.map(c => (
-              <CampaignRow key={c.id} campaign={c} isDm={true} />
+              <QuestRow key={c.id} campaign={c} isDm={true} />
             ))}
             {campaigns.played.map(c => (
-              <CampaignRow key={c.id} campaign={c} isDm={false} />
+              <QuestRow key={c.id} campaign={c} isDm={false} />
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
             <Swords className="w-12 h-12 mx-auto mb-4 text-parchment-muted/50" />
-            <h3 className="font-serif text-lg text-parchment mb-2">No Campaigns Yet</h3>
+            <h3 className="font-serif text-lg text-parchment mb-2">No Quests Yet</h3>
             <p className="text-parchment-muted text-sm mb-4">Create or join a campaign to begin your adventure.</p>
             <div className="flex gap-3 justify-center">
               <Link href="/quests/create">
                 <Button variant="outline" className="gap-1">
                   <Plus className="w-4 h-4" />
-                  Create Campaign
+                  Create Quest
                 </Button>
               </Link>
               <Link href="/campaigns">
                 <Button variant="outline" className="gap-1">
                   <Users className="w-4 h-4" />
-                  Browse Campaigns
+                  Browse Quests
                 </Button>
               </Link>
             </div>

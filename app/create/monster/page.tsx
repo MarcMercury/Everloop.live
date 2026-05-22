@@ -18,7 +18,7 @@ const monsterPurposes = [
   },
   {
     purpose: 'campaign',
-    title: 'For a Campaign / Quest',
+    title: 'For a Quest / Quest',
     description:
       'Build a fully statted D&D 5e monster — with CR, HP, AC, actions, traits, and Everloop lore — ready to drop into encounters.',
     icon: Swords,

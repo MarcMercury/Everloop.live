@@ -83,7 +83,7 @@ export async function getEntityCrossReferences(entityId: string): Promise<Entity
     }))
   }
 
-  // 2. Campaigns that reference this entity
+  // 2. Quests that reference this entity
   const { data: campaigns } = await supabase
     .from('quests')
     .select('id, title, slug, status, game_mode')

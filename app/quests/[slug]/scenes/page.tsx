@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { SceneBuilderClient } from './scene-builder-client'
-import type { Campaign, CampaignScene } from '@/types/campaign'
+import type { Quest, QuestScene } from '@/types/quest'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -20,7 +20,7 @@ export default async function SceneBuilderPage({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  const campaign = campaignData as unknown as Campaign | null
+  const campaign = campaignData as unknown as Quest | null
   if (!campaign) notFound()
   if (campaign.dm_id !== user.id) redirect(`/quests/${slug}`)
 
@@ -41,7 +41,7 @@ export default async function SceneBuilderPage({ params }: PageProps) {
   return (
     <SceneBuilderClient
       campaign={campaign}
-      scenes={(scenes ?? []) as unknown as CampaignScene[]}
+      scenes={(scenes ?? []) as unknown as QuestScene[]}
       entities={(entities ?? []) as { id: string; name: string; type: string; slug: string }[]}
     />
   )

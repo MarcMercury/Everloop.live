@@ -524,10 +524,10 @@ export function CharacterForm({ character }: Props) {
           </Card>
           
           <Card className="p-4 md:p-6 bg-charcoal-950/50 border-gold-500/10 space-y-4">
-            <h3 className="text-lg font-serif text-parchment">Campaign & Portrait</h3>
+            <h3 className="text-lg font-serif text-parchment">Quest & Portrait</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-parchment-muted">Campaign Name</Label>
+                <Label className="text-parchment-muted">Quest Name</Label>
                 <Input value={campaignName} onChange={e => setCampaignName(e.target.value)} placeholder="Curse of Strahd" className="bg-charcoal-950 border-gold-500/10 text-parchment" />
               </div>
               <div>

@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PlayerSessionClient } from './player-session-client'
-import type { Campaign, CampaignPlayer, CampaignScene, CampaignSession, CampaignMessage, NarrativeIdol } from '@/types/campaign'
+import type { Quest, QuestPlayer, QuestScene, QuestSession, QuestMessage, NarrativeIdol } from '@/types/quest'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -20,7 +20,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  const campaign = campaignData as unknown as Campaign | null
+  const campaign = campaignData as unknown as Quest | null
   if (!campaign) notFound()
 
   // Verify player is accepted
@@ -35,7 +35,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
     .eq('status', 'accepted')
     .single()
 
-  const myPlayer = myPlayerData as unknown as CampaignPlayer | null
+  const myPlayer = myPlayerData as unknown as QuestPlayer | null
 
   if (!myPlayer && campaign.dm_id !== user.id) {
     redirect(`/quests/${slug}`)
@@ -62,7 +62,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
     .limit(1)
     .maybeSingle()
 
-  const session = sessionData as unknown as CampaignSession | null
+  const session = sessionData as unknown as QuestSession | null
   if (!session) redirect(`/quests/${slug}`)
 
   // Fetch active scene (only non-DM-only fields)
@@ -83,7 +83,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
     .order('created_at', { ascending: true })
     .limit(200)
 
-  const allMessages = (allMessagesData ?? []) as unknown as (CampaignMessage & { visible_to: string[] })[]
+  const allMessages = (allMessagesData ?? []) as unknown as (QuestMessage & { visible_to: string[] })[]
 
   // Client-side filter: show public messages + whispers where user is in visible_to
   const messages = allMessages.filter(msg => {
@@ -102,11 +102,11 @@ export default async function PlayerSessionPage({ params }: PageProps) {
   return (
     <PlayerSessionClient
       campaign={campaign}
-      player={myPlayer as CampaignPlayer}
-      players={(playersData ?? []) as unknown as CampaignPlayer[]}
+      player={myPlayer as QuestPlayer}
+      players={(playersData ?? []) as unknown as QuestPlayer[]}
       session={session}
-      activeScene={activeSceneData as unknown as CampaignScene | null}
-      messages={messages as CampaignMessage[]}
+      activeScene={activeSceneData as unknown as QuestScene | null}
+      messages={messages as QuestMessage[]}
       idols={(myIdolsData ?? []) as unknown as NarrativeIdol[]}
       userId={user.id}
     />

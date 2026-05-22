@@ -1,14 +1,14 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getConvergenceState } from '@/lib/data/world-state'
-import { GAME_MODE_INFO } from '@/types/campaign'
-import type { GameMode, CampaignStatus } from '@/types/campaign'
+import { GAME_MODE_INFO } from '@/types/quest'
+import type { GameMode, QuestStatus } from '@/types/quest'
 import { Plus, Users, Clock, Flame, Search, Swords, Target, Skull, Eye } from 'lucide-react'
 import { WorldPulse, FrayIndicator, MonsterWarning } from '@/components/world-pulse'
 
-interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; updated_at: string; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
+interface QuestRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; updated_at: string; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
 
-export default async function CampaignsPage() {
+export default async function QuestsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const convergence = await getConvergenceState()
@@ -21,12 +21,12 @@ export default async function CampaignsPage() {
     .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
     .order('updated_at', { ascending: false })
 
-  const campaigns = (campaignsData ?? []) as unknown as CampaignRow[]
+  const campaigns = (campaignsData ?? []) as unknown as QuestRow[]
 
   // Fetch my campaigns (DM + player)
-  let myCampaigns: CampaignRow[] = []
+  let myQuests: QuestRow[] = []
   if (user) {
-    const { data: dmCampaignsData } = await supabase
+    const { data: dmQuestsData } = await supabase
       .from('quests')
       .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .eq('dm_id', user.id)
@@ -40,19 +40,19 @@ export default async function CampaignsPage() {
 
     const playerIds = ((playerEntries ?? []) as unknown as { quest_id: string }[]).map(p => p.quest_id)
 
-    let playerCampaigns: CampaignRow[] = []
+    let playerQuests: QuestRow[] = []
     if (playerIds.length > 0) {
       const { data } = await supabase
         .from('quests')
         .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
         .in('id', playerIds)
         .order('updated_at', { ascending: false })
-      playerCampaigns = (data ?? []) as unknown as CampaignRow[]
+      playerQuests = (data ?? []) as unknown as QuestRow[]
     }
 
-    const all = [...((dmCampaignsData ?? []) as unknown as CampaignRow[]), ...playerCampaigns]
+    const all = [...((dmQuestsData ?? []) as unknown as QuestRow[]), ...playerQuests]
     const seen = new Set<string>()
-    myCampaigns = all.filter(c => {
+    myQuests = all.filter(c => {
       if (seen.has(c.id)) return false
       seen.add(c.id)
       return true
@@ -97,7 +97,7 @@ export default async function CampaignsPage() {
       <div className="flex items-center justify-between mb-12">
         <div>
           <h1 className="text-4xl md:text-5xl font-serif">
-            <span className="text-parchment">Campaign</span>{' '}
+            <span className="text-parchment">Quest</span>{' '}
             <span className="canon-text">Engine</span>
           </h1>
           <p className="text-parchment-muted mt-2 max-w-xl">
@@ -110,7 +110,7 @@ export default async function CampaignsPage() {
             className="btn-fantasy flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Create Campaign
+            Create Quest
           </Link>
         )}
       </div>
@@ -134,15 +134,15 @@ export default async function CampaignsPage() {
         </div>
       </div>
 
-      {/* My Campaigns */}
-      {user && myCampaigns && myCampaigns.length > 0 && (
+      {/* My Quests */}
+      {user && myQuests && myQuests.length > 0 && (
         <section className="mb-12">
           <h2 className="text-2xl font-serif text-parchment mb-6 flex items-center gap-2">
             <Skull className="w-5 h-5 text-gold" />
-            My Campaigns
+            My Quests
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myCampaigns.map((campaign) => {
+            {myQuests.map((campaign) => {
               const mode = GAME_MODE_INFO[campaign.game_mode as GameMode]
               const isDM = campaign.dm_id === user.id
               return (
@@ -188,11 +188,11 @@ export default async function CampaignsPage() {
         </section>
       )}
 
-      {/* Public Campaigns */}
+      {/* Public Quests */}
       <section>
         <h2 className="text-2xl font-serif text-parchment mb-6 flex items-center gap-2">
           <Swords className="w-5 h-5 text-gold" />
-          Open Campaigns
+          Open Quests
         </h2>
         {campaigns && campaigns.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Volume2, VolumeX, Music, Wind } from 'lucide-react'
-import type { SceneMood } from '@/types/campaign'
+import type { SceneMood } from '@/types/quest'
 
 /**
  * Atmosphere Engine

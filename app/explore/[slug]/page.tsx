@@ -397,12 +397,12 @@ export default async function EntityPage({ params }: EntityPageProps) {
               )}
             </div>
 
-            {/* Campaigns */}
+            {/* Quests */}
             {crossRefs.campaigns.length > 0 && (
               <div className="p-6 rounded-lg bg-teal-rich/50 border border-gold/10 space-y-4">
                 <h3 className="text-lg font-serif text-gold flex items-center gap-2">
                   <Swords className="w-4 h-4" />
-                  Active Campaigns
+                  Active Quests
                 </h3>
                 <ul className="space-y-2">
                   {crossRefs.campaigns.map((campaign) => (

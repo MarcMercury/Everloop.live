@@ -108,7 +108,7 @@ export default function Home() {
               </p>
               <div className="space-y-1.5 pt-2 text-xs text-parchment-muted">
                 <Link href="/player-deck" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Player Deck</Link>
-                <Link href="/campaigns" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Campaigns</Link>
+                <Link href="/campaigns" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Quests</Link>
                 <Link href="/quests" className="flex items-center gap-2 hover:text-parchment transition-colors"><span className="text-purple-400">✦</span> Quests</Link>
               </div>
             </div>

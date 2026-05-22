@@ -722,14 +722,14 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
 import type { MonsterStats } from '@/lib/dnd-rules/monsters'
 
 // Full D&D 5e stat block — see lib/dnd-rules/monsters.ts.
-type CampaignMonsterStats = MonsterStats
+type QuestMonsterStats = MonsterStats
 
-interface SaveCampaignMonsterInput {
+interface SaveQuestMonsterInput {
   name: string
   tagline: string
   description: string
   imageUrl?: string
-  monsterStats: CampaignMonsterStats
+  monsterStats: QuestMonsterStats
   /**
    * Optional. If provided, the existing canon_entities row will be updated
    * (converted from story → campaign) instead of creating a new entity.
@@ -741,7 +741,7 @@ interface SaveCampaignMonsterInput {
 /**
  * List user-created Story Monsters — i.e. canon_entities of type='monster'
  * created by the current user that do NOT yet have a monster_stats stat block.
- * Used by the Campaign Monster wizard to "load / convert" a story monster.
+ * Used by the Quest Monster wizard to "load / convert" a story monster.
  */
 export async function getUserStoryMonsters(): Promise<{
   success: boolean
@@ -812,7 +812,7 @@ export async function getUserStoryMonsters(): Promise<{
  * Save a campaign-ready D&D 5e monster to canon_entities
  * Stores full stat block and Everloop lore in extended_lore + metadata
  */
-export async function saveCampaignMonster(input: SaveCampaignMonsterInput): Promise<{
+export async function saveQuestMonster(input: SaveQuestMonsterInput): Promise<{
   success: boolean
   entityId?: string
   slug?: string

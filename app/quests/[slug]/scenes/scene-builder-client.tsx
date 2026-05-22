@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/quests'
-import { MOOD_THEMES } from '@/types/campaign'
-import type { Campaign, CampaignScene, CampaignSceneUpdate, SceneType, SceneMood } from '@/types/campaign'
+import { MOOD_THEMES } from '@/types/quest'
+import type { Quest, QuestScene, QuestSceneUpdate, SceneType, SceneMood } from '@/types/quest'
 import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,8 +32,8 @@ const ModelViewerCompact = dynamic(
 )
 
 interface Props {
-  campaign: Campaign
-  scenes: CampaignScene[]
+  campaign: Quest
+  scenes: QuestScene[]
   entities: { id: string; name: string; type: string; slug: string }[]
 }
 
@@ -106,7 +106,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
     setLoading(false)
   }
 
-  async function handleUpdateScene(sceneId: string, updates: CampaignSceneUpdate) {
+  async function handleUpdateScene(sceneId: string, updates: QuestSceneUpdate) {
     setLoading(true)
     const result = await updateScene(sceneId, campaign.id, updates)
     if (result.success && result.scene) {
