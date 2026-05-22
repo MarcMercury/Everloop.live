@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/quests'
 import { MOOD_THEMES } from '@/types/campaign'
 import type { Campaign, CampaignScene, CampaignSceneUpdate, SceneType, SceneMood } from '@/types/campaign'
-import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box } from 'lucide-react'
+import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -41,6 +41,27 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
   const [editingScene, setEditingScene] = useState<string | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [generatingMapFor, setGeneratingMapFor] = useState<string | null>(null)
+
+  async function handleGenerateMap(sceneId: string) {
+    setGeneratingMapFor(sceneId)
+    try {
+      const res = await fetch(`/api/quests/${campaign.id}/map`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sceneId }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('Map generation failed:', data?.error)
+        return
+      }
+      // Refresh scenes from server to pick up persisted map_url
+      router.refresh()
+    } finally {
+      setGeneratingMapFor(null)
+    }
+  }
 
   const [newScene, setNewScene] = useState({
     title: '',
@@ -101,10 +122,22 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
           </h1>
           <p className="text-parchment-muted mt-1">Design scenes your players will experience. Each scene has a mood, type, and narration.</p>
         </div>
-        <Button onClick={() => setShowNew(!showNew)} className="btn-fantasy gap-2">
-          <Plus className="w-4 h-4" />
-          Add Scene
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`/api/quests/${campaign.id}/print?print=1`}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-sm"
+            title="Open printable quest packet (DDEX-style)"
+          >
+            <Printer className="w-4 h-4" />
+            Print Packet
+          </a>
+          <Button onClick={() => setShowNew(!showNew)} className="btn-fantasy gap-2">
+            <Plus className="w-4 h-4" />
+            Add Scene
+          </Button>
+        </div>
       </div>
 
       {/* New Scene Form */}
@@ -292,6 +325,31 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     {scene.dm_notes && (
                       <p className="text-xs text-red-400/60 mt-2">🔒 DM: {scene.dm_notes}</p>
                     )}
+                    {/* Map preview + generation */}
+                    <div className="mt-3 flex items-start gap-3">
+                      {(scene as { map_url?: string | null }).map_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={(scene as { map_url?: string }).map_url}
+                          alt={`Map for ${scene.title}`}
+                          className="w-32 h-32 object-cover rounded border border-gold/20"
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateMap(scene.id)}
+                        disabled={generatingMapFor === scene.id}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50"
+                        title="Generate an AI map illustration for this scene"
+                      >
+                        {generatingMapFor === scene.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <ImageIcon className="w-3 h-3" />
+                        )}
+                        {(scene as { map_url?: string | null }).map_url ? 'Regenerate Map' : 'Generate Map'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

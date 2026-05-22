@@ -18,6 +18,7 @@ import {
   Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map,
   Volume2, Eye, EyeOff, Sparkles, Flame, Shield, MessageSquare,
   ChevronRight, Zap, Gift, SkipForward, AlertTriangle, Bot, Box,
+  Printer,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -294,6 +295,16 @@ export function DMControlPanelClient({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href={`/api/quests/${campaign.id}/print?print=1`}
+            target="_blank"
+            rel="noopener"
+            className="text-sm text-parchment-muted hover:text-gold inline-flex items-center gap-1 px-2 py-1 rounded border border-gold/20"
+            title="Open printable quest packet"
+          >
+            <Printer className="w-4 h-4" />
+            Print Packet
+          </a>
           {!session ? (
             <Button onClick={handleStartSession} disabled={loading} className="btn-fantasy text-sm gap-2">
               <Play className="w-4 h-4" />
