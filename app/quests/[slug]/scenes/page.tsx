@@ -15,7 +15,7 @@ export default async function SceneBuilderPage({ params }: PageProps) {
   if (!user) redirect('/login')
 
   const { data: campaignData } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('*')
     .eq('slug', slug)
     .single()
@@ -25,9 +25,9 @@ export default async function SceneBuilderPage({ params }: PageProps) {
   if (campaign.dm_id !== user.id) redirect(`/quests/${slug}`)
 
   const { data: scenes } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .order('scene_order', { ascending: true })
 
   // Fetch canon entities for linking

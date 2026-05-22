@@ -274,24 +274,24 @@ function EmptyState({ variant }: { variant: 'draft' | 'pending' | 'revision' | '
 async function getUserCampaigns(supabase: SupabaseServerClient, userId: string) {
   // Campaigns I DM
   const { data: dmCampaigns } = await supabase
-    .from('campaigns')
-    .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('dm_id', userId)
     .order('updated_at', { ascending: false })
 
   // Campaigns I'm a player in
   const { data: playerEntries } = await supabase
-    .from('campaign_players')
-    .select('campaign_id')
+    .from('quest_players')
+    .select('quest_id')
     .eq('user_id', userId)
     .in('status', ['pending', 'accepted'])
 
   let playerCampaigns: DashboardCampaign[] = []
   if (playerEntries && playerEntries.length > 0) {
-    const ids = (playerEntries as unknown as { campaign_id: string }[]).map(p => p.campaign_id)
+    const ids = (playerEntries as unknown as { quest_id: string }[]).map(p => p.quest_id)
     const { data } = await supabase
-      .from('campaigns')
-      .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+      .from('quests')
+      .select('id, title, slug, description, dm_id, game_mode, status, max_players, session_count, updated_at, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .in('id', ids)
       .order('updated_at', { ascending: false })
     playerCampaigns = (data ?? []) as unknown as DashboardCampaign[]

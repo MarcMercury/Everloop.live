@@ -122,7 +122,7 @@ export function DMControlPanelClient({
     if (!session || !messageInput.trim()) return
     const result = await sendMessage({
       session_id: session.id,
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       message_type: whisperTarget ? 'whisper' : 'chat',
       content: messageInput.trim(),
       visible_to: whisperTarget ? [whisperTarget, userId] : [],
@@ -139,7 +139,7 @@ export function DMControlPanelClient({
     if (!session || !narrationInput.trim()) return
     const result = await sendMessage({
       session_id: session.id,
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       message_type: 'narration',
       content: narrationInput.trim(),
       character_name: 'Narrator',
@@ -162,7 +162,7 @@ export function DMControlPanelClient({
     if (!session) return
     const result = await rollDiceAction({
       session_id: session.id,
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       roll_type: 'custom',
       dice_formula: diceFormula,
       character_name: 'DM',
@@ -174,7 +174,7 @@ export function DMControlPanelClient({
     if (!session) return
     const def = IDOL_DEFINITIONS[power]
     await grantIdol({
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       player_id: playerId,
       session_id: session.id,
       name: def.name,
@@ -209,7 +209,7 @@ export function DMControlPanelClient({
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         session_id: session.id,
-        campaign_id: campaign.id,
+        quest_id: campaign.id,
         sender_id: userId,
         message_type: 'ai_narration',
         content: result.content,
@@ -240,7 +240,7 @@ export function DMControlPanelClient({
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         session_id: session.id,
-        campaign_id: campaign.id,
+        quest_id: campaign.id,
         sender_id: userId,
         message_type: 'ai_narration',
         content: result.content,
@@ -264,7 +264,7 @@ export function DMControlPanelClient({
       const theme = MOOD_THEMES[mood]
       await sendMessage({
         session_id: session.id,
-        campaign_id: campaign.id,
+        quest_id: campaign.id,
         message_type: 'system',
         content: `${theme.icon} The atmosphere shifts to ${mood}...`,
       })

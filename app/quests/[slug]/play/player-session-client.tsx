@@ -95,7 +95,7 @@ export function PlayerSessionClient({
     setLoading(true)
     const result = await sendMessage({
       session_id: session.id,
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       message_type: 'chat',
       content: chatInput.trim(),
       character_name: char?.name ?? 'Player',
@@ -112,7 +112,7 @@ export function PlayerSessionClient({
     setLoading(true)
     const result = await rollDiceAction({
       session_id: session.id,
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       roll_type: rollType,
       dice_formula: diceFormula,
       character_name: char?.name ?? 'Player',

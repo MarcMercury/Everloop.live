@@ -47,7 +47,7 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
 
   // Verify user is the DM
   const { data: campaign } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, dm_id, settings')
     .eq('id', input.campaignId)
     .single()
@@ -88,10 +88,10 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
     const messageType = input.type === 'npc_dialogue' ? 'ai_narration' : 'narration'
 
     await supabase
-      .from('campaign_messages')
+      .from('quest_messages')
       .insert({
         session_id: input.sessionId,
-        campaign_id: input.campaignId,
+        quest_id: input.campaignId,
         sender_id: user.id,
         message_type: messageType,
         content,
@@ -106,7 +106,7 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
     // Auto-update scene mood if narration suggests a shift
     if (suggestedMood && suggestedMood !== input.context?.sceneMood) {
       const { data: sessionData } = await supabase
-        .from('campaign_sessions')
+        .from('quest_sessions')
         .select('active_scene_id')
         .eq('id', input.sessionId)
         .single()
@@ -114,10 +114,10 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
       const sessionRow = sessionData as unknown as { active_scene_id: string | null } | null
       if (sessionRow?.active_scene_id) {
         await supabase
-          .from('campaign_scenes')
+          .from('quest_scenes')
           .update({ mood: suggestedMood } as never)
           .eq('id', sessionRow.active_scene_id)
-          .eq('campaign_id', input.campaignId)
+          .eq('quest_id', input.campaignId)
       }
     }
 
@@ -353,7 +353,7 @@ export async function advanceWorldClock(
 
   // Verify DM
   const { data: campaign } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, dm_id, fray_intensity, settings, world_era')
     .eq('id', campaignId)
     .single()
@@ -369,9 +369,9 @@ export async function advanceWorldClock(
 
   // Gather faction NPCs
   const { data: npcsData } = await supabase
-    .from('campaign_npcs')
+    .from('quest_npcs')
     .select('*')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
 
   const npcs = (npcsData ?? []) as unknown as Array<{
     id: string; name: string; npc_type: string;
@@ -385,9 +385,9 @@ export async function advanceWorldClock(
 
   // Get recent events for context
   const { data: recentMessages } = await supabase
-    .from('campaign_messages')
+    .from('quest_messages')
     .select('content, message_type')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .in('message_type', ['event', 'narration', 'ai_narration'])
     .order('created_at', { ascending: false })
     .limit(10)
@@ -399,9 +399,9 @@ export async function advanceWorldClock(
 
   // Get current scenes for location context
   const { data: scenes } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('title, mood, narration, status')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .in('status', ['prepared', 'active', 'completed'])
     .limit(10)
 
@@ -495,10 +495,10 @@ Generate faction moves. Return a JSON object with this exact structure:
     // Post each event as a campaign message
     for (const event of parsed.events) {
       await supabase
-        .from('campaign_messages')
+        .from('quest_messages')
         .insert({
           session_id: sessionId,
-          campaign_id: campaignId,
+          quest_id: campaignId,
           sender_id: user.id,
           message_type: 'event',
           content: `**${event.faction}**: ${event.action}\n\n${event.consequence}`,
@@ -516,10 +516,10 @@ Generate faction moves. Return a JSON object with this exact structure:
     // Post the narrative summary
     if (parsed.narrativeSummary) {
       await supabase
-        .from('campaign_messages')
+        .from('quest_messages')
         .insert({
           session_id: sessionId,
-          campaign_id: campaignId,
+          quest_id: campaignId,
           sender_id: user.id,
           message_type: 'narration',
           content: `🌍 *The world turns...*\n\n${parsed.narrativeSummary}`,
@@ -532,7 +532,7 @@ Generate faction moves. Return a JSON object with this exact structure:
     if (totalFrayShift !== 0) {
       const newFray = Math.max(0, Math.min(1, fray + totalFrayShift))
       await supabase
-        .from('campaigns')
+        .from('quests')
         .update({ fray_intensity: newFray } as never)
         .eq('id', campaignId)
     }

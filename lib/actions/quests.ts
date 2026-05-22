@@ -36,8 +36,8 @@ export async function getCampaigns(filters?: {
   const supabase = await createClient()
 
   let query = supabase
-    .from('campaigns')
-    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .order('updated_at', { ascending: false })
 
   if (filters?.status) query = query.eq('status', filters.status)
@@ -60,8 +60,8 @@ export async function getCampaign(idOrSlug: string): Promise<{ success: boolean;
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
 
   let query = supabase
-    .from('campaigns')
-    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
 
   if (isUuid) {
     query = query.eq('id', idOrSlug)
@@ -86,8 +86,8 @@ export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: 
 
   // Campaigns I DM
   const { data: dmCampaigns, error: dmErr } = await supabase
-    .from('campaigns')
-    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('dm_id', user.id)
     .order('updated_at', { ascending: false })
 
@@ -95,17 +95,17 @@ export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: 
 
   // Campaigns I'm a player in
   const { data: playerEntries } = await supabase
-    .from('campaign_players')
-    .select('campaign_id')
+    .from('quest_players')
+    .select('quest_id')
     .eq('user_id', user.id)
     .eq('status', 'accepted')
 
   let playerCampaigns: Campaign[] = []
   if (playerEntries && playerEntries.length > 0) {
-    const ids = playerEntries.map(p => p.campaign_id)
+    const ids = playerEntries.map(p => p.quest_id)
     const { data } = await supabase
-      .from('campaigns')
-      .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+      .from('quests')
+      .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .in('id', ids)
       .order('updated_at', { ascending: false })
     playerCampaigns = (data ?? []) as unknown as Campaign[]
@@ -137,7 +137,7 @@ export async function createCampaign(input: Omit<CampaignInsert, 'dm_id' | 'slug
     + '-' + Date.now().toString(36)
 
   const { data, error } = await supabase
-    .from('campaigns')
+    .from('quests')
     .insert({ ...input, dm_id: user.id, slug })
     .select()
     .single()
@@ -159,7 +159,7 @@ export async function updateCampaign(id: string, updates: CampaignUpdate): Promi
   if (!user) return { success: false, error: 'Not authenticated' }
 
   const { data, error } = await supabase
-    .from('campaigns')
+    .from('quests')
     .update(updates)
     .eq('id', id)
     .eq('dm_id', user.id)
@@ -190,7 +190,7 @@ export async function getCampaignPlayers(campaignId: string): Promise<{
 
   // Verify user is DM or player in this campaign
   const { data: campaign } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, dm_id')
     .eq('id', campaignId)
     .single()
@@ -200,22 +200,22 @@ export async function getCampaignPlayers(campaignId: string): Promise<{
   const campaignRow = campaign as { id: string; dm_id: string }
   if (campaignRow.dm_id !== user.id) {
     const { data: player } = await supabase
-      .from('campaign_players')
+      .from('quest_players')
       .select('id')
-      .eq('campaign_id', campaignId)
+      .eq('quest_id', campaignId)
       .eq('user_id', user.id)
       .single()
     if (!player) return { success: false, error: 'Access denied' }
   }
 
   const { data, error } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .select(`
       *,
-      user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
-      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
+      user:profiles!quest_players_user_id_fkey(id, username, display_name, avatar_url),
+      character:player_characters!quest_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
     `)
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .order('joined_at', { ascending: true })
 
   if (error) {
@@ -235,7 +235,7 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
 
   // Check campaign exists and is recruiting
   const { data: campaign } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, max_players, status, dm_id')
     .eq('id', campaignId)
     .single()
@@ -246,9 +246,9 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
 
   // Check player count
   const { count } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .select('id', { count: 'exact', head: true })
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .in('status', ['pending', 'accepted'])
 
   if ((count ?? 0) >= (campaign.max_players ?? 6)) {
@@ -256,9 +256,9 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
   }
 
   const { error } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .insert({
-      campaign_id: campaignId,
+      quest_id: campaignId,
       user_id: user.id,
       character_id: characterId ?? null,
       status: 'pending',
@@ -285,7 +285,7 @@ export async function updatePlayerStatus(
 
   // Verify DM
   const { data: campaign } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('dm_id')
     .eq('id', campaignId)
     .single()
@@ -298,10 +298,10 @@ export async function updatePlayerStatus(
   if (status === 'accepted') updates.joined_at = new Date().toISOString()
 
   const { error } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .update(updates)
     .eq('id', playerId)
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
 
   if (error) {
     console.error('Error updating player status:', error)
@@ -320,9 +320,9 @@ export async function selectCharacter(campaignId: string, characterId: string): 
   if (!user) return { success: false, error: 'Not authenticated' }
 
   const { error } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .update({ character_id: characterId })
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .eq('user_id', user.id)
 
   if (error) {
@@ -344,9 +344,9 @@ export async function getCampaignScenes(campaignId: string): Promise<{
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('*')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .order('scene_order', { ascending: true })
 
   if (error) {
@@ -366,12 +366,12 @@ export async function createScene(input: CampaignSceneInsert): Promise<{
 
   // Get next scene order
   const { count } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('id', { count: 'exact', head: true })
-    .eq('campaign_id', input.campaign_id)
+    .eq('quest_id', input.quest_id)
 
   const { data, error } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .insert({ ...input, scene_order: input.scene_order ?? (count ?? 0) })
     .select()
     .single()
@@ -381,7 +381,7 @@ export async function createScene(input: CampaignSceneInsert): Promise<{
     return { success: false, error: error.message }
   }
 
-  revalidatePath(`/quests/${input.campaign_id}`)
+  revalidatePath(`/quests/${input.quest_id}`)
   return { success: true, scene: data as unknown as CampaignScene }
 }
 
@@ -391,10 +391,10 @@ export async function updateScene(id: string, campaignId: string, updates: Campa
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .update(updates)
     .eq('id', id)
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .select()
     .single()
 
@@ -420,24 +420,24 @@ export async function startSession(campaignId: string, title?: string): Promise<
 
   // Get session number
   const { count } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('id', { count: 'exact', head: true })
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
 
   // Get first prepared scene
   const { data: firstScene } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('id')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .eq('status', 'prepared')
     .order('scene_order', { ascending: true })
     .limit(1)
     .single()
 
   const { data, error } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .insert({
-      campaign_id: campaignId,
+      quest_id: campaignId,
       session_number: (count ?? 0) + 1,
       title: title ?? `Session ${(count ?? 0) + 1}`,
       status: 'active',
@@ -454,7 +454,7 @@ export async function startSession(campaignId: string, title?: string): Promise<
 
   // Update campaign status
   await supabase
-    .from('campaigns')
+    .from('quests')
     .update({ status: 'in_progress' })
     .eq('id', campaignId)
     .eq('dm_id', user.id)
@@ -462,7 +462,7 @@ export async function startSession(campaignId: string, title?: string): Promise<
   // Activate the first scene
   if (firstScene?.id) {
     await supabase
-      .from('campaign_scenes')
+      .from('quest_scenes')
       .update({ status: 'active' })
       .eq('id', firstScene.id)
   }
@@ -477,9 +477,9 @@ export async function getActiveSession(campaignId: string): Promise<{
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('*')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .in('status', ['active', 'paused'])
     .order('created_at', { ascending: false })
     .limit(1)
@@ -501,7 +501,7 @@ export async function endSession(sessionId: string, campaignId: string, summary?
   if (!user) return { success: false, error: 'Not authenticated' }
 
   const { error } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .update({
       status: 'completed',
       ended_at: new Date().toISOString(),
@@ -515,17 +515,17 @@ export async function endSession(sessionId: string, campaignId: string, summary?
   }
 
   // Increment campaign session count
-  await supabase.rpc('increment_campaign_sessions', { campaign_id: campaignId }).catch(() => {
+  await supabase.rpc('increment_campaign_sessions', { quest_id: campaignId }).catch(() => {
     // Fallback: manual increment
     supabase
-      .from('campaigns')
+      .from('quests')
       .select('session_count')
       .eq('id', campaignId)
       .single()
       .then(({ data }) => {
         if (data) {
           supabase
-            .from('campaigns')
+            .from('quests')
             .update({ session_count: (data.session_count ?? 0) + 1 })
             .eq('id', campaignId)
         }
@@ -543,27 +543,27 @@ export async function changeScene(sessionId: string, sceneId: string, campaignId
 
   // Deactivate old scene
   const { data: session } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('active_scene_id')
     .eq('id', sessionId)
     .single()
 
   if (session?.active_scene_id) {
     await supabase
-      .from('campaign_scenes')
+      .from('quest_scenes')
       .update({ status: 'completed' })
       .eq('id', session.active_scene_id)
   }
 
   // Activate new scene
   await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .update({ status: 'active' })
     .eq('id', sceneId)
 
   // Update session
   const { error } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .update({ active_scene_id: sceneId })
     .eq('id', sessionId)
 
@@ -582,7 +582,7 @@ export async function changeScene(sessionId: string, sceneId: string, campaignId
 
 export async function sendMessage(input: {
   session_id: string
-  campaign_id: string
+  quest_id: string
   message_type: MessageType
   content: string
   visible_to?: string[]
@@ -595,7 +595,7 @@ export async function sendMessage(input: {
   if (!user) return { success: false, error: 'Not authenticated' }
 
   const { data, error } = await supabase
-    .from('campaign_messages')
+    .from('quest_messages')
     .insert({
       ...input,
       sender_id: user.id,
@@ -618,10 +618,10 @@ export async function getSessionMessages(sessionId: string, limit = 100): Promis
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_messages')
+    .from('quest_messages')
     .select(`
       *,
-      sender:profiles!campaign_messages_sender_id_fkey(username, display_name, avatar_url)
+      sender:profiles!quest_messages_sender_id_fkey(username, display_name, avatar_url)
     `)
     .eq('session_id', sessionId)
     .order('created_at', { ascending: true })
@@ -659,7 +659,7 @@ function parseDiceFormula(formula: string): { count: number; sides: number; modi
 
 export async function rollDiceAction(input: {
   session_id: string
-  campaign_id: string
+  quest_id: string
   roll_type: RollType
   dice_formula: string
   ability?: string
@@ -694,10 +694,10 @@ export async function rollDiceAction(input: {
   const isSuccess = input.dc !== undefined ? total >= input.dc : null
 
   const { data, error } = await supabase
-    .from('campaign_dice_rolls')
+    .from('quest_dice_rolls')
     .insert({
       session_id: input.session_id,
-      campaign_id: input.campaign_id,
+      quest_id: input.quest_id,
       player_id: user.id,
       character_name: input.character_name ?? null,
       roll_type: input.roll_type,
@@ -726,7 +726,7 @@ export async function rollDiceAction(input: {
   const rollDisplay = isCritHit ? '🎯 CRITICAL HIT!' : isCritFail ? '💀 CRITICAL FAIL!' : `Rolled ${total}`
   await sendMessage({
     session_id: input.session_id,
-    campaign_id: input.campaign_id,
+    quest_id: input.quest_id,
     message_type: 'roll',
     content: `${input.character_name ?? 'Unknown'} rolls ${input.dice_formula}: [${diceResults.join(', ')}] + ${modifier} = **${total}** ${rollDisplay}${input.dc ? ` (DC ${input.dc}: ${isSuccess ? '✅ Success' : '❌ Fail'})` : ''}`,
     roll_data: {
@@ -757,7 +757,7 @@ export async function getCampaignIdols(campaignId: string): Promise<{
   const { data, error } = await supabase
     .from('narrative_idols')
     .select('*')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .order('created_at', { ascending: false })
 
   if (error) return { success: false, error: error.message }
@@ -765,7 +765,7 @@ export async function getCampaignIdols(campaignId: string): Promise<{
 }
 
 export async function grantIdol(input: {
-  campaign_id: string
+  quest_id: string
   player_id: string
   session_id: string
   name: string
@@ -782,7 +782,7 @@ export async function grantIdol(input: {
   const { data, error } = await supabase
     .from('narrative_idols')
     .insert({
-      campaign_id: input.campaign_id,
+      quest_id: input.quest_id,
       holder_id: input.player_id,
       name: input.name,
       description: input.description ?? null,
@@ -804,14 +804,14 @@ export async function grantIdol(input: {
 
   // Update player idol count
   await supabase.rpc('increment_player_idols', {
-    p_campaign_id: input.campaign_id,
+    p_campaign_id: input.quest_id,
     p_user_id: input.player_id,
   }).catch(() => {})
 
   // Send message
   await sendMessage({
     session_id: input.session_id,
-    campaign_id: input.campaign_id,
+    quest_id: input.quest_id,
     message_type: 'idol',
     content: `🏆 **${input.name}** has been granted! ${input.reason}`,
     reference_data: { idol_id: data?.id, power: input.power },
@@ -856,7 +856,7 @@ export async function useIdol(idolId: string, sessionId: string, campaignId: str
   // Send dramatic message
   await sendMessage({
     session_id: sessionId,
-    campaign_id: campaignId,
+    quest_id: campaignId,
     message_type: 'idol',
     content: `⚡ **${(idol as Record<string, unknown>).name}** has been activated! ${effect}. The Everloop trembles...`,
     reference_data: { idol_id: idolId, power: (idol as Record<string, unknown>).power },
@@ -876,9 +876,9 @@ export async function getCampaignNpcs(campaignId: string): Promise<{
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_npcs')
+    .from('quest_npcs')
     .select('*')
-    .eq('campaign_id', campaignId)
+    .eq('quest_id', campaignId)
     .order('created_at', { ascending: false })
 
   if (error) return { success: false, error: error.message }
@@ -886,7 +886,7 @@ export async function getCampaignNpcs(campaignId: string): Promise<{
 }
 
 export async function createNpc(input: {
-  campaign_id: string
+  quest_id: string
   name: string
   description?: string
   npc_type?: string
@@ -900,7 +900,7 @@ export async function createNpc(input: {
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('campaign_npcs')
+    .from('quest_npcs')
     .insert(input)
     .select()
     .single()
@@ -910,7 +910,7 @@ export async function createNpc(input: {
     return { success: false, error: error.message }
   }
 
-  revalidatePath(`/quests/${input.campaign_id}`)
+  revalidatePath(`/quests/${input.quest_id}`)
   return { success: true, npc: data as unknown as CampaignNpc }
 }
 
@@ -934,7 +934,7 @@ export async function getQuestsForPicker(): Promise<{
 }> {
   const supabase = await createClient()
   const { data, error } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, slug, title, game_mode, fray_intensity, status, is_public')
     .eq('is_public', true)
     .order('updated_at', { ascending: false })

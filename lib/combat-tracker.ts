@@ -45,7 +45,7 @@ export type Combatant = PlayerCombatant | NPCCombatant
 
 export interface CombatState {
   id: string
-  campaign_id: string
+  quest_id: string
   session_id: string
   round: number
   turn_index: number

@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress'
 import { FrayIndicator } from '@/components/world-pulse'
 import { ArrowLeft, User, Calendar, Sparkles, BookOpen, Swords, Scroll, Link2, Diamond } from 'lucide-react'
 import type { CanonEntityType } from '@/types/database'
+import { MonsterStatBlock } from '@/components/quests/monster-stat-block'
+import { hydrateMonsterStats } from '@/lib/dnd-rules/monster-hydrate'
 
 interface EntityPageProps {
   params: Promise<{ slug: string }>

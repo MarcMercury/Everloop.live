@@ -29,7 +29,7 @@ export async function GET(
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   // Supabase generated types treat the campaigns table row as broader than
   // our Campaign interface — cast through unknown for the narrow fields we need.
-  const query = supabase.from('campaigns').select('*')
+  const query = supabase.from('quests').select('*')
   const { data, error } = await (isUuid ? query.eq('id', id) : query.eq('slug', id)).maybeSingle()
   const quest = (data ?? null) as unknown as Campaign | null
 
@@ -39,12 +39,12 @@ export async function GET(
 
   const [{ data: scenes }, { data: npcs }, { data: idols }] = await Promise.all([
     supabase
-      .from('campaign_scenes')
+      .from('quest_scenes')
       .select('*')
-      .eq('campaign_id', quest.id)
+      .eq('quest_id', quest.id)
       .order('scene_order', { ascending: true }),
-    supabase.from('campaign_npcs').select('*').eq('campaign_id', quest.id),
-    supabase.from('narrative_idols').select('*').eq('campaign_id', quest.id),
+    supabase.from('quest_npcs').select('*').eq('quest_id', quest.id),
+    supabase.from('narrative_idols').select('*').eq('quest_id', quest.id),
   ])
 
   const html = renderQuestPrintHtml({
