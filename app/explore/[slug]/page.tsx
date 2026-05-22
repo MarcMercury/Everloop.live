@@ -103,7 +103,16 @@ export default async function EntityPage({ params }: EntityPageProps) {
     undefined
   // Hide internal/structural keys from the Extended Lore section so we
   // don't render a raw image URL or flags as lore text.
-  const HIDDEN_LORE_KEYS = new Set(['image_url', 'is_user_created'])
+  const HIDDEN_LORE_KEYS = new Set([
+    'image_url',
+    'is_user_created',
+    // Rendered with dedicated UI below.
+    'tagline',
+    'monster_stats',
+    'everloop_lore',
+    'region_id',
+    'is_one_off',
+  ])
   const extendedLore = extendedLoreRaw
     ? Object.fromEntries(
         Object.entries(extendedLoreRaw).filter(
@@ -112,6 +121,13 @@ export default async function EntityPage({ params }: EntityPageProps) {
       )
     : null
   const regionMeta = (entity.metadata as { region?: string })?.region
+
+  // Monster-specific: hydrate full stat block + Everloop lore
+  const monsterStats =
+    entity.type === 'monster' ? hydrateMonsterStats(extendedLoreRaw?.monster_stats) : null
+  const everloopLore = extendedLoreRaw?.everloop_lore as
+    | { what_broke_here?: string; what_leaked_through?: string; drawn_to?: string }
+    | undefined
 
   // Format dates
   const formatDate = (dateString: string) => {
@@ -181,6 +197,61 @@ export default async function EntityPage({ params }: EntityPageProps) {
                 {entity.description || 'No description available.'}
               </p>
             </div>
+
+            {/* Monster D&D 5e Stat Block */}
+            {monsterStats && (
+              <section className="space-y-3">
+                <h2 className="text-2xl font-serif text-gold flex items-center gap-2">
+                  <Swords className="w-5 h-5" /> Battle Stat Block
+                </h2>
+                <p className="text-sm text-parchment-muted">
+                  Drop this creature into any quest — every value here is ready for the table.
+                </p>
+                <MonsterStatBlock stats={monsterStats} name={entity.name} />
+              </section>
+            )}
+
+            {/* Everloop / Fray binding for monsters */}
+            {everloopLore &&
+              (everloopLore.what_broke_here ||
+                everloopLore.what_leaked_through ||
+                everloopLore.drawn_to) && (
+                <section className="space-y-3">
+                  <h2 className="text-2xl font-serif text-gold">Why It Exists</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {everloopLore.what_broke_here && (
+                      <div className="p-4 rounded-lg bg-red-deep/10 border border-red-deep/30">
+                        <h3 className="text-xs uppercase tracking-wider text-red-300 mb-1">
+                          What broke here
+                        </h3>
+                        <p className="text-sm text-parchment-muted whitespace-pre-line">
+                          {everloopLore.what_broke_here}
+                        </p>
+                      </div>
+                    )}
+                    {everloopLore.what_leaked_through && (
+                      <div className="p-4 rounded-lg bg-red-deep/10 border border-red-deep/30">
+                        <h3 className="text-xs uppercase tracking-wider text-red-300 mb-1">
+                          What leaked through
+                        </h3>
+                        <p className="text-sm text-parchment-muted whitespace-pre-line">
+                          {everloopLore.what_leaked_through}
+                        </p>
+                      </div>
+                    )}
+                    {everloopLore.drawn_to && (
+                      <div className="p-4 rounded-lg bg-red-deep/10 border border-red-deep/30">
+                        <h3 className="text-xs uppercase tracking-wider text-red-300 mb-1">
+                          Drawn to
+                        </h3>
+                        <p className="text-sm text-parchment-muted whitespace-pre-line">
+                          {everloopLore.drawn_to}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
             {/* Extended Lore */}
             {extendedLore && Object.keys(extendedLore).length > 0 && (

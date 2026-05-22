@@ -23,6 +23,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AtmosphereEngine } from '@/components/quests/atmosphere-engine'
+import { DnDQuickReference } from '@/components/quests/dnd-quick-reference'
 import { supabase } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
@@ -454,6 +455,7 @@ export function DMControlPanelClient({
                   <div className="text-xs text-parchment-muted">{activeScene.dm_notes}</div>
                 </div>
               )}
+              <DnDQuickReference />
             </div>
           )}
 
