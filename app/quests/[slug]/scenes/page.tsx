@@ -22,7 +22,7 @@ export default async function SceneBuilderPage({ params }: PageProps) {
 
   const campaign = campaignData as unknown as Campaign | null
   if (!campaign) notFound()
-  if (campaign.dm_id !== user.id) redirect(`/campaigns/${slug}`)
+  if (campaign.dm_id !== user.id) redirect(`/quests/${slug}`)
 
   const { data: scenes } = await supabase
     .from('campaign_scenes')

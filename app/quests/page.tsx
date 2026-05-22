@@ -1,279 +1,255 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getConvergenceState } from '@/lib/data/world-state'
-import { Plus, Users, Clock, Sparkles, Compass, Zap, Globe, Bot } from 'lucide-react'
-import { WorldPulse } from '@/components/world-pulse'
-import MyQuestCard from '@/components/quests/my-quest-card'
+import { GAME_MODE_INFO } from '@/types/campaign'
+import type { GameMode, CampaignStatus } from '@/types/campaign'
+import { Plus, Users, Clock, Flame, Search, Swords, Target, Skull, Eye } from 'lucide-react'
+import { WorldPulse, FrayIndicator, MonsterWarning } from '@/components/world-pulse'
 
-interface QuestRow {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  quest_type: string
-  difficulty: string
-  estimated_duration: string
-  min_participants: number
-  max_participants: number
-  everloop_overlay: boolean
-  status: string
-  is_official: boolean
-  times_played: number
-  average_rating: number
-  tags: string[]
-  updated_at: string
-  creator: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null
-}
+interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; updated_at: string; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
 
-const QUEST_TYPE_INFO: Record<string, { label: string; icon: React.ReactNode; desc: string }> = {
-  solo: { label: 'Solo Quest', icon: <Compass className="w-5 h-5" />, desc: 'A personal journey through the Everloop. Just you and the narrative.' },
-  paired: { label: 'Paired Quest', icon: <Users className="w-5 h-5" />, desc: 'Two adventurers, bound by fate. Cooperative storytelling for two.' },
-  party: { label: 'Party Quest', icon: <Users className="w-5 h-5" />, desc: 'Gather your party. Face challenges designed for a full group.' },
-  public: { label: 'Public Quest', icon: <Globe className="w-5 h-5" />, desc: 'Open to all. Jump in with strangers and forge new bonds.' },
-  ai_guided: { label: 'AI-Guided', icon: <Bot className="w-5 h-5" />, desc: 'The AI narrates your adventure. No DM needed—the Loop guides you.' },
-}
-
-const DIFFICULTY_BADGE: Record<string, { color: string; label: string }> = {
-  story_mode: { color: 'bg-green-500/20 text-green-400 border-green-500/30', label: 'Story Mode' },
-  standard: { color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', label: 'Standard' },
-  brutal: { color: 'bg-red-500/20 text-red-400 border-red-500/30', label: 'Brutal' },
-  chaos: { color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', label: 'Chaos' },
-}
-
-export default async function QuestsPage() {
+export default async function CampaignsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const convergence = await getConvergenceState()
 
-  // Fetch available quests
-  const { data: questsData } = await supabase
-    .from('quests')
-    .select('*, creator:profiles!quests_created_by_fkey(id, username, display_name, avatar_url)')
-    .in('status', ['available', 'featured'])
+  // Fetch public campaigns
+  const { data: campaignsData } = await supabase
+    .from('campaigns')
+    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .eq('is_public', true)
+    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
     .order('updated_at', { ascending: false })
 
-  const quests = (questsData ?? []) as unknown as QuestRow[]
+  const campaigns = (campaignsData ?? []) as unknown as CampaignRow[]
 
-  // Fetch my active quest participations
-  let myActiveQuests: QuestRow[] = []
-  let myCreatedQuests: QuestRow[] = []
+  // Fetch my campaigns (DM + player)
+  let myCampaigns: CampaignRow[] = []
   if (user) {
-    const { data: participations } = await supabase
-      .from('quest_participants')
-      .select('quest_id')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
+    const { data: dmCampaignsData } = await supabase
+      .from('campaigns')
+      .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+      .eq('dm_id', user.id)
+      .order('updated_at', { ascending: false })
 
-    const activeIds = ((participations ?? []) as unknown as { quest_id: string }[]).map(p => p.quest_id)
-    if (activeIds.length > 0) {
+    const { data: playerEntries } = await supabase
+      .from('campaign_players')
+      .select('campaign_id')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'accepted'])
+
+    const playerIds = ((playerEntries ?? []) as unknown as { campaign_id: string }[]).map(p => p.campaign_id)
+
+    let playerCampaigns: CampaignRow[] = []
+    if (playerIds.length > 0) {
       const { data } = await supabase
-        .from('quests')
-        .select('*, creator:profiles!quests_created_by_fkey(id, username, display_name, avatar_url)')
-        .in('id', activeIds)
-      myActiveQuests = (data ?? []) as unknown as QuestRow[]
+        .from('campaigns')
+        .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+        .in('id', playerIds)
+        .order('updated_at', { ascending: false })
+      playerCampaigns = (data ?? []) as unknown as CampaignRow[]
     }
 
-    // Quests this user created (any status — including drafts) so they can find and publish them
-    const { data: created } = await supabase
-      .from('quests')
-      .select('*, creator:profiles!quests_created_by_fkey(id, username, display_name, avatar_url)')
-      .eq('created_by', user.id)
-      .order('updated_at', { ascending: false })
-    myCreatedQuests = (created ?? []) as unknown as QuestRow[]
+    const all = [...((dmCampaignsData ?? []) as unknown as CampaignRow[]), ...playerCampaigns]
+    const seen = new Set<string>()
+    myCampaigns = all.filter(c => {
+      if (seen.has(c.id)) return false
+      seen.add(c.id)
+      return true
+    })
   }
 
-  const featured = quests.filter(q => q.status === 'featured')
-  const available = quests.filter(q => q.status === 'available')
+  const gameModeIcon = (mode: string) => {
+    switch (mode) {
+      case 'classic': return <Swords className="w-4 h-4" />
+      case 'one_shot': return <Target className="w-4 h-4" />
+      case 'survivor': return <Flame className="w-4 h-4" />
+      case 'mystery': return <Search className="w-4 h-4" />
+      case 'social_deception': return <Eye className="w-4 h-4" />
+      default: return <Swords className="w-4 h-4" />
+    }
+  }
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case 'lobby': case 'recruiting':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">Open Lobby</span>
+      case 'ready':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Ready</span>
+      case 'active': case 'in_progress':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Active</span>
+      case 'paused':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Paused</span>
+      case 'complete': case 'completed':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400 border border-gray-500/30">Complete</span>
+      case 'archived':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-500 border border-gray-500/20">Archived</span>
+      case 'draft':
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">Draft</span>
+      default:
+        return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400">{status}</span>
+    }
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12">
+    <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-12">
         <div>
-          <h1 className="text-4xl font-serif">
-            <span className="text-parchment">Everloop</span>{' '}
-            <span className="canon-text">Quest Portal</span>
+          <h1 className="text-4xl md:text-5xl font-serif">
+            <span className="text-parchment">Campaign</span>{' '}
+            <span className="canon-text">Engine</span>
           </h1>
-          <p className="text-parchment-muted mt-2">
-            Enter the Loop. Every quest leads somewhere — and everything in the Everloop is being drawn together.
+          <p className="text-parchment-muted mt-2 max-w-xl">
+            Enter the Everloop as a player. Join campaigns, build your character, and follow the pull that draws all things toward what was broken.
           </p>
         </div>
         {user && (
           <Link
             href="/quests/create"
-            className="btn-fantasy flex items-center gap-2 px-4 py-2 rounded-lg text-sm"
+            className="btn-fantasy flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Create Quest
+            Create Campaign
           </Link>
         )}
       </div>
 
-      {/* Quest Type Showcase */}
+      {/* Game Mode Showcase */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-12">
-        <div className="md:col-span-1 space-y-3">
+        <div className="md:col-span-1">
           <WorldPulse convergence={convergence} />
-          <div className="p-3 rounded-lg bg-purple-900/10 border border-purple-500/10 text-xs text-purple-300/70 italic leading-relaxed">
-            Every quest follows the pull of the Shards. Whether you know it or not, your path leads toward what was broken — and what might yet be made whole.
-          </div>
         </div>
-        <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {Object.entries(QUEST_TYPE_INFO).map(([key, info]) => (
-            <div key={key} className="story-card p-4 text-center">
-              <div className="flex justify-center text-gold mb-2">{info.icon}</div>
-              <h3 className="text-sm font-serif text-parchment">{info.label}</h3>
-              <p className="text-xs text-parchment-muted mt-1 line-clamp-2">{info.desc}</p>
-            </div>
-          ))}
+        <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-5 gap-3">
+          {(Object.entries(GAME_MODE_INFO) as [GameMode, typeof GAME_MODE_INFO[GameMode]][]).map(([key, mode]) => (
+          <div
+            key={key}
+            className="story-card text-center p-4 hover:border-gold/40 transition-all cursor-pointer"
+          >
+            <div className="text-2xl mb-2">{mode.icon}</div>
+            <div className="text-sm font-serif text-parchment">{mode.name}</div>
+            <div className="text-xs text-parchment-muted mt-1">{mode.estimatedLength}</div>
+          </div>
+        ))}
         </div>
       </div>
 
-      {/* My Active Quests */}
-      {myActiveQuests.length > 0 && (
+      {/* My Campaigns */}
+      {user && myCampaigns && myCampaigns.length > 0 && (
         <section className="mb-12">
-          <h2 className="text-2xl font-serif text-parchment mb-4">
-            <Zap className="w-5 h-5 inline mr-2 text-gold" />
-            My Active Quests
+          <h2 className="text-2xl font-serif text-parchment mb-6 flex items-center gap-2">
+            <Skull className="w-5 h-5 text-gold" />
+            My Campaigns
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myActiveQuests.map(quest => (
-              <QuestCard key={quest.id} quest={quest} isActive />
-            ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {myCampaigns.map((campaign) => {
+              const mode = GAME_MODE_INFO[campaign.game_mode as GameMode]
+              const isDM = campaign.dm_id === user.id
+              return (
+                <Link
+                  key={campaign.id}
+                  href={`/quests/${campaign.slug}`}
+                  className="story-card group block"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {gameModeIcon(campaign.game_mode)}
+                      <span className="text-xs text-parchment-muted">{mode?.name ?? campaign.game_mode}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isDM && (
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-gold/20 text-gold border border-gold/30">DM</span>
+                      )}
+                      {statusBadge(campaign.status)}
+                    </div>
+                  </div>
+                  <h3 className="text-lg font-serif text-parchment group-hover:text-gold transition-colors">
+                    {campaign.title}
+                  </h3>
+                  {campaign.description && (
+                    <p className="text-sm text-parchment-muted mt-2 line-clamp-2">{campaign.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 mt-4 text-xs text-parchment-muted">
+                    <span className="flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {campaign.max_players} max
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {campaign.session_count} sessions
+                    </span>
+                    <FrayIndicator intensity={campaign.fray_intensity ?? 0.15} />
+                  </div>
+                  <MonsterWarning frayIntensity={campaign.fray_intensity ?? 0.15} className="mt-2" />
+                </Link>
+              )
+            })}
           </div>
         </section>
       )}
 
-      {/* My Created Quests (drafts + published) */}
-      {myCreatedQuests.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-serif text-parchment mb-4">
-            <Plus className="w-5 h-5 inline mr-2 text-gold" />
-            My Quests
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {myCreatedQuests.map(quest => (
-              <MyQuestCard key={quest.id} quest={quest} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Featured Quests */}
-      {featured.length > 0 && (
-        <section className="mb-12">
-          <h2 className="text-2xl font-serif text-parchment mb-4">
-            <Sparkles className="w-5 h-5 inline mr-2 text-gold" />
-            Featured Quests
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featured.map(quest => (
-              <QuestCard key={quest.id} quest={quest} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* All Available Quests */}
+      {/* Public Campaigns */}
       <section>
-        <h2 className="text-2xl font-serif text-parchment mb-4">
-          Available Quests
+        <h2 className="text-2xl font-serif text-parchment mb-6 flex items-center gap-2">
+          <Swords className="w-5 h-5 text-gold" />
+          Open Campaigns
         </h2>
-        {available.length === 0 && featured.length === 0 ? (
-          <div className="story-card p-12 text-center">
-            <Compass className="w-12 h-12 text-parchment-muted/30 mx-auto mb-4" />
-            <h3 className="text-lg font-serif text-parchment mb-2">No quests available yet</h3>
-            <p className="text-parchment-muted text-sm mb-4">
-              The Quest Portal is waiting for its first stories. Be the pioneer.
-            </p>
-            {user && (
-              <Link href="/quests/create" className="btn-fantasy inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm">
-                <Plus className="w-4 h-4" />
-                Create the First Quest
-              </Link>
-            )}
+        {campaigns && campaigns.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {campaigns.map((campaign) => {
+              const mode = GAME_MODE_INFO[campaign.game_mode as GameMode]
+              const dm = campaign.dm
+              return (
+                <Link
+                  key={campaign.id}
+                  href={`/quests/${campaign.slug}`}
+                  className="story-card group block"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {gameModeIcon(campaign.game_mode)}
+                      <span className="text-xs text-parchment-muted">{mode?.name ?? campaign.game_mode}</span>
+                    </div>
+                    {statusBadge(campaign.status)}
+                  </div>
+                  <h3 className="text-lg font-serif text-parchment group-hover:text-gold transition-colors">
+                    {campaign.title}
+                  </h3>
+                  {campaign.description && (
+                    <p className="text-sm text-parchment-muted mt-2 line-clamp-2">{campaign.description}</p>
+                  )}
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-4 text-xs text-parchment-muted">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {campaign.max_players} max
+                      </span>
+                      <FrayIndicator intensity={campaign.fray_intensity ?? 0.15} />
+                    </div>
+                    {dm && (
+                      <span className="text-xs text-parchment-muted">
+                        DM: <span className="text-gold">{dm.display_name ?? dm.username}</span>
+                      </span>
+                    )}
+                  </div>
+                  <MonsterWarning frayIntensity={campaign.fray_intensity ?? 0.15} className="mt-2" />
+                </Link>
+              )
+            })}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {available.map(quest => (
-              <QuestCard key={quest.id} quest={quest} />
-            ))}
+          <div className="story-card text-center py-16">
+            <Swords className="w-12 h-12 text-parchment-muted mx-auto mb-4" />
+            <p className="text-parchment-muted">No open campaigns yet.</p>
+            {user && (
+              <Link href="/quests/create" className="btn-fantasy mt-4 inline-flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Be the First DM
+              </Link>
+            )}
           </div>
         )}
       </section>
     </div>
-  )
-}
-
-function QuestCard({ quest, isActive }: { quest: QuestRow; isActive?: boolean }) {
-  const typeInfo = QUEST_TYPE_INFO[quest.quest_type] ?? QUEST_TYPE_INFO.solo
-  const diffBadge = DIFFICULTY_BADGE[quest.difficulty] ?? DIFFICULTY_BADGE.standard
-
-  return (
-    <Link href={`/quests/${quest.slug}`} className="story-card p-5 hover:border-gold/40 transition-all group block">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-gold">
-          {typeInfo.icon}
-          <span className="text-xs text-parchment-muted">{typeInfo.label}</span>
-        </div>
-        <span className={`px-2 py-0.5 text-xs rounded-full border ${diffBadge.color}`}>
-          {diffBadge.label}
-        </span>
-      </div>
-
-      <h3 className="text-lg font-serif text-parchment group-hover:text-gold transition-colors mb-2">
-        {quest.title}
-      </h3>
-
-      {quest.description && (
-        <p className="text-sm text-parchment-muted line-clamp-2 mb-3">{quest.description}</p>
-      )}
-
-      <div className="flex items-center gap-4 text-xs text-parchment-muted">
-        <span className="flex items-center gap-1">
-          <Users className="w-3 h-3" />
-          {quest.min_participants === quest.max_participants
-            ? `${quest.min_participants}`
-            : `${quest.min_participants}-${quest.max_participants}`} players
-        </span>
-        <span className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          {quest.estimated_duration}
-        </span>
-        {quest.times_played > 0 && (
-          <span>{quest.times_played} played</span>
-        )}
-      </div>
-
-      {quest.everloop_overlay && (
-        <div className="mt-2">
-          <span className="text-xs text-purple-400/80">✦ Everloop Enhanced</span>
-        </div>
-      )}
-
-      {isActive && (
-        <div className="mt-3 px-2 py-1 rounded bg-green-500/10 border border-green-500/20 text-green-400 text-xs text-center">
-          In Progress
-        </div>
-      )}
-
-      {quest.status === 'draft' && (
-        <div className="mt-3 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs text-center">
-          Draft — not yet published
-        </div>
-      )}
-
-      {quest.creator && (
-        <div className="mt-3 pt-3 border-t border-gold/10 flex items-center gap-2">
-          {quest.creator.avatar_url ? (
-            <img src={quest.creator.avatar_url} alt="" className="w-5 h-5 rounded-full" />
-          ) : (
-            <div className="w-5 h-5 rounded-full bg-teal-rich border border-gold/20" />
-          )}
-          <span className="text-xs text-parchment-muted">
-            {quest.is_official ? 'Official' : `by ${quest.creator.display_name || quest.creator.username}`}
-          </span>
-        </div>
-      )}
-    </Link>
   )
 }

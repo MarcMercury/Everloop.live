@@ -1,112 +1,114 @@
-import { redirect } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getQuest, getQuestParticipants } from '@/lib/actions/quests'
-import { ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import QuestPlayClient from './quest-play-client'
+import { PlayerSessionClient } from './player-session-client'
+import type { Campaign, CampaignPlayer, CampaignScene, CampaignSession, CampaignMessage, NarrativeIdol } from '@/types/campaign'
 
-export default async function QuestPlayPage({ params }: { params: Promise<{ slug: string }> }) {
+interface PageProps {
+  params: Promise<{ slug: string }>
+}
+
+export default async function PlayerSessionPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
   if (!user) redirect('/login')
 
-  const result = await getQuest(slug)
-  if (!result.success || !result.quest) redirect('/quests')
-  const quest = result.quest
+  const { data: campaignData } = await supabase
+    .from('campaigns')
+    .select('*')
+    .eq('slug', slug)
+    .single()
 
-  // Check participation
-  const partResult = await getQuestParticipants(quest.id)
-  const participants = partResult.participants ?? []
-  const myParticipation = participants.find(
-    p => p.user_id === user.id && p.status === 'active'
-  )
+  const campaign = campaignData as unknown as Campaign | null
+  if (!campaign) notFound()
 
-  if (!myParticipation) redirect(`/quests/${slug}`)
+  // Verify player is accepted
+  const { data: myPlayerData } = await supabase
+    .from('campaign_players')
+    .select(`
+      *,
+      character:player_characters!campaign_players_character_id_fkey(*)
+    `)
+    .eq('campaign_id', campaign.id)
+    .eq('user_id', user.id)
+    .eq('status', 'accepted')
+    .single()
 
-  // Fetch character details if selected
-  let character: {
-    id: string; name: string; race: string; class: string; level: number
-    current_hp: number; max_hp: number; armor_class: number
-    portrait_url: string | null; everloop_traits: string[]
-    abilities: Record<string, number>
-  } | null = null
+  const myPlayer = myPlayerData as unknown as CampaignPlayer | null
 
-  if (myParticipation.character_id) {
-    const { data } = await supabase
-      .from('player_characters')
-      .select('id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, everloop_traits, strength, dexterity, constitution, intelligence, wisdom, charisma')
-      .eq('id', myParticipation.character_id)
-      .single()
-
-    if (data) {
-      const d = data as Record<string, unknown>
-      character = {
-        id: d.id as string,
-        name: d.name as string,
-        race: d.race as string,
-        class: d.class as string,
-        level: d.level as number,
-        current_hp: d.current_hp as number,
-        max_hp: d.max_hp as number,
-        armor_class: d.armor_class as number,
-        portrait_url: d.portrait_url as string | null,
-        everloop_traits: (d.everloop_traits as string[]) ?? [],
-        abilities: {
-          STR: d.strength as number ?? 10,
-          DEX: d.dexterity as number ?? 10,
-          CON: d.constitution as number ?? 10,
-          INT: d.intelligence as number ?? 10,
-          WIS: d.wisdom as number ?? 10,
-          CHA: d.charisma as number ?? 10,
-        },
-      }
-    }
+  if (!myPlayer && campaign.dm_id !== user.id) {
+    redirect(`/quests/${slug}`)
   }
 
-  return (
-    <div className="h-[calc(100vh-60px)] flex flex-col">
-      {/* Thin top bar */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gold/10 bg-teal-rich/50">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/quests/${slug}`}
-            className="flex items-center gap-1 text-xs text-parchment-muted hover:text-parchment transition-colors"
-          >
-            <ArrowLeft className="w-3 h-3" />
-            Exit
-          </Link>
-          <div className="w-px h-4 bg-gold/20" />
-          <span className="text-sm font-serif text-parchment">{quest.title}</span>
-          {quest.everloop_overlay && (
-            <span className="text-xs text-purple-400">✦ Everloop</span>
-          )}
-        </div>
-        <div className="flex items-center gap-3 text-xs text-parchment-muted">
-          <span>Act {myParticipation.current_act}</span>
-          {character && (
-            <>
-              <div className="w-px h-4 bg-gold/20" />
-              <span>{character.name}</span>
-              <span className="text-green-400">{character.current_hp}/{character.max_hp} HP</span>
-            </>
-          )}
-        </div>
-      </div>
+  // Fetch all players
+  const { data: playersData } = await supabase
+    .from('campaign_players')
+    .select(`
+      *,
+      user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
+      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
+    `)
+    .eq('campaign_id', campaign.id)
+    .eq('status', 'accepted')
 
-      <QuestPlayClient
-        questId={quest.id}
-        questSlug={slug}
-        questTitle={quest.title}
-        questDescription={quest.description}
-        questType={quest.quest_type}
-        difficulty={quest.difficulty}
-        everloopOverlay={quest.everloop_overlay}
-        aiNarratorConfig={quest.ai_narrator_config}
-        participationId={myParticipation.id}
-        currentAct={myParticipation.current_act}
-        character={character}
-      />
-    </div>
+  // Fetch active session
+  const { data: sessionData } = await supabase
+    .from('campaign_sessions')
+    .select('*')
+    .eq('campaign_id', campaign.id)
+    .in('status', ['active', 'paused'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const session = sessionData as unknown as CampaignSession | null
+  if (!session) redirect(`/quests/${slug}`)
+
+  // Fetch active scene (only non-DM-only fields)
+  const { data: activeSceneData } = await supabase
+    .from('campaign_scenes')
+    .select('id, campaign_id, title, description, scene_type, mood, atmosphere, map_url, narration, status, scene_order, linked_entities, created_at, updated_at')
+    .eq('id', session.active_scene_id ?? '')
+    .single()
+
+  // Fetch messages (filter whispers to only those visible to this player)
+  const { data: allMessagesData } = await supabase
+    .from('campaign_messages')
+    .select(`
+      *,
+      sender:profiles!campaign_messages_sender_id_fkey(username, display_name, avatar_url)
+    `)
+    .eq('session_id', session.id)
+    .order('created_at', { ascending: true })
+    .limit(200)
+
+  const allMessages = (allMessagesData ?? []) as unknown as (CampaignMessage & { visible_to: string[] })[]
+
+  // Client-side filter: show public messages + whispers where user is in visible_to
+  const messages = allMessages.filter(msg => {
+    if (msg.message_type !== 'whisper') return !msg.is_hidden
+    return msg.visible_to?.includes(user.id) || msg.sender_id === user.id
+  })
+
+  // Fetch player's idols
+  const { data: myIdolsData } = await supabase
+    .from('narrative_idols')
+    .select('*')
+    .eq('campaign_id', campaign.id)
+    .eq('holder_id', user.id)
+    .eq('status', 'held')
+
+  return (
+    <PlayerSessionClient
+      campaign={campaign}
+      player={myPlayer as CampaignPlayer}
+      players={(playersData ?? []) as unknown as CampaignPlayer[]}
+      session={session}
+      activeScene={activeSceneData as unknown as CampaignScene | null}
+      messages={messages as CampaignMessage[]}
+      idols={(myIdolsData ?? []) as unknown as NarrativeIdol[]}
+      userId={user.id}
+    />
   )
 }

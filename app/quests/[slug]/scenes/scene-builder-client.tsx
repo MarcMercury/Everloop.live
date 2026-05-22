@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createScene, updateScene } from '@/lib/actions/campaigns'
+import { createScene, updateScene } from '@/lib/actions/quests'
 import { MOOD_THEMES } from '@/types/campaign'
 import type { Campaign, CampaignScene, CampaignSceneUpdate, SceneType, SceneMood } from '@/types/campaign'
 import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box } from 'lucide-react'
@@ -85,7 +85,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="flex items-center gap-2 text-sm text-parchment-muted mb-4">
-        <Link href={`/campaigns/${campaign.slug}`} className="hover:text-parchment transition-colors flex items-center gap-1">
+        <Link href={`/quests/${campaign.slug}`} className="hover:text-parchment transition-colors flex items-center gap-1">
           <ArrowLeft className="w-4 h-4" />
           {campaign.title}
         </Link>

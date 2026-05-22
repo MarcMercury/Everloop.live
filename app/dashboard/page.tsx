@@ -356,7 +356,7 @@ function CampaignRow({ campaign, isDm }: { campaign: DashboardCampaign; isDm: bo
         </div>
       </div>
       <div className="flex items-center gap-2 ml-4">
-        <Link href={`/campaigns/${campaign.slug}`}>
+        <Link href={`/quests/${campaign.slug}`}>
           <Button variant="outline" size="sm" className="gap-1">
             <ExternalLink className="w-3 h-3" />
             Open
@@ -656,7 +656,7 @@ export default async function DashboardPage() {
       <div className="mb-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-serif text-parchment">My Campaigns</h2>
-          <Link href="/campaigns/create">
+          <Link href="/quests/create">
             <Button variant="outline" size="sm" className="gap-1">
               <Plus className="w-3 h-3" />
               New Campaign
@@ -679,7 +679,7 @@ export default async function DashboardPage() {
             <h3 className="font-serif text-lg text-parchment mb-2">No Campaigns Yet</h3>
             <p className="text-parchment-muted text-sm mb-4">Create or join a campaign to begin your adventure.</p>
             <div className="flex gap-3 justify-center">
-              <Link href="/campaigns/create">
+              <Link href="/quests/create">
                 <Button variant="outline" className="gap-1">
                   <Plus className="w-4 h-4" />
                   Create Campaign
