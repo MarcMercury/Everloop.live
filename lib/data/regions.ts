@@ -42,9 +42,9 @@ export const REGIONS: EverloopRegion[] = [
   {
     id: 'bellroot',
     name: 'The Bellroot Vale',
-    sub: 'Memory Nexus',
+    sub: 'Riverwoven Wilds',
     description:
-      'A living, layered ecosystem of memory. Cliffs on one side give way to expansive forest systems — redwood clusters, rainforest zones, swamp regions, and mixed woodland transitions. Fragmented waterways weave through wetlands and marshes. Hidden villages lie embedded within the ancient canopy.',
+      'A dense, deeply wooded region crisscrossed by rivers and threaded with patches of true jungle. Towering redwood stands give way to humid jungle pockets, fern-choked ravines, and mixed woodland transitions. Rivers and tributaries braid through the floor of the Vale, feeding wetlands, marshes, and hidden villages tucked beneath the ancient canopy.',
     color: '#50c070',
     mapImage: '/Maps/bellroot-vale.png',
     model3dPath: '/Maps/3D/bellroot-vale.glb',

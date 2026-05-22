@@ -279,7 +279,7 @@ export const LOCATION_DESCRIPTIONS: Record<string, string> = {
     'A featureless obsidian spire rising from the Frontier\'s borderlands, appearing without explanation in Fray-touched territory. The Black Stone Tower — also called the Black Tower of Sera — repels Fray corruption in a radius around it, creating an island of stability in otherwise unstable ground. No door or window is visible, and its surface is warm to the touch regardless of season.',
 
 
-  // ─── BELLROOT VALE — Memory Nexus ─────────────────────────
+  // ─── BELLROOT VALE — Riverwoven Wilds ─────────────────────
 
   // Villages
   'Merrow Bend':
