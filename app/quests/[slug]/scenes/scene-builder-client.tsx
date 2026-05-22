@@ -12,6 +12,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
+import { EncounterDifficulty } from '@/components/quests/encounter-difficulty'
+import { QUEST_SCENE_TEMPLATES, type QuestSceneTemplateKind } from '@/lib/dnd-rules/scene-templates'
+
+const TEMPLATE_TO_SCENE_TYPE: Record<QuestSceneTemplateKind, SceneType> = {
+  narrative_arrival: 'narrative',
+  social_encounter: 'social',
+  combat_encounter: 'combat',
+  exploration: 'exploration',
+  puzzle_or_trap: 'puzzle',
+  rest_camp: 'rest',
+  boss_fight: 'boss',
+  climax_or_resolution: 'event',
+}
 
 const ModelViewerCompact = dynamic(
   () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewerCompact),
@@ -143,7 +156,44 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
       {/* New Scene Form */}
       {showNew && (
         <div className="story-card mb-8 border-gold/30">
-          <h3 className="text-lg font-serif text-parchment mb-4">New Scene</h3>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <h3 className="text-lg font-serif text-parchment">New Scene</h3>
+            <div className="flex items-center gap-2">
+              <label className="text-[11px] uppercase tracking-wide text-parchment-muted">Scaffold from</label>
+              <select
+                value=""
+                onChange={(e) => {
+                  const kind = e.target.value as QuestSceneTemplateKind
+                  const tpl = QUEST_SCENE_TEMPLATES.find((t) => t.kind === kind)
+                  if (!tpl) return
+                  const dmHints = tpl.fields
+                    .filter((f) => f.key !== 'boxed_text')
+                    .map((f) => `${f.label}:\n${f.hint}`)
+                    .join('\n\n')
+                  setNewScene((p) => ({
+                    ...p,
+                    scene_type: TEMPLATE_TO_SCENE_TYPE[kind],
+                    description: p.description || tpl.description,
+                    narration:
+                      p.narration ||
+                      tpl.fields.find((f) => f.key === 'boxed_text')?.hint ||
+                      '',
+                    dm_notes: p.dm_notes || dmHints,
+                  }))
+                }}
+                className="rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-none focus:ring-2 focus:ring-gold/40"
+              >
+                <option value="" disabled>
+                  Template…
+                </option>
+                {QUEST_SCENE_TEMPLATES.map((t) => (
+                  <option key={t.kind} value={t.kind}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <Label className="text-parchment text-sm">Title</Label>
@@ -232,6 +282,13 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                 className="w-full mt-1 rounded-lg bg-red-500/5 border border-red-500/10 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/20"
               />
             </div>
+
+            {/* Encounter difficulty calculator (combat/boss scenes) */}
+            {(newScene.scene_type === 'combat' || newScene.scene_type === 'boss') && (
+              <div className="col-span-2">
+                <EncounterDifficulty />
+              </div>
+            )}
 
             {/* 3D Scene Environment */}
             {newScene.description && (
