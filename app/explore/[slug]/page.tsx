@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { ReactNode } from 'react'
 import { getCanonEntityBySlug } from '@/lib/data/canon'
 import { getEntityCrossReferences } from '@/lib/data/cross-references'
+import { linkifyEntities } from '@/lib/utils/entity-linkify'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { FrayIndicator } from '@/components/world-pulse'
@@ -95,6 +97,13 @@ export default async function EntityPage({ params }: EntityPageProps) {
   const crossRefs = await getEntityCrossReferences(entity.id)
   const stabilityPercent = entity.stability_rating * 100
   const extendedLoreRaw = entity.extended_lore as Record<string, unknown> | null
+  // Wikipedia-style auto-linking: any other canonical entity referenced by
+  // name inside the body becomes a <Link> to /explore/<slug>.
+  const linkifiedDescription = await linkifyEntities(entity.description, {
+    excludeId: entity.id,
+    maxLinks: 20,
+    maxLinksPerEntity: 1,
+  })
   // Image may live in metadata.image_url (admin/seeded entities) or
   // extended_lore.image_url (user-created entities via the writing roster).
   const entityImage =
@@ -120,6 +129,26 @@ export default async function EntityPage({ params }: EntityPageProps) {
         )
       )
     : null
+
+  // Pre-linkify every string-valued extended-lore entry so that JSX render
+  // stays synchronous below. Object values are still rendered as JSON.
+  const linkifiedExtendedLore: { key: string; value: ReactNode }[] = []
+  if (extendedLore) {
+    for (const [key, value] of Object.entries(extendedLore)) {
+      if (typeof value === 'string') {
+        linkifiedExtendedLore.push({
+          key,
+          value: await linkifyEntities(value, {
+            excludeId: entity.id,
+            maxLinks: 10,
+            maxLinksPerEntity: 1,
+          }),
+        })
+      } else {
+        linkifiedExtendedLore.push({ key, value: JSON.stringify(value, null, 2) })
+      }
+    }
+  }
   const regionMeta = (entity.metadata as { region?: string })?.region
 
   // Monster-specific: hydrate full stat block + Everloop lore
@@ -194,7 +223,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
             {/* Description */}
             <div className="prose prose-invert max-w-none">
               <p className="text-lg text-parchment-muted leading-relaxed whitespace-pre-line">
-                {entity.description || 'No description available.'}
+                {entity.description ? linkifiedDescription : 'No description available.'}
               </p>
             </div>
 
@@ -258,13 +287,13 @@ export default async function EntityPage({ params }: EntityPageProps) {
               <div className="space-y-6">
                 <h2 className="text-2xl font-serif text-gold">Extended Lore</h2>
                 <div className="space-y-4">
-                  {Object.entries(extendedLore).map(([key, value]) => (
+                  {linkifiedExtendedLore.map(({ key, value }) => (
                     <div key={key} className="p-4 rounded-lg bg-teal-rich/50 border border-gold/10">
                       <h3 className="text-lg font-medium text-parchment capitalize mb-2">
                         {key.replace(/_/g, ' ')}
                       </h3>
-                      <p className="text-parchment-muted">
-                        {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+                      <p className="text-parchment-muted whitespace-pre-line">
+                        {value}
                       </p>
                     </div>
                   ))}
