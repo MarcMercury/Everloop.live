@@ -155,7 +155,7 @@ function Select({
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
 
-export function MonsterCampaignWizard() {
+export function MonsterQuestWizard() {
   const router = useRouter()
   const [step, setStep] = useState(0)
 

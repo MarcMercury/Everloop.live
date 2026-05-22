@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MonsterCampaignWizard } from '@/components/editor/monster-campaign-wizard'
+import { MonsterQuestWizard } from '@/components/editor/monster-quest-wizard'
 
 export default async function CreateCampaignMonsterPage() {
   const supabase = await createClient()
@@ -27,7 +27,7 @@ export default async function CreateCampaignMonsterPage() {
         </div>
 
         {/* Wizard */}
-        <MonsterCampaignWizard />
+        <MonsterQuestWizard />
       </div>
     </div>
   )

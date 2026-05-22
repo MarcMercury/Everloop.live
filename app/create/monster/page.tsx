@@ -25,7 +25,7 @@ const monsterPurposes = [
     gradient: 'from-red-600/20 to-orange-900/20',
     borderColor: 'border-orange-500/30 hover:border-orange-500/60',
     iconColor: 'text-orange-400',
-    href: '/create/monster/campaign',
+    href: '/create/monster/quest',
   },
 ]
 
