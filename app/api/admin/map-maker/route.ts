@@ -58,13 +58,29 @@ export async function POST(request: Request) {
 
     if (rows.length > 0) {
       // map_label_overrides is not in the generated Supabase types yet — cast.
-      const { error } = await (admin.from('map_label_overrides') as unknown as {
-        upsert: (rows: unknown, opts: { onConflict: string }) => Promise<{ error: { message: string } | null }>
-      }).upsert(rows, { onConflict: 'region_id,label_name' })
+      const { data: savedRows, error } = await (admin.from('map_label_overrides') as unknown as {
+        upsert: (rows: unknown, opts: { onConflict: string }) => {
+          select: () => Promise<{ data: unknown[] | null; error: { message: string } | null }>
+        }
+      }).upsert(rows, { onConflict: 'region_id,label_name' }).select()
       if (error) {
         console.error('label override upsert failed:', error)
         return NextResponse.json(
           { error: 'Failed to save label overrides', detail: error.message },
+          { status: 500 }
+        )
+      }
+      if (!savedRows || savedRows.length !== rows.length) {
+        console.error(
+          '[map-maker] upsert wrote fewer rows than requested',
+          { requested: rows.length, saved: savedRows?.length ?? 0 }
+        )
+        return NextResponse.json(
+          {
+            error: 'Save partially failed',
+            detail: `Requested ${rows.length} label overrides but only ${savedRows?.length ?? 0} persisted. ` +
+              `This usually means the PostgREST schema cache is stale — refresh it and retry.`,
+          },
           { status: 500 }
         )
       }

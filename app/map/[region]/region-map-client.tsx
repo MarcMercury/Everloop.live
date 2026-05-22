@@ -599,7 +599,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerUp}
           onWheel={handleWheel}
-          onClick={(e) => { if (!didDrag.current) handleBackdropClick() }}
+          onClick={() => { if (!didDrag.current) handleBackdropClick() }}
         >
           {/* Reset view button */}
           {(zoom !== 1 || pan.x !== 0 || pan.y !== 0) && (
