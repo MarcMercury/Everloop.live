@@ -2,6 +2,18 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { runLoreAgent } from '@/lib/agents/lore-agent'
+
+/**
+ * Trigger the Lore Agent in the background. We intentionally do NOT await
+ * the result so canonization actions stay fast — the agent writes its own
+ * audit row to lore_agent_runs.
+ */
+function triggerLoreAgent(input: Parameters<typeof runLoreAgent>[0]) {
+  void runLoreAgent(input).catch((err) => {
+    console.error('[lore-agent] background run failed:', err)
+  })
+}
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>
 type AdminGate =
@@ -75,6 +87,13 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
   revalidatePath('/stories')
   revalidatePath('/explore')
   revalidatePath('/dashboard')
+
+  triggerLoreAgent({
+    trigger: 'story_canonized',
+    triggerRef: storyId,
+    triggerStoryId: storyId,
+  })
+
   return { success: true }
 }
 
@@ -316,6 +335,12 @@ export async function canonizeEntity(entityId: string): Promise<{
   revalidatePath('/admin')
   revalidatePath('/explore')
   revalidatePath('/roster')
+
+  triggerLoreAgent({
+    trigger: 'entity_canonized',
+    triggerRef: entityId,
+  })
+
   return { success: true, hydrated }
 }
 

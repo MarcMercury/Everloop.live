@@ -60,6 +60,12 @@ export default async function AdminLayout({
                 >
                   Users
                 </Link>
+                <Link
+                  href="/admin/lore-agent"
+                  className="text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  Lore Agent
+                </Link>
               </nav>
             </div>
             <Link
