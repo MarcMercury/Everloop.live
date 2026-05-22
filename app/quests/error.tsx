@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import Link from 'next/link'
 
-export default function QuestsError({
+export default function CampaignsError({
   error,
   reset,
 }: {
@@ -12,7 +12,7 @@ export default function QuestsError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[Quests Error]', error)
+    console.error('[Campaigns Error]', error)
   }, [error])
 
   return (
@@ -25,11 +25,11 @@ export default function QuestsError({
         </div>
         
         <h2 className="text-2xl font-serif mb-2 text-parchment">
-          Quest Error
+          Campaign Error
         </h2>
         
         <p className="text-parchment-muted mb-6">
-          {error.message || 'Could not load quests.'}
+          {error.message || 'Could not load campaigns.'}
         </p>
         
         {error.digest && (

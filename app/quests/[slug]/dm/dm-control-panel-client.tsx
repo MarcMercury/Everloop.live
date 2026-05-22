@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   startSession, endSession, changeScene, sendMessage,
   rollDiceAction, grantIdol, updateScene,
-} from '@/lib/actions/campaigns'
+} from '@/lib/actions/quests'
 import { generateAINarration, generateSceneNarration, generateConsequence } from '@/lib/actions/ai-dm'
 import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/campaign'
 import type {
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AtmosphereEngine } from '@/components/campaign/atmosphere-engine'
+import { AtmosphereEngine } from '@/components/quests/atmosphere-engine'
 import { supabase } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
@@ -276,7 +276,7 @@ export function DMControlPanelClient({
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 bg-teal-rich border-b border-gold/10">
         <div className="flex items-center gap-4">
-          <Link href={`/campaigns/${campaign.slug}`} className="text-parchment-muted hover:text-parchment">
+          <Link href={`/quests/${campaign.slug}`} className="text-parchment-muted hover:text-parchment">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
@@ -526,7 +526,7 @@ export function DMControlPanelClient({
                 )
               })}
               <Link
-                href={`/campaigns/${campaign.slug}/scenes`}
+                href={`/quests/${campaign.slug}/scenes`}
                 className="text-sm text-gold hover:text-gold/80 text-center mt-2"
               >
                 + Build More Scenes

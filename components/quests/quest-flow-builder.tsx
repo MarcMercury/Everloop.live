@@ -2,15 +2,15 @@
 
 /**
  * QuestFlowBuilder
- * ----------------
- * Visual flow-chart designer for the second step of quest creation.
+ * -------------------
+ * Visual flow-chart designer for campaigns. Adapted from QuestFlowBuilder,
+ * with one key addition: a `quest` node kind that embeds a fully built,
+ * saved Quest as a single beat in the campaign flow.
  *
- * Designers compose a quest as a directed graph of beats:
- *   Hook → (Scenes / Encounters / Choices / NPCs / Skill Checks / Rewards) → Goal
+ *   Start → Chapters / Scenes / Encounters / Choices / NPCs / Quests → Climax
  *
- * Branches can fork from Choice nodes and rejoin the main thread anywhere.
- * The graph is serialized to `quests.quest_structure` so the AI narrator can
- * reference the intended structure during play.
+ * The graph is serialized to `campaigns.metadata.flow` so the Director / AI Co-DM
+ * can reference the intended narrative spine during play.
  */
 
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
@@ -40,13 +40,16 @@ import {
   Sword,
   GitBranch,
   Users,
-  Dice6,
   Gem,
   Flag,
   Trash2,
   Plus,
   AlertTriangle,
   CheckCircle2,
+  BookOpen,
+  Scroll,
+  ExternalLink,
+  Search,
   Wand2,
   Copy,
 } from 'lucide-react'
@@ -56,63 +59,87 @@ import { ArchivePicker, autoLayout, type ArchiveRef } from '@/components/flow/fl
 // Types
 // ---------------------------------------------------------------------------
 
-export type QuestNodeKind =
-  | 'hook'
+export type CampaignNodeKind =
+  | 'start'
+  | 'chapter'
   | 'scene'
   | 'encounter'
   | 'choice'
   | 'npc'
-  | 'skill_check'
+  | 'quest'
   | 'reward'
-  | 'goal'
+  | 'climax'
 
-export interface QuestNodeData {
-  kind: QuestNodeKind
+export interface QuestSummary {
+  id: string
+  slug: string
+  title: string
+  quest_type?: string | null
+  difficulty?: string | null
+  status?: string | null
+}
+
+export interface CampaignNodeData {
+  kind: CampaignNodeKind
   label: string
   description?: string
-  // Type-specific fields (loosely typed, narrator interprets)
+  // Type-specific fields
   monsters?: string
   npc_name?: string
-  ability?: string
-  dc?: number
   reward?: string
   outcomes?: string
+  // Embedded quest reference (kind === 'quest' only)
+  quest_id?: string
+  quest_slug?: string
+  quest_title?: string
+  quest_type?: string
+  quest_difficulty?: string
   /** Linked canonical entities from the Archive. */
   archive_refs?: ArchiveRef[]
 }
 
-export interface QuestFlowGraph {
-  nodes: Node<QuestNodeData>[]
+export interface CampaignFlowGraph {
+  nodes: Node<CampaignNodeData>[]
   edges: Edge[]
 }
 
 interface QuestFlowBuilderProps {
-  initial?: QuestFlowGraph
-  onChange?: (graph: QuestFlowGraph) => void
+  initial?: CampaignFlowGraph
+  onChange?: (graph: CampaignFlowGraph) => void
+  /** Pool of quests the designer can embed as quest-nodes. */
+  availableQuests?: QuestSummary[]
 }
 
 // ---------------------------------------------------------------------------
-// Node kind metadata (icon, color, default label, helper text)
+// Node kind metadata
 // ---------------------------------------------------------------------------
 
 const KIND_META: Record<
-  QuestNodeKind,
+  CampaignNodeKind,
   {
     label: string
     icon: React.ComponentType<{ className?: string }>
-    color: string // tailwind border + accent color
-    accent: string // tailwind text color
+    color: string
+    accent: string
     bg: string
     hint: string
   }
 > = {
-  hook: {
-    label: 'Hook',
+  start: {
+    label: 'Start',
     icon: Sparkles,
     color: 'border-amber-400/60',
     accent: 'text-amber-300',
     bg: 'from-amber-950/50 to-amber-900/20',
-    hint: 'The opening pull — what draws players in.',
+    hint: 'Where the campaign begins — the first pull.',
+  },
+  chapter: {
+    label: 'Chapter',
+    icon: BookOpen,
+    color: 'border-indigo-400/60',
+    accent: 'text-indigo-300',
+    bg: 'from-indigo-950/60 to-indigo-900/20',
+    hint: 'A major arc or chapter of the campaign.',
   },
   scene: {
     label: 'Scene',
@@ -146,13 +173,13 @@ const KIND_META: Record<
     bg: 'from-blue-950/60 to-blue-900/20',
     hint: 'A character interaction.',
   },
-  skill_check: {
-    label: 'Skill Check',
-    icon: Dice6,
-    color: 'border-emerald-400/60',
-    accent: 'text-emerald-300',
-    bg: 'from-emerald-950/60 to-emerald-900/20',
-    hint: 'An ability check — outcome forks.',
+  quest: {
+    label: 'Quest',
+    icon: Scroll,
+    color: 'border-fuchsia-400/70',
+    accent: 'text-fuchsia-300',
+    bg: 'from-fuchsia-950/60 to-fuchsia-900/30',
+    hint: 'Embed a fully built Quest as a layer of the campaign.',
   },
   reward: {
     label: 'Reward',
@@ -162,22 +189,23 @@ const KIND_META: Record<
     bg: 'from-yellow-950/50 to-yellow-900/20',
     hint: 'Loot, knowledge, a Shard fragment.',
   },
-  goal: {
-    label: 'Goal',
+  climax: {
+    label: 'Climax',
     icon: Flag,
     color: 'border-gold/80',
     accent: 'text-gold',
     bg: 'from-yellow-900/40 to-amber-900/30',
-    hint: 'The quest culminates here.',
+    hint: 'The campaign culminates here.',
   },
 }
 
-const PALETTE_KINDS: QuestNodeKind[] = [
+const PALETTE_KINDS: CampaignNodeKind[] = [
+  'chapter',
   'scene',
   'encounter',
   'choice',
   'npc',
-  'skill_check',
+  'quest',
   'reward',
 ]
 
@@ -185,12 +213,12 @@ const PALETTE_KINDS: QuestNodeKind[] = [
 // Custom node renderer
 // ---------------------------------------------------------------------------
 
-function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
+function CampaignNode({ data, selected }: NodeProps<CampaignNodeData>) {
   const meta = KIND_META[data.kind]
   const Icon = meta.icon
-  const isTerminal = data.kind === 'hook' || data.kind === 'goal'
+  const isTerminal = data.kind === 'start' || data.kind === 'climax'
+  const isQuest = data.kind === 'quest'
 
-  // Branch handles for Choice node: one per outcome line.
   const branches = useMemo(() => {
     if (data.kind !== 'choice') return [] as { id: string; label: string }[]
     const lines = (data.outcomes ?? '')
@@ -207,10 +235,9 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
     <div
       className={`relative rounded-lg border-2 bg-gradient-to-br ${meta.bg} ${meta.color} backdrop-blur-sm shadow-lg transition-all min-w-[200px] max-w-[240px] ${
         selected ? 'ring-2 ring-gold/70 scale-[1.02]' : ''
-      }`}
+      } ${isQuest && data.quest_id ? 'ring-1 ring-fuchsia-400/40' : ''}`}
     >
-      {/* Top handle (target) — hook has none */}
-      {data.kind !== 'hook' && (
+      {data.kind !== 'start' && (
         <Handle
           type="target"
           position={Position.Top}
@@ -224,18 +251,38 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
           <span className="text-[10px] uppercase tracking-wider font-medium">
             {meta.label}
           </span>
+          {isQuest && data.quest_id && (
+            <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-200">
+              embedded
+            </span>
+          )}
         </div>
         <div className="text-sm font-serif text-parchment leading-tight break-words">
-          {data.label || <span className="italic text-parchment-muted/60">Untitled</span>}
+          {data.label || (
+            <span className="italic text-parchment-muted/60">Untitled</span>
+          )}
         </div>
         {data.description && (
           <div className="text-[11px] text-parchment-muted mt-1 line-clamp-2">
             {data.description}
           </div>
         )}
-        {data.kind === 'skill_check' && data.ability && (
-          <div className="text-[10px] text-emerald-300/80 mt-1">
-            {data.ability.toUpperCase()}{data.dc ? ` · DC ${data.dc}` : ''}
+        {isQuest && data.quest_title && (
+          <div className="mt-2 px-2 py-1 rounded bg-fuchsia-950/40 border border-fuchsia-400/20 text-[10px] text-fuchsia-200">
+            <div className="flex items-center gap-1">
+              <Scroll className="w-3 h-3" />
+              <span className="truncate">{data.quest_title}</span>
+            </div>
+            {(data.quest_type || data.quest_difficulty) && (
+              <div className="text-[9px] text-fuchsia-300/70 mt-0.5">
+                {[data.quest_type, data.quest_difficulty].filter(Boolean).join(' · ')}
+              </div>
+            )}
+          </div>
+        )}
+        {isQuest && !data.quest_id && (
+          <div className="mt-2 px-2 py-1 rounded bg-amber-950/40 border border-amber-400/30 text-[10px] text-amber-200 italic">
+            No quest selected — open inspector
           </div>
         )}
         {data.kind === 'encounter' && data.monsters && (
@@ -262,14 +309,12 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
             )}
           </div>
         )}
-        {/* Branch labels for Choice */}
         {data.kind === 'choice' && branches.length > 0 && (
           <div className="mt-2 pt-2 border-t border-purple-400/20 space-y-0.5">
             {branches.map((b, i) => (
               <div
                 key={b.id}
                 className="text-[10px] text-purple-200/90 flex items-center gap-1"
-                style={{ paddingRight: 6 }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400/80 shrink-0" />
                 <span className="truncate">{b.label}</span>
@@ -282,14 +327,12 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
         )}
         {isTerminal && (
           <div className="text-[10px] text-gold/60 mt-1 italic">
-            {data.kind === 'hook' ? 'Quest entry' : 'Quest culmination'}
+            {data.kind === 'start' ? 'Campaign entry' : 'Campaign culmination'}
           </div>
         )}
       </div>
 
-      {/* Bottom handle(s) */}
-      {data.kind === 'goal' ? null : data.kind === 'choice' ? (
-        // One labeled handle per outcome, evenly distributed across the bottom edge.
+      {data.kind === 'climax' ? null : data.kind === 'choice' ? (
         branches.map((b, i) => {
           const left = ((i + 1) / (branches.length + 1)) * 100
           return (
@@ -314,33 +357,34 @@ function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
   )
 }
 
-const NODE_TYPES = { quest: QuestNode }
+const NODE_TYPES = { campaign: CampaignNode }
 
 // ---------------------------------------------------------------------------
-// Default graph (Hook → Goal scaffold)
+// Default graph (Start → Climax scaffold)
 // ---------------------------------------------------------------------------
 
-function defaultGraph(): QuestFlowGraph {
+function defaultGraph(): CampaignFlowGraph {
   return {
     nodes: [
       {
-        id: 'hook',
-        type: 'quest',
-        position: { x: 250, y: 40 },
+        id: 'start',
+        type: 'campaign',
+        position: { x: 280, y: 40 },
         data: {
-          kind: 'hook',
-          label: 'The Hook',
-          description: 'How the quest begins — what pulls the players in.',
+          kind: 'start',
+          label: 'The Beginning',
+          description: 'How the campaign opens — what pulls the players in.',
         },
       },
       {
-        id: 'goal',
-        type: 'quest',
-        position: { x: 250, y: 480 },
+        id: 'climax',
+        type: 'campaign',
+        position: { x: 280, y: 560 },
         data: {
-          kind: 'goal',
-          label: 'The Goal',
-          description: 'What waits at the end — and how it bends toward a Shard.',
+          kind: 'climax',
+          label: 'The Climax',
+          description:
+            'What waits at the end — and how it bends toward a Shard.',
         },
       },
     ],
@@ -352,33 +396,42 @@ function defaultGraph(): QuestFlowGraph {
 // Validation
 // ---------------------------------------------------------------------------
 
-function validateGraph(graph: QuestFlowGraph): {
+function validateGraph(graph: CampaignFlowGraph): {
   ok: boolean
   warnings: string[]
 } {
   const warnings: string[] = []
   const { nodes, edges } = graph
 
-  const hook = nodes.find(n => n.data.kind === 'hook')
-  const goal = nodes.find(n => n.data.kind === 'goal')
+  const start = nodes.find(n => n.data.kind === 'start')
+  const climax = nodes.find(n => n.data.kind === 'climax')
 
-  if (!hook) warnings.push('Missing Hook node — every quest needs an entry.')
-  if (!goal) warnings.push('Missing Goal node — every quest needs a culmination.')
+  if (!start) warnings.push('Missing Start node — every campaign needs an entry.')
+  if (!climax) warnings.push('Missing Climax node — every campaign needs a culmination.')
 
-  // BFS from hook to goal
-  if (hook && goal) {
+  // Quest nodes without a selected quest
+  const unboundQuests = nodes.filter(
+    n => n.data.kind === 'quest' && !n.data.quest_id,
+  )
+  if (unboundQuests.length > 0) {
+    warnings.push(
+      `${unboundQuests.length} quest node${unboundQuests.length === 1 ? '' : 's'} not yet linked to a saved quest.`,
+    )
+  }
+
+  if (start && climax) {
     const adj = new Map<string, string[]>()
     edges.forEach(e => {
       const list = adj.get(e.source) ?? []
       list.push(e.target)
       adj.set(e.source, list)
     })
-    const seen = new Set<string>([hook.id])
-    const queue = [hook.id]
+    const seen = new Set<string>([start.id])
+    const queue = [start.id]
     let reached = false
     while (queue.length) {
       const cur = queue.shift()!
-      if (cur === goal.id) {
+      if (cur === climax.id) {
         reached = true
         break
       }
@@ -390,14 +443,13 @@ function validateGraph(graph: QuestFlowGraph): {
       }
     }
     if (!reached) {
-      warnings.push('No path connects the Hook to the Goal yet.')
+      warnings.push('No path connects Start to Climax yet.')
     }
 
-    // Orphan nodes (not reachable from hook)
-    const orphans = nodes.filter(n => !seen.has(n.id) && n.id !== goal.id)
+    const orphans = nodes.filter(n => !seen.has(n.id) && n.id !== climax.id)
     if (orphans.length > 0) {
       warnings.push(
-        `${orphans.length} node${orphans.length === 1 ? ' is' : 's are'} not reachable from the Hook.`,
+        `${orphans.length} node${orphans.length === 1 ? ' is' : 's are'} not reachable from Start.`,
       )
     }
   }
@@ -406,28 +458,35 @@ function validateGraph(graph: QuestFlowGraph): {
 }
 
 // ---------------------------------------------------------------------------
-// Inner builder (must be inside ReactFlowProvider)
+// Inner builder
 // ---------------------------------------------------------------------------
 
-function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
-  const [nodes, setNodes] = useState<Node<QuestNodeData>[]>(
+function BuilderInner({
+  initial,
+  onChange,
+  availableQuests,
+}: QuestFlowBuilderProps) {
+  const [nodes, setNodes] = useState<Node<CampaignNodeData>[]>(
     initial?.nodes?.length ? initial.nodes : defaultGraph().nodes,
   )
   const [edges, setEdges] = useState<Edge[]>(initial?.edges ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const idCounter = useRef(
-    Math.max(0, ...((initial?.nodes ?? []).map(n => parseInt(n.id.replace(/\D/g, '')) || 0))) + 1,
+    Math.max(
+      0,
+      ...((initial?.nodes ?? []).map(n => parseInt(n.id.replace(/\D/g, '')) || 0)),
+    ) + 1,
   )
   const wrapperRef = useRef<HTMLDivElement>(null)
   const { screenToFlowPosition } = useReactFlow()
 
-  // Notify parent
   useEffect(() => {
     onChange?.({ nodes, edges })
   }, [nodes, edges, onChange])
 
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes(ns => applyNodeChanges(changes, ns) as Node<QuestNodeData>[]),
+    (changes: NodeChange[]) =>
+      setNodes(ns => applyNodeChanges(changes, ns) as Node<CampaignNodeData>[]),
     [],
   )
   const onEdgesChange = useCallback(
@@ -436,7 +495,6 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
   )
   const onConnect = useCallback(
     (conn: Connection) => {
-      // Find the source node — if it's a Choice, label the edge with the branch outcome.
       let label: string | undefined
       const src = conn.source ? nodes.find(n => n.id === conn.source) : null
       if (src && src.data.kind === 'choice' && conn.sourceHandle) {
@@ -468,28 +526,29 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
     [nodes],
   )
 
-  // Add a node from the palette at a sensible position
-  function addNode(kind: QuestNodeKind, position?: { x: number; y: number }) {
+  function addNode(kind: CampaignNodeKind, position?: { x: number; y: number }) {
     const id = `n${idCounter.current++}`
     const meta = KIND_META[kind]
-    const newNode: Node<QuestNodeData> = {
+    const newNode: Node<CampaignNodeData> = {
       id,
-      type: 'quest',
-      position: position ?? { x: 100 + Math.random() * 300, y: 200 + Math.random() * 200 },
+      type: 'campaign',
+      position:
+        position ?? { x: 100 + Math.random() * 360, y: 220 + Math.random() * 220 },
       data: { kind, label: `New ${meta.label}` },
     }
     setNodes(ns => [...ns, newNode])
     setSelectedId(id)
   }
 
-  // Drag-and-drop from palette to canvas
   function onDragOver(e: React.DragEvent) {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
   }
   function onDrop(e: React.DragEvent) {
     e.preventDefault()
-    const kind = e.dataTransfer.getData('application/quest-node') as QuestNodeKind
+    const kind = e.dataTransfer.getData(
+      'application/campaign-node',
+    ) as CampaignNodeKind
     if (!kind) return
     const position = screenToFlowPosition({ x: e.clientX, y: e.clientY })
     addNode(kind, position)
@@ -498,18 +557,20 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
   function deleteSelected() {
     if (!selectedId) return
     const node = nodes.find(n => n.id === selectedId)
-    if (!node || node.data.kind === 'hook' || node.data.kind === 'goal') return
+    if (!node || node.data.kind === 'start' || node.data.kind === 'climax') return
     setNodes(ns => ns.filter(n => n.id !== selectedId))
-    setEdges(es => es.filter(e => e.source !== selectedId && e.target !== selectedId))
+    setEdges(es =>
+      es.filter(e => e.source !== selectedId && e.target !== selectedId),
+    )
     setSelectedId(null)
   }
 
   function duplicateSelected() {
     if (!selectedId) return
     const node = nodes.find(n => n.id === selectedId)
-    if (!node || node.data.kind === 'hook' || node.data.kind === 'goal') return
+    if (!node || node.data.kind === 'start' || node.data.kind === 'climax') return
     const id = `n${idCounter.current++}`
-    const copy: Node<QuestNodeData> = {
+    const copy: Node<CampaignNodeData> = {
       ...node,
       id,
       position: { x: node.position.x + 40, y: node.position.y + 40 },
@@ -521,10 +582,9 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
   }
 
   function autoLayoutGraph() {
-    setNodes(ns => autoLayout(ns, edges, ['hook']))
+    setNodes(ns => autoLayout(ns, edges, ['start']))
   }
 
-  // Keyboard: Delete / Backspace removes selected node (when not typing).
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement)?.tagName
@@ -543,10 +603,12 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, nodes, edges])
 
-  function updateSelected(patch: Partial<QuestNodeData>) {
+  function updateSelected(patch: Partial<CampaignNodeData>) {
     if (!selectedId) return
     setNodes(ns =>
-      ns.map(n => (n.id === selectedId ? { ...n, data: { ...n.data, ...patch } } : n)),
+      ns.map(n =>
+        n.id === selectedId ? { ...n, data: { ...n.data, ...patch } } : n,
+      ),
     )
   }
 
@@ -555,11 +617,14 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
     [nodes, selectedId],
   )
 
-  const validation = useMemo(() => validateGraph({ nodes, edges }), [nodes, edges])
+  const validation = useMemo(
+    () => validateGraph({ nodes, edges }),
+    [nodes, edges],
+  )
 
   return (
-    <div className="grid grid-cols-12 gap-4 h-[640px]">
-      {/* Left: Palette */}
+    <div className="grid grid-cols-12 gap-4 h-[680px]">
+      {/* Palette */}
       <aside className="col-span-2 space-y-2">
         <div className="text-[11px] uppercase tracking-wider text-parchment-muted mb-2 font-medium">
           Add Beat
@@ -573,7 +638,7 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
               type="button"
               draggable
               onDragStart={e => {
-                e.dataTransfer.setData('application/quest-node', kind)
+                e.dataTransfer.setData('application/campaign-node', kind)
                 e.dataTransfer.effectAllowed = 'move'
               }}
               onClick={() => addNode(kind)}
@@ -588,18 +653,14 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
           )
         })}
         <div className="text-[10px] text-parchment-muted/70 italic mt-3 leading-relaxed">
-          Drag onto the canvas, or click to add. Connect nodes by dragging from
-          the bottom dot to the top dot of the next beat.
-        </div>
-        <div className="text-[10px] text-parchment-muted/70 italic mt-2 leading-relaxed">
-          <kbd className="px-1 rounded bg-teal-deep/60 border border-gold/15">Del</kbd>{' '}
-          remove ·{' '}
-          <kbd className="px-1 rounded bg-teal-deep/60 border border-gold/15">⌘D</kbd>{' '}
-          duplicate
+          Drag onto the canvas, or click to add. The{' '}
+          <span className="text-fuchsia-300">Quest</span> beat embeds a fully
+          built quest from your library — its entire flow becomes a layer of the
+          campaign.
         </div>
       </aside>
 
-      {/* Center: Canvas */}
+      {/* Canvas */}
       <div
         ref={wrapperRef}
         className="col-span-7 rounded-lg border border-gold/20 bg-teal-deep/40 overflow-hidden relative"
@@ -626,25 +687,23 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
           proOptions={{ hideAttribution: true }}
         >
           <Background color="#d4af37" gap={24} size={1} style={{ opacity: 0.15 }} />
-          <Controls
-            className="!bg-teal-rich/80 !border-gold/30"
-            style={{ button: { background: 'transparent' } } as React.CSSProperties}
-          />
+          <Controls className="!bg-teal-rich/80 !border-gold/30" />
           <MiniMap
             pannable
             zoomable
             className="!bg-teal-deep/80 !border !border-gold/20"
             nodeColor={n => {
-              const k = (n.data as QuestNodeData)?.kind ?? 'scene'
-              const map: Record<QuestNodeKind, string> = {
-                hook: '#fbbf24',
+              const k = (n.data as CampaignNodeData)?.kind ?? 'scene'
+              const map: Record<CampaignNodeKind, string> = {
+                start: '#fbbf24',
+                chapter: '#818cf8',
                 scene: '#5eead4',
                 encounter: '#f87171',
                 choice: '#c084fc',
                 npc: '#60a5fa',
-                skill_check: '#34d399',
+                quest: '#e879f9',
                 reward: '#facc15',
-                goal: '#d4af37',
+                climax: '#d4af37',
               }
               return map[k] ?? '#5eead4'
             }}
@@ -668,8 +727,8 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
             onClick={duplicateSelected}
             disabled={
               !selectedNode ||
-              selectedNode.data.kind === 'hook' ||
-              selectedNode.data.kind === 'goal'
+              selectedNode.data.kind === 'start' ||
+              selectedNode.data.kind === 'climax'
             }
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             title="Duplicate the selected beat (⌘D)"
@@ -679,12 +738,11 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
           </button>
         </div>
 
-        {/* Validation banner */}
         <div className="absolute top-3 right-3 max-w-xs z-10">
           {validation.ok ? (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-900/70 border border-emerald-400/40 text-emerald-200 text-xs backdrop-blur">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Hook reaches Goal — flow valid.
+              Start reaches Climax — flow valid.
             </div>
           ) : (
             <div className="flex items-start gap-2 px-3 py-1.5 rounded-md bg-amber-900/70 border border-amber-400/40 text-amber-200 text-xs backdrop-blur">
@@ -699,7 +757,7 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
         </div>
       </div>
 
-      {/* Right: Inspector */}
+      {/* Inspector */}
       <aside className="col-span-3 rounded-lg border border-gold/20 bg-teal-rich/40 p-4 overflow-y-auto">
         {!selectedNode ? (
           <div className="text-center text-parchment-muted/70 text-sm py-12">
@@ -712,7 +770,11 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
             node={selectedNode}
             onChange={updateSelected}
             onDelete={deleteSelected}
-            canDelete={selectedNode.data.kind !== 'hook' && selectedNode.data.kind !== 'goal'}
+            canDelete={
+              selectedNode.data.kind !== 'start' &&
+              selectedNode.data.kind !== 'climax'
+            }
+            availableQuests={availableQuests ?? []}
           />
         )}
       </aside>
@@ -721,7 +783,7 @@ function BuilderInner({ initial, onChange }: QuestFlowBuilderProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Inspector panel
+// Inspector
 // ---------------------------------------------------------------------------
 
 function NodeInspector({
@@ -729,14 +791,27 @@ function NodeInspector({
   onChange,
   onDelete,
   canDelete,
+  availableQuests,
 }: {
-  node: Node<QuestNodeData>
-  onChange: (patch: Partial<QuestNodeData>) => void
+  node: Node<CampaignNodeData>
+  onChange: (patch: Partial<CampaignNodeData>) => void
   onDelete: () => void
   canDelete: boolean
+  availableQuests: QuestSummary[]
 }) {
   const meta = KIND_META[node.data.kind]
   const Icon = meta.icon
+  const [questSearch, setQuestSearch] = useState('')
+
+  const filteredQuests = useMemo(() => {
+    const q = questSearch.trim().toLowerCase()
+    if (!q) return availableQuests
+    return availableQuests.filter(
+      qq =>
+        qq.title.toLowerCase().includes(q) ||
+        (qq.quest_type ?? '').toLowerCase().includes(q),
+    )
+  }, [questSearch, availableQuests])
 
   return (
     <div className="space-y-4">
@@ -756,15 +831,93 @@ function NodeInspector({
         />
       </Field>
 
-      <Field label="Description / Narration Hint">
+      <Field label="Description / Director Note">
         <textarea
           value={node.data.description ?? ''}
           onChange={e => onChange({ description: e.target.value })}
           rows={10}
           className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-gold/40"
-          placeholder="What happens here? What should the narrator emphasize?"
+          placeholder="What happens here? What should the AI co-DM emphasize?"
         />
       </Field>
+
+      {node.data.kind === 'quest' && (
+        <div className="space-y-2 pt-2 border-t border-fuchsia-400/20">
+          <Field label="Linked Quest">
+            <div className="relative">
+              <Search className="w-3 h-3 absolute left-2 top-1/2 -translate-y-1/2 text-parchment-muted/60" />
+              <input
+                value={questSearch}
+                onChange={e => setQuestSearch(e.target.value)}
+                placeholder="Search your quests..."
+                className="w-full bg-teal-deep/60 border border-gold/20 rounded pl-7 pr-2 py-1.5 text-xs text-parchment focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
+              />
+            </div>
+          </Field>
+          {availableQuests.length === 0 ? (
+            <div className="text-[11px] text-amber-300/80 italic px-2 py-2 rounded bg-amber-950/30 border border-amber-400/20">
+              No quests available yet. Build a quest first at /quests/create —
+              then return here to embed it.
+            </div>
+          ) : (
+            <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+              {filteredQuests.map(q => {
+                const isSelected = node.data.quest_id === q.id
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() =>
+                      onChange({
+                        quest_id: q.id,
+                        quest_slug: q.slug,
+                        quest_title: q.title,
+                        quest_type: q.quest_type ?? undefined,
+                        quest_difficulty: q.difficulty ?? undefined,
+                        // Sync the node label to the quest title for quick recognition
+                        label:
+                          node.data.label.startsWith('New ') || !node.data.label
+                            ? q.title
+                            : node.data.label,
+                      })
+                    }
+                    className={`w-full text-left px-2 py-1.5 rounded border transition-all ${
+                      isSelected
+                        ? 'bg-fuchsia-500/20 border-fuchsia-400/50 text-fuchsia-100'
+                        : 'bg-teal-deep/40 border-gold/15 text-parchment hover:border-fuchsia-400/30'
+                    }`}
+                  >
+                    <div className="text-xs font-medium truncate">
+                      {q.title}
+                    </div>
+                    <div className="text-[10px] text-parchment-muted">
+                      {[q.quest_type, q.difficulty, q.status]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  </button>
+                )
+              })}
+              {filteredQuests.length === 0 && (
+                <div className="text-[11px] text-parchment-muted/70 italic px-2 py-1">
+                  No quests match.
+                </div>
+              )}
+            </div>
+          )}
+          {node.data.quest_slug && (
+            <a
+              href={`/quests/${node.data.quest_slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 hover:text-fuchsia-200"
+            >
+              <ExternalLink className="w-3 h-3" />
+              View linked quest
+            </a>
+          )}
+        </div>
+      )}
 
       {node.data.kind === 'encounter' && (
         <Field label="Monsters / Threats">
@@ -788,37 +941,15 @@ function NodeInspector({
         </Field>
       )}
 
-      {node.data.kind === 'skill_check' && (
-        <>
-          <Field label="Ability">
-            <select
-              value={node.data.ability ?? 'wisdom'}
-              onChange={e => onChange({ ability: e.target.value })}
-              className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
-            >
-              {['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma', 'perception', 'arcana', 'stealth', 'persuasion'].map(a => (
-                <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Difficulty Class (DC)">
-            <input
-              type="number"
-              value={node.data.dc ?? 12}
-              onChange={e => onChange({ dc: parseInt(e.target.value) || 0 })}
-              className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
-            />
-          </Field>
-        </>
-      )}
-
       {node.data.kind === 'choice' && (
         <Field label="Branch Outcomes (one per line)">
           <textarea
             value={node.data.outcomes ?? ''}
             onChange={e => onChange({ outcomes: e.target.value })}
             rows={3}
-            placeholder={'Trust the stranger\nFollow the trail alone\nReturn to town'}
+            placeholder={
+              'Side with the rebels\nReport to the council\nSlip away unseen'
+            }
             className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-none focus:outline-none focus:ring-2 focus:ring-gold/40"
           />
         </Field>
@@ -829,30 +960,37 @@ function NodeInspector({
           <input
             value={node.data.reward ?? ''}
             onChange={e => onChange({ reward: e.target.value })}
-            placeholder="A Shard fragment, an oath-blade, a name long forgotten..."
+            placeholder="A Shard fragment, a name long forgotten..."
             className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
           />
         </Field>
       )}
 
-      {/* Archive linker — wire this beat to canon entities */}
+      {/* Archive linker */}
       {(() => {
-        const allowedByKind: Record<QuestNodeKind, string[] | undefined> = {
-          hook: undefined,
+        const allowedByKind: Partial<Record<CampaignNodeKind, string[]>> = {
+          chapter: ['location', 'event', 'faction'],
           scene: ['location', 'faction', 'event'],
           encounter: ['monster', 'creature', 'location'],
-          choice: undefined,
           npc: ['character', 'faction'],
-          skill_check: undefined,
           reward: ['artifact', 'concept'],
-          goal: undefined,
         }
         const allowed = allowedByKind[node.data.kind]
-        const hintByKind: Partial<Record<QuestNodeKind, string>> = {
-          scene: 'Locations, factions, or events from the Archive that anchor this scene.',
-          encounter: 'Monsters or creatures from the Archive — their stats & lore are pulled in by the narrator.',
+        const hintByKind: Partial<Record<CampaignNodeKind, string>> = {
+          chapter: 'Locations, factions, or events that anchor this chapter.',
+          scene: 'Locations, factions, or events that anchor this scene.',
+          encounter: 'Monsters or creatures from the Archive — their stats & lore are pulled in.',
           npc: 'Canon characters or factions this NPC belongs to.',
           reward: 'Canon artifacts or concepts gained here.',
+        }
+        // Only show for relevant kinds; quest/start/climax/choice don't need it.
+        if (
+          node.data.kind === 'start' ||
+          node.data.kind === 'climax' ||
+          node.data.kind === 'quest' ||
+          node.data.kind === 'choice'
+        ) {
+          return null
         }
         return (
           <div className="pt-3 mt-3 border-t border-gold/10">
@@ -880,7 +1018,13 @@ function NodeInspector({
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string
+  children: React.ReactNode
+}) {
   return (
     <div>
       <label className="text-[11px] uppercase tracking-wider text-parchment-muted block mb-1">
@@ -903,5 +1047,4 @@ export default function QuestFlowBuilder(props: QuestFlowBuilderProps) {
   )
 }
 
-// Re-export for callers that want to validate or inspect outside the component.
 export { validateGraph, defaultGraph }

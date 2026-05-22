@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { sendMessage, rollDiceAction, useIdol } from '@/lib/actions/campaigns'
+import { sendMessage, rollDiceAction, useIdol } from '@/lib/actions/quests'
 import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/campaign'
 import type {
   Campaign, CampaignPlayer, CampaignScene, CampaignSession,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AtmosphereEngine } from '@/components/campaign/atmosphere-engine'
+import { AtmosphereEngine } from '@/components/quests/atmosphere-engine'
 import { supabase } from '@/lib/supabase/client'
 
 interface Props {
@@ -140,7 +140,7 @@ export function PlayerSessionClient({
       <div className={`px-4 py-3 border-b border-gold/10 bg-gradient-to-r ${moodTheme.bgGradient}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href={`/campaigns/${campaign.slug}`} className="text-parchment-muted hover:text-parchment">
+            <Link href={`/quests/${campaign.slug}`} className="text-parchment-muted hover:text-parchment">
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>

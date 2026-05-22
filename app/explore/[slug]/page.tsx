@@ -335,7 +335,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
                   {crossRefs.campaigns.map((campaign) => (
                     <li key={campaign.id}>
                       <Link
-                        href={`/campaigns/${campaign.slug}`}
+                        href={`/quests/${campaign.slug}`}
                         className="block p-2 rounded hover:bg-gold/5 transition-colors"
                       >
                         <span className="text-sm text-parchment hover:text-gold transition-colors">

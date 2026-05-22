@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { joinCampaign, selectCharacter, updateCampaign, updatePlayerStatus } from '@/lib/actions/campaigns'
+import { joinCampaign, selectCharacter, updateCampaign, updatePlayerStatus } from '@/lib/actions/quests'
 import { Button } from '@/components/ui/button'
 import type { CampaignPlayer } from '@/types/campaign'
 import { UserPlus, Swords, Settings, Check, X, Shield, Copy } from 'lucide-react'
 
-interface CampaignLobbyClientProps {
+interface QuestLobbyClientProps {
   campaignId: string
   campaignSlug: string
   campaignStatus: string
@@ -22,7 +22,7 @@ interface CampaignLobbyClientProps {
   userId?: string
 }
 
-export function CampaignLobbyClient({
+export function QuestLobbyClient({
   campaignId,
   campaignSlug,
   campaignStatus,
@@ -35,7 +35,7 @@ export function CampaignLobbyClient({
   myCharacters,
   pendingPlayers = [],
   userId,
-}: CampaignLobbyClientProps) {
+}: QuestLobbyClientProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
