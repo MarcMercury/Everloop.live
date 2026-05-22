@@ -17,7 +17,6 @@ export interface RegionalState {
   shards_gathered: number
   hollow_count: number
   drift_breach_count: number
-  active_campaigns: number
   active_quests: number
   canonical_stories: number
   last_shard_event: string | null

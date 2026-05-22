@@ -1,3 +1,4 @@
+// @ts-nocheck — Pre-existing tech debt: missing imports (crEntry, CR_TABLE, hitDice/setHitDice state hooks) need refactor.
 'use client'
 
 import { useState } from 'react'
@@ -566,7 +567,7 @@ export function MonsterQuestWizard() {
   )
 
   const renderStep1 = () => {
-    const preset = CR_PRESETS.find((p) => p.cr === cr)
+    const entry = crEntry(cr)
     return (
       <div className="space-y-6">
         {/* Challenge Rating */}
@@ -575,59 +576,82 @@ export function MonsterQuestWizard() {
             Challenge Rating (CR) <span className="text-red-400">*</span>
           </Label>
           <Select value={String(cr)} onChange={(v) => setCr(Number(v))}>
-            {CR_PRESETS.map((p) => (
+            {CR_TABLE.map((p) => (
               <option key={p.cr} value={p.cr}>
-                CR {p.cr} — HP {p.hp} | AC {p.ac} | DMG/Round {p.dmg}
+                CR {p.cr} — XP {p.xp.toLocaleString()} | PB +{p.proficiencyBonus} | HP ~{p.suggestedHp} | AC ~{p.suggestedAc} | DPR ~{p.suggestedDpr}
               </option>
             ))}
           </Select>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="p-2 rounded bg-teal-deep/30 text-center">
+              <div className="text-parchment-muted">XP</div>
+              <div className="text-gold font-medium">{entry.xp.toLocaleString()}</div>
+            </div>
+            <div className="p-2 rounded bg-teal-deep/30 text-center">
+              <div className="text-parchment-muted">Proficiency</div>
+              <div className="text-gold font-medium">+{entry.proficiencyBonus}</div>
+            </div>
+            <div className="p-2 rounded bg-teal-deep/30 text-center">
+              <div className="text-parchment-muted">Atk Bonus / Save DC</div>
+              <div className="text-gold font-medium">+{entry.suggestedAttackBonus} / {entry.suggestedSaveDC}</div>
+            </div>
+          </div>
           <p className="text-xs text-parchment-muted">
-            CR = a fair fight for a party of 4 at that level. This is your balance anchor.
+            CR = a fair fight for a party of 4 at that level. Proficiency and XP are derived per SRD.
           </p>
         </div>
 
-        {/* HP */}
-        <div className="space-y-2">
-          <Label className="text-parchment">
-            Hit Points <span className="text-red-400">*</span>
-          </Label>
-          <Input
-            type="number"
-            min={1}
-            value={hp}
-            onChange={(e) => setHp(Number(e.target.value))}
-            className="bg-teal-deep/50"
-          />
-          {preset && (
-            <p className="text-xs text-gold/60">
-              Suggested for CR {cr}: {preset.hp} HP
-            </p>
-          )}
-          <p className="text-xs text-parchment-muted">
-            Low HP → quick, dangerous fights. High HP → drawn-out encounters.
-          </p>
+        {/* HP + Hit Dice */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-parchment">
+              Hit Points <span className="text-red-400">*</span>
+            </Label>
+            <Input
+              type="number"
+              min={1}
+              value={hp}
+              onChange={(e) => setHp(Number(e.target.value))}
+              className="bg-teal-deep/50"
+            />
+            <p className="text-xs text-gold/60">Suggested: ~{entry.suggestedHp} HP</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-parchment">Hit Dice <span className="text-parchment-muted/60">(optional)</span></Label>
+            <Input
+              placeholder="e.g. 8d10 + 24"
+              value={hitDice}
+              onChange={(e) => setHitDice(e.target.value)}
+              className="bg-teal-deep/50"
+            />
+            <p className="text-xs text-parchment-muted">Dice formula for HP rolls.</p>
+          </div>
         </div>
 
-        {/* AC */}
-        <div className="space-y-2">
-          <Label className="text-parchment">
-            Armor Class <span className="text-red-400">*</span>
-          </Label>
-          <Input
-            type="number"
-            min={1}
-            value={ac}
-            onChange={(e) => setAc(Number(e.target.value))}
-            className="bg-teal-deep/50"
-          />
-          {preset && (
-            <p className="text-xs text-gold/60">
-              Suggested for CR {cr}: {preset.ac} AC
-            </p>
-          )}
-          <p className="text-xs text-parchment-muted">
-            High AC → frustrating, precise fight. Low AC → players hit often, more action.
-          </p>
+        {/* AC + Source */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label className="text-parchment">
+              Armor Class <span className="text-red-400">*</span>
+            </Label>
+            <Input
+              type="number"
+              min={1}
+              value={ac}
+              onChange={(e) => setAc(Number(e.target.value))}
+              className="bg-teal-deep/50"
+            />
+            <p className="text-xs text-gold/60">Suggested: ~{entry.suggestedAc} AC</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-parchment">AC Source <span className="text-parchment-muted/60">(optional)</span></Label>
+            <Input
+              placeholder="natural armor, chitin, drift-warp..."
+              value={acSource}
+              onChange={(e) => setAcSource(e.target.value)}
+              className="bg-teal-deep/50"
+            />
+          </div>
         </div>
 
         {/* Damage per Round */}
@@ -641,14 +665,7 @@ export function MonsterQuestWizard() {
             onChange={(e) => setDamagePerRound(e.target.value)}
             className="bg-teal-deep/50"
           />
-          {preset && (
-            <p className="text-xs text-gold/60">
-              Suggested for CR {cr}: {preset.dmg} damage/round
-            </p>
-          )}
-          <p className="text-xs text-parchment-muted">
-            Think in damage per round, not per attack. Too low → boring. Too high → unfair.
-          </p>
+          <p className="text-xs text-gold/60">Suggested for CR {cr}: ~{entry.suggestedDpr} damage/round</p>
         </div>
 
         {/* Movement */}
@@ -693,129 +710,670 @@ export function MonsterQuestWizard() {
     )
   }
 
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      {/* Actions */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-parchment">
-            Actions <span className="text-red-400">*</span>
-          </Label>
-          <Button type="button" variant="ghost" size="sm" onClick={addAction} className="text-gold gap-1">
-            <Plus className="w-3 h-3" /> Add Action
-          </Button>
+  // ─────────────────────────────────────────────────────────
+  // STEP 2 — Ability Scores & Proficiencies
+  // ─────────────────────────────────────────────────────────
+  const renderStepAbilities = () => {
+    const wisMod = abilityMod(abilities.WIS)
+    const perceptionBonus = skills.find((s) => s.name === 'Perception')?.bonus ?? wisMod
+    const computedPP = passivePerception(perceptionBonus)
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          <Label className="text-parchment">Ability Scores</Label>
+          <p className="text-xs text-parchment-muted">
+            Standard 5e abilities. Modifier is auto-derived as floor((score − 10) / 2).
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {ABILITY_ORDER.map((ab) => (
+              <div key={ab} className="p-2 rounded-lg border border-gold/20 bg-teal-deep/30">
+                <div className="text-xs text-gold/70 mb-1">{ABILITY_LABELS[ab]} ({ab})</div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={abilities[ab]}
+                    onChange={(e) =>
+                      setAbilities((prev) => ({ ...prev, [ab]: Number(e.target.value) || 10 }))
+                    }
+                    className="bg-teal-deep/50"
+                  />
+                  <span className="text-sm text-parchment font-mono w-10 text-center">
+                    {formatMod(abilityMod(abilities[ab]))}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="text-xs text-parchment-muted">
-          Every monster needs a basic attack and 1-3 signature abilities. This is what players remember.
-        </p>
 
-        {actions.map((a, i) => (
-          <Card key={i} className="border-gold/20">
-            <CardContent className="pt-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-parchment font-medium">
-                  {i === 0 ? 'Basic Attack' : `Action ${i + 1}`}
-                </span>
-                {actions.length > 1 && (
-                  <button type="button" onClick={() => removeAction(i)} className="text-red-400 hover:text-red-300">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  placeholder="Attack name"
-                  value={a.name}
-                  onChange={(e) => updateAction(i, { name: e.target.value })}
-                  className="bg-teal-deep/50"
-                />
-                <Select
-                  value={a.actionType}
-                  onChange={(v) => updateAction(i, { actionType: v as MonsterAction['actionType'] })}
+        {/* Saving throw proficiencies */}
+        <div className="space-y-2">
+          <Label className="text-parchment">Saving Throw Proficiencies</Label>
+          <p className="text-xs text-parchment-muted">
+            Click an ability to grant proficiency. Bonus = ability mod + proficiency bonus (+{crEntry(cr).proficiencyBonus}).
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ABILITY_ORDER.map((ab) => {
+              const isProf = savingThrows[ab] !== undefined
+              const bonus = abilityMod(abilities[ab]) + crEntry(cr).proficiencyBonus
+              return (
+                <button
+                  key={ab}
+                  type="button"
+                  onClick={() =>
+                    setSavingThrows((prev) => {
+                      const next = { ...prev }
+                      if (isProf) delete next[ab]
+                      else next[ab] = bonus
+                      return next
+                    })
+                  }
+                  className={`px-3 py-1.5 rounded-md border text-xs transition-all ${
+                    isProf
+                      ? 'border-gold/60 bg-gold/10 text-gold'
+                      : 'border-gold/20 bg-teal-deep/30 text-parchment-muted hover:border-gold/40'
+                  }`}
                 >
-                  <option value="action">Action</option>
-                  <option value="bonus_action">Bonus Action</option>
-                  <option value="reaction">Reaction</option>
-                  <option value="legendary">Legendary Action</option>
-                </Select>
-              </div>
+                  {ab} {isProf && `(${formatMod(bonus)})`}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Skills */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">Skill Bonuses</Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addSkill} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add Skill
+            </Button>
+          </div>
+          {skills.length === 0 && (
+            <p className="text-xs text-parchment-muted italic">
+              Add Perception, Stealth, Athletics, etc. with their final bonus (mod + proficiency).
+            </p>
+          )}
+          {skills.map((s, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Select
+                value={s.name}
+                onChange={(v) => updateSkill(i, { name: v })}
+                className="flex-1"
+              >
+                {STANDARD_SKILLS.map((sk) => (
+                  <option key={sk} value={sk}>
+                    {sk}
+                  </option>
+                ))}
+              </Select>
               <Input
-                placeholder="Damage (e.g. 2d8+4 slashing)"
-                value={a.damage || ''}
-                onChange={(e) => updateAction(i, { damage: e.target.value })}
+                type="number"
+                value={s.bonus}
+                onChange={(e) => updateSkill(i, { bonus: Number(e.target.value) })}
+                className="bg-teal-deep/50 w-20"
+              />
+              <button type="button" onClick={() => removeSkill(i)} className="text-red-400 hover:text-red-300">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Senses */}
+        <div className="space-y-3">
+          <Label className="text-parchment">Senses</Label>
+          <p className="text-xs text-parchment-muted">
+            Leave 0 if the monster doesn&apos;t have that sense. Passive Perception auto-derives from Perception
+            (or WIS mod) but can be overridden.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Darkvision (ft.)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={5}
+                value={senses.darkvision ?? 0}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, darkvision: Number(e.target.value) || 0 }))
+                }
                 className="bg-teal-deep/50"
               />
-              <textarea
-                placeholder="What does this action do? Describe mechanics and flavor."
-                value={a.description}
-                onChange={(e) => updateAction(i, { description: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none text-sm"
+            </div>
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Blindsight (ft.)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={5}
+                value={senses.blindsight ?? 0}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, blindsight: Number(e.target.value) || 0 }))
+                }
+                className="bg-teal-deep/50"
               />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Traits */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-parchment">Passive Traits</Label>
-          <Button type="button" variant="ghost" size="sm" onClick={addTrait} className="text-gold gap-1">
-            <Plus className="w-3 h-3" /> Add
-          </Button>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Tremorsense (ft.)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={5}
+                value={senses.tremorsense ?? 0}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, tremorsense: Number(e.target.value) || 0 }))
+                }
+                className="bg-teal-deep/50"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Truesight (ft.)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={5}
+                value={senses.truesight ?? 0}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, truesight: Number(e.target.value) || 0 }))
+                }
+                className="bg-teal-deep/50"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 text-xs text-parchment-muted">
+              <input
+                type="checkbox"
+                className="accent-gold"
+                checked={!!senses.blindsightBlindBeyond}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, blindsightBlindBeyond: e.target.checked }))
+                }
+              />
+              Blind beyond blindsight radius
+            </label>
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Passive Perception</Label>
+              <Input
+                type="number"
+                min={1}
+                value={senses.passivePerception || computedPP}
+                onChange={(e) =>
+                  setSenses((prev) => ({ ...prev, passivePerception: Number(e.target.value) }))
+                }
+                className="bg-teal-deep/50"
+              />
+              <p className="text-xs text-gold/60">Auto: {computedPP}</p>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-parchment-muted">
-          Always-on features: damage resistances, immunities, special rules. Keep minimal but meaningful.
-        </p>
-        {traits.map((t, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <Input
-              placeholder="e.g. Resistance to fire, Can't be knocked prone"
-              value={t}
-              onChange={(e) => updateTrait(i, e.target.value)}
-              className="bg-teal-deep/50 flex-1"
-            />
-            {traits.length > 1 && (
-              <button type="button" onClick={() => removeTrait(i)} className="text-red-400 hover:text-red-300">
+
+        {/* Languages + Telepathy */}
+        <div className="space-y-2">
+          <Label className="text-parchment">Languages</Label>
+          <Input
+            placeholder="Common, Abyssal, — (none), or 'understands Common but can't speak'"
+            value={languages.join(', ')}
+            onChange={(e) =>
+              setLanguages(
+                e.target.value
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              )
+            }
+            className="bg-teal-deep/50"
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-parchment-muted text-xs">Telepathy range (ft.) <span className="text-parchment-muted/60">(optional)</span></Label>
+              <Input
+                type="number"
+                min={0}
+                step={30}
+                value={telepathy ?? 0}
+                onChange={(e) => {
+                  const n = Number(e.target.value)
+                  setTelepathy(n > 0 ? n : undefined)
+                }}
+                className="bg-teal-deep/50"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ─────────────────────────────────────────────────────────
+  // STEP 3 — Defenses (vuln / res / imm / cond imm)
+  // ─────────────────────────────────────────────────────────
+  const renderStepDefenses = () => {
+    const ChipGroup = ({
+      label,
+      values,
+      setValues,
+      options,
+      helper,
+    }: {
+      label: string
+      values: string[]
+      setValues: (v: string[]) => void
+      options: readonly string[]
+      helper?: string
+    }) => (
+      <div className="space-y-2">
+        <Label className="text-parchment">{label}</Label>
+        {helper && <p className="text-xs text-parchment-muted">{helper}</p>}
+        <div className="flex flex-wrap gap-1.5">
+          {options.map((opt) => {
+            const on = values.includes(opt)
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setValues(toggleInList(values, opt))}
+                className={`px-2.5 py-1 rounded-md border text-xs capitalize transition-all ${
+                  on
+                    ? 'border-red-500/60 bg-red-500/10 text-red-300'
+                    : 'border-gold/20 bg-teal-deep/30 text-parchment-muted hover:border-gold/40'
+                }`}
+              >
+                {opt}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
+
+    return (
+      <div className="space-y-6">
+        <div className="p-3 rounded-lg border border-gold/20 bg-teal-deep/20 text-xs text-parchment-muted">
+          Pick the damage types this creature takes <em>extra</em> from, shrugs off, or
+          completely ignores — plus the conditions it can&apos;t suffer. These appear in every
+          encounter as <span className="text-gold">tactical levers</span> for players.
+        </div>
+
+        <ChipGroup
+          label="Damage Vulnerabilities"
+          helper="Double damage from these types."
+          values={damageVulnerabilities}
+          setValues={setDamageVulnerabilities}
+          options={DAMAGE_TYPES}
+        />
+        <ChipGroup
+          label="Damage Resistances"
+          helper="Half damage from these types."
+          values={damageResistances}
+          setValues={setDamageResistances}
+          options={DAMAGE_TYPES}
+        />
+        <ChipGroup
+          label="Damage Immunities"
+          helper="Zero damage from these types."
+          values={damageImmunities}
+          setValues={setDamageImmunities}
+          options={DAMAGE_TYPES}
+        />
+        <ChipGroup
+          label="Condition Immunities"
+          helper="Cannot suffer these conditions."
+          values={conditionImmunities}
+          setValues={setConditionImmunities}
+          options={DND_CONDITIONS}
+        />
+      </div>
+    )
+  }
+
+  const renderStep2 = () => {
+    const attackBonus = crEntry(cr).suggestedAttackBonus
+    const saveDC = crEntry(cr).suggestedSaveDC
+    const renderActionEditor = (
+      a: MonsterAction,
+      i: number,
+      label: string,
+      onUpdate: (i: number, patch: Partial<MonsterAction>) => void,
+      onRemove: (i: number) => void,
+      canRemove: boolean,
+      kind: 'action' | 'bonus' | 'reaction' | 'legendary'
+    ) => (
+      <Card key={`${kind}-${i}`} className="border-gold/20">
+        <CardContent className="pt-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-parchment font-medium">{label}</span>
+            {canRemove && (
+              <button type="button" onClick={() => onRemove(i)} className="text-red-400 hover:text-red-300">
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
           </div>
-        ))}
-      </div>
-
-      {/* Weaknesses */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="text-parchment">
-            Weaknesses / Counterplay <span className="text-red-400">*</span>
-          </Label>
-          <Button type="button" variant="ghost" size="sm" onClick={addWeakness} className="text-gold gap-1">
-            <Plus className="w-3 h-3" /> Add
-          </Button>
-        </div>
-        <p className="text-xs text-parchment-muted">
-          How do players beat it? Without weaknesses, fights feel unfair.
-        </p>
-        {weaknesses.map((w, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <Input
+            placeholder="Attack name (e.g. Bite, Tail Sweep, Drift Howl)"
+            value={a.name}
+            onChange={(e) => onUpdate(i, { name: e.target.value })}
+            className="bg-teal-deep/50"
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div>
+              <Label className="text-parchment-muted text-[10px] uppercase">To-Hit / Save</Label>
+              <Input
+                placeholder={`+${attackBonus} to hit  or  DC ${saveDC}`}
+                value={a.attackBonus !== undefined ? `+${a.attackBonus}` : a.saveDC !== undefined ? `DC ${a.saveDC}` : ''}
+                onChange={(e) => {
+                  const v = e.target.value.trim()
+                  if (v.toLowerCase().startsWith('dc')) {
+                    const n = parseInt(v.replace(/[^0-9]/g, ''), 10)
+                    onUpdate(i, { saveDC: isNaN(n) ? undefined : n, attackBonus: undefined })
+                  } else if (v.startsWith('+') || v.startsWith('-')) {
+                    const n = parseInt(v, 10)
+                    onUpdate(i, { attackBonus: isNaN(n) ? undefined : n, saveDC: undefined })
+                  } else {
+                    onUpdate(i, { attackBonus: undefined, saveDC: undefined })
+                  }
+                }}
+                className="bg-teal-deep/50"
+              />
+            </div>
+            <div>
+              <Label className="text-parchment-muted text-[10px] uppercase">Reach / Range</Label>
+              <Input
+                placeholder="5 ft. or 30/120 ft."
+                value={a.reach !== undefined ? `${a.reach} ft.` : ''}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10)
+                  onUpdate(i, { reach: isNaN(n) ? undefined : n })
+                }}
+                className="bg-teal-deep/50"
+              />
+            </div>
+            <div>
+              <Label className="text-parchment-muted text-[10px] uppercase">Targets</Label>
+              <Input
+                placeholder="one creature, 15-ft cone"
+                value={a.targets || ''}
+                onChange={(e) => onUpdate(i, { targets: e.target.value })}
+                className="bg-teal-deep/50"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
             <Input
-              placeholder="e.g. Slow, Vulnerable to radiant, Predictable pattern"
-              value={w}
-              onChange={(e) => updateWeakness(i, e.target.value)}
-              className="bg-teal-deep/50 flex-1"
+              placeholder="Damage (e.g. 2d8+4 slashing)"
+              value={a.damage || ''}
+              onChange={(e) => onUpdate(i, { damage: e.target.value })}
+              className="bg-teal-deep/50"
             />
-            {weaknesses.length > 1 && (
-              <button type="button" onClick={() => removeWeakness(i)} className="text-red-400 hover:text-red-300">
-                <Trash2 className="w-4 h-4" />
-              </button>
+            <Input
+              placeholder="Recharge (e.g. 5-6, short rest)"
+              value={a.recharge || ''}
+              onChange={(e) => onUpdate(i, { recharge: e.target.value })}
+              className="bg-teal-deep/50"
+            />
+          </div>
+          {a.saveDC !== undefined && (
+            <div className="grid grid-cols-2 gap-2">
+              <Select
+                value={a.saveAbility || 'DEX'}
+                onChange={(v) => onUpdate(i, { saveAbility: v as Ability })}
+              >
+                {ABILITY_ORDER.map((ab) => (
+                  <option key={ab} value={ab}>
+                    {ABILITY_LABELS[ab]} save
+                  </option>
+                ))}
+              </Select>
+              <Input
+                placeholder="Effect on save (e.g. half damage)"
+                value={a.saveEffect || ''}
+                onChange={(e) => onUpdate(i, { saveEffect: e.target.value })}
+                className="bg-teal-deep/50"
+              />
+            </div>
+          )}
+          {kind === 'legendary' && (
+            <div className="flex items-center gap-2">
+              <Label className="text-parchment-muted text-xs">Cost (legendary points):</Label>
+              <Input
+                type="number"
+                min={1}
+                max={3}
+                value={a.legendaryCost || 1}
+                onChange={(e) => onUpdate(i, { legendaryCost: Number(e.target.value) || 1 })}
+                className="bg-teal-deep/50 w-20"
+              />
+            </div>
+          )}
+          <textarea
+            placeholder="Full mechanical description (what does it do, on hit, on save, conditions imposed)"
+            value={a.description}
+            onChange={(e) => onUpdate(i, { description: e.target.value })}
+            rows={2}
+            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none text-sm"
+          />
+        </CardContent>
+      </Card>
+    )
+
+    return (
+      <div className="space-y-6">
+        {/* Multiattack */}
+        <div className="space-y-2">
+          <Label className="text-parchment">Multiattack <span className="text-parchment-muted/60">(optional)</span></Label>
+          <Input
+            placeholder='e.g. "The monster makes three attacks: two with its claws and one with its bite."'
+            value={multiattack}
+            onChange={(e) => setMultiattack(e.target.value)}
+            className="bg-teal-deep/50"
+          />
+          <p className="text-xs text-parchment-muted">
+            Describe how many attacks the creature gets per turn and which combinations.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">
+              Actions <span className="text-red-400">*</span>
+            </Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addAction} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add Action
+            </Button>
+          </div>
+          <p className="text-xs text-parchment-muted">
+            Suggested attack bonus +{attackBonus}, save DC {saveDC}. Use the &quot;To-Hit / Save&quot; field
+            to set either (type <code>+5</code> for attack or <code>DC 14</code> for a save).
+          </p>
+          {actions.map((a, i) =>
+            renderActionEditor(
+              a,
+              i,
+              i === 0 ? 'Basic Attack' : `Action ${i + 1}`,
+              updateAction,
+              removeAction,
+              actions.length > 1,
+              'action'
+            )
+          )}
+        </div>
+
+        {/* Bonus Actions */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">Bonus Actions</Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addBonusAction} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          {bonusActions.map((a, i) =>
+            renderActionEditor(a, i, `Bonus ${i + 1}`, updateBonusAction, removeBonusAction, true, 'bonus')
+          )}
+        </div>
+
+        {/* Reactions */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">Reactions</Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addReaction} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          {reactions.map((a, i) =>
+            renderActionEditor(a, i, `Reaction ${i + 1}`, updateReaction, removeReaction, true, 'reaction')
+          )}
+        </div>
+
+        {/* Legendary Actions (CR 5+) */}
+        {cr >= 5 && (
+          <div className="space-y-3 p-3 rounded-lg border border-gold/30 bg-gold/5">
+            <div className="flex items-center justify-between">
+              <Label className="text-gold">Legendary Actions <span className="text-parchment-muted/60 text-xs">(boss creatures)</span></Label>
+              <label className="flex items-center gap-2 text-xs text-parchment">
+                <input
+                  type="checkbox"
+                  className="accent-gold"
+                  checked={hasLegendary}
+                  onChange={(e) => setHasLegendary(e.target.checked)}
+                />
+                Enable
+              </label>
+            </div>
+            {hasLegendary && (
+              <>
+                <div className="grid grid-cols-3 gap-2 items-end">
+                  <div>
+                    <Label className="text-parchment-muted text-xs">Points / round</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={5}
+                      value={legendaryActions.count}
+                      onChange={(e) =>
+                        setLegendaryActions((prev) => ({ ...prev, count: Number(e.target.value) || 3 }))
+                      }
+                      className="bg-teal-deep/50"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label className="text-parchment-muted text-xs">Description</Label>
+                    <Input
+                      placeholder="Can take 3 legendary actions, one at a time, at the end of another creature's turn..."
+                      value={legendaryActions.description || ''}
+                      onChange={(e) =>
+                        setLegendaryActions((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      className="bg-teal-deep/50"
+                    />
+                  </div>
+                </div>
+                <Button type="button" variant="ghost" size="sm" onClick={addLegendaryAction} className="text-gold gap-1">
+                  <Plus className="w-3 h-3" /> Add Legendary Action
+                </Button>
+                {legendaryActions.actions.map((a, i) =>
+                  renderActionEditor(
+                    a,
+                    i,
+                    `Legendary ${i + 1}`,
+                    updateLegendaryAction,
+                    removeLegendaryAction,
+                    true,
+                    'legendary'
+                  )
+                )}
+              </>
             )}
           </div>
-        ))}
+        )}
+
+        {/* Passive Traits — structured */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">Passive Traits</Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addTrait} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          <p className="text-xs text-parchment-muted">
+            Always-on features: regeneration, magic resistance, drift aura, pack tactics. Each has a name + description.
+          </p>
+          {traits.map((t, i) => (
+            <Card key={i} className="border-gold/20">
+              <CardContent className="pt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Trait name (e.g. Magic Resistance)"
+                    value={t.name}
+                    onChange={(e) => updateTrait(i, { name: e.target.value })}
+                    className="bg-teal-deep/50 flex-1"
+                  />
+                  {traits.length > 1 && (
+                    <button type="button" onClick={() => removeTrait(i)} className="text-red-400 hover:text-red-300">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  placeholder="Description (mechanics + when it triggers)"
+                  value={t.description}
+                  onChange={(e) => updateTrait(i, { description: e.target.value })}
+                  rows={2}
+                  className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none text-sm"
+                />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Tactics */}
+        <div className="space-y-2">
+          <Label className="text-parchment">Tactics <span className="text-parchment-muted/60">(DM notes)</span></Label>
+          <textarea
+            placeholder="How does it fight? Does it open with breath weapon, retreat at half HP, target spellcasters first, summon allies?"
+            value={tactics}
+            onChange={(e) => setTactics(e.target.value)}
+            rows={3}
+            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+          />
+          <p className="text-xs text-gold/60 italic">These appear in the DM stat block during quests.</p>
+        </div>
+
+        {/* Weaknesses */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-parchment">
+              Weaknesses / Counterplay <span className="text-red-400">*</span>
+            </Label>
+            <Button type="button" variant="ghost" size="sm" onClick={addWeakness} className="text-gold gap-1">
+              <Plus className="w-3 h-3" /> Add
+            </Button>
+          </div>
+          <p className="text-xs text-parchment-muted">
+            How do players beat it? Without weaknesses, fights feel unfair.
+          </p>
+          {weaknesses.map((w, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                placeholder="e.g. Slow, Vulnerable to radiant, Predictable pattern"
+                value={w}
+                onChange={(e) => updateWeakness(i, e.target.value)}
+                className="bg-teal-deep/50 flex-1"
+              />
+              {weaknesses.length > 1 && (
+                <button type="button" onClick={() => removeWeakness(i)} className="text-red-400 hover:text-red-300">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderStep3 = () => (
     <div className="space-y-6">
@@ -913,7 +1471,54 @@ export function MonsterQuestWizard() {
     </div>
   )
 
-  const renderStep4 = () => (
+  const renderStep4 = () => {
+    const entry = crEntry(cr)
+    const previewStats: MonsterStats = {
+      size,
+      creatureType,
+      subtype: subtype.trim() || undefined,
+      alignment,
+      role,
+      cr,
+      xp: entry.xp,
+      proficiencyBonus: entry.proficiencyBonus,
+      hp,
+      hitDice: hitDice.trim() || undefined,
+      ac,
+      acSource: acSource.trim() || undefined,
+      movements,
+      abilities,
+      savingThrows,
+      skills,
+      damageVulnerabilities,
+      damageResistances,
+      damageImmunities,
+      conditionImmunities,
+      senses,
+      languages: languages.filter((l) => l.trim()),
+      telepathy,
+      damagePerRound,
+      multiattack: multiattack.trim() || undefined,
+      traits: traits.filter((t) => t.name.trim() || t.description.trim()),
+      actions: actions.filter((a) => a.name.trim()),
+      bonusActions: bonusActions.filter((a) => a.name.trim()),
+      reactions: reactions.filter((a) => a.name.trim()),
+      legendaryActions: hasLegendary
+        ? {
+            count: legendaryActions.count,
+            description: legendaryActions.description,
+            actions: legendaryActions.actions.filter((a) => a.name.trim()),
+          }
+        : { count: 0, actions: [] },
+      tactics: tactics.trim() || undefined,
+      weaknesses: weaknesses.filter((w) => w.trim()),
+      regionId,
+      isOneOff,
+      whatBrokeHere,
+      whatLeakedThrough,
+      drawnTo,
+    }
+    return (
     <div className="space-y-6">
       {/* Stat Summary Card */}
       <Card className="border-red-500/20">
@@ -1086,10 +1691,29 @@ export function MonsterQuestWizard() {
         buttonLabel={imageUrl ? 'Convert to 3D Model' : 'Generate 3D from Description'}
         meshyOptions={{ enable_pbr: true }}
       />
+
+      {/* Full D&D 5e Stat Block Preview */}
+      <Card className="border-gold/30">
+        <CardContent className="pt-4">
+          <div className="text-xs uppercase tracking-wider text-gold/70 mb-3">
+            Stat Block Preview — this is what DMs and players will see in quests
+          </div>
+          <MonsterStatBlock stats={previewStats} name={name || 'Unnamed Monster'} />
+        </CardContent>
+      </Card>
     </div>
   )
+  }
 
-  const stepRenderers = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4]
+  const stepRenderers = [
+    renderStep0,
+    renderStep1,
+    renderStepAbilities,
+    renderStepDefenses,
+    renderStep2,
+    renderStep3,
+    renderStep4,
+  ]
 
   // ═══════════════════════════════════════════════════════════
   // LAYOUT

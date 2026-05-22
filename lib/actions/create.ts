@@ -719,22 +719,10 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
 // CAMPAIGN MONSTER (D&D 5e stat block)
 // ═══════════════════════════════════════════════════════════
 
-interface CampaignMonsterStats {
-  role: string
-  cr: number
-  hp: number
-  ac: number
-  damagePerRound: string
-  movements: { type: string; speed: number }[]
-  actions: { name: string; description: string; damage?: string; actionType: string }[]
-  traits: string[]
-  weaknesses: string[]
-  regionId: string
-  isOneOff: boolean
-  whatBrokeHere: string
-  whatLeakedThrough: string
-  drawnTo: string
-}
+import type { MonsterStats } from '@/lib/dnd-rules/monsters'
+
+// Full D&D 5e stat block — see lib/dnd-rules/monsters.ts.
+type CampaignMonsterStats = MonsterStats
 
 interface SaveCampaignMonsterInput {
   name: string
@@ -845,15 +833,40 @@ export async function saveCampaignMonster(input: SaveCampaignMonsterInput): Prom
       tagline: input.tagline,
       image_url: input.imageUrl || null,
       is_user_created: true,
+      // Full D&D 5e stat block. Consumers should treat this as the canonical source.
       monster_stats: {
+        size: stats.size,
+        creature_type: stats.creatureType,
+        subtype: stats.subtype ?? null,
+        alignment: stats.alignment,
         role: stats.role,
         cr: stats.cr,
+        xp: stats.xp,
+        proficiency_bonus: stats.proficiencyBonus,
         hp: stats.hp,
+        hit_dice: stats.hitDice ?? null,
         ac: stats.ac,
+        ac_source: stats.acSource ?? null,
         damage_per_round: stats.damagePerRound,
         movements: stats.movements,
-        actions: stats.actions,
+        abilities: stats.abilities,
+        saving_throws: stats.savingThrows,
+        skills: stats.skills,
+        damage_vulnerabilities: stats.damageVulnerabilities,
+        damage_resistances: stats.damageResistances,
+        damage_immunities: stats.damageImmunities,
+        condition_immunities: stats.conditionImmunities,
+        senses: stats.senses,
+        languages: stats.languages,
+        telepathy: stats.telepathy ?? null,
+        multiattack: stats.multiattack ?? null,
         traits: stats.traits,
+        actions: stats.actions,
+        bonus_actions: stats.bonusActions,
+        reactions: stats.reactions,
+        legendary_actions: stats.legendaryActions,
+        lair_actions: stats.lairActions ?? null,
+        tactics: stats.tactics ?? null,
         weaknesses: stats.weaknesses,
       },
       everloop_lore: {

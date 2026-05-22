@@ -662,7 +662,7 @@ export interface Database {
           chapter_order?: number
         }
       }
-      campaigns: {
+      quests: {
         Row: {
           id: string
           title: string
@@ -731,10 +731,10 @@ export interface Database {
           metadata?: Json
         }
       }
-      campaign_players: {
+      quest_players: {
         Row: {
           id: string
-          campaign_id: string
+          quest_id: string
           user_id: string
           character_id: string | null
           role: string
@@ -752,7 +752,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id: string
+          quest_id: string
           user_id: string
           character_id?: string | null
           role?: string
@@ -780,10 +780,10 @@ export interface Database {
           joined_at?: string | null
         }
       }
-      campaign_scenes: {
+      quest_scenes: {
         Row: {
           id: string
-          campaign_id: string
+          quest_id: string
           title: string
           description: string | null
           scene_order: number
@@ -805,7 +805,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id: string
+          quest_id: string
           title: string
           description?: string | null
           scene_order?: number
@@ -842,10 +842,10 @@ export interface Database {
           metadata?: Json
         }
       }
-      campaign_sessions: {
+      quest_sessions: {
         Row: {
           id: string
-          campaign_id: string
+          quest_id: string
           session_number: number
           title: string | null
           status: string
@@ -866,7 +866,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id: string
+          quest_id: string
           session_number?: number
           title?: string | null
           status?: string
@@ -901,11 +901,11 @@ export interface Database {
           metadata?: Json
         }
       }
-      campaign_messages: {
+      quest_messages: {
         Row: {
           id: string
           session_id: string
-          campaign_id: string
+          quest_id: string
           sender_id: string | null
           message_type: string
           content: string
@@ -919,7 +919,7 @@ export interface Database {
         Insert: {
           id?: string
           session_id: string
-          campaign_id: string
+          quest_id: string
           sender_id?: string | null
           message_type?: string
           content: string
@@ -939,11 +939,11 @@ export interface Database {
           is_hidden?: boolean
         }
       }
-      campaign_dice_rolls: {
+      quest_dice_rolls: {
         Row: {
           id: string
           session_id: string
-          campaign_id: string
+          quest_id: string
           player_id: string | null
           character_name: string | null
           roll_type: string
@@ -965,7 +965,7 @@ export interface Database {
         Insert: {
           id?: string
           session_id: string
-          campaign_id: string
+          quest_id: string
           player_id?: string | null
           character_name?: string | null
           roll_type?: string
@@ -1003,7 +1003,7 @@ export interface Database {
       narrative_idols: {
         Row: {
           id: string
-          campaign_id: string
+          quest_id: string
           holder_id: string | null
           name: string
           description: string | null
@@ -1021,7 +1021,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id: string
+          quest_id: string
           holder_id?: string | null
           name: string
           description?: string | null
@@ -1050,10 +1050,10 @@ export interface Database {
           used_effect?: string | null
         }
       }
-      campaign_npcs: {
+      quest_npcs: {
         Row: {
           id: string
-          campaign_id: string
+          quest_id: string
           canon_entity_id: string | null
           name: string
           description: string | null
@@ -1073,7 +1073,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          campaign_id: string
+          quest_id: string
           canon_entity_id?: string | null
           name: string
           description?: string | null
@@ -1176,7 +1176,6 @@ export interface Database {
           shards_gathered: number
           hollow_count: number
           drift_breach_count: number
-          active_campaigns: number
           active_quests: number
           canonical_stories: number
           last_shard_event: string | null
@@ -1194,7 +1193,6 @@ export interface Database {
           shards_gathered?: number
           hollow_count?: number
           drift_breach_count?: number
-          active_campaigns?: number
           active_quests?: number
           canonical_stories?: number
           last_shard_event?: string | null
@@ -1208,7 +1206,6 @@ export interface Database {
           shards_gathered?: number
           hollow_count?: number
           drift_breach_count?: number
-          active_campaigns?: number
           active_quests?: number
           canonical_stories?: number
           last_shard_event?: string | null
@@ -1223,7 +1220,6 @@ export interface Database {
           event_type: string
           region_id: string | null
           actor_id: string | null
-          campaign_id: string | null
           quest_id: string | null
           story_id: string | null
           description: string | null
@@ -1237,7 +1233,6 @@ export interface Database {
           event_type: string
           region_id?: string | null
           actor_id?: string | null
-          campaign_id?: string | null
           quest_id?: string | null
           story_id?: string | null
           description?: string | null
@@ -1261,7 +1256,6 @@ export interface Database {
           event_type: string
           severity: string
           region_id: string | null
-          source_campaign_id: string | null
           source_quest_id: string | null
           source_story_id: string | null
           affected_entities: string[]
@@ -1278,7 +1272,6 @@ export interface Database {
           event_type: string
           severity?: string
           region_id?: string | null
-          source_campaign_id?: string | null
           source_quest_id?: string | null
           source_story_id?: string | null
           affected_entities?: string[]

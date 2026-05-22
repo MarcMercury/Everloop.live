@@ -85,7 +85,7 @@ export async function getEntityCrossReferences(entityId: string): Promise<Entity
 
   // 2. Campaigns that reference this entity
   const { data: campaigns } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('id, title, slug, status, game_mode')
     .contains('referenced_entities', [entityId])
     .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
@@ -184,7 +184,7 @@ export async function getUserEntityUsageStats(userId: string): Promise<{
       .overlaps('referenced_entities', entityIds)
       .in('canon_status', ['approved', 'canonical']),
     supabase
-      .from('campaigns')
+      .from('quests')
       .select('referenced_entities')
       .overlaps('referenced_entities', entityIds),
     supabase

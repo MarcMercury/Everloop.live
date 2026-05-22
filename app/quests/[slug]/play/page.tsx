@@ -15,7 +15,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
   if (!user) redirect('/login')
 
   const { data: campaignData } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('*')
     .eq('slug', slug)
     .single()
@@ -25,12 +25,12 @@ export default async function PlayerSessionPage({ params }: PageProps) {
 
   // Verify player is accepted
   const { data: myPlayerData } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .select(`
       *,
-      character:player_characters!campaign_players_character_id_fkey(*)
+      character:player_characters!quest_players_character_id_fkey(*)
     `)
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .eq('user_id', user.id)
     .eq('status', 'accepted')
     .single()
@@ -43,20 +43,20 @@ export default async function PlayerSessionPage({ params }: PageProps) {
 
   // Fetch all players
   const { data: playersData } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .select(`
       *,
-      user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
-      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
+      user:profiles!quest_players_user_id_fkey(id, username, display_name, avatar_url),
+      character:player_characters!quest_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
     `)
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .eq('status', 'accepted')
 
   // Fetch active session
   const { data: sessionData } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .in('status', ['active', 'paused'])
     .order('created_at', { ascending: false })
     .limit(1)
@@ -67,17 +67,17 @@ export default async function PlayerSessionPage({ params }: PageProps) {
 
   // Fetch active scene (only non-DM-only fields)
   const { data: activeSceneData } = await supabase
-    .from('campaign_scenes')
-    .select('id, campaign_id, title, description, scene_type, mood, atmosphere, map_url, narration, status, scene_order, linked_entities, created_at, updated_at')
+    .from('quest_scenes')
+    .select('id, quest_id, title, description, scene_type, mood, atmosphere, map_url, narration, status, scene_order, linked_entities, created_at, updated_at')
     .eq('id', session.active_scene_id ?? '')
     .single()
 
   // Fetch messages (filter whispers to only those visible to this player)
   const { data: allMessagesData } = await supabase
-    .from('campaign_messages')
+    .from('quest_messages')
     .select(`
       *,
-      sender:profiles!campaign_messages_sender_id_fkey(username, display_name, avatar_url)
+      sender:profiles!quest_messages_sender_id_fkey(username, display_name, avatar_url)
     `)
     .eq('session_id', session.id)
     .order('created_at', { ascending: true })
@@ -95,7 +95,7 @@ export default async function PlayerSessionPage({ params }: PageProps) {
   const { data: myIdolsData } = await supabase
     .from('narrative_idols')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .eq('holder_id', user.id)
     .eq('status', 'held')
 

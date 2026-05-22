@@ -230,7 +230,6 @@ export async function recordShardEvent(input: {
   shard_id: string
   event_type: 'found' | 'revealed' | 'moved' | 'misunderstood' | 'used' | 'corrupted' | 'united'
   region_id?: string
-  campaign_id?: string
   quest_id?: string
   story_id?: string
   description: string
@@ -247,7 +246,6 @@ export async function recordShardEvent(input: {
       event_type: input.event_type,
       region_id: input.region_id || null,
       actor_id: userId,
-      campaign_id: input.campaign_id || null,
       quest_id: input.quest_id || null,
       story_id: input.story_id || null,
       description: input.description,

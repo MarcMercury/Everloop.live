@@ -15,8 +15,8 @@ export default async function CampaignsPage() {
 
   // Fetch public campaigns
   const { data: campaignsData } = await supabase
-    .from('campaigns')
-    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('is_public', true)
     .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
     .order('updated_at', { ascending: false })
@@ -27,24 +27,24 @@ export default async function CampaignsPage() {
   let myCampaigns: CampaignRow[] = []
   if (user) {
     const { data: dmCampaignsData } = await supabase
-      .from('campaigns')
-      .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+      .from('quests')
+      .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .eq('dm_id', user.id)
       .order('updated_at', { ascending: false })
 
     const { data: playerEntries } = await supabase
-      .from('campaign_players')
-      .select('campaign_id')
+      .from('quest_players')
+      .select('quest_id')
       .eq('user_id', user.id)
       .in('status', ['pending', 'accepted'])
 
-    const playerIds = ((playerEntries ?? []) as unknown as { campaign_id: string }[]).map(p => p.campaign_id)
+    const playerIds = ((playerEntries ?? []) as unknown as { quest_id: string }[]).map(p => p.quest_id)
 
     let playerCampaigns: CampaignRow[] = []
     if (playerIds.length > 0) {
       const { data } = await supabase
-        .from('campaigns')
-        .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+        .from('quests')
+        .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
         .in('id', playerIds)
         .order('updated_at', { ascending: false })
       playerCampaigns = (data ?? []) as unknown as CampaignRow[]

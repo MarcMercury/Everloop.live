@@ -40,7 +40,7 @@ export async function POST(
   const style = typeof body.style === 'string' ? body.style.slice(0, 120) : 'tactical fantasy battle map'
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
-  const questQuery = supabase.from('campaigns').select('id, dm_id, title')
+  const questQuery = supabase.from('quests').select('id, dm_id, title')
   const { data: questRow } = await (isUuid ? questQuery.eq('id', id) : questQuery.eq('slug', id)).maybeSingle()
   const quest = (questRow ?? null) as { id: string; dm_id: string; title: string } | null
 
@@ -56,10 +56,10 @@ export async function POST(
   let sceneDescription: string | null = null
   if (sceneId) {
     const { data: sceneRow } = await supabase
-      .from('campaign_scenes')
+      .from('quest_scenes')
       .select('title, description, scene_type, mood')
       .eq('id', sceneId)
-      .eq('campaign_id', quest.id)
+      .eq('quest_id', quest.id)
       .maybeSingle()
     const scene = sceneRow as { title: string | null; description: string | null } | null
     if (scene) {
@@ -129,11 +129,11 @@ export async function POST(
     // generated Database type does not currently expose campaign_scenes.map_url.
     if (sceneId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const scenes = supabase.from('campaign_scenes') as any
+      const scenes = supabase.from('quest_scenes') as any
       await scenes
         .update({ map_url: publicUrl })
         .eq('id', sceneId)
-        .eq('campaign_id', quest.id)
+        .eq('quest_id', quest.id)
     }
 
     return NextResponse.json({ mapUrl: publicUrl })

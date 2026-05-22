@@ -386,7 +386,7 @@ export interface CampaignUpdate {
 
 export interface CampaignPlayer {
   id: string
-  campaign_id: string
+  quest_id: string
   user_id: string
   character_id: string | null
   role: PlayerRole
@@ -438,7 +438,7 @@ export interface CampaignPlayer {
 
 export interface CampaignScene {
   id: string
-  campaign_id: string
+  quest_id: string
   title: string
   description: string | null
   scene_order: number
@@ -460,7 +460,7 @@ export interface CampaignScene {
 }
 
 export interface CampaignSceneInsert {
-  campaign_id: string
+  quest_id: string
   title: string
   description?: string | null
   scene_order?: number
@@ -495,7 +495,7 @@ export interface CampaignSceneUpdate {
 
 export interface CampaignSession {
   id: string
-  campaign_id: string
+  quest_id: string
   session_number: number
   title: string | null
   status: SessionStatus
@@ -518,7 +518,7 @@ export interface CampaignSession {
 export interface CampaignMessage {
   id: string
   session_id: string
-  campaign_id: string
+  quest_id: string
   sender_id: string | null
   message_type: MessageType
   content: string
@@ -539,7 +539,7 @@ export interface CampaignMessage {
 export interface CampaignDiceRoll {
   id: string
   session_id: string
-  campaign_id: string
+  quest_id: string
   player_id: string | null
   character_name: string | null
   roll_type: RollType
@@ -561,7 +561,7 @@ export interface CampaignDiceRoll {
 
 export interface NarrativeIdol {
   id: string
-  campaign_id: string
+  quest_id: string
   holder_id: string | null
   name: string
   description: string | null
@@ -580,7 +580,7 @@ export interface NarrativeIdol {
 
 export interface CampaignNpc {
   id: string
-  campaign_id: string
+  quest_id: string
   canon_entity_id: string | null
   name: string
   description: string | null

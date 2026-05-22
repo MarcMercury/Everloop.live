@@ -16,7 +16,7 @@ export default async function DMControlPage({ params }: PageProps) {
 
   // Fetch campaign
   const { data: campaignData } = await supabase
-    .from('campaigns')
+    .from('quests')
     .select('*')
     .eq('slug', slug)
     .single()
@@ -28,35 +28,35 @@ export default async function DMControlPage({ params }: PageProps) {
   // Fetch all data
   const [playersRes, scenesRes, sessionRes, npcsRes, idolsRes] = await Promise.all([
     supabase
-      .from('campaign_players')
+      .from('quest_players')
       .select(`
         *,
-        user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
-        character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
+        user:profiles!quest_players_user_id_fkey(id, username, display_name, avatar_url),
+        character:player_characters!quest_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color)
       `)
-      .eq('campaign_id', campaign.id)
+      .eq('quest_id', campaign.id)
       .eq('status', 'accepted'),
     supabase
-      .from('campaign_scenes')
+      .from('quest_scenes')
       .select('*')
-      .eq('campaign_id', campaign.id)
+      .eq('quest_id', campaign.id)
       .order('scene_order', { ascending: true }),
     supabase
-      .from('campaign_sessions')
+      .from('quest_sessions')
       .select('*')
-      .eq('campaign_id', campaign.id)
+      .eq('quest_id', campaign.id)
       .in('status', ['active', 'paused'])
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
     supabase
-      .from('campaign_npcs')
+      .from('quest_npcs')
       .select('*')
-      .eq('campaign_id', campaign.id),
+      .eq('quest_id', campaign.id),
     supabase
       .from('narrative_idols')
       .select('*')
-      .eq('campaign_id', campaign.id),
+      .eq('quest_id', campaign.id),
   ])
 
   const session = sessionRes.data as unknown as CampaignSession | null
@@ -65,10 +65,10 @@ export default async function DMControlPage({ params }: PageProps) {
   let messages: CampaignMessage[] = []
   if (session) {
     const { data: msgs } = await supabase
-      .from('campaign_messages')
+      .from('quest_messages')
       .select(`
         *,
-        sender:profiles!campaign_messages_sender_id_fkey(username, display_name, avatar_url)
+        sender:profiles!quest_messages_sender_id_fkey(username, display_name, avatar_url)
       `)
       .eq('session_id', session.id)
       .order('created_at', { ascending: true })

@@ -8,7 +8,7 @@ import { QuestLobbyClient } from './quest-lobby-client'
 
 // Row shapes for Supabase type assertions
 interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
-interface PlayerRow { id: string; campaign_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; approval_state?: string; readiness_state?: string; party_role?: string; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null; [key: string]: unknown }
+interface PlayerRow { id: string; quest_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; approval_state?: string; readiness_state?: string; party_role?: string; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null; [key: string]: unknown }
 interface SceneRow { id: string; title: string; scene_type: string; mood: string; status: string; scene_order: number; [key: string]: unknown }
 interface SessionRow { id: string; session_number: number; title: string | null; status: string; active_scene_id: string | null; summary: string | null; [key: string]: unknown }
 
@@ -23,8 +23,8 @@ export default async function CampaignPage({ params }: PageProps) {
 
   // Fetch campaign
   const { data: campaignData } = await supabase
-    .from('campaigns')
-    .select('*, dm:profiles!campaigns_dm_id_fkey(id, username, display_name, avatar_url)')
+    .from('quests')
+    .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('slug', slug)
     .single()
 
@@ -33,31 +33,31 @@ export default async function CampaignPage({ params }: PageProps) {
 
   // Fetch players
   const { data: playersData } = await supabase
-    .from('campaign_players')
+    .from('quest_players')
     .select(`
       *,
-      user:profiles!campaign_players_user_id_fkey(id, username, display_name, avatar_url),
-      character:player_characters!campaign_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color, everloop_traits, passive_perception)
+      user:profiles!quest_players_user_id_fkey(id, username, display_name, avatar_url),
+      character:player_characters!quest_players_character_id_fkey(id, name, race, class, level, current_hp, max_hp, armor_class, portrait_url, theme_color, everloop_traits, passive_perception)
     `)
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .order('joined_at', { ascending: true })
 
   const players = (playersData ?? []) as unknown as PlayerRow[]
 
   // Fetch scenes
   const { data: scenesData } = await supabase
-    .from('campaign_scenes')
+    .from('quest_scenes')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .order('scene_order', { ascending: true })
 
   const scenes = (scenesData ?? []) as unknown as SceneRow[]
 
   // Fetch active session
   const { data: activeSessionData } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .in('status', ['active', 'paused'])
     .order('created_at', { ascending: false })
     .limit(1)
@@ -67,9 +67,9 @@ export default async function CampaignPage({ params }: PageProps) {
 
   // Fetch all sessions for history
   const { data: sessionsData } = await supabase
-    .from('campaign_sessions')
+    .from('quest_sessions')
     .select('*')
-    .eq('campaign_id', campaign.id)
+    .eq('quest_id', campaign.id)
     .order('session_number', { ascending: false })
 
   const sessions = (sessionsData ?? []) as unknown as SessionRow[]

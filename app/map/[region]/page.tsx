@@ -70,7 +70,7 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
             <div className="grid grid-cols-2 gap-2 text-[10px] text-parchment-muted pt-1 border-t border-gold/5">
               <div>Stability: <span className="text-parchment">{Math.round(regionalState.stability_index * 100)}%</span></div>
               <div>Shards Known: <span className="text-gold">{regionalState.shards_known}</span></div>
-              <div>Campaigns: <span className="text-parchment">{regionalState.active_campaigns}</span></div>
+              <div>Campaigns: <span className="text-parchment">{regionalState.active_quests}</span></div>
               <div>Stories: <span className="text-parchment">{regionalState.canonical_stories}</span></div>
             </div>
           </div>

@@ -77,7 +77,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
     if (!newScene.title.trim()) return
     setLoading(true)
     const result = await createScene({
-      campaign_id: campaign.id,
+      quest_id: campaign.id,
       title: newScene.title.trim(),
       description: newScene.description.trim() || undefined,
       scene_type: newScene.scene_type,
