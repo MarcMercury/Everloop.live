@@ -1642,14 +1642,14 @@ function StepDescription({
         onPortraitSelect={(url) => setPortraitUrl(url)}
       />
 
-      {/* Campaign Info */}
+      {/* Quest Info */}
       <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-4">
         <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
-          <Scroll className="w-4 h-4" /> Campaign Info (optional)
+          <Scroll className="w-4 h-4" /> Quest Info (optional)
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label className="text-parchment-muted text-xs">Campaign Name</Label>
+            <Label className="text-parchment-muted text-xs">Quest Name</Label>
             <Input
               value={campaignName}
               onChange={e => setCampaignName(e.target.value)}

@@ -12,7 +12,7 @@ interface ChatMessage {
 }
 
 interface LoreChatProps {
-  /** Campaign context for scoped queries */
+  /** Quest context for scoped queries */
   campaignId?: string
 }
 

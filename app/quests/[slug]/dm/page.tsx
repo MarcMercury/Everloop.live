@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DMControlPanelClient } from './dm-control-panel-client'
-import type { Campaign, CampaignPlayer, CampaignScene, CampaignSession, CampaignMessage, NarrativeIdol, CampaignNpc } from '@/types/campaign'
+import type { Quest, QuestPlayer, QuestScene, QuestSession, QuestMessage, NarrativeIdol, QuestNpc } from '@/types/quest'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -21,7 +21,7 @@ export default async function DMControlPage({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  const campaign = campaignData as unknown as Campaign | null
+  const campaign = campaignData as unknown as Quest | null
   if (!campaign) notFound()
   if (campaign.dm_id !== user.id) redirect(`/quests/${slug}`)
 
@@ -59,10 +59,10 @@ export default async function DMControlPage({ params }: PageProps) {
       .eq('quest_id', campaign.id),
   ])
 
-  const session = sessionRes.data as unknown as CampaignSession | null
+  const session = sessionRes.data as unknown as QuestSession | null
 
   // Fetch messages if session exists
-  let messages: CampaignMessage[] = []
+  let messages: QuestMessage[] = []
   if (session) {
     const { data: msgs } = await supabase
       .from('quest_messages')
@@ -73,17 +73,17 @@ export default async function DMControlPage({ params }: PageProps) {
       .eq('session_id', session.id)
       .order('created_at', { ascending: true })
       .limit(200)
-    messages = (msgs ?? []) as unknown as CampaignMessage[]
+    messages = (msgs ?? []) as unknown as QuestMessage[]
   }
 
   return (
     <DMControlPanelClient
       campaign={campaign}
-      players={(playersRes.data ?? []) as unknown as CampaignPlayer[]}
-      scenes={(scenesRes.data ?? []) as unknown as CampaignScene[]}
+      players={(playersRes.data ?? []) as unknown as QuestPlayer[]}
+      scenes={(scenesRes.data ?? []) as unknown as QuestScene[]}
       session={session}
       messages={messages}
-      npcs={(npcsRes.data ?? []) as unknown as CampaignNpc[]}
+      npcs={(npcsRes.data ?? []) as unknown as QuestNpc[]}
       idols={(idolsRes.data ?? []) as unknown as NarrativeIdol[]}
       userId={user.id}
     />

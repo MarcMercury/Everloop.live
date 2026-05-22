@@ -8,12 +8,12 @@ import {
   rollDiceAction, grantIdol, updateScene,
 } from '@/lib/actions/quests'
 import { generateAINarration, generateSceneNarration, generateConsequence } from '@/lib/actions/ai-dm'
-import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/campaign'
+import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/quest'
 import type {
-  Campaign, CampaignPlayer, CampaignScene, CampaignSession,
-  CampaignMessage, CampaignNpc, NarrativeIdol,
+  Quest, QuestPlayer, QuestScene, QuestSession,
+  QuestMessage, QuestNpc, NarrativeIdol,
   SceneMood, IdolPower, IdolType,
-} from '@/types/campaign'
+} from '@/types/quest'
 import {
   Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map,
   Volume2, Eye, EyeOff, Sparkles, Flame, Shield, MessageSquare,
@@ -34,12 +34,12 @@ const ModelViewerCompact = dynamic(
 )
 
 interface Props {
-  campaign: Campaign
-  players: CampaignPlayer[]
-  scenes: CampaignScene[]
-  session: CampaignSession | null
-  messages: CampaignMessage[]
-  npcs: CampaignNpc[]
+  campaign: Quest
+  players: QuestPlayer[]
+  scenes: QuestScene[]
+  session: QuestSession | null
+  messages: QuestMessage[]
+  npcs: QuestNpc[]
   idols: NarrativeIdol[]
   userId: string
 }
@@ -84,11 +84,11 @@ export function DMControlPanelClient({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'campaign_messages',
+          table: 'quest_messages',
           filter: `session_id=eq.${session.id}`,
         },
         (payload) => {
-          const newMsg = payload.new as CampaignMessage
+          const newMsg = payload.new as QuestMessage
           setMessages(prev => {
             // Avoid duplicates (from optimistic adds)
             if (prev.some(m => m.id === newMsg.id)) return prev
@@ -221,7 +221,7 @@ export function DMControlPanelClient({
         visible_to: [],
         sender: null,
         created_at: new Date().toISOString(),
-      } as unknown as CampaignMessage])
+      } as unknown as QuestMessage])
     }
     setAiPrompt('')
     setAiLoading(false)
@@ -252,7 +252,7 @@ export function DMControlPanelClient({
         visible_to: [],
         sender: null,
         created_at: new Date().toISOString(),
-      } as unknown as CampaignMessage])
+      } as unknown as QuestMessage])
     }
     setAiLoading(false)
   }
@@ -732,7 +732,7 @@ export function DMControlPanelClient({
   )
 }
 
-function MessageBubble({ message, userId }: { message: CampaignMessage; userId: string }) {
+function MessageBubble({ message, userId }: { message: QuestMessage; userId: string }) {
   const isOwn = message.sender_id === userId
   const sender = message.sender as { username: string; display_name: string | null } | null
 

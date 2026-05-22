@@ -24,7 +24,7 @@ import {
 import {
   generateEntityDescription,
   generateEntityImage,
-  saveCampaignMonster,
+  saveQuestMonster,
   getUserStoryMonsters,
 } from '@/lib/actions/create'
 import {
@@ -332,7 +332,7 @@ export function MonsterQuestWizard() {
       const cleanWeaknesses = weaknesses.filter((w) => w.trim())
       const cleanLanguages = languages.filter((l) => l.trim())
 
-      const result = await saveCampaignMonster({
+      const result = await saveQuestMonster({
         name,
         tagline,
         description,

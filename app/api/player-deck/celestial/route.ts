@@ -115,7 +115,7 @@ function buildCharacterContext(char: Record<string, unknown>): string {
     : 'None'
 
   return `**${char.name}** — Level ${char.level} ${char.race} ${char.class}${char.subclass ? ` (${char.subclass})` : ''}
-Campaign: ${char.campaign_name || 'Unknown'} | Background: ${char.background || 'Unknown'} | Alignment: ${char.alignment}
+Quest: ${char.campaign_name || 'Unknown'} | Background: ${char.background || 'Unknown'} | Alignment: ${char.alignment}
 
 **Current State:**
 - HP: ${char.current_hp}/${char.max_hp}${Number(char.temp_hp) > 0 ? ` (+${char.temp_hp} temp)` : ''} | AC: ${char.armor_class} | Speed: ${char.speed} ft

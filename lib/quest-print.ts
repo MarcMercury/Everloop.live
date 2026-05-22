@@ -11,12 +11,12 @@
  * and `narrative_idols` tables — the same data that the Quest Builder writes.
  */
 
-import type { Campaign, CampaignScene, CampaignNpc, NarrativeIdol } from '@/types/campaign'
+import type { Quest, QuestScene, QuestNpc, NarrativeIdol } from '@/types/quest'
 
 export interface QuestPrintInput {
-  quest: Campaign
-  scenes: CampaignScene[]
-  npcs: CampaignNpc[]
+  quest: Quest
+  scenes: QuestScene[]
+  npcs: QuestNpc[]
   idols: NarrativeIdol[]
 }
 
@@ -38,7 +38,7 @@ function paragraphs(text: string | null | undefined): string {
     .join('\n')
 }
 
-function renderSceneCard(scene: CampaignScene, npcs: CampaignNpc[]): string {
+function renderSceneCard(scene: QuestScene, npcs: QuestNpc[]): string {
   const sceneNpcs = npcs.filter((n) => n.current_scene_id === scene.id)
   const atmosphere = scene.atmosphere
   return `
@@ -102,7 +102,7 @@ function renderSceneCard(scene: CampaignScene, npcs: CampaignNpc[]): string {
 `
 }
 
-function renderNpc(npc: CampaignNpc): string {
+function renderNpc(npc: QuestNpc): string {
   const stats = npc.stats
   return `
 <article class="statblock">

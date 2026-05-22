@@ -49,6 +49,12 @@ export default async function AdminLayout({
                   Shards
                 </Link>
                 <Link
+                  href="/admin/map-maker"
+                  className="text-parchment-muted hover:text-parchment transition-colors"
+                >
+                  Map Maker
+                </Link>
+                <Link
                   href="/admin/users"
                   className="text-parchment-muted hover:text-parchment transition-colors"
                 >

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MonsterQuestWizard } from '@/components/editor/monster-quest-wizard'
 
-export default async function CreateCampaignMonsterPage() {
+export default async function CreateQuestMonsterPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -18,7 +18,7 @@ export default async function CreateCampaignMonsterPage() {
         {/* Header */}
         <div className="max-w-2xl mx-auto mb-10 text-center">
           <h1 className="text-3xl md:text-4xl font-serif text-parchment mb-2">
-            Forge a <span className="text-red-400">Campaign Monster</span>
+            Forge a <span className="text-red-400">Quest Monster</span>
           </h1>
           <p className="text-parchment-muted">
             Build a fully statted D&D 5e monster with combat role, stats, actions, and

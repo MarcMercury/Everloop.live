@@ -4,11 +4,11 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { sendMessage, rollDiceAction, useIdol } from '@/lib/actions/quests'
-import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/campaign'
+import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/quest'
 import type {
-  Campaign, CampaignPlayer, CampaignScene, CampaignSession,
-  CampaignMessage, NarrativeIdol, SceneMood, RollType,
-} from '@/types/campaign'
+  Quest, QuestPlayer, QuestScene, QuestSession,
+  QuestMessage, NarrativeIdol, SceneMood, RollType,
+} from '@/types/quest'
 import {
   Send, Dice1, Users, Heart, Shield, Sparkles, Eye,
   Swords, ArrowLeft, Flame, Zap, EyeOff, MessageSquare,
@@ -19,12 +19,12 @@ import { AtmosphereEngine } from '@/components/quests/atmosphere-engine'
 import { supabase } from '@/lib/supabase/client'
 
 interface Props {
-  campaign: Campaign
-  player: CampaignPlayer
-  players: CampaignPlayer[]
-  session: CampaignSession
-  activeScene: CampaignScene | null
-  messages: CampaignMessage[]
+  campaign: Quest
+  player: QuestPlayer
+  players: QuestPlayer[]
+  session: QuestSession
+  activeScene: QuestScene | null
+  messages: QuestMessage[]
   idols: NarrativeIdol[]
   userId: string
 }
@@ -68,11 +68,11 @@ export function PlayerSessionClient({
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'campaign_messages',
+          table: 'quest_messages',
           filter: `session_id=eq.${session.id}`,
         },
         (payload) => {
-          const newMsg = payload.new as CampaignMessage
+          const newMsg = payload.new as QuestMessage
           // Filter whispers: non-DMs only see messages visible to them
           if (newMsg.message_type === 'whisper') {
             const visibleTo = newMsg.visible_to as string[] | null
@@ -366,7 +366,7 @@ export function PlayerSessionClient({
   )
 }
 
-function PlayerMessageBubble({ message, userId }: { message: CampaignMessage; userId: string }) {
+function PlayerMessageBubble({ message, userId }: { message: QuestMessage; userId: string }) {
   const isOwn = message.sender_id === userId
   const sender = message.sender as { username: string; display_name: string | null } | null
 

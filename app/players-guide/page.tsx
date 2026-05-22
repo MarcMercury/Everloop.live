@@ -377,7 +377,7 @@ export default function PlayersGuidePage() {
             </Link>
             <Link href="/campaigns">
               <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10">
-                Join a Campaign
+                Join a Quest
               </Button>
             </Link>
             <Link href="/readers-guide">

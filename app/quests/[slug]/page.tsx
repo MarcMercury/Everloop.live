@@ -1,13 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { GAME_MODE_INFO, MOOD_THEMES } from '@/types/campaign'
-import type { GameMode, CampaignPlayer, CampaignScene, CampaignSession } from '@/types/campaign'
+import { GAME_MODE_INFO, MOOD_THEMES } from '@/types/quest'
+import type { GameMode, QuestPlayer, QuestScene, QuestSession } from '@/types/quest'
 import { Users, Clock, Flame, Shield, Swords, Play, Settings, Map, Plus, Crown, UserPlus } from 'lucide-react'
 import { QuestLobbyClient } from './quest-lobby-client'
 
 // Row shapes for Supabase type assertions
-interface CampaignRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
+interface QuestRow { id: string; title: string; slug: string; description: string | null; dm_id: string; game_mode: string; status: string; max_players: number; is_public: boolean; session_count: number; fray_intensity: number; dm: { id: string; username: string; display_name: string | null; avatar_url: string | null } | null; [key: string]: unknown }
 interface PlayerRow { id: string; quest_id: string; user_id: string; character_id: string | null; role: string; status: string; joined_at: string | null; approval_state?: string; readiness_state?: string; party_role?: string; user: { username: string; display_name: string | null; avatar_url: string | null } | null; character: { name: string; class: string; level: number; race: string; current_hp: number; max_hp: number; theme_color: string; armor_class?: number; everloop_traits?: string[]; passive_perception?: number } | null; [key: string]: unknown }
 interface SceneRow { id: string; title: string; scene_type: string; mood: string; status: string; scene_order: number; [key: string]: unknown }
 interface SessionRow { id: string; session_number: number; title: string | null; status: string; active_scene_id: string | null; summary: string | null; [key: string]: unknown }
@@ -16,7 +16,7 @@ interface PageProps {
   params: Promise<{ slug: string }>
 }
 
-export default async function CampaignPage({ params }: PageProps) {
+export default async function QuestPage({ params }: PageProps) {
   const { slug } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -28,7 +28,7 @@ export default async function CampaignPage({ params }: PageProps) {
     .eq('slug', slug)
     .single()
 
-  const campaign = campaignData as unknown as CampaignRow | null
+  const campaign = campaignData as unknown as QuestRow | null
   if (!campaign) notFound()
 
   // Fetch players
@@ -97,7 +97,7 @@ export default async function CampaignPage({ params }: PageProps) {
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
       <div className="flex items-center gap-2 text-sm text-parchment-muted mb-4">
-        <Link href="/quests" className="hover:text-parchment transition-colors">Campaigns</Link>
+        <Link href="/quests" className="hover:text-parchment transition-colors">Quests</Link>
         <span>/</span>
         <span className="text-parchment">{campaign.title}</span>
       </div>
@@ -105,7 +105,7 @@ export default async function CampaignPage({ params }: PageProps) {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Content */}
         <div className="flex-1 space-y-8">
-          {/* Campaign Header */}
+          {/* Quest Header */}
           <div className="story-card">
             <div className="flex items-start justify-between">
               <div>
@@ -286,9 +286,9 @@ export default async function CampaignPage({ params }: PageProps) {
             joinCode={(campaign as Record<string, unknown>).join_code as string | null ?? null}
             isDM={isDM}
             isPlayer={isPlayer}
-            myPlayer={myPlayer as CampaignPlayer | undefined}
+            myPlayer={myPlayer as QuestPlayer | undefined}
             myCharacters={myCharacters}
-            pendingPlayers={pendingPlayers as unknown as CampaignPlayer[]}
+            pendingPlayers={pendingPlayers as unknown as QuestPlayer[]}
             userId={user?.id}
           />
 

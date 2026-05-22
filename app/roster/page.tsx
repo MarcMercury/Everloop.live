@@ -317,7 +317,7 @@ export default async function RosterPage({
                               </span>
                             )}
                             {usage.campaignCount > 0 && (
-                              <span className="flex items-center gap-0.5" title="Campaigns using this entity">
+                              <span className="flex items-center gap-0.5" title="Quests using this entity">
                                 <Swords className="w-3 h-3" /> {usage.campaignCount}
                               </span>
                             )}

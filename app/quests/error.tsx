@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CampaignsError({
+export default function QuestsError({
   error,
   reset,
 }: {
@@ -12,7 +12,7 @@ export default function CampaignsError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[Campaigns Error]', error)
+    console.error('[Quests Error]', error)
   }, [error])
 
   return (
@@ -25,7 +25,7 @@ export default function CampaignsError({
         </div>
         
         <h2 className="text-2xl font-serif mb-2 text-parchment">
-          Campaign Error
+          Quest Error
         </h2>
         
         <p className="text-parchment-muted mb-6">

@@ -1,6 +1,6 @@
 /**
- * Campaign Engine Types
- * Core types for the Everloop Live Campaign Engine
+ * Quest Engine Types
+ * Core types for the Everloop Live Quest Engine
  */
 
 import { Json } from './database'
@@ -11,17 +11,17 @@ import { Json } from './database'
 
 export type GameMode = 'classic' | 'one_shot' | 'survivor' | 'mystery' | 'social_deception'
 
-export type CampaignType = 'dm_led' | 'quest'
+export type QuestType = 'dm_led' | 'quest'
 
-export type CampaignStatus = 'draft' | 'lobby' | 'ready' | 'active' | 'paused' | 'complete' | 'archived'
+export type QuestStatus = 'draft' | 'lobby' | 'ready' | 'active' | 'paused' | 'complete' | 'archived'
 
-export type CampaignLength = 'one_shot' | 'short_arc' | 'full_campaign' | 'endless'
+export type QuestLength = 'one_shot' | 'short_arc' | 'full_campaign' | 'endless'
 
 export type DifficultyPreset = 'story_mode' | 'standard' | 'brutal' | 'chaos'
 
 export type SettingName = 'custom' | 'forgotten_realms' | 'everloop_world' | 'other'
 
-export type CampaignTone = 'light_adventure' | 'dark_horror' | 'political_intrigue' | 'chaotic_experimental'
+export type QuestTone = 'light_adventure' | 'dark_horror' | 'political_intrigue' | 'chaotic_experimental'
 
 export type WorldStructure = 'linear' | 'branching' | 'open_world' | 'looping'
 
@@ -36,8 +36,6 @@ export type PartyRole = 'tank' | 'healer' | 'dps' | 'support' | 'utility' | 'cus
 export type ReadinessState = 'not_ready' | 'ready' | 'away'
 
 export type ApprovalState = 'pending_character' | 'awaiting_approval' | 'approved' | 'rejected'
-
-export type QuestType = 'solo' | 'paired' | 'party' | 'public' | 'ai_guided'
 
 export type SceneType = 'narrative' | 'combat' | 'exploration' | 'social' | 'puzzle' | 'rest' | 'boss' | 'event'
 
@@ -69,7 +67,7 @@ export type NpcType = 'ally' | 'enemy' | 'neutral' | 'merchant' | 'quest_giver' 
 // CAMPAIGN SETTINGS
 // =====================================================
 
-export interface CampaignSettings {
+export interface QuestSettings {
   allow_pvp: boolean
   death_rules: 'standard' | 'permadeath' | 'heroic' | 'narrative'
   difficulty: 'easy' | 'normal' | 'hard' | 'nightmare'
@@ -258,16 +256,16 @@ export interface DiceRollData {
 // ROW TYPES
 // =====================================================
 
-export interface Campaign {
+export interface Quest {
   id: string
   title: string
   slug: string
   description: string | null
   cover_image_url: string | null
   dm_id: string
-  campaign_type: CampaignType
+  campaign_type: QuestType
   game_mode: GameMode
-  status: CampaignStatus
+  status: QuestStatus
   max_players: number
   is_public: boolean
   allow_spectators: boolean
@@ -275,11 +273,11 @@ export interface Campaign {
   fray_intensity: number
   referenced_entities: string[]
   referenced_shards: string[]
-  settings: CampaignSettings
-  // Campaign Forge fields
+  settings: QuestSettings
+  // Quest Forge fields
   setting_name: SettingName
-  tone: CampaignTone
-  campaign_length: CampaignLength
+  tone: QuestTone
+  campaign_length: QuestLength
   difficulty_preset: DifficultyPreset
   difficulty_sliders: DifficultySliders
   ruleset: RulesetConfig
@@ -308,19 +306,19 @@ export interface Campaign {
     display_name: string | null
     avatar_url: string | null
   }
-  players?: CampaignPlayer[]
-  scenes?: CampaignScene[]
+  players?: QuestPlayer[]
+  scenes?: QuestScene[]
 }
 
-export interface CampaignInsert {
+export interface QuestInsert {
   title: string
   slug: string
   description?: string | null
   cover_image_url?: string | null
   dm_id: string
-  campaign_type?: CampaignType
+  campaign_type?: QuestType
   game_mode?: GameMode
-  status?: CampaignStatus
+  status?: QuestStatus
   max_players?: number
   is_public?: boolean
   allow_spectators?: boolean
@@ -330,8 +328,8 @@ export interface CampaignInsert {
   referenced_shards?: string[]
   settings?: Json
   setting_name?: SettingName
-  tone?: CampaignTone
-  campaign_length?: CampaignLength
+  tone?: QuestTone
+  campaign_length?: QuestLength
   difficulty_preset?: DifficultyPreset
   difficulty_sliders?: Json
   ruleset?: Json
@@ -350,21 +348,21 @@ export interface CampaignInsert {
   metadata?: Json
 }
 
-export interface CampaignUpdate {
+export interface QuestUpdate {
   title?: string
   description?: string | null
   cover_image_url?: string | null
-  campaign_type?: CampaignType
+  campaign_type?: QuestType
   game_mode?: GameMode
-  status?: CampaignStatus
+  status?: QuestStatus
   max_players?: number
   is_public?: boolean
   allow_spectators?: boolean
   fray_intensity?: number
   settings?: Json
   setting_name?: SettingName
-  tone?: CampaignTone
-  campaign_length?: CampaignLength
+  tone?: QuestTone
+  campaign_length?: QuestLength
   difficulty_preset?: DifficultyPreset
   difficulty_sliders?: Json
   ruleset?: Json
@@ -384,7 +382,7 @@ export interface CampaignUpdate {
   total_play_time_minutes?: number
 }
 
-export interface CampaignPlayer {
+export interface QuestPlayer {
   id: string
   quest_id: string
   user_id: string
@@ -436,7 +434,7 @@ export interface CampaignPlayer {
   }
 }
 
-export interface CampaignScene {
+export interface QuestScene {
   id: string
   quest_id: string
   title: string
@@ -459,7 +457,7 @@ export interface CampaignScene {
   updated_at: string
 }
 
-export interface CampaignSceneInsert {
+export interface QuestSceneInsert {
   quest_id: string
   title: string
   description?: string | null
@@ -475,7 +473,7 @@ export interface CampaignSceneInsert {
   linked_entities?: string[]
 }
 
-export interface CampaignSceneUpdate {
+export interface QuestSceneUpdate {
   title?: string
   description?: string | null
   scene_order?: number
@@ -493,7 +491,7 @@ export interface CampaignSceneUpdate {
   linked_entities?: string[]
 }
 
-export interface CampaignSession {
+export interface QuestSession {
   id: string
   quest_id: string
   session_number: number
@@ -515,7 +513,7 @@ export interface CampaignSession {
   updated_at: string
 }
 
-export interface CampaignMessage {
+export interface QuestMessage {
   id: string
   session_id: string
   quest_id: string
@@ -536,7 +534,7 @@ export interface CampaignMessage {
   }
 }
 
-export interface CampaignDiceRoll {
+export interface QuestDiceRoll {
   id: string
   session_id: string
   quest_id: string
@@ -578,7 +576,7 @@ export interface NarrativeIdol {
   updated_at: string
 }
 
-export interface CampaignNpc {
+export interface QuestNpc {
   id: string
   quest_id: string
   canon_entity_id: string | null
@@ -605,7 +603,7 @@ export interface CampaignNpc {
 
 export const GAME_MODE_INFO: Record<GameMode, { name: string; description: string; icon: string; minPlayers: number; maxPlayers: number; estimatedLength: string }> = {
   classic: {
-    name: 'Classic Campaign',
+    name: 'Classic Quest',
     description: 'Traditional long-form D&D campaign. Build your party, explore the Everloop, and shape the world across multiple sessions.',
     icon: '⚔️',
     minPlayers: 2,

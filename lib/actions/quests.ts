@@ -4,35 +4,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type {
-  Campaign,
-  CampaignInsert,
-  CampaignUpdate,
-  CampaignPlayer,
-  CampaignScene,
-  CampaignSceneInsert,
-  CampaignSceneUpdate,
-  CampaignSession,
-  CampaignMessage,
-  CampaignDiceRoll,
+  Quest,
+  QuestInsert,
+  QuestUpdate,
+  QuestPlayer,
+  QuestScene,
+  QuestSceneInsert,
+  QuestSceneUpdate,
+  QuestSession,
+  QuestMessage,
+  QuestDiceRoll,
   NarrativeIdol,
-  CampaignNpc,
+  QuestNpc,
   DiceRollData,
   MessageType,
   RollType,
   AdvantageType,
   IdolPower,
   IdolType,
-} from '@/types/campaign'
+} from '@/types/quest'
 
 // =====================================================
 // CAMPAIGNS
 // =====================================================
 
-export async function getCampaigns(filters?: {
+export async function getQuests(filters?: {
   status?: string
   game_mode?: string
   is_public?: boolean
-}): Promise<{ success: boolean; campaigns?: Campaign[]; error?: string }> {
+}): Promise<{ success: boolean; campaigns?: Quest[]; error?: string }> {
   const supabase = await createClient()
 
   let query = supabase
@@ -51,10 +51,10 @@ export async function getCampaigns(filters?: {
     return { success: false, error: error.message }
   }
 
-  return { success: true, campaigns: (data ?? []) as unknown as Campaign[] }
+  return { success: true, campaigns: (data ?? []) as unknown as Quest[] }
 }
 
-export async function getCampaign(idOrSlug: string): Promise<{ success: boolean; campaign?: Campaign; error?: string }> {
+export async function getQuest(idOrSlug: string): Promise<{ success: boolean; campaign?: Quest; error?: string }> {
   const supabase = await createClient()
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug)
@@ -76,16 +76,16 @@ export async function getCampaign(idOrSlug: string): Promise<{ success: boolean;
     return { success: false, error: error.message }
   }
 
-  return { success: true, campaign: data as unknown as Campaign }
+  return { success: true, campaign: data as unknown as Quest }
 }
 
-export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: Campaign[]; error?: string }> {
+export async function getMyQuests(): Promise<{ success: boolean; campaigns?: Quest[]; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
 
-  // Campaigns I DM
-  const { data: dmCampaigns, error: dmErr } = await supabase
+  // Quests I DM
+  const { data: dmQuests, error: dmErr } = await supabase
     .from('quests')
     .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('dm_id', user.id)
@@ -93,14 +93,14 @@ export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: 
 
   if (dmErr) return { success: false, error: dmErr.message }
 
-  // Campaigns I'm a player in
+  // Quests I'm a player in
   const { data: playerEntries } = await supabase
     .from('quest_players')
     .select('quest_id')
     .eq('user_id', user.id)
     .eq('status', 'accepted')
 
-  let playerCampaigns: Campaign[] = []
+  let playerQuests: Quest[] = []
   if (playerEntries && playerEntries.length > 0) {
     const ids = playerEntries.map(p => p.quest_id)
     const { data } = await supabase
@@ -108,10 +108,10 @@ export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: 
       .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
       .in('id', ids)
       .order('updated_at', { ascending: false })
-    playerCampaigns = (data ?? []) as unknown as Campaign[]
+    playerQuests = (data ?? []) as unknown as Quest[]
   }
 
-  const all = [...(dmCampaigns ?? []) as unknown as Campaign[], ...playerCampaigns]
+  const all = [...(dmQuests ?? []) as unknown as Quest[], ...playerQuests]
   // Deduplicate
   const seen = new Set<string>()
   const unique = all.filter(c => {
@@ -123,8 +123,8 @@ export async function getMyCampaigns(): Promise<{ success: boolean; campaigns?: 
   return { success: true, campaigns: unique }
 }
 
-export async function createCampaign(input: Omit<CampaignInsert, 'dm_id' | 'slug'>): Promise<{
-  success: boolean; campaign?: Campaign; error?: string
+export async function createQuest(input: Omit<QuestInsert, 'dm_id' | 'slug'>): Promise<{
+  success: boolean; campaign?: Quest; error?: string
 }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -148,11 +148,11 @@ export async function createCampaign(input: Omit<CampaignInsert, 'dm_id' | 'slug
   }
 
   revalidatePath('/campaigns')
-  return { success: true, campaign: data as unknown as Campaign }
+  return { success: true, campaign: data as unknown as Quest }
 }
 
-export async function updateCampaign(id: string, updates: CampaignUpdate): Promise<{
-  success: boolean; campaign?: Campaign; error?: string
+export async function updateQuest(id: string, updates: QuestUpdate): Promise<{
+  success: boolean; campaign?: Quest; error?: string
 }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -173,15 +173,15 @@ export async function updateCampaign(id: string, updates: CampaignUpdate): Promi
 
   revalidatePath('/campaigns')
   revalidatePath(`/quests/${id}`)
-  return { success: true, campaign: data as unknown as Campaign }
+  return { success: true, campaign: data as unknown as Quest }
 }
 
 // =====================================================
 // CAMPAIGN PLAYERS
 // =====================================================
 
-export async function getCampaignPlayers(campaignId: string): Promise<{
-  success: boolean; players?: CampaignPlayer[]; error?: string
+export async function getQuestPlayers(campaignId: string): Promise<{
+  success: boolean; players?: QuestPlayer[]; error?: string
 }> {
   const supabase = await createClient()
 
@@ -195,7 +195,7 @@ export async function getCampaignPlayers(campaignId: string): Promise<{
     .eq('id', campaignId)
     .single()
 
-  if (!campaign) return { success: false, error: 'Campaign not found' }
+  if (!campaign) return { success: false, error: 'Quest not found' }
 
   const campaignRow = campaign as { id: string; dm_id: string }
   if (campaignRow.dm_id !== user.id) {
@@ -223,10 +223,10 @@ export async function getCampaignPlayers(campaignId: string): Promise<{
     return { success: false, error: error.message }
   }
 
-  return { success: true, players: (data ?? []) as unknown as CampaignPlayer[] }
+  return { success: true, players: (data ?? []) as unknown as QuestPlayer[] }
 }
 
-export async function joinCampaign(campaignId: string, characterId?: string): Promise<{
+export async function joinQuest(campaignId: string, characterId?: string): Promise<{
   success: boolean; error?: string
 }> {
   const supabase = await createClient()
@@ -240,9 +240,9 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
     .eq('id', campaignId)
     .single()
 
-  if (!campaign) return { success: false, error: 'Campaign not found' }
+  if (!campaign) return { success: false, error: 'Quest not found' }
   if (campaign.dm_id === user.id) return { success: false, error: 'You are the DM of this campaign' }
-  if (!['lobby', 'recruiting'].includes(campaign.status)) return { success: false, error: 'Campaign is not accepting players' }
+  if (!['lobby', 'recruiting'].includes(campaign.status)) return { success: false, error: 'Quest is not accepting players' }
 
   // Check player count
   const { count } = await supabase
@@ -252,7 +252,7 @@ export async function joinCampaign(campaignId: string, characterId?: string): Pr
     .in('status', ['pending', 'accepted'])
 
   if ((count ?? 0) >= (campaign.max_players ?? 6)) {
-    return { success: false, error: 'Campaign is full' }
+    return { success: false, error: 'Quest is full' }
   }
 
   const { error } = await supabase
@@ -338,8 +338,8 @@ export async function selectCharacter(campaignId: string, characterId: string): 
 // SCENES
 // =====================================================
 
-export async function getCampaignScenes(campaignId: string): Promise<{
-  success: boolean; scenes?: CampaignScene[]; error?: string
+export async function getQuestScenes(campaignId: string): Promise<{
+  success: boolean; scenes?: QuestScene[]; error?: string
 }> {
   const supabase = await createClient()
 
@@ -354,11 +354,11 @@ export async function getCampaignScenes(campaignId: string): Promise<{
     return { success: false, error: error.message }
   }
 
-  return { success: true, scenes: (data ?? []) as unknown as CampaignScene[] }
+  return { success: true, scenes: (data ?? []) as unknown as QuestScene[] }
 }
 
-export async function createScene(input: CampaignSceneInsert): Promise<{
-  success: boolean; scene?: CampaignScene; error?: string
+export async function createScene(input: QuestSceneInsert): Promise<{
+  success: boolean; scene?: QuestScene; error?: string
 }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -382,11 +382,11 @@ export async function createScene(input: CampaignSceneInsert): Promise<{
   }
 
   revalidatePath(`/quests/${input.quest_id}`)
-  return { success: true, scene: data as unknown as CampaignScene }
+  return { success: true, scene: data as unknown as QuestScene }
 }
 
-export async function updateScene(id: string, campaignId: string, updates: CampaignSceneUpdate): Promise<{
-  success: boolean; scene?: CampaignScene; error?: string
+export async function updateScene(id: string, campaignId: string, updates: QuestSceneUpdate): Promise<{
+  success: boolean; scene?: QuestScene; error?: string
 }> {
   const supabase = await createClient()
 
@@ -404,7 +404,7 @@ export async function updateScene(id: string, campaignId: string, updates: Campa
   }
 
   revalidatePath(`/quests/${campaignId}`)
-  return { success: true, scene: data as unknown as CampaignScene }
+  return { success: true, scene: data as unknown as QuestScene }
 }
 
 // =====================================================
@@ -412,7 +412,7 @@ export async function updateScene(id: string, campaignId: string, updates: Campa
 // =====================================================
 
 export async function startSession(campaignId: string, title?: string): Promise<{
-  success: boolean; session?: CampaignSession; error?: string
+  success: boolean; session?: QuestSession; error?: string
 }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -468,11 +468,11 @@ export async function startSession(campaignId: string, title?: string): Promise<
   }
 
   revalidatePath(`/quests/${campaignId}`)
-  return { success: true, session: data as unknown as CampaignSession }
+  return { success: true, session: data as unknown as QuestSession }
 }
 
 export async function getActiveSession(campaignId: string): Promise<{
-  success: boolean; session?: CampaignSession; error?: string
+  success: boolean; session?: QuestSession; error?: string
 }> {
   const supabase = await createClient()
 
@@ -490,7 +490,7 @@ export async function getActiveSession(campaignId: string): Promise<{
     return { success: false, error: error.message }
   }
 
-  return { success: true, session: data as unknown as CampaignSession }
+  return { success: true, session: data as unknown as QuestSession }
 }
 
 export async function endSession(sessionId: string, campaignId: string, summary?: string): Promise<{
@@ -589,7 +589,7 @@ export async function sendMessage(input: {
   roll_data?: DiceRollData
   reference_data?: Record<string, unknown>
   character_name?: string
-}): Promise<{ success: boolean; message?: CampaignMessage; error?: string }> {
+}): Promise<{ success: boolean; message?: QuestMessage; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
@@ -609,11 +609,11 @@ export async function sendMessage(input: {
     return { success: false, error: error.message }
   }
 
-  return { success: true, message: data as unknown as CampaignMessage }
+  return { success: true, message: data as unknown as QuestMessage }
 }
 
 export async function getSessionMessages(sessionId: string, limit = 100): Promise<{
-  success: boolean; messages?: CampaignMessage[]; error?: string
+  success: boolean; messages?: QuestMessage[]; error?: string
 }> {
   const supabase = await createClient()
 
@@ -632,7 +632,7 @@ export async function getSessionMessages(sessionId: string, limit = 100): Promis
     return { success: false, error: error.message }
   }
 
-  return { success: true, messages: (data ?? []) as unknown as CampaignMessage[] }
+  return { success: true, messages: (data ?? []) as unknown as QuestMessage[] }
 }
 
 // =====================================================
@@ -668,7 +668,7 @@ export async function rollDiceAction(input: {
   advantage_type?: AdvantageType
   is_secret?: boolean
   character_name?: string
-}): Promise<{ success: boolean; roll?: CampaignDiceRoll; error?: string }> {
+}): Promise<{ success: boolean; roll?: QuestDiceRoll; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
@@ -742,14 +742,14 @@ export async function rollDiceAction(input: {
     visible_to: input.is_secret ? [user.id] : [],
   })
 
-  return { success: true, roll: data as unknown as CampaignDiceRoll }
+  return { success: true, roll: data as unknown as QuestDiceRoll }
 }
 
 // =====================================================
 // NARRATIVE IDOLS
 // =====================================================
 
-export async function getCampaignIdols(campaignId: string): Promise<{
+export async function getQuestIdols(campaignId: string): Promise<{
   success: boolean; idols?: NarrativeIdol[]; error?: string
 }> {
   const supabase = await createClient()
@@ -870,8 +870,8 @@ export async function useIdol(idolId: string, sessionId: string, campaignId: str
 // NPCs
 // =====================================================
 
-export async function getCampaignNpcs(campaignId: string): Promise<{
-  success: boolean; npcs?: CampaignNpc[]; error?: string
+export async function getQuestNpcs(campaignId: string): Promise<{
+  success: boolean; npcs?: QuestNpc[]; error?: string
 }> {
   const supabase = await createClient()
 
@@ -882,7 +882,7 @@ export async function getCampaignNpcs(campaignId: string): Promise<{
     .order('created_at', { ascending: false })
 
   if (error) return { success: false, error: error.message }
-  return { success: true, npcs: (data ?? []) as unknown as CampaignNpc[] }
+  return { success: true, npcs: (data ?? []) as unknown as QuestNpc[] }
 }
 
 export async function createNpc(input: {
@@ -896,7 +896,7 @@ export async function createNpc(input: {
   secrets?: string
   canon_entity_id?: string
   stats?: Record<string, unknown>
-}): Promise<{ success: boolean; npc?: CampaignNpc; error?: string }> {
+}): Promise<{ success: boolean; npc?: QuestNpc; error?: string }> {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -911,7 +911,7 @@ export async function createNpc(input: {
   }
 
   revalidatePath(`/quests/${input.quest_id}`)
-  return { success: true, npc: data as unknown as CampaignNpc }
+  return { success: true, npc: data as unknown as QuestNpc }
 }
 
 // =====================================================
