@@ -375,7 +375,7 @@ export default function PlayersGuidePage() {
                 Build a Character
               </Button>
             </Link>
-            <Link href="/campaigns">
+            <Link href="/quests">
               <Button variant="outline" className="border-gold/30 text-gold hover:bg-gold/10">
                 Join a Quest
               </Button>

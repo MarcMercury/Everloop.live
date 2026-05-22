@@ -84,29 +84,25 @@ export async function getEntityCrossReferences(entityId: string): Promise<Entity
   }
 
   // 2. Quests that reference this entity
-  const { data: campaigns } = await supabase
-    .from('quests')
-    .select('id, title, slug, status, game_mode')
-    .contains('referenced_entities', [entityId])
-    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
-    .order('updated_at', { ascending: false })
-    .limit(10)
-
-  if (campaigns) {
-    result.campaigns = campaigns as typeof result.campaigns
-  }
-
-  // 3. Quests that reference this entity
+  // Note: After the campaigns→quests rename, there is only one table.
+  // The legacy `campaigns` array on EntityCrossRef is kept empty for backwards
+  // compatibility with existing consumers, and all rows are surfaced under `quests`.
   const { data: quests } = await supabase
     .from('quests')
-    .select('id, title, slug, quest_type, status')
+    .select('id, title, slug, quest_type, status, game_mode')
     .contains('referenced_entities', [entityId])
-    .in('status', ['available', 'featured', 'active'])
+    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress', 'available', 'featured'])
     .order('updated_at', { ascending: false })
-    .limit(10)
+    .limit(20)
 
   if (quests) {
-    result.quests = quests as typeof result.quests
+    result.quests = (quests as Array<Record<string, unknown>>).map((q) => ({
+      id: q.id as string,
+      title: q.title as string,
+      slug: q.slug as string,
+      quest_type: (q.quest_type as string) ?? (q.game_mode as string) ?? '',
+      status: q.status as string,
+    }))
   }
 
   // 4. Related entities (from the related_entities array)
@@ -176,17 +172,15 @@ export async function getUserEntityUsageStats(userId: string): Promise<{
 
   const entityIds = entities.map(e => e.id)
 
-  // Fetch all referencing rows in parallel with just 3 queries (instead of N*3 sequential)
-  const [storiesRes, campaignsRes, questsRes] = await Promise.all([
+  // Fetch all referencing rows in parallel. After the campaigns→quests rename
+  // there is only one table; `campaignCount` is kept on the return type for
+  // backwards compatibility and is always 0.
+  const [storiesRes, questsRes] = await Promise.all([
     supabase
       .from('stories')
       .select('referenced_entities')
       .overlaps('referenced_entities', entityIds)
       .in('canon_status', ['approved', 'canonical']),
-    supabase
-      .from('quests')
-      .select('referenced_entities')
-      .overlaps('referenced_entities', entityIds),
     supabase
       .from('quests')
       .select('referenced_entities')
@@ -207,14 +201,13 @@ export async function getUserEntityUsageStats(userId: string): Promise<{
   }
 
   const storyMap = tally(storiesRes.data as { referenced_entities: string[] | null }[] | null)
-  const campaignMap = tally(campaignsRes.data as { referenced_entities: string[] | null }[] | null)
   const questMap = tally(questsRes.data as { referenced_entities: string[] | null }[] | null)
 
   return entities.map(entity => ({
     entityId: entity.id,
     entityName: entity.name,
     storyCount: storyMap.get(entity.id) ?? 0,
-    campaignCount: campaignMap.get(entity.id) ?? 0,
+    campaignCount: 0,
     questCount: questMap.get(entity.id) ?? 0,
   }))
 }

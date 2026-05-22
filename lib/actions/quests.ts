@@ -147,7 +147,7 @@ export async function createQuest(input: Omit<QuestInsert, 'dm_id' | 'slug'>): P
     return { success: false, error: error.message }
   }
 
-  revalidatePath('/campaigns')
+  revalidatePath('/quests')
   return { success: true, campaign: data as unknown as Quest }
 }
 
@@ -171,7 +171,7 @@ export async function updateQuest(id: string, updates: QuestUpdate): Promise<{
     return { success: false, error: error.message }
   }
 
-  revalidatePath('/campaigns')
+  revalidatePath('/quests')
   revalidatePath(`/quests/${id}`)
   return { success: true, campaign: data as unknown as Quest }
 }
