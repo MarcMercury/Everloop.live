@@ -4,12 +4,14 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { joinQuest, selectCharacter, updateQuest, updatePlayerStatus } from '@/lib/actions/quests'
 import { Button } from '@/components/ui/button'
+import { SessionZeroModal } from '@/components/quests/session-zero-modal'
 import type { QuestPlayer } from '@/types/quest'
-import { UserPlus, Swords, Settings, Check, X, Shield, Copy } from 'lucide-react'
+import { UserPlus, Swords, Settings, Check, X, Shield, Copy, Heart } from 'lucide-react'
 
 interface QuestLobbyClientProps {
   campaignId: string
   campaignSlug: string
+  campaignTitle: string
   campaignStatus: string
   campaignType: string
   characterEntryMode: string
@@ -25,6 +27,7 @@ interface QuestLobbyClientProps {
 export function QuestLobbyClient({
   campaignId,
   campaignSlug,
+  campaignTitle,
   campaignStatus,
   campaignType,
   characterEntryMode,
@@ -40,6 +43,7 @@ export function QuestLobbyClient({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [sessionZeroOpen, setSessionZeroOpen] = useState(false)
 
   async function handleJoin() {
     setLoading(true)
@@ -222,8 +226,52 @@ export function QuestLobbyClient({
           ? '⏳ Awaiting DM Approval...'
           : null
 
+    const sessionZeroDone = Boolean(myPlayer.session_zero_completed_at)
+
     return (
-      <div className="story-card p-4">
+      <>
+        <SessionZeroModal
+          questId={campaignId}
+          questTitle={campaignTitle}
+          open={sessionZeroOpen}
+          onOpenChange={setSessionZeroOpen}
+          onCompleted={() => router.refresh()}
+        />
+        {/* Session Zero card — only for accepted players */}
+        {myPlayer.status === 'accepted' && (
+          <div
+            className={[
+              'story-card p-4 mb-4 border',
+              sessionZeroDone
+                ? 'border-indigo-500/20 bg-indigo-500/5'
+                : 'border-amber-500/30 bg-amber-500/5',
+            ].join(' ')}
+          >
+            <div className="flex items-start gap-3">
+              <Heart className={`w-4 h-4 mt-0.5 ${sessionZeroDone ? 'text-indigo-300' : 'text-amber-300'}`} />
+              <div className="flex-1">
+                <h4 className="text-sm font-serif text-parchment">
+                  {sessionZeroDone ? 'Session Zero complete' : 'Session Zero'}
+                </h4>
+                <p className="text-xs text-parchment-muted mt-1 leading-snug">
+                  {sessionZeroDone
+                    ? 'Your safety preferences and heart anchors are on file with the DM.'
+                    : 'Before the quest begins, set your safety floor (lines & veils) and tell the DM what your character holds dear.'}
+                </p>
+                <button
+                  onClick={() => setSessionZeroOpen(true)}
+                  className={[
+                    'mt-2 text-xs font-medium underline-offset-2 hover:underline',
+                    sessionZeroDone ? 'text-indigo-300' : 'text-amber-300',
+                  ].join(' ')}
+                >
+                  {sessionZeroDone ? 'Review or edit' : 'Begin Session Zero →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="story-card p-4">
         <h3 className="text-lg font-serif text-parchment mb-4 flex items-center gap-2">
           <Swords className="w-4 h-4 text-gold" />
           Your Character
@@ -262,6 +310,7 @@ export function QuestLobbyClient({
         )}
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}
       </div>
+      </>
     )
   }
 

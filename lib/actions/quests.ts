@@ -335,8 +335,364 @@ export async function selectCharacter(campaignId: string, characterId: string): 
 }
 
 // =====================================================
-// SCENES
+// SESSION ZERO (Safety + Heart Anchors)
 // =====================================================
+
+export async function submitSessionZero(input: {
+  questId: string
+  lines: string
+  veils: string
+  tonePreference: 'light' | 'mixed' | 'dark'
+  heartAnchors: Array<{ label: string; note?: string }>
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Verify the user is an accepted player (or the DM) in this quest
+  const { data: row } = await supabase
+    .from('quest_players')
+    .select('id, status')
+    .eq('quest_id', input.questId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!row) return { success: false, error: 'Not a player of this quest' }
+
+  // Trim and validate
+  const lines = (input.lines || '').trim().slice(0, 1000)
+  const veils = (input.veils || '').trim().slice(0, 1000)
+  const heartAnchors = (input.heartAnchors || [])
+    .filter(a => a && typeof a.label === 'string' && a.label.trim().length > 0)
+    .slice(0, 5)
+    .map(a => ({
+      label: a.label.trim().slice(0, 80),
+      note: a.note ? String(a.note).trim().slice(0, 200) : undefined,
+    }))
+
+  const { error } = await supabase
+    .from('quest_players')
+    .update({
+      lines_text: lines || null,
+      veils_text: veils || null,
+      tone_preference: input.tonePreference,
+      heart_anchors: heartAnchors,
+      session_zero_completed_at: new Date().toISOString(),
+    })
+    .eq('id', row.id)
+
+  if (error) {
+    console.error('Error submitting Session Zero:', error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath(`/quests/${input.questId}`)
+  return { success: true }
+}
+
+export async function getSessionZero(questId: string): Promise<{
+  success: boolean
+  data?: {
+    lines_text: string | null
+    veils_text: string | null
+    tone_preference: 'light' | 'mixed' | 'dark' | null
+    heart_anchors: Array<{ label: string; note?: string }>
+    session_zero_completed_at: string | null
+  }
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { data, error } = await supabase
+    .from('quest_players')
+    .select('lines_text, veils_text, tone_preference, heart_anchors, session_zero_completed_at')
+    .eq('quest_id', questId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (error) return { success: false, error: error.message }
+  if (!data) return { success: false, error: 'Not a player of this quest' }
+
+  return {
+    success: true,
+    data: {
+      lines_text: data.lines_text ?? null,
+      veils_text: data.veils_text ?? null,
+      tone_preference: data.tone_preference ?? null,
+      heart_anchors: Array.isArray(data.heart_anchors) ? data.heart_anchors : [],
+      session_zero_completed_at: data.session_zero_completed_at ?? null,
+    },
+  }
+}
+
+// DM-only aggregate view of all safety inputs from accepted players.
+export async function getQuestSafetySummary(questId: string): Promise<{
+  success: boolean
+  data?: {
+    lines: string[]
+    veils: string[]
+    tones: Record<'light' | 'mixed' | 'dark', number>
+    pending: number       // accepted players who haven't done Session Zero
+    completed: number
+  }
+  error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('dm_id')
+    .eq('id', questId)
+    .single()
+
+  if (!quest || quest.dm_id !== user.id) {
+    return { success: false, error: 'Only the DM can view safety summary' }
+  }
+
+  const { data: rows, error } = await supabase
+    .from('quest_players')
+    .select('lines_text, veils_text, tone_preference, session_zero_completed_at')
+    .eq('quest_id', questId)
+    .eq('status', 'accepted')
+
+  if (error) return { success: false, error: error.message }
+
+  const lines: string[] = []
+  const veils: string[] = []
+  const tones = { light: 0, mixed: 0, dark: 0 }
+  let pending = 0
+  let completed = 0
+
+  for (const r of rows || []) {
+    if (r.session_zero_completed_at) {
+      completed += 1
+      if (r.lines_text) lines.push(r.lines_text)
+      if (r.veils_text) veils.push(r.veils_text)
+      if (r.tone_preference && r.tone_preference in tones) {
+        tones[r.tone_preference as keyof typeof tones] += 1
+      }
+    } else {
+      pending += 1
+    }
+  }
+
+  return { success: true, data: { lines, veils, tones, pending, completed } }
+}
+
+// Quill Handoff: track whether the DM or the Narrator currently holds the Quill (live-play voice).
+// `holder` is a free-form label so groups can use whatever vocabulary they like
+// (e.g. 'dm', 'narrator', or a specific user id). Passing null clears the holder.
+export async function setQuillHolder(sessionId: string, holder: string | null): Promise<{
+  success: boolean; error?: string
+}> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Verify user is DM of the parent quest
+  const { data: sess } = await supabase
+    .from('quest_sessions')
+    .select('id, quest_id')
+    .eq('id', sessionId)
+    .single()
+
+  if (!sess) return { success: false, error: 'Session not found' }
+
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('dm_id, slug')
+    .eq('id', sess.quest_id)
+    .single()
+
+  if (!quest || quest.dm_id !== user.id) {
+    return { success: false, error: 'Only the DM can set the Quill holder' }
+  }
+
+  const trimmed = holder?.trim() || null
+  const { error } = await supabase
+    .from('quest_sessions')
+    .update({ quill_holder: trimmed })
+    .eq('id', sessionId)
+
+  if (error) return { success: false, error: error.message }
+
+  if (quest.slug) revalidatePath(`/quests/${quest.slug}/dm`)
+  return { success: true }
+}
+
+// Spotlight: pick up to 2 players per session whose moments take priority.
+// Stored on quest_sessions.spotlight_player_ids (UUID[]).
+export async function setSpotlightPlayers(
+  sessionId: string,
+  playerUserIds: string[],
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Not authenticated' }
+
+  // Cap at 2 and dedupe
+  const clean = Array.from(new Set(playerUserIds)).slice(0, 2)
+
+  const { data: sess } = await supabase
+    .from('quest_sessions')
+    .select('id, quest_id')
+    .eq('id', sessionId)
+    .single()
+  if (!sess) return { success: false, error: 'Session not found' }
+
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('dm_id, slug')
+    .eq('id', sess.quest_id)
+    .single()
+  if (!quest || quest.dm_id !== user.id) {
+    return { success: false, error: 'Only the DM can set the spotlight' }
+  }
+
+  const { error } = await supabase
+    .from('quest_sessions')
+    .update({ spotlight_player_ids: clean })
+    .eq('id', sessionId)
+  if (error) return { success: false, error: error.message }
+
+  if (quest.slug) revalidatePath(`/quests/${quest.slug}/dm`)
+  return { success: true }
+}
+
+// =====================================================
+// WORLD COGS — offscreen plots that turn whether players see them or not
+// =====================================================
+
+export async function listWorldCogs(questId: string): Promise<{
+  success: boolean; data?: any[]; error?: string
+}> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('world_cogs')
+    .select('*')
+    .eq('quest_id', questId)
+    .order('created_at', { ascending: true })
+  if (error) return { success: false, error: error.message }
+  return { success: true, data: data ?? [] }
+}
+
+async function assertDmOfQuest(questId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { ok: false as const, error: 'Not authenticated', supabase, user: null }
+  const { data: quest } = await supabase
+    .from('quests')
+    .select('dm_id, slug')
+    .eq('id', questId)
+    .single()
+  if (!quest || quest.dm_id !== user.id) {
+    return { ok: false as const, error: 'Only the DM can manage world cogs', supabase, user }
+  }
+  return { ok: true as const, supabase, user, slug: quest.slug as string | null }
+}
+
+export async function createWorldCog(input: {
+  quest_id: string
+  faction: string
+  goal: string
+  tempo?: 'crawl' | 'steady' | 'rushing'
+  current_state?: string | null
+  next_beat?: string | null
+  visible_to_players?: boolean
+  shard_ref?: number | null
+  fray_ref?: string | null
+}): Promise<{ success: boolean; data?: any; error?: string }> {
+  const g = await assertDmOfQuest(input.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const { data, error } = await g.supabase
+    .from('world_cogs')
+    .insert({
+      quest_id: input.quest_id,
+      faction: input.faction.trim(),
+      goal: input.goal.trim(),
+      tempo: input.tempo ?? 'steady',
+      current_state: input.current_state ?? null,
+      next_beat: input.next_beat ?? null,
+      visible_to_players: input.visible_to_players ?? false,
+      shard_ref: input.shard_ref ?? null,
+      fray_ref: input.fray_ref ?? null,
+    })
+    .select()
+    .single()
+  if (error) return { success: false, error: error.message }
+  if (g.slug) revalidatePath(`/quests/${g.slug}/dm`)
+  return { success: true, data }
+}
+
+export async function updateWorldCog(
+  id: string,
+  patch: Partial<{
+    faction: string
+    goal: string
+    tempo: 'crawl' | 'steady' | 'rushing'
+    current_state: string | null
+    next_beat: string | null
+    visible_to_players: boolean
+  }>,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: cog } = await supabase
+    .from('world_cogs')
+    .select('quest_id')
+    .eq('id', id)
+    .single()
+  if (!cog) return { success: false, error: 'Cog not found' }
+  const g = await assertDmOfQuest(cog.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const { error } = await g.supabase.from('world_cogs').update(patch).eq('id', id)
+  if (error) return { success: false, error: error.message }
+  if (g.slug) revalidatePath(`/quests/${g.slug}/dm`)
+  return { success: true }
+}
+
+export async function deleteWorldCog(id: string): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: cog } = await supabase.from('world_cogs').select('quest_id').eq('id', id).single()
+  if (!cog) return { success: false, error: 'Cog not found' }
+  const g = await assertDmOfQuest(cog.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const { error } = await g.supabase.from('world_cogs').delete().eq('id', id)
+  if (error) return { success: false, error: error.message }
+  if (g.slug) revalidatePath(`/quests/${g.slug}/dm`)
+  return { success: true }
+}
+
+// Advance the cog: promote next_beat into current_state and bump last_advanced_at.
+export async function advanceWorldCog(
+  id: string,
+  newNextBeat?: string | null,
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+  const { data: cog } = await supabase
+    .from('world_cogs')
+    .select('quest_id, next_beat, current_state')
+    .eq('id', id)
+    .single()
+  if (!cog) return { success: false, error: 'Cog not found' }
+  const g = await assertDmOfQuest(cog.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const promoted = cog.next_beat ?? cog.current_state ?? null
+  const { error } = await g.supabase
+    .from('world_cogs')
+    .update({
+      current_state: promoted,
+      next_beat: newNextBeat ?? null,
+      last_advanced_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+  if (error) return { success: false, error: error.message }
+  if (g.slug) revalidatePath(`/quests/${g.slug}/dm`)
+  return { success: true }
+}
 
 export async function getQuestScenes(campaignId: string): Promise<{
   success: boolean; scenes?: QuestScene[]; error?: string
@@ -589,6 +945,7 @@ export async function sendMessage(input: {
   roll_data?: DiceRollData
   reference_data?: Record<string, unknown>
   character_name?: string
+  tone?: 'hushed' | 'steady' | 'urgent' | 'grim' | 'wondrous' | null
 }): Promise<{ success: boolean; message?: QuestMessage; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

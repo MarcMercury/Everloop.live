@@ -280,6 +280,7 @@ export default async function QuestPage({ params }: PageProps) {
           <QuestLobbyClient
             campaignId={campaign.id}
             campaignSlug={slug}
+            campaignTitle={campaign.title}
             campaignStatus={campaign.status}
             campaignType={(campaign as Record<string, unknown>).campaign_type as string ?? 'dm_led'}
             characterEntryMode={(campaign as Record<string, unknown>).character_entry_mode as string ?? 'bring_own'}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/quests'
 import { MOOD_THEMES } from '@/types/quest'
-import type { Quest, QuestScene, QuestSceneUpdate, SceneType, SceneMood } from '@/types/quest'
+import type { Quest, QuestScene, QuestSceneUpdate, SceneType, SceneMood, ScenePacing } from '@/types/quest'
 import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -83,6 +83,11 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
     mood: 'neutral' as SceneMood,
     narration: '',
     dm_notes: '',
+    feeling: '',
+    reveal: '',
+    choice: '',
+    pacing: 'medium' as ScenePacing,
+    sensory_anchors: ['', '', ''] as [string, string, string],
   })
   const [sceneModelUrls, setSceneModelUrls] = useState<Record<string, string>>({})
 
@@ -97,10 +102,18 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
       mood: newScene.mood,
       narration: newScene.narration.trim() || undefined,
       dm_notes: newScene.dm_notes.trim() || undefined,
+      feeling: newScene.feeling.trim() || undefined,
+      reveal: newScene.reveal.trim() || undefined,
+      choice: newScene.choice.trim() || undefined,
+      pacing: newScene.pacing,
+      sensory_anchors: newScene.sensory_anchors
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(label => ({ label })),
     })
     if (result.success && result.scene) {
       setScenes(prev => [...prev, result.scene!])
-      setNewScene({ title: '', description: '', scene_type: 'narrative', mood: 'neutral', narration: '', dm_notes: '' })
+      setNewScene({ title: '', description: '', scene_type: 'narrative', mood: 'neutral', narration: '', dm_notes: '', feeling: '', reveal: '', choice: '', pacing: 'medium', sensory_anchors: ['', '', ''] })
       setShowNew(false)
     }
     setLoading(false)
@@ -272,6 +285,87 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
               />
             </div>
 
+            {/* Narrative Compass: Feeling / Reveal / Choice */}
+            <div className="col-span-2 rounded-lg border border-gold/20 bg-teal-rich/30 p-3 space-y-3">
+              <div>
+                <h4 className="text-xs font-serif text-gold uppercase tracking-wide">Scene Compass</h4>
+                <p className="text-[11px] text-parchment-muted mt-0.5">
+                  Three answers keep a scene from drifting. Skip any field if you&apos;re improvising.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-rose-300/90 text-[11px] uppercase tracking-wide">Feeling</Label>
+                  <textarea
+                    value={newScene.feeling}
+                    onChange={e => setNewScene(p => ({ ...p, feeling: e.target.value }))}
+                    placeholder="What should the table feel by the end?"
+                    rows={2}
+                    className="w-full mt-1 rounded bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+                  />
+                </div>
+                <div>
+                  <Label className="text-amber-300/90 text-[11px] uppercase tracking-wide">Reveal</Label>
+                  <textarea
+                    value={newScene.reveal}
+                    onChange={e => setNewScene(p => ({ ...p, reveal: e.target.value }))}
+                    placeholder="What truth, clue, or escalation surfaces?"
+                    rows={2}
+                    className="w-full mt-1 rounded bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                  />
+                </div>
+                <div>
+                  <Label className="text-indigo-300/90 text-[11px] uppercase tracking-wide">Choice</Label>
+                  <textarea
+                    value={newScene.choice}
+                    onChange={e => setNewScene(p => ({ ...p, choice: e.target.value }))}
+                    placeholder="What real decision do the players face?"
+                    rows={2}
+                    className="w-full mt-1 rounded bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="md:col-span-3">
+                  <Label className="text-parchment text-[11px] uppercase tracking-wide">Sensory Anchors</Label>
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {[0, 1, 2].map(i => (
+                      <Input
+                        key={i}
+                        value={newScene.sensory_anchors[i]}
+                        onChange={e => setNewScene(p => {
+                          const next = [...p.sensory_anchors] as [string, string, string]
+                          next[i] = e.target.value
+                          return { ...p, sensory_anchors: next }
+                        })}
+                        placeholder={['Sight', 'Sound', 'Smell/Touch'][i]}
+                        className="bg-teal-rich/50 border-gold/20 text-parchment placeholder:text-parchment-muted/40 text-xs h-8"
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-parchment text-[11px] uppercase tracking-wide">Pacing</Label>
+                  <div className="grid grid-cols-3 gap-1 mt-1">
+                    {(['slow', 'medium', 'fast'] as ScenePacing[]).map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setNewScene(prev => ({ ...prev, pacing: p }))}
+                        className={`text-[10px] py-1.5 rounded border transition-all capitalize ${
+                          newScene.pacing === p
+                            ? 'bg-gold/20 border-gold/40 text-parchment'
+                            : 'bg-teal-rich/50 border-gold/10 text-parchment-muted hover:border-gold/30'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="col-span-2">
               <Label className="text-parchment text-sm text-red-400/80">DM Notes (hidden from players)</Label>
               <textarea
@@ -378,6 +472,42 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                       <p className="text-sm text-parchment/80 mt-2 italic font-serif border-l-2 border-gold/20 pl-3">
                         {scene.narration}
                       </p>
+                    )}
+                    {(scene.feeling || scene.reveal || scene.choice) && (
+                      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                        {scene.feeling && (
+                          <div className="rounded bg-rose-950/20 border border-rose-400/20 px-2 py-1.5">
+                            <div className="text-[10px] uppercase tracking-wide text-rose-300/80">Feeling</div>
+                            <div className="text-parchment/90">{scene.feeling}</div>
+                          </div>
+                        )}
+                        {scene.reveal && (
+                          <div className="rounded bg-amber-950/20 border border-amber-400/20 px-2 py-1.5">
+                            <div className="text-[10px] uppercase tracking-wide text-amber-300/80">Reveal</div>
+                            <div className="text-parchment/90">{scene.reveal}</div>
+                          </div>
+                        )}
+                        {scene.choice && (
+                          <div className="rounded bg-indigo-950/20 border border-indigo-400/20 px-2 py-1.5">
+                            <div className="text-[10px] uppercase tracking-wide text-indigo-300/80">Choice</div>
+                            <div className="text-parchment/90">{scene.choice}</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {(scene.sensory_anchors?.length || scene.pacing) && (
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-parchment-muted">
+                        {scene.pacing && (
+                          <span className="px-1.5 py-0.5 rounded bg-gold/10 border border-gold/20 text-gold/90 capitalize">
+                            {scene.pacing} pacing
+                          </span>
+                        )}
+                        {scene.sensory_anchors?.map((a, idx) => (
+                          <span key={idx} className="px-1.5 py-0.5 rounded bg-teal-rich/50 border border-gold/10">
+                            {a.label}
+                          </span>
+                        ))}
+                      </div>
                     )}
                     {scene.dm_notes && (
                       <p className="text-xs text-red-400/60 mt-2">🔒 DM: {scene.dm_notes}</p>
