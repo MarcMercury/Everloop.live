@@ -55,22 +55,42 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
   const [showNew, setShowNew] = useState(false)
   const [loading, setLoading] = useState(false)
   const [generatingMapFor, setGeneratingMapFor] = useState<string | null>(null)
+  const [mapError, setMapError] = useState<{ sceneId: string; message: string } | null>(null)
 
   async function handleGenerateMap(sceneId: string) {
     setGeneratingMapFor(sceneId)
+    setMapError(null)
     try {
       const res = await fetch(`/api/quests/${campaign.id}/map`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sceneId }),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        console.error('Map generation failed:', data?.error)
+      let data: { mapUrl?: string; error?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // non-JSON response (e.g. 504 HTML page)
+      }
+      if (!res.ok || !data.mapUrl) {
+        const message = data.error || `Map generation failed (HTTP ${res.status})`
+        console.error('Map generation failed:', message)
+        setMapError({ sceneId, message })
         return
       }
-      // Refresh scenes from server to pick up persisted map_url
+      // Update local state so the new map appears immediately.
+      const newUrl = data.mapUrl
+      setScenes(prev =>
+        prev.map(s =>
+          s.id === sceneId ? ({ ...s, map_url: newUrl } as QuestScene) : s,
+        ),
+      )
+      // Also refresh server data so subsequent navigations see the persisted URL.
       router.refresh()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network error'
+      console.error('Map generation error:', err)
+      setMapError({ sceneId, message })
     } finally {
       setGeneratingMapFor(null)
     }
@@ -522,20 +542,27 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                           className="w-32 h-32 object-cover rounded border border-gold/20"
                         />
                       ) : null}
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateMap(scene.id)}
-                        disabled={generatingMapFor === scene.id}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50"
-                        title="Generate an AI map illustration for this scene"
-                      >
-                        {generatingMapFor === scene.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <ImageIcon className="w-3 h-3" />
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateMap(scene.id)}
+                          disabled={generatingMapFor === scene.id}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50"
+                          title="Generate an AI map illustration for this scene"
+                        >
+                          {generatingMapFor === scene.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <ImageIcon className="w-3 h-3" />
+                          )}
+                          {(scene as { map_url?: string | null }).map_url ? 'Regenerate Map' : 'Generate Map'}
+                        </button>
+                        {mapError && mapError.sceneId === scene.id && (
+                          <p className="text-xs text-red-400 max-w-xs">
+                            {mapError.message}
+                          </p>
                         )}
-                        {(scene as { map_url?: string | null }).map_url ? 'Regenerate Map' : 'Generate Map'}
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
