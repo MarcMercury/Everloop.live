@@ -66,14 +66,19 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sceneId }),
       })
-      let data: { mapUrl?: string; error?: string } = {}
+      let data: { mapUrl?: string; error?: string; provider?: string; providersConfigured?: string[]; hint?: string } = {}
       try {
         data = await res.json()
       } catch {
         // non-JSON response (e.g. 504 HTML page)
       }
       if (!res.ok || !data.mapUrl) {
-        const message = data.error || `Map generation failed (HTTP ${res.status})`
+        const baseMessage = data.error || `Map generation failed (HTTP ${res.status})`
+        const providers = data.providersConfigured?.length
+          ? ` Configured providers: ${data.providersConfigured.join(', ')}.`
+          : ' No image providers configured.'
+        const hint = data.hint ? ` ${data.hint}` : ''
+        const message = `${baseMessage}.${providers}${hint}`
         console.error('Map generation failed:', message)
         setMapError({ sceneId, message })
         return
