@@ -14,6 +14,7 @@ import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 import { EncounterDifficulty } from '@/components/quests/encounter-difficulty'
 import { SceneMapViewer } from '@/components/quests/scene-map-viewer'
+import { SceneImageViewer } from '@/components/quests/scene-image-viewer'
 import { QUEST_SCENE_TEMPLATES, type QuestSceneTemplateKind } from '@/lib/dnd-rules/scene-templates'
 
 const TEMPLATE_TO_SCENE_TYPE: Record<QuestSceneTemplateKind, SceneType> = {
@@ -57,6 +58,8 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
   const [loading, setLoading] = useState(false)
   const [generatingMapFor, setGeneratingMapFor] = useState<string | null>(null)
   const [mapError, setMapError] = useState<{ sceneId: string; message: string } | null>(null)
+  const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null)
+  const [imageError, setImageError] = useState<{ sceneId: string; message: string } | null>(null)
 
   async function handleGenerateMap(sceneId: string) {
     setGeneratingMapFor(sceneId)
@@ -99,6 +102,48 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
       setMapError({ sceneId, message })
     } finally {
       setGeneratingMapFor(null)
+    }
+  }
+
+  async function handleGenerateImage(sceneId: string) {
+    setGeneratingImageFor(sceneId)
+    setImageError(null)
+    try {
+      const res = await fetch(`/api/quests/${campaign.id}/scene-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sceneId }),
+      })
+      let data: { imageUrl?: string; error?: string; providersConfigured?: string[]; hint?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // non-JSON response
+      }
+      if (!res.ok || !data.imageUrl) {
+        const baseMessage = data.error || `Image generation failed (HTTP ${res.status})`
+        const providers = data.providersConfigured?.length
+          ? ` Configured providers: ${data.providersConfigured.join(', ')}.`
+          : ' No image providers configured.'
+        const hint = data.hint ? ` ${data.hint}` : ''
+        const message = `${baseMessage}.${providers}${hint}`
+        console.error('Scene image generation failed:', message)
+        setImageError({ sceneId, message })
+        return
+      }
+      const newUrl = data.imageUrl
+      setScenes(prev =>
+        prev.map(s =>
+          s.id === sceneId ? ({ ...s, image_url: newUrl } as QuestScene) : s,
+        ),
+      )
+      router.refresh()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Network error'
+      console.error('Scene image generation error:', err)
+      setImageError({ sceneId, message })
+    } finally {
+      setGeneratingImageFor(null)
     }
   }
 
@@ -565,6 +610,40 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                         {mapError && mapError.sceneId === scene.id && (
                           <p className="text-xs text-red-400 max-w-xs">
                             {mapError.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Scene illustration preview + generation */}
+                    <div className="mt-3 flex items-start gap-3">
+                      {scene.image_url ? (
+                        <SceneImageViewer
+                          imageUrl={scene.image_url}
+                          alt={`Illustration for ${scene.title}`}
+                          downloadName={`${(scene.title || 'scene').replace(/[^a-z0-9-_]+/gi, '_')}-image.png`}
+                        />
+                      ) : null}
+                      <div className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateImage(scene.id)}
+                          disabled={generatingImageFor === scene.id}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50"
+                          title="Generate an atmospheric AI illustration based on this scene's text"
+                        >
+                          {generatingImageFor === scene.id ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <ImageIcon className="w-3 h-3" />
+                          )}
+                          {scene.image_url ? 'Regenerate Image' : 'Generate Image'}
+                        </button>
+                        <p className="text-[10px] text-parchment/50 max-w-xs">
+                          Uses all scene text (description, narration, compass, sensory anchors, linked entities) to set atmosphere.
+                        </p>
+                        {imageError && imageError.sceneId === scene.id && (
+                          <p className="text-xs text-red-400 max-w-xs">
+                            {imageError.message}
                           </p>
                         )}
                       </div>
