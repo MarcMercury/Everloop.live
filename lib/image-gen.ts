@@ -114,18 +114,17 @@ async function tryGeminiImagen(prompt: string, key: string, model: string): Prom
 }
 
 /**
- * Try gemini-2.5-flash-image-preview ("Nano Banana") via :generateContent.
- * This endpoint is available on free-tier API keys and is the most reliable
- * Gemini fallback when Imagen is gated behind paid billing.
+ * Try gemini *-image-generation / *-image models via :generateContent.
+ * Google has shipped this capability under several names; we accept any
+ * that the caller's key happens to have access to.
  */
-async function tryGeminiFlashImage(prompt: string, key: string): Promise<Buffer> {
-  const model = 'gemini-2.5-flash-image-preview'
+async function tryGeminiFlashImage(prompt: string, key: string, model: string): Promise<Buffer> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
     key,
   )}`
   const body = {
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseModalities: ['IMAGE'] },
+    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
   }
   const res = await fetch(url, {
     method: 'POST',
@@ -157,21 +156,26 @@ async function tryGeminiFlashImage(prompt: string, key: string): Promise<Buffer>
 }
 
 /**
- * Gemini image generation with multi-model fallback:
- *  1. Imagen 4 (best quality, paid tier only)
- *  2. Imagen 3 (paid tier only)
- *  3. gemini-2.5-flash-image-preview (works on free tier)
+ * Gemini image generation with multi-model fallback. Google ships image
+ * generation under many names that come and go and have different billing
+ * tiers; we try every known endpoint so the call survives one model being
+ * retired or gated behind paid billing on the caller's key.
  *
- * The free-tier key path is the lifeline when OpenAI/Stability are out of
- * credits, so it must always be attempted last.
+ * Run `node scripts/list-gemini-models.cjs` to see exactly which models
+ * your specific API key has access to.
  */
 async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
   const key = geminiKey()
   if (!key) throw new Error('GEMINI_API_KEY not set')
 
   const errors: string[] = []
-  // Imagen 4 first (highest fidelity), then Imagen 3, then free-tier fallback.
-  const imagenModels = ['imagen-4.0-generate-001', 'imagen-3.0-generate-002']
+
+  // Imagen via :predict (paid tier only on most keys).
+  const imagenModels = [
+    'imagen-4.0-generate-001',
+    'imagen-3.0-generate-002',
+    'imagen-3.0-fast-generate-001',
+  ]
   for (const model of imagenModels) {
     try {
       return await tryGeminiImagen(opts.prompt, key, model)
@@ -179,11 +183,24 @@ async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
       errors.push(`${model}: ${err instanceof Error ? err.message : String(err)}`)
     }
   }
-  try {
-    return await tryGeminiFlashImage(opts.prompt, key)
-  } catch (err) {
-    errors.push(`gemini-2.5-flash-image-preview: ${err instanceof Error ? err.message : String(err)}`)
+
+  // Image generation via :generateContent. Names have shifted across
+  // releases; try every one we have seen in the wild.
+  const flashModels = [
+    'gemini-2.5-flash-image',
+    'gemini-2.5-flash-image-preview',
+    'gemini-2.0-flash-preview-image-generation',
+    'gemini-2.0-flash-exp-image-generation',
+    'gemini-2.0-flash-exp',
+  ]
+  for (const model of flashModels) {
+    try {
+      return await tryGeminiFlashImage(opts.prompt, key, model)
+    } catch (err) {
+      errors.push(`${model}: ${err instanceof Error ? err.message : String(err)}`)
+    }
   }
+
   throw new Error(`Gemini image generation failed → ${errors.join(' | ')}`)
 }
 
