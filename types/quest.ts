@@ -533,6 +533,7 @@ export interface QuestScene {
   mood: SceneMood
   atmosphere: SceneAtmosphere
   map_url: string | null
+  image_url: string | null
   map_data: Json
   fog_of_war: Json
   triggers: EventTrigger[]
@@ -582,6 +583,7 @@ export interface QuestSceneUpdate {
   mood?: SceneMood
   atmosphere?: Json
   map_url?: string | null
+  image_url?: string | null
   map_data?: Json
   fog_of_war?: Json
   triggers?: Json
