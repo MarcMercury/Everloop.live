@@ -84,26 +84,46 @@ export async function POST(
     )
   }
 
-  // Layout description (if present) is the authoritative source for map
-  // geometry / scale / features. Fall back to the player-facing description
-  // only when no dedicated layout text has been written.
-  const layoutSource = (sceneLayout && sceneLayout.trim()) || sceneDescription || ''
-  const prompt = [
-    `Design a ${style} for a D&D 5e quest scene.`,
-    sceneTitle ? `Scene title: "${sceneTitle}".` : '',
-    sceneLayout && sceneLayout.trim()
-      ? `Layout (authoritative; respect scale, geometry, and features exactly): ${layoutSource.slice(0, 1200)}`
-      : layoutSource
-      ? `Description: ${layoutSource.slice(0, 400)}`
-      : '',
-    userPrompt ? `Additional direction: ${userPrompt}` : '',
-    'Top-down perspective. Clear distinct terrain features, walls, doors, hazards, cover.',
-    'Aged parchment background with subtle grid lines, hand-painted style.',
-    'No text, no labels, no character tokens.',
-    'Composition usable as a printed tactical map for tabletop play.',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  // Layout description (if present) is the AUTHORITATIVE source for map
+  // geometry / scale / features. When provided we lead with it and keep
+  // stylistic guidance terse so the model interprets the architecture
+  // literally instead of defaulting to generic battlemap tropes.
+  const hasLayout = Boolean(sceneLayout && sceneLayout.trim())
+  // gpt-image-1 accepts very long prompts; previous 1200-char cap was
+  // dropping critical rooms from detailed tavern/dungeon layouts.
+  const LAYOUT_CHAR_BUDGET = 6000
+  const layoutText = (hasLayout ? sceneLayout! : sceneDescription || '').slice(0, LAYOUT_CHAR_BUDGET)
+
+  let prompt: string
+  if (hasLayout) {
+    // Layout-first prompt: the architectural spec leads, style is a footer.
+    prompt = [
+      'Top-down architectural floor plan / tactical battlemap of the following location. Interpret the layout LITERALLY: respect the stated overall footprint, room dimensions, wall positions, doors, windows, furniture placement, and scale. Do not invent extra rooms, courtyards, palisades, or features that are not described. Do not make the building circular if it is described as rectangular.',
+      sceneTitle ? `Location: "${sceneTitle}".` : '',
+      '',
+      'LAYOUT SPECIFICATION:',
+      layoutText,
+      '',
+      userPrompt ? `Additional direction: ${userPrompt}` : '',
+      `Render as a ${style}: bird\u2019s-eye orthographic view, walls and furniture clearly visible from above, consistent scale across the whole image, faint 5 ft square grid overlay, muted natural colors, hand-drawn ink-and-wash style on aged parchment. No text, no labels, no character tokens, no compass rose.`,
+    ]
+      .filter(Boolean)
+      .join('\n')
+  } else {
+    // Fallback (no dedicated layout): old behavior, kept compact.
+    prompt = [
+      `Design a ${style} for a D&D 5e quest scene.`,
+      sceneTitle ? `Scene title: "${sceneTitle}".` : '',
+      layoutText ? `Description: ${layoutText.slice(0, 400)}` : '',
+      userPrompt ? `Additional direction: ${userPrompt}` : '',
+      'Top-down perspective. Clear distinct terrain features, walls, doors, hazards, cover.',
+      'Aged parchment background with subtle grid lines, hand-painted style.',
+      'No text, no labels, no character tokens.',
+      'Composition usable as a printed tactical map for tabletop play.',
+    ]
+      .filter(Boolean)
+      .join(' ')
+  }
 
   try {
     const { buffer: imageBuffer, provider, attempts } = await generateImage({
