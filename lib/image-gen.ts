@@ -23,8 +23,8 @@ export type ImageProvider = 'openai' | 'gemini' | 'stability'
 
 export interface GenerateImageOptions {
   prompt: string
-  /** Square pixel size (used by providers that accept arbitrary sizes). */
-  size?: 1024 | 1536 | 2048
+  /** Only 1024 supported for OpenAI; others ignored. */
+  size?: 1024 | 2048
   /** Forced provider order. Defaults to ['openai', 'gemini', 'stability']. */
   providers?: ImageProvider[]
   /** Quality hint passed to providers that honor it. */
@@ -56,7 +56,8 @@ async function tryOpenAI(opts: GenerateImageOptions): Promise<Buffer> {
     throw new Error('OPENAI_API_KEY not set')
   }
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const size = `${opts.size ?? 1024}x${opts.size ?? 1024}` as '1024x1024' | '1536x1536'
+  // Only allow valid OpenAI sizes. For square, only 1024x1024 is supported.
+  const size: '1024x1024' = '1024x1024'
   const response = await client.images.generate({
     model: 'gpt-image-1',
     prompt: opts.prompt,
