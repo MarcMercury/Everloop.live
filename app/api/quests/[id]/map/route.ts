@@ -1,6 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
+import {
+  configuredImageProviders,
+  generateImage,
+  hasAnyImageProvider,
+} from '@/lib/image-gen'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -68,10 +72,15 @@ export async function POST(
     }
   }
 
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: 'OpenAI not configured' }, { status: 500 })
+  if (!hasAnyImageProvider()) {
+    return NextResponse.json(
+      {
+        error:
+          'No image-generation provider is configured. Set OPENAI_API_KEY, GEMINI_API_KEY, or STABILITY_API_KEY.',
+      },
+      { status: 500 },
+    )
   }
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const prompt = [
     `Design a ${style} for a D&D 5e quest scene.`,
@@ -87,28 +96,11 @@ export async function POST(
     .join(' ')
 
   try {
-    const response = await client.images.generate({
-      model: 'gpt-image-1',
+    const { buffer: imageBuffer, provider, attempts } = await generateImage({
       prompt,
-      n: 1,
-      size: '1024x1024',
+      size: 1024,
       quality: 'medium',
     })
-
-    const b64 = response.data?.[0]?.b64_json
-    const tempUrl = response.data?.[0]?.url
-    let imageBuffer: ArrayBuffer
-    if (b64) {
-      imageBuffer = Buffer.from(b64, 'base64').buffer.slice(0) as ArrayBuffer
-    } else if (tempUrl) {
-      const r = await fetch(tempUrl)
-      if (!r.ok) {
-        return NextResponse.json({ error: 'Failed to download generated map' }, { status: 500 })
-      }
-      imageBuffer = await r.arrayBuffer()
-    } else {
-      return NextResponse.json({ error: 'No image generated' }, { status: 500 })
-    }
 
     const fileName = `${user.id}/quest-${quest.id}/map-${sceneId ?? 'scene'}-${Date.now()}.png`
     const { error: uploadError } = await supabase.storage
@@ -136,10 +128,18 @@ export async function POST(
         .eq('quest_id', quest.id)
     }
 
-    return NextResponse.json({ mapUrl: publicUrl })
+    return NextResponse.json({ mapUrl: publicUrl, provider, attempts })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Map generation failed'
     console.error('Quest map generation error:', message)
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: message,
+        providersConfigured: configuredImageProviders(),
+        hint:
+          'OpenAI returns "Token limit reached" when the project-level usage cap is hit or the org is not verified for gpt-image-1. Configure GEMINI_API_KEY or STABILITY_API_KEY to enable automatic fallback.',
+      },
+      { status: 500 },
+    )
   }
 }
