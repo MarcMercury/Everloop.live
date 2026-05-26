@@ -60,6 +60,30 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
   const [mapError, setMapError] = useState<{ sceneId: string; message: string } | null>(null)
   const [generatingImageFor, setGeneratingImageFor] = useState<string | null>(null)
   const [imageError, setImageError] = useState<{ sceneId: string; message: string } | null>(null)
+  const [layoutDrafts, setLayoutDrafts] = useState<Record<string, string>>({})
+  const [savingLayoutFor, setSavingLayoutFor] = useState<string | null>(null)
+  const [showLayoutFor, setShowLayoutFor] = useState<Record<string, boolean>>({})
+
+  function getLayoutValue(scene: QuestScene): string {
+    return layoutDrafts[scene.id] ?? scene.layout_description ?? ''
+  }
+
+  async function handleSaveLayout(sceneId: string) {
+    const value = layoutDrafts[sceneId] ?? ''
+    setSavingLayoutFor(sceneId)
+    const result = await updateScene(sceneId, campaign.id, {
+      layout_description: value.trim() ? value : null,
+    })
+    if (result.success && result.scene) {
+      setScenes(prev => prev.map(s => (s.id === sceneId ? result.scene! : s)))
+      setLayoutDrafts(prev => {
+        const next = { ...prev }
+        delete next[sceneId]
+        return next
+      })
+    }
+    setSavingLayoutFor(null)
+  }
 
   async function handleGenerateMap(sceneId: string) {
     setGeneratingMapFor(sceneId)
@@ -592,12 +616,12 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                           downloadName={`${(scene.title || 'scene').replace(/[^a-z0-9-_]+/gi, '_')}-map.png`}
                         />
                       ) : null}
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col gap-1 flex-1 min-w-0">
                         <button
                           type="button"
                           onClick={() => handleGenerateMap(scene.id)}
                           disabled={generatingMapFor === scene.id}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded border border-gold/30 text-parchment hover:bg-gold/10 text-xs disabled:opacity-50 self-start"
                           title="Generate an AI map illustration for this scene"
                         >
                           {generatingMapFor === scene.id ? (
@@ -611,6 +635,57 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                           <p className="text-xs text-red-400 max-w-xs">
                             {mapError.message}
                           </p>
+                        )}
+
+                        {/* Layout description: dedicated prompt for map generation */}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowLayoutFor(prev => ({ ...prev, [scene.id]: !prev[scene.id] }))
+                          }
+                          className="text-[10px] text-parchment-muted hover:text-parchment self-start mt-1 underline decoration-dotted underline-offset-2"
+                        >
+                          {showLayoutFor[scene.id] ? 'Hide' : 'Edit'} map layout description
+                          {scene.layout_description ? ' ✓' : ''}
+                        </button>
+                        {showLayoutFor[scene.id] && (
+                          <div className="mt-1 rounded border border-gold/20 bg-teal-rich/30 p-2 space-y-2">
+                            <p className="text-[10px] text-parchment-muted">
+                              Pure layout text used by the AI to generate the map: geometry, scale (e.g. 30×40 ft), exits, terrain, cover, hazards, lighting. Independent of narration & description so you can iterate the map without touching scene text.
+                            </p>
+                            <textarea
+                              value={getLayoutValue(scene)}
+                              onChange={e =>
+                                setLayoutDrafts(prev => ({ ...prev, [scene.id]: e.target.value }))
+                              }
+                              placeholder="A roughly circular stone chamber, 40 ft across. Single arched door on the south wall, collapsed passage on the north. Central raised dais 10 ft square with a shattered altar. Two pillars flank the dais (full cover). Shallow water (difficult terrain) covers the western third of the floor. Dim torchlight from sconces on east and west walls."
+                              rows={5}
+                              className="w-full rounded bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-gold/40 font-mono"
+                            />
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveLayout(scene.id)}
+                                disabled={
+                                  savingLayoutFor === scene.id ||
+                                  layoutDrafts[scene.id] === undefined ||
+                                  (layoutDrafts[scene.id] ?? '') === (scene.layout_description ?? '')
+                                }
+                                className="btn-fantasy text-xs h-7 px-2"
+                              >
+                                {savingLayoutFor === scene.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Save className="w-3 h-3 mr-1" />
+                                )}
+                                Save Layout
+                              </Button>
+                              {layoutDrafts[scene.id] !== undefined &&
+                                (layoutDrafts[scene.id] ?? '') !== (scene.layout_description ?? '') && (
+                                  <span className="text-[10px] text-amber-300/80">Unsaved changes</span>
+                                )}
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
