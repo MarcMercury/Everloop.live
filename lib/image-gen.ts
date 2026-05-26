@@ -77,25 +77,18 @@ async function tryOpenAI(opts: GenerateImageOptions): Promise<Buffer> {
 }
 
 /** Try Google Gemini Imagen 3 via the public Generative Language API. */
-async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
-  const key = geminiKey()
-  if (!key) throw new Error('GEMINI_API_KEY not set')
-
-  // imagen-3.0-generate-002 is the current Imagen model exposed through the
-  // public generativelanguage endpoint. It supports the :predict method.
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${encodeURIComponent(
+/**
+ * Try Imagen via the :predict endpoint. Imagen requires a paid-tier
+ * Generative Language API key — free keys get a 404 on these models.
+ */
+async function tryGeminiImagen(prompt: string, key: string, model: string): Promise<Buffer> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict?key=${encodeURIComponent(
     key,
   )}`
   const body = {
-    instances: [{ prompt: opts.prompt }],
-    parameters: {
-      sampleCount: 1,
-      aspectRatio: '1:1',
-      // Imagen API rejects explicit imagery by default; leave at standard.
-      personGeneration: 'allow_adult',
-    },
+    instances: [{ prompt }],
+    parameters: { sampleCount: 1, aspectRatio: '1:1', personGeneration: 'allow_adult' },
   }
-
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -110,16 +103,88 @@ async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
     } catch {
       /* ignore */
     }
-    throw new Error(`Gemini Imagen HTTP ${res.status}: ${parsed || text.slice(0, 200)}`)
+    throw new Error(`HTTP ${res.status}: ${parsed || text.slice(0, 200)}`)
   }
   const data = (await res.json()) as {
-    predictions?: Array<{ bytesBase64Encoded?: string; mimeType?: string }>
+    predictions?: Array<{ bytesBase64Encoded?: string }>
   }
-  const first = data.predictions?.[0]
-  if (!first?.bytesBase64Encoded) {
-    throw new Error('Gemini Imagen returned no image bytes')
+  const b64 = data.predictions?.[0]?.bytesBase64Encoded
+  if (!b64) throw new Error('no image bytes')
+  return Buffer.from(b64, 'base64')
+}
+
+/**
+ * Try gemini-2.5-flash-image-preview ("Nano Banana") via :generateContent.
+ * This endpoint is available on free-tier API keys and is the most reliable
+ * Gemini fallback when Imagen is gated behind paid billing.
+ */
+async function tryGeminiFlashImage(prompt: string, key: string): Promise<Buffer> {
+  const model = 'gemini-2.5-flash-image-preview'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+    key,
+  )}`
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { responseModalities: ['IMAGE'] },
   }
-  return Buffer.from(first.bytesBase64Encoded, 'base64')
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    let parsed = ''
+    try {
+      const j = JSON.parse(text) as { error?: { message?: string } }
+      parsed = j?.error?.message ?? ''
+    } catch {
+      /* ignore */
+    }
+    throw new Error(`HTTP ${res.status}: ${parsed || text.slice(0, 200)}`)
+  }
+  const data = (await res.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ inlineData?: { data?: string; mimeType?: string } }> }
+    }>
+  }
+  const parts = data.candidates?.[0]?.content?.parts ?? []
+  for (const p of parts) {
+    const b64 = p.inlineData?.data
+    if (b64) return Buffer.from(b64, 'base64')
+  }
+  throw new Error('no image bytes')
+}
+
+/**
+ * Gemini image generation with multi-model fallback:
+ *  1. Imagen 4 (best quality, paid tier only)
+ *  2. Imagen 3 (paid tier only)
+ *  3. gemini-2.5-flash-image-preview (works on free tier)
+ *
+ * The free-tier key path is the lifeline when OpenAI/Stability are out of
+ * credits, so it must always be attempted last.
+ */
+async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
+  const key = geminiKey()
+  if (!key) throw new Error('GEMINI_API_KEY not set')
+
+  const errors: string[] = []
+  // Imagen 4 first (highest fidelity), then Imagen 3, then free-tier fallback.
+  const imagenModels = ['imagen-4.0-generate-001', 'imagen-3.0-generate-002']
+  for (const model of imagenModels) {
+    try {
+      return await tryGeminiImagen(opts.prompt, key, model)
+    } catch (err) {
+      errors.push(`${model}: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }
+  try {
+    return await tryGeminiFlashImage(opts.prompt, key)
+  } catch (err) {
+    errors.push(`gemini-2.5-flash-image-preview: ${err instanceof Error ? err.message : String(err)}`)
+  }
+  throw new Error(`Gemini image generation failed → ${errors.join(' | ')}`)
 }
 
 /** Try Stability AI (Stable Image Core). */
