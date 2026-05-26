@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 import { EncounterDifficulty } from '@/components/quests/encounter-difficulty'
+import { SceneMapViewer } from '@/components/quests/scene-map-viewer'
 import { QUEST_SCENE_TEMPLATES, type QuestSceneTemplateKind } from '@/lib/dnd-rules/scene-templates'
 
 const TEMPLATE_TO_SCENE_TYPE: Record<QuestSceneTemplateKind, SceneType> = {
@@ -540,11 +541,10 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     {/* Map preview + generation */}
                     <div className="mt-3 flex items-start gap-3">
                       {(scene as { map_url?: string | null }).map_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={(scene as { map_url?: string }).map_url}
+                        <SceneMapViewer
+                          mapUrl={(scene as { map_url?: string }).map_url as string}
                           alt={`Map for ${scene.title}`}
-                          className="w-32 h-32 object-cover rounded border border-gold/20"
+                          downloadName={`${(scene.title || 'scene').replace(/[^a-z0-9-_]+/gi, '_')}-map.png`}
                         />
                       ) : null}
                       <div className="flex flex-col gap-1">

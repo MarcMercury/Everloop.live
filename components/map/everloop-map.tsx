@@ -2482,93 +2482,18 @@ function MapLegend({ showSubLayers, onToggleLayers }: { showSubLayers: boolean; 
 // ═══════════════════════════════════════════════════════════════
 export default function EverloopMap() {
   const [showSubLayers, setShowSubLayers] = useState(false)
-  const [expanded, setExpanded] = useState(false)
-  const mapRef = useRef<HTMLDivElement>(null)
   const handleToggleLayers = useCallback(() => { setShowSubLayers(prev => !prev) }, [])
 
-  // Download map as image
-  const handleDownload = async () => {
-    if (!mapRef.current) return
-    const node = mapRef.current
-    // Dynamically import html-to-image for SSR safety
-    const htmlToImage = await import('html-to-image')
-    htmlToImage.toPng(node, { cacheBust: true })
-      .then((dataUrl: string) => {
-        const link = document.createElement('a')
-        link.download = 'everloop-map.png'
-        link.href = dataUrl
-        link.click()
-      })
-  }
-
-  // Hex grid overlay SVG
-  const HexGrid = ({ width = 480, height = 320, hexSize = 32, color = 'rgba(255,255,255,0.18)' }) => {
-    const hexHeight = Math.sqrt(3) * hexSize
-    const hexWidth = 2 * hexSize
-    const vertDist = hexHeight
-    const horizDist = hexWidth * 0.75
-    const rows = Math.ceil(height / vertDist) + 2
-    const cols = Math.ceil(width / horizDist) + 2
-    let lines = []
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * horizDist + ((row % 2) * horizDist) / 2
-        const y = row * vertDist
-        // Draw hex
-        let points = []
-        for (let i = 0; i < 6; i++) {
-          const angle = Math.PI / 3 * i
-          points.push([
-            x + hexSize * Math.cos(angle),
-            y + hexSize * Math.sin(angle)
-          ])
-        }
-        for (let i = 0; i < 6; i++) {
-          const [x1, y1] = points[i]
-          const [x2, y2] = points[(i + 1) % 6]
-          lines.push(<line key={`${row}-${col}-${i}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1.5" />)
-        }
-      }
-    }
-    return (
-      <svg width={width} height={height} style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 5 }}>
-        {lines}
-      </svg>
-    )
-  }
-
-  // Map container size
-  const mapWidth = expanded ? 960 : 320
-  const mapHeight = expanded ? 640 : 220
-
-  const MapContent = (
-    <div ref={mapRef} className="relative" style={{ width: mapWidth, height: mapHeight, background: '#030308', borderRadius: 12, overflow: 'hidden' }}>
+  return (
+    <div className="relative w-full h-full">
       <Canvas
         shadows
         camera={{ position: showSubLayers ? [0, 80, 120] : [0, 120, 140], fov: 40, near: 0.1, far: 1000 }}
         gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
-        style={{ background: '#030308', width: mapWidth, height: mapHeight }}
+        style={{ background: '#030308' }}
       >
         <Scene showSubLayers={showSubLayers} />
       </Canvas>
-      {/* Hex grid overlay */}
-      <HexGrid width={mapWidth} height={mapHeight} hexSize={expanded ? 48 : 24} />
-      {/* Controls */}
-      <div className="absolute top-2 right-2 flex gap-2 z-20">
-        <button onClick={() => setExpanded(e => !e)} className="px-2 py-1 rounded bg-black/60 text-parchment text-xs border border-gold/30 hover:bg-gold/10">{expanded ? 'Close' : 'Expand'}</button>
-        <button onClick={handleDownload} className="px-2 py-1 rounded bg-black/60 text-parchment text-xs border border-gold/30 hover:bg-gold/10">Download</button>
-      </div>
-    </div>
-  )
-
-  return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      {expanded && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" style={{ backdropFilter: 'blur(2px)' }}>
-          {MapContent}
-        </div>
-      )}
-      {!expanded && MapContent}
       <MapLegend showSubLayers={showSubLayers} onToggleLayers={handleToggleLayers} />
     </div>
   )
