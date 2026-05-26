@@ -58,17 +58,19 @@ export async function POST(
   // If a scene id is provided, pull its title/description to enrich the prompt.
   let sceneTitle: string | null = null
   let sceneDescription: string | null = null
+  let sceneLayout: string | null = null
   if (sceneId) {
     const { data: sceneRow } = await supabase
       .from('quest_scenes')
-      .select('title, description, scene_type, mood')
+      .select('title, description, scene_type, mood, layout_description')
       .eq('id', sceneId)
       .eq('quest_id', quest.id)
       .maybeSingle()
-    const scene = sceneRow as { title: string | null; description: string | null } | null
+    const scene = sceneRow as { title: string | null; description: string | null; layout_description: string | null } | null
     if (scene) {
       sceneTitle = scene.title
       sceneDescription = scene.description
+      sceneLayout = scene.layout_description
     }
   }
 
@@ -82,10 +84,18 @@ export async function POST(
     )
   }
 
+  // Layout description (if present) is the authoritative source for map
+  // geometry / scale / features. Fall back to the player-facing description
+  // only when no dedicated layout text has been written.
+  const layoutSource = (sceneLayout && sceneLayout.trim()) || sceneDescription || ''
   const prompt = [
     `Design a ${style} for a D&D 5e quest scene.`,
     sceneTitle ? `Scene title: "${sceneTitle}".` : '',
-    sceneDescription ? `Description: ${sceneDescription.slice(0, 400)}` : '',
+    sceneLayout && sceneLayout.trim()
+      ? `Layout (authoritative; respect scale, geometry, and features exactly): ${layoutSource.slice(0, 1200)}`
+      : layoutSource
+      ? `Description: ${layoutSource.slice(0, 400)}`
+      : '',
     userPrompt ? `Additional direction: ${userPrompt}` : '',
     'Top-down perspective. Clear distinct terrain features, walls, doors, hazards, cover.',
     'Aged parchment background with subtle grid lines, hand-painted style.',
