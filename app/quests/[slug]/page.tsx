@@ -2,9 +2,10 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { GAME_MODE_INFO, MOOD_THEMES } from '@/types/quest'
-import type { GameMode, QuestPlayer, QuestScene, QuestSession } from '@/types/quest'
-import { Users, Clock, Flame, Shield, Swords, Play, Settings, Map, Plus, Crown, UserPlus } from 'lucide-react'
+import type { GameMode, QuestPlayer, QuestScene, QuestSession, LivePlayConfig, SceneLivePlay } from '@/types/quest'
+import { Users, Clock, Flame, Swords, Play, Settings, Map, Plus, Crown, UserPlus, Bell, Volume2, Dice5, EyeOff, Link2, Presentation } from 'lucide-react'
 import { QuestLobbyClient } from './quest-lobby-client'
+import { SessionLauncher } from '@/components/quests/session-launcher'
 
 // Always render on-request so scenes/sessions reflect the latest DB state.
 export const dynamic = 'force-dynamic'
@@ -97,6 +98,10 @@ export default async function QuestPage({ params }: PageProps) {
   const acceptedPlayers = players.filter(p => p.status === 'accepted')
   const pendingPlayers = players.filter(p => p.status === 'pending')
 
+  // Live-Play briefing (Bell Tree-style one-shots): pulled from quest metadata.liveplay
+  const questMetadata = (campaign as Record<string, unknown>).metadata as Record<string, unknown> | null | undefined
+  const liveplay = (questMetadata?.liveplay ?? null) as LivePlayConfig | null
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       {/* Header */}
@@ -147,45 +152,153 @@ export default async function QuestPage({ params }: PageProps) {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3 mt-6">
-              {isDM && activeSession && (
-                <Link
-                  href={`/quests/${slug}/dm`}
-                  className="btn-fantasy flex items-center gap-2"
-                >
-                  <Shield className="w-4 h-4" />
-                  DM Control Panel
-                </Link>
-              )}
-              {isDM && !activeSession && (
-                <Link
-                  href={`/quests/${slug}/dm`}
-                  className="btn-fantasy flex items-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  Start Session
-                </Link>
-              )}
-              {isPlayer && activeSession && (
-                <Link
-                  href={`/quests/${slug}/play`}
-                  className="btn-fantasy flex items-center gap-2"
-                >
-                  <Play className="w-4 h-4" />
-                  Enter Session
-                </Link>
-              )}
+            <div className="flex flex-col gap-4 mt-6">
               {isDM && (
-                <Link
-                  href={`/quests/${slug}/scenes`}
-                  className="btn-outline-fantasy flex items-center gap-2"
-                >
-                  <Map className="w-4 h-4" />
-                  Scene Builder
-                </Link>
+                <SessionLauncher
+                  campaignId={campaign.id}
+                  campaignSlug={slug}
+                  hasActiveSession={!!activeSession}
+                  activeSessionMode={
+                    (((activeSession as Record<string, unknown> | null)?.metadata as Record<string, unknown> | null | undefined)
+                      ?.session_mode as 'online' | 'in_person' | undefined) ?? null
+                  }
+                />
               )}
+              <div className="flex items-center gap-3 flex-wrap">
+                {isPlayer && activeSession && (
+                  <Link
+                    href={`/quests/${slug}/play`}
+                    className="btn-fantasy flex items-center gap-2"
+                  >
+                    <Play className="w-4 h-4" />
+                    Enter Session
+                  </Link>
+                )}
+                {isDM && (
+                  <Link
+                    href={`/quests/${slug}/scenes`}
+                    className="btn-outline-fantasy flex items-center gap-2"
+                  >
+                    <Map className="w-4 h-4" />
+                    Scene Builder
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Live-Play Briefing (Bell, Sound Meter, Redirect Die, props, callbacks) */}
+          {liveplay && (
+            <div className="story-card border-amber-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-serif text-parchment flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-amber-300" />
+                  Live-Play Briefing
+                </h2>
+                <span className="text-[10px] uppercase tracking-wide text-parchment-muted">
+                  {liveplay.narrator_present && liveplay.dm_present ? 'Narrator + DM' : liveplay.narrator_present ? 'Narrator-led' : 'DM-led'}
+                </span>
+              </div>
+
+              {liveplay.required_table_props?.length ? (
+                <div className="mb-4">
+                  <div className="text-[10px] uppercase tracking-wide text-parchment-muted mb-1">Required at the table</div>
+                  <div className="flex flex-wrap gap-1">
+                    {liveplay.required_table_props.map(p => (
+                      <span key={p} className="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-200">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                {liveplay.bell_sequence?.enabled && (
+                  <div className="rounded border border-gold/20 bg-teal-rich/30 p-3">
+                    <div className="flex items-center gap-2 text-gold mb-1">
+                      <Bell className="w-3.5 h-3.5" />
+                      <span className="font-medium">Bell Sequence ({liveplay.bell_sequence.note_count} notes)</span>
+                    </div>
+                    <p className="text-parchment-muted text-[11px] leading-snug">{liveplay.bell_sequence.rule}</p>
+                    {liveplay.bell_sequence.becomes_answer_in && (
+                      <p className="text-[10px] text-amber-300/80 mt-2">Answer for: <code>{liveplay.bell_sequence.becomes_answer_in}</code></p>
+                    )}
+                  </div>
+                )}
+                {liveplay.sound_meter?.enabled && (
+                  <div className="rounded border border-gold/20 bg-teal-rich/30 p-3">
+                    <div className="flex items-center gap-2 text-cyan-300 mb-1">
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span className="font-medium">Sound Meter ({liveplay.sound_meter.starts_at}→{liveplay.sound_meter.max})</span>
+                    </div>
+                    <p className="text-parchment-muted text-[11px] leading-snug">+1 on: {liveplay.sound_meter.increases_on.join(', ')}.</p>
+                  </div>
+                )}
+                {liveplay.redirect_die?.enabled && (
+                  <div className="rounded border border-gold/20 bg-teal-rich/30 p-3">
+                    <div className="flex items-center gap-2 text-rose-300 mb-1">
+                      <Dice5 className="w-3.5 h-3.5" />
+                      <span className="font-medium">Redirect Die</span>
+                    </div>
+                    {liveplay.redirect_die.table && (
+                      <div className="text-[10px] text-parchment-muted leading-snug space-y-0.5">
+                        {Object.entries(liveplay.redirect_die.table).map(([range, die]) => (
+                          <div key={range}><span className="text-parchment/80">{range} players</span> → {die}</div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {liveplay.npc_reset_triggers?.length ? (
+                <div className="mt-4">
+                  <div className="text-[10px] uppercase tracking-wide text-parchment-muted mb-1">NPC reset cues</div>
+                  <div className="space-y-1">
+                    {liveplay.npc_reset_triggers.map((t, i) => (
+                      <div key={i} className="text-[11px] text-parchment-muted">
+                        <span className="text-parchment">{t.npc}</span> · <span className="text-amber-300/80">{t.cue}</span> → {t.effect}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {liveplay.scene_callbacks?.length ? (
+                <div className="mt-4">
+                  <div className="text-[10px] uppercase tracking-wide text-parchment-muted mb-1 flex items-center gap-1">
+                    <Link2 className="w-3 h-3" /> Scene callbacks
+                  </div>
+                  <div className="space-y-1">
+                    {liveplay.scene_callbacks.map((c, i) => (
+                      <div key={i} className="text-[11px] text-parchment-muted">
+                        <code className="text-parchment">{c.from_scene}</code> → <code className="text-parchment">{c.to_scene}</code>
+                        <div className="text-[10px] opacity-80 ml-3">{c.payload}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {liveplay.hidden_mechanics?.length ? (
+                <div className="mt-4">
+                  <div className="text-[10px] uppercase tracking-wide text-parchment-muted mb-1 flex items-center gap-1">
+                    <EyeOff className="w-3 h-3" /> Hidden mechanics (DM only)
+                  </div>
+                  <ul className="text-[11px] text-parchment-muted space-y-0.5 list-disc pl-4">
+                    {liveplay.hidden_mechanics.map((m, i) => (
+                      <li key={i}><code className="text-parchment">{m.scene}</code> — {m.mechanic}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {liveplay.narrator_dm_battle_concept && (
+                <p className="mt-4 text-[11px] italic text-parchment-muted border-l-2 border-amber-400/30 pl-3">
+                  {liveplay.narrator_dm_battle_concept}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Scenes Preview */}
           <div className="story-card">
@@ -208,6 +321,8 @@ export default async function QuestPage({ params }: PageProps) {
                 {scenes.map((scene, i) => {
                   const moodTheme = MOOD_THEMES[scene.mood as keyof typeof MOOD_THEMES]
                   const isActive = activeSession?.active_scene_id === scene.id
+                  const sceneMeta = (scene as Record<string, unknown>).metadata as Record<string, unknown> | null | undefined
+                  const lp = (sceneMeta?.live_play ?? null) as SceneLivePlay | null
                   return (
                     <div
                       key={scene.id}
@@ -226,10 +341,31 @@ export default async function QuestPage({ params }: PageProps) {
                       </div>
                       <div className="flex-1">
                         <div className="text-sm text-parchment font-medium">{scene.title}</div>
-                        <div className="text-xs text-parchment-muted flex items-center gap-2">
+                        <div className="text-xs text-parchment-muted flex items-center gap-2 flex-wrap">
                           <span>{scene.scene_type}</span>
                           <span>·</span>
                           <span>{moodTheme?.icon} {scene.mood}</span>
+                          {lp?.bell_sequence_introduced && (
+                            <span title="Bell sequence introduced" className="inline-flex items-center gap-0.5 text-amber-300/80"><Bell className="w-3 h-3" /></span>
+                          )}
+                          {lp?.sound_meter?.enabled && (
+                            <span title="Sound Meter active" className="inline-flex items-center gap-0.5 text-cyan-300/80"><Volume2 className="w-3 h-3" /></span>
+                          )}
+                          {lp?.redirect_die?.enabled && (
+                            <span title="Redirect Die" className="inline-flex items-center gap-0.5 text-rose-300/80"><Dice5 className="w-3 h-3" /></span>
+                          )}
+                          {lp?.presentation?.enabled && (
+                            <span title={`Presentation (${lp.presentation.slide_count} slides)`} className="inline-flex items-center gap-0.5 text-violet-300/80"><Presentation className="w-3 h-3" /></span>
+                          )}
+                          {lp?.callback_source && (
+                            <span title={`Callback from ${lp.callback_source}`} className="inline-flex items-center gap-0.5 text-emerald-300/80"><Link2 className="w-3 h-3" /></span>
+                          )}
+                          {lp?.hidden_mechanics && (
+                            <span title="Hidden mechanic" className="inline-flex items-center gap-0.5 text-parchment-muted/80"><EyeOff className="w-3 h-3" /></span>
+                          )}
+                          {lp?.escalation_failure && (
+                            <span title={`${lp.escalation_failure.strikes}-strike escalation`} className="text-[10px] px-1 rounded bg-red-500/10 text-red-300 border border-red-500/20">{lp.escalation_failure.strikes}✗</span>
+                          )}
                         </div>
                       </div>
                       {isActive && (
