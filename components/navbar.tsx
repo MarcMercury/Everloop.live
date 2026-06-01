@@ -43,6 +43,8 @@ export async function Navbar() {
                     { href: '/map', label: 'Interactive Map', icon: <Map className="w-4 h-4" />, description: 'Explore the Everloop world' },
                     { href: '/stories', label: 'Library', icon: <Library className="w-4 h-4" />, description: 'Read canonical stories' },
                     { href: '/explore', label: 'Archive', icon: <BookOpen className="w-4 h-4" />, description: 'Browse canonical entities' },
+                    { href: '/library', label: 'Compendium', icon: <ScrollText className="w-4 h-4" />, description: 'Spells, monsters, items & rules' },
+                    { href: '/library/homebrew', label: 'Homebrew Workshop', icon: <Sparkles className="w-4 h-4" />, description: 'Forge your own lore' },
                     { href: '/readers-guide', label: "Reader's Guide", icon: <ScrollText className="w-4 h-4" />, description: 'Glossary of the world' },
                     { href: '/explore/everloop-game', label: 'Everloop: The Game', icon: <Swords className="w-4 h-4" />, description: 'Learn to play the board game' },
                   ]}

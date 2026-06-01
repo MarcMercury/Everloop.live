@@ -12,7 +12,7 @@ import {
   Skull, Eye, ArrowLeft, Pencil, Dices, Target,
   ChevronDown, ChevronUp, Timer, Brain,
   CircleDot, Wind, PawPrint, MessageCircle,
-  Loader2, Palette, X as XIcon, Info,
+  Loader2, Palette, X as XIcon, Info, Trophy, Printer,
 } from 'lucide-react'
 import type { 
   PlayerCharacter, FeatureEntry, SpellEntry, WeaponEntry,
@@ -30,6 +30,8 @@ import {
 } from '@/lib/actions/player-characters'
 import { DiceRoller } from '@/components/player-deck/dice-roller'
 import { CelestialAdvisor } from '@/components/player-deck/celestial-advisor'
+import { DamageDialog } from '@/components/player-deck/damage-dialog'
+import { computeCarryingCapacity } from '@/lib/inventory-weight'
 import { lookupSpellDetail } from '@/lib/data/spell-details'
 import {
   SKILL_INFO, ABILITY_INFO, STANDARD_ACTIONS, CONDITION_INFO,
@@ -70,6 +72,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   const [portraitLoading, setPortraitLoading] = useState(false)
   const [portraitError, setPortraitError] = useState<string | null>(null)
   const [info, setInfo] = useState<InfoTarget | null>(null)
+  const [showDamageDialog, setShowDamageDialog] = useState(false)
   
   const classColor = CLASS_COLORS[char.class] || '#d4a84b'
   const hp = hpPercentage(char.current_hp, char.max_hp)
@@ -591,6 +594,14 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                   +5 temp
                 </Button>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-2 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10"
+                onClick={() => setShowDamageDialog(true)}
+              >
+                Apply Damage (auto resist / concentration)
+              </Button>
             </Card>
             
             {/* Quick Stats Row */}
@@ -656,6 +667,23 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           >
             <Star className={`w-4 h-4 ${char.status?.inspiration ? 'fill-amber-400' : ''}`} />
             Inspiration
+          </Button>
+          {char.level < 20 && (
+            <Button asChild variant="outline" size="sm" className="gap-2 border-gold/40 text-gold hover:bg-gold/10">
+              <Link href={`/player-deck/${char.id}/level-up`}>
+                <Trophy className="w-4 h-4" /> Level Up
+              </Link>
+            </Button>
+          )}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="gap-2 border-parchment-muted/30 text-parchment-muted hover:bg-charcoal-800"
+          >
+            <a href={`/api/player-deck/${char.id}/print?print=1`} target="_blank" rel="noopener noreferrer">
+              <Printer className="w-4 h-4" /> PDF
+            </a>
           </Button>
         </div>
 
@@ -1436,6 +1464,33 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
 
           {/* INVENTORY TAB */}
           <TabsContent value="inventory" className="space-y-4">
+            {/* Carrying Capacity */}
+            {(() => {
+              const cap = computeCarryingCapacity(char.strength, char.inventory ?? { weapons: [], items: [], magic_items: [], currency: {} })
+              const pct = Math.min(100, (cap.totalWeight / cap.capacity) * 100)
+              const statusColor =
+                cap.status === 'overloaded' ? 'bg-rose-500' :
+                cap.status === 'heavily_encumbered' ? 'bg-orange-500' :
+                cap.status === 'encumbered' ? 'bg-amber-500' : 'bg-emerald-500'
+              const statusLabel =
+                cap.status === 'overloaded' ? 'Overloaded — cannot move' :
+                cap.status === 'heavily_encumbered' ? 'Heavily encumbered — speed −20, disadv STR/DEX/CON' :
+                cap.status === 'encumbered' ? 'Encumbered — speed −10' : 'Unencumbered'
+              return (
+                <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-serif text-parchment">Carrying Capacity</h3>
+                    <span className="text-xs font-mono text-parchment-muted">
+                      {cap.totalWeight} / {cap.capacity} lb
+                    </span>
+                  </div>
+                  <div className="h-2 bg-charcoal-900 rounded-full overflow-hidden">
+                    <div className={`h-full ${statusColor} transition-all`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="text-[11px] text-parchment-muted mt-1.5">{statusLabel}</p>
+                </Card>
+              )
+            })()}
             {/* Currency */}
             <Card className="p-4 bg-charcoal-950/50 border-gold-500/10">
               <h3 className="text-sm font-serif text-parchment mb-3">Currency</h3>
@@ -1794,6 +1849,20 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           toggleCondition(c)
           setInfo(null)
         }}
+      />
+
+      {/* Damage Dialog — auto-applies resist/vuln/immunity + concentration save */}
+      <DamageDialog
+        open={showDamageDialog}
+        onClose={() => setShowDamageDialog(false)}
+        modifiers={char.damage_modifiers ?? { resistances: [], immunities: [], vulnerabilities: [], condition_immunities: [] }}
+        status={char.status ?? defaultStatus()}
+        conSaveModifier={
+          abilityModifier(char.constitution) +
+          ((char.proficiencies?.saving_throws ?? []).map(s => s.toLowerCase()).includes('constitution') ? char.proficiency_bonus : 0)
+        }
+        onApply={(delta) => adjustHP(delta)}
+        onBreakConcentration={() => setConcentration(null)}
       />
     </div>
   )

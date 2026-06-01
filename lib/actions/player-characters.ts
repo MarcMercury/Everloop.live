@@ -279,9 +279,32 @@ export async function shortRest(id: string): Promise<{
     ...f,
     uses_remaining: f.recharge === 'short_rest' ? f.uses_max : f.uses_remaining,
   }))
+
+  // Recharge magic items keyed to short_rest
+  const updatedInventory = { ...char.inventory }
+  if (updatedInventory.magic_items?.length) {
+    updatedInventory.magic_items = updatedInventory.magic_items.map(it =>
+      it.recharge === 'short_rest' && it.charges_max != null
+        ? { ...it, charges_remaining: it.charges_max }
+        : it
+    )
+  }
+
+  // Pact magic slots (warlock) recharge on short rest
+  const updatedSpellcasting = { ...char.spellcasting }
+  if (updatedSpellcasting.spell_slots) {
+    for (const level of Object.keys(updatedSpellcasting.spell_slots)) {
+      const slot = updatedSpellcasting.spell_slots[level]
+      if (slot?.recharge === 'short_rest') {
+        updatedSpellcasting.spell_slots[level] = { ...slot, used: 0 }
+      }
+    }
+  }
   
   return updatePlayerCharacter(id, {
     features: updatedFeatures as unknown as Json,
+    inventory: updatedInventory as unknown as Json,
+    spellcasting: updatedSpellcasting as unknown as Json,
   })
 }
 
@@ -317,6 +340,16 @@ export async function longRest(id: string): Promise<{
       }
     }
   }
+
+  // Recharge magic items keyed to long_rest / dawn / dusk
+  const updatedInventory = { ...char.inventory }
+  if (updatedInventory.magic_items?.length) {
+    updatedInventory.magic_items = updatedInventory.magic_items.map(it =>
+      (it.recharge === 'long_rest' || it.recharge === 'short_rest' || it.recharge === 'dawn' || it.recharge === 'dusk') && it.charges_max != null
+        ? { ...it, charges_remaining: it.charges_max }
+        : it
+    )
+  }
   
   // Reduce exhaustion by 1
   const updatedStatus = {
@@ -334,6 +367,7 @@ export async function longRest(id: string): Promise<{
     death_save_failures: 0,
     features: updatedFeatures as unknown as Json,
     spellcasting: updatedSpellcasting as unknown as Json,
+    inventory: updatedInventory as unknown as Json,
     status: updatedStatus as unknown as Json,
   })
 }
