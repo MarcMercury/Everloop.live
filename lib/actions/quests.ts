@@ -767,7 +767,13 @@ export async function updateScene(id: string, campaignId: string, updates: Quest
 // SESSIONS
 // =====================================================
 
-export async function startSession(campaignId: string, title?: string): Promise<{
+export type SessionMode = 'online' | 'in_person'
+
+export async function startSession(
+  campaignId: string,
+  title?: string,
+  mode: SessionMode = 'online'
+): Promise<{
   success: boolean; session?: QuestSession; error?: string
 }> {
   const supabase = await createClient()
@@ -780,12 +786,11 @@ export async function startSession(campaignId: string, title?: string): Promise<
     .select('id', { count: 'exact', head: true })
     .eq('quest_id', campaignId)
 
-  // Get first prepared scene
+  // Get first prepared scene (fall back to any scene if none prepared)
   const { data: firstScene } = await supabase
     .from('quest_scenes')
     .select('id')
     .eq('quest_id', campaignId)
-    .eq('status', 'prepared')
     .order('scene_order', { ascending: true })
     .limit(1)
     .single()
@@ -799,6 +804,7 @@ export async function startSession(campaignId: string, title?: string): Promise<
       status: 'active',
       active_scene_id: firstScene?.id ?? null,
       started_at: new Date().toISOString(),
+      metadata: { session_mode: mode },
     })
     .select()
     .single()
