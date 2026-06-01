@@ -52,7 +52,7 @@ export function DMScreenBar() {
             {open === 'actions' && (
               <Panel title="Actions in Combat">
                 {Object.entries(STANDARD_ACTIONS).map(([k, a]) => (
-                  <Row key={k} title={a.name} body={a.description} extra={a.actionType} />
+                  <Row key={k} title={a.name} body={a.description} extra={a.type} />
                 ))}
               </Panel>
             )}

@@ -81,7 +81,7 @@ export async function POST(_req: NextRequest, context: { params: Promise<{ id: s
     const summary = json.choices?.[0]?.message?.content?.trim()
     if (!summary) return NextResponse.json({ error: 'Empty summary' }, { status: 500 })
 
-    await supabase.from('quest_sessions').update({ summary }).eq('id', id)
+    await supabase.from('quest_sessions').update({ summary } as never).eq('id', id)
     return NextResponse.json({ summary })
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Summarize failed' }, { status: 500 })
