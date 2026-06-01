@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/quests'
 import { MOOD_THEMES } from '@/types/quest'
 import type { Quest, QuestScene, QuestSceneUpdate, SceneType, SceneMood, ScenePacing } from '@/types/quest'
-import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2, Bell, Volume2, Dice5, EyeOff, Presentation, Link2, ChevronDown, ChevronUp, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -183,12 +184,108 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
     choice: '',
     pacing: 'medium' as ScenePacing,
     sensory_anchors: ['', '', ''] as [string, string, string],
+    // Live-Play (Bell Tree-style) authoring. Persists to metadata.live_play.
+    live_play: {
+      hidden_mechanics: false,
+      bell_sequence_introduced: false,
+      sound_meter_enabled: false,
+      redirect_die_enabled: false,
+      escalation_strikes: 0,
+      escalation_each_strike: '',
+      escalation_final_strike: '',
+      presentation_enabled: false,
+      presentation_slide_count: 0,
+      presentation_titles: '',
+      npc_reset_npc: '',
+      npc_reset_cue: '',
+      npc_reset_effect: '',
+      props_required: '',
+      callback_source: '',
+      callback_setup: '',
+    },
+    // Session Media (audio/SFX/TTS/mic/camera) — persists to metadata.media.
+    media: {
+      ambience_url: '',
+      ambience_label: '',
+      // One SFX per line, format:  "Label | https://url.mp3 | 🔔"
+      sfx_lines: '',
+      narration_voice_preset: '',
+      enable_tts_narration: false,
+      auto_arm_sound_meter: false,
+      enable_camera_capture: false,
+    },
   })
+  const [showLivePlay, setShowLivePlay] = useState(false)
+  const [showMedia, setShowMedia] = useState(false)
   const [sceneModelUrls, setSceneModelUrls] = useState<Record<string, string>>({})
+
+  function buildSceneLivePlayMetadata(lp: typeof newScene.live_play): Record<string, unknown> | undefined {
+    const meta: Record<string, unknown> = {}
+    if (lp.hidden_mechanics) meta.hidden_mechanics = true
+    if (lp.bell_sequence_introduced) meta.bell_sequence_introduced = true
+    if (lp.sound_meter_enabled) meta.sound_meter = { enabled: true, starts_at: 0, max: 6, increases_on: [] }
+    if (lp.redirect_die_enabled) meta.redirect_die = { enabled: true, auto_scale_by_player_count: true }
+    if (lp.escalation_strikes > 0) {
+      meta.escalation_failure = {
+        strikes: lp.escalation_strikes,
+        damage_each_strike: lp.escalation_each_strike.trim() || undefined,
+        on_final_strike: lp.escalation_final_strike.trim() || undefined,
+      }
+    }
+    if (lp.presentation_enabled && lp.presentation_slide_count > 0) {
+      meta.presentation = {
+        enabled: true,
+        slide_count: lp.presentation_slide_count,
+        titles: lp.presentation_titles.split('\n').map(s => s.trim()).filter(Boolean),
+      }
+    }
+    if (lp.npc_reset_npc.trim() && lp.npc_reset_cue.trim()) {
+      meta.npc_reset = {
+        npc: lp.npc_reset_npc.trim(),
+        cue: lp.npc_reset_cue.trim(),
+        effect: lp.npc_reset_effect.trim(),
+      }
+    }
+    const props = lp.props_required.split(',').map(s => s.trim()).filter(Boolean)
+    if (props.length) meta.props_required = props
+    if (lp.callback_source.trim()) meta.callback_source = lp.callback_source.trim()
+    const setups = lp.callback_setup.split(',').map(s => s.trim()).filter(Boolean)
+    if (setups.length) meta.callback_setup = setups
+    return Object.keys(meta).length ? meta : undefined
+  }
+
+  function buildSceneMediaMetadata(m: typeof newScene.media): Record<string, unknown> | undefined {
+    const out: Record<string, unknown> = {}
+    if (m.ambience_url.trim()) out.ambience_url = m.ambience_url.trim()
+    if (m.ambience_label.trim()) out.ambience_label = m.ambience_label.trim()
+    // SFX lines: "Label | url | icon"  (icon optional)
+    const sfxButtons = m.sfx_lines
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean)
+      .map(line => {
+        const [label, url, icon] = line.split('|').map(s => s?.trim()).filter(s => s !== undefined)
+        if (!label || !url) return null
+        return icon ? { label, url, icon } : { label, url }
+      })
+      .filter((b): b is { label: string; url: string; icon?: string } => b !== null)
+    if (sfxButtons.length) out.sfx_buttons = sfxButtons
+    if (m.narration_voice_preset.trim()) out.narration_voice_preset = m.narration_voice_preset.trim()
+    if (m.enable_tts_narration) out.enable_tts_narration = true
+    if (m.auto_arm_sound_meter) out.auto_arm_sound_meter = true
+    if (m.enable_camera_capture) out.enable_camera_capture = true
+    return Object.keys(out).length ? out : undefined
+  }
 
   async function handleCreateScene() {
     if (!newScene.title.trim()) return
     setLoading(true)
+    const livePlayMeta = buildSceneLivePlayMetadata(newScene.live_play)
+    const mediaMeta = buildSceneMediaMetadata(newScene.media)
+    const combinedMeta: Record<string, unknown> | undefined =
+      livePlayMeta || mediaMeta
+        ? { ...(livePlayMeta ? { live_play: livePlayMeta } : {}), ...(mediaMeta ? { media: mediaMeta } : {}) }
+        : undefined
     const result = await createScene({
       quest_id: campaign.id,
       title: newScene.title.trim(),
@@ -205,10 +302,30 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
         .map(s => s.trim())
         .filter(Boolean)
         .map(label => ({ label })),
+      metadata: combinedMeta as never,
     })
     if (result.success && result.scene) {
       setScenes(prev => [...prev, result.scene!])
-      setNewScene({ title: '', description: '', scene_type: 'narrative', mood: 'neutral', narration: '', dm_notes: '', feeling: '', reveal: '', choice: '', pacing: 'medium', sensory_anchors: ['', '', ''] })
+      setNewScene({
+        title: '', description: '', scene_type: 'narrative', mood: 'neutral',
+        narration: '', dm_notes: '', feeling: '', reveal: '', choice: '',
+        pacing: 'medium', sensory_anchors: ['', '', ''],
+        live_play: {
+          hidden_mechanics: false, bell_sequence_introduced: false,
+          sound_meter_enabled: false, redirect_die_enabled: false,
+          escalation_strikes: 0, escalation_each_strike: '', escalation_final_strike: '',
+          presentation_enabled: false, presentation_slide_count: 0, presentation_titles: '',
+          npc_reset_npc: '', npc_reset_cue: '', npc_reset_effect: '',
+          props_required: '', callback_source: '', callback_setup: '',
+        },
+        media: {
+          ambience_url: '', ambience_label: '', sfx_lines: '',
+          narration_voice_preset: '', enable_tts_narration: false,
+          auto_arm_sound_meter: false, enable_camera_capture: false,
+        },
+      })
+      setShowLivePlay(false)
+      setShowMedia(false)
       setShowNew(false)
     }
     setLoading(false)
@@ -472,6 +589,266 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
               />
             </div>
 
+            {/* Live-Play Mechanics (Bell Sequence, Sound Meter, Redirect Die, NPC reset, escalation, presentation, callbacks) */}
+            <div className="col-span-2">
+              <button
+                type="button"
+                onClick={() => setShowLivePlay(v => !v)}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 transition-all"
+              >
+                <span className="flex items-center gap-2 text-sm text-amber-200">
+                  <Bell className="w-4 h-4" />
+                  Live-Play Mechanics
+                  <span className="text-[10px] text-parchment-muted">(optional — Bell Sequence, Sound Meter, Redirect Die, escalation, callbacks…)</span>
+                </span>
+                {showLivePlay ? <ChevronUp className="w-4 h-4 text-parchment-muted" /> : <ChevronDown className="w-4 h-4 text-parchment-muted" />}
+              </button>
+
+              {showLivePlay && (
+                <div className="mt-3 p-4 rounded-lg bg-amber-500/5 border border-amber-500/15 space-y-4">
+                  {/* Toggles row */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <LpToggle
+                      icon={<EyeOff className="w-3 h-3" />}
+                      label="Hidden mechanics"
+                      active={newScene.live_play.hidden_mechanics}
+                      onClick={() => setNewScene(p => ({ ...p, live_play: { ...p.live_play, hidden_mechanics: !p.live_play.hidden_mechanics } }))}
+                    />
+                    <LpToggle
+                      icon={<Bell className="w-3 h-3" />}
+                      label="Introduces bell sequence"
+                      active={newScene.live_play.bell_sequence_introduced}
+                      onClick={() => setNewScene(p => ({ ...p, live_play: { ...p.live_play, bell_sequence_introduced: !p.live_play.bell_sequence_introduced } }))}
+                    />
+                    <LpToggle
+                      icon={<Volume2 className="w-3 h-3" />}
+                      label="Sound Meter active"
+                      active={newScene.live_play.sound_meter_enabled}
+                      onClick={() => setNewScene(p => ({ ...p, live_play: { ...p.live_play, sound_meter_enabled: !p.live_play.sound_meter_enabled } }))}
+                    />
+                    <LpToggle
+                      icon={<Dice5 className="w-3 h-3" />}
+                      label="Redirect Die"
+                      active={newScene.live_play.redirect_die_enabled}
+                      onClick={() => setNewScene(p => ({ ...p, live_play: { ...p.live_play, redirect_die_enabled: !p.live_play.redirect_die_enabled } }))}
+                    />
+                  </div>
+
+                  {/* Escalation failure */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">Escalation strikes</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={10}
+                        value={newScene.live_play.escalation_strikes}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, escalation_strikes: parseInt(e.target.value || '0', 10) } }))}
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">On each strike</Label>
+                      <Input
+                        value={newScene.live_play.escalation_each_strike}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, escalation_each_strike: e.target.value } }))}
+                        placeholder="e.g. 2d10 force damage"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">On final strike</Label>
+                      <Input
+                        value={newScene.live_play.escalation_final_strike}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, escalation_final_strike: e.target.value } }))}
+                        placeholder="e.g. door collapses"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Presentation */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <LpToggle
+                      icon={<Presentation className="w-3 h-3" />}
+                      label="NPC presentation"
+                      active={newScene.live_play.presentation_enabled}
+                      onClick={() => setNewScene(p => ({ ...p, live_play: { ...p.live_play, presentation_enabled: !p.live_play.presentation_enabled } }))}
+                    />
+                    {newScene.live_play.presentation_enabled && (
+                      <>
+                        <div>
+                          <Label className="text-parchment text-[11px] uppercase tracking-wide">Slide count</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={50}
+                            value={newScene.live_play.presentation_slide_count}
+                            onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, presentation_slide_count: parseInt(e.target.value || '0', 10) } }))}
+                            className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-parchment text-[11px] uppercase tracking-wide">Slide titles (one per line)</Label>
+                          <textarea
+                            value={newScene.live_play.presentation_titles}
+                            onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, presentation_titles: e.target.value } }))}
+                            placeholder={'Drift\nFold\nFirst Architects'}
+                            rows={3}
+                            className="w-full mt-1 rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-2 resize-none"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* NPC reset trigger */}
+                  <div>
+                    <Label className="text-parchment text-[11px] uppercase tracking-wide">NPC reset trigger</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                      <Input
+                        value={newScene.live_play.npc_reset_npc}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, npc_reset_npc: e.target.value } }))}
+                        placeholder="NPC (e.g. Garron)"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8"
+                      />
+                      <Input
+                        value={newScene.live_play.npc_reset_cue}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, npc_reset_cue: e.target.value } }))}
+                        placeholder="Cue (e.g. sharp bell)"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8"
+                      />
+                      <Input
+                        value={newScene.live_play.npc_reset_effect}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, npc_reset_effect: e.target.value } }))}
+                        placeholder="Effect (e.g. forgets last 30s)"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Props + callbacks */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">Props required (comma-separated)</Label>
+                      <Input
+                        value={newScene.live_play.props_required}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, props_required: e.target.value } }))}
+                        placeholder="bell, vision cards"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide flex items-center gap-1"><Link2 className="w-3 h-3" /> Callback from scene (slug)</Label>
+                      <Input
+                        value={newScene.live_play.callback_source}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, callback_source: e.target.value } }))}
+                        placeholder="mayor-modular-answers"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide flex items-center gap-1"><Link2 className="w-3 h-3" /> Sets up scenes (comma-separated slugs)</Label>
+                      <Input
+                        value={newScene.live_play.callback_setup}
+                        onChange={e => setNewScene(p => ({ ...p, live_play: { ...p.live_play, callback_setup: e.target.value } }))}
+                        placeholder="final-question, memory-gate"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Session Media (ambience, SFX, TTS, mic, camera) */}
+            <div className="col-span-2">
+              <button
+                type="button"
+                onClick={() => setShowMedia(v => !v)}
+                className="w-full flex items-center justify-between p-3 rounded-lg bg-purple-500/5 border border-purple-500/20 hover:border-purple-500/40 transition-all"
+              >
+                <span className="flex items-center gap-2 text-sm text-purple-200">
+                  <Volume2 className="w-4 h-4" />
+                  Session Media
+                  <span className="text-[10px] text-parchment-muted">(ambience, soundboard, TTS, mic Sound Meter, camera)</span>
+                </span>
+                {showMedia ? <ChevronUp className="w-4 h-4 text-parchment-muted" /> : <ChevronDown className="w-4 h-4 text-parchment-muted" />}
+              </button>
+
+              {showMedia && (
+                <div className="mt-3 p-4 rounded-lg bg-purple-500/5 border border-purple-500/15 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">Ambience URL (mp3/ogg, loops)</Label>
+                      <Input
+                        value={newScene.media.ambience_url}
+                        onChange={e => setNewScene(p => ({ ...p, media: { ...p.media, ambience_url: e.target.value } }))}
+                        placeholder="https://… or /audio/library/tavern-warm.mp3"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">Ambience label (UI only)</Label>
+                      <Input
+                        value={newScene.media.ambience_label}
+                        onChange={e => setNewScene(p => ({ ...p, media: { ...p.media, ambience_label: e.target.value } }))}
+                        placeholder="Warm Tavern"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="text-parchment text-[11px] uppercase tracking-wide">Soundboard buttons</Label>
+                    <p className="text-[10px] text-parchment-muted mt-0.5 mb-1">
+                      One per line. Format: <code>Label | https://url.mp3 | 🔔</code> (icon optional)
+                    </p>
+                    <textarea
+                      value={newScene.media.sfx_lines}
+                      onChange={e => setNewScene(p => ({ ...p, media: { ...p.media, sfx_lines: e.target.value } }))}
+                      placeholder={'Bell Toll | /audio/library/sfx-bell.mp3 | 🔔\nSword Clash | /audio/library/sfx-sword.mp3 | ⚔️'}
+                      rows={4}
+                      className="w-full rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-2 resize-none font-mono"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-parchment text-[11px] uppercase tracking-wide">TTS voice preset</Label>
+                      <Input
+                        value={newScene.media.narration_voice_preset}
+                        onChange={e => setNewScene(p => ({ ...p, media: { ...p.media, narration_voice_preset: e.target.value } }))}
+                        placeholder="narrator_warm (default)"
+                        className="bg-teal-rich/50 border-gold/20 text-parchment text-xs h-8 mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <LpToggle
+                      icon={<Play className="w-3 h-3" />}
+                      label="Enable read-aloud (TTS)"
+                      active={newScene.media.enable_tts_narration}
+                      onClick={() => setNewScene(p => ({ ...p, media: { ...p.media, enable_tts_narration: !p.media.enable_tts_narration } }))}
+                    />
+                    <LpToggle
+                      icon={<Volume2 className="w-3 h-3" />}
+                      label="Auto-arm Sound Meter (mic)"
+                      active={newScene.media.auto_arm_sound_meter}
+                      onClick={() => setNewScene(p => ({ ...p, media: { ...p.media, auto_arm_sound_meter: !p.media.auto_arm_sound_meter } }))}
+                    />
+                    <LpToggle
+                      icon={<EyeOff className="w-3 h-3" />}
+                      label="Enable camera capture"
+                      active={newScene.media.enable_camera_capture}
+                      onClick={() => setNewScene(p => ({ ...p, media: { ...p.media, enable_camera_capture: !p.media.enable_camera_capture } }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Encounter difficulty calculator (combat/boss scenes) */}
             {(newScene.scene_type === 'combat' || newScene.scene_type === 'boss') && (
               <div className="col-span-2">
@@ -731,5 +1108,22 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
         )}
       </div>
     </div>
+  )
+}
+
+function LpToggle({ icon, label, active, onClick }: { icon: ReactNode; label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 text-[11px] py-1.5 px-2 rounded border transition-all ${
+        active
+          ? 'bg-amber-500/20 border-amber-500/40 text-amber-100'
+          : 'bg-teal-rich/40 border-gold/10 text-parchment-muted hover:border-gold/30'
+      }`}
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </button>
   )
 }

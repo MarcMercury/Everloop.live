@@ -196,6 +196,187 @@ export interface NarrativeSettings {
 }
 
 // =====================================================
+// LIVE-PLAY MECHANICS
+// -----------------------------------------------------
+// Mechanics surfaced by Live-Play one-shots (e.g. The Bell
+// Tree and the Broken World). These live on quests at
+// `metadata.liveplay` and on scenes at `metadata.live_play`
+// so the Quest Builder UI can surface them without needing
+// new DB columns.
+// =====================================================
+
+/** A recurring physical bell sequence that becomes a callback later in the session. */
+export interface BellSequenceConfig {
+  enabled: boolean
+  /** Number of notes in the canonical sequence (e.g. 5). */
+  note_count: number
+  /** Plain-language description of the rule (when/how to ring). */
+  rule: string
+  /** Slug of the scene where the sequence becomes the puzzle answer. */
+  becomes_answer_in?: string
+  /** Other scene slugs where the sequence should be repeated identically. */
+  reused_in_scenes?: string[]
+}
+
+/** A visible encounter meter that grows when players are loud. */
+export interface SoundMeterConfig {
+  enabled: boolean
+  starts_at: number
+  max: number
+  /** Triggers that increment the meter (e.g. "shout", "verbal spell"). */
+  increases_on: string[]
+  /** Scene slugs where the meter is active. */
+  used_in_scenes?: string[]
+  visible_to_players?: boolean
+  /** Optional bonus-damage table keyed by meter value, e.g. {"1":"+0","6":"+10"}. */
+  bonus_damage_table?: Record<string, string>
+}
+
+/** A die whose size scales automatically with the current player count. */
+export interface RedirectDieConfig {
+  enabled: boolean
+  auto_scale_by_player_count: boolean
+  /** Player-count buckets → die size, e.g. {"4-5":"d6","12+":"d20"}. */
+  table?: Record<string, string>
+  used_in_scenes?: string[]
+}
+
+/** NPC that "resets" (forgets the conversation) on a specific cue. */
+export interface NpcResetTrigger {
+  npc: string
+  cue: string
+  effect: string
+}
+
+/** Documented hidden mechanic for a scene — DMs do not reveal these. */
+export interface HiddenMechanicDoc {
+  scene: string
+  mechanic: string
+}
+
+/** Explicit callback link from one scene's payload to another. */
+export interface SceneCallback {
+  from_scene: string
+  to_scene: string
+  payload: string
+}
+
+/** Quest-level live-play config block (stored at metadata.liveplay). */
+export interface LivePlayConfig {
+  narrator_present: boolean
+  dm_present: boolean
+  required_table_props: string[]
+  bell_sequence?: BellSequenceConfig
+  sound_meter?: SoundMeterConfig
+  redirect_die?: RedirectDieConfig
+  npc_reset_triggers?: NpcResetTrigger[]
+  hidden_mechanics?: HiddenMechanicDoc[]
+  scene_callbacks?: SceneCallback[]
+  /** Free-text description of the Narrator/DM combat division. */
+  narrator_dm_battle_concept?: string
+}
+
+/** A repeatable puzzle that escalates on failure (e.g. the Fork, the Memory Gate). */
+export interface EscalationFailureConfig {
+  /** Number of strikes before the final consequence triggers. */
+  strikes: number
+  /** What happens each failed strike (free text). */
+  damage_each_strike?: string
+  /** What happens on the final/catastrophic strike. */
+  on_final_strike?: string
+  /** Inscriptions or narration that appear on each strike, indexed from 1. */
+  inscriptions?: Record<string, string>
+}
+
+/** A presentation / slideshow run by an NPC during a scene. */
+export interface ScenePresentation {
+  enabled: boolean
+  slide_count: number
+  titles: string[]
+  /** Optional notes per slide for the Narrator. */
+  speaker_notes?: string[]
+}
+
+/** Scene-level live-play config block (stored at scene metadata.live_play). */
+export interface SceneLivePlay {
+  /** Canonical slug for this scene (used by callbacks). */
+  slug?: string
+  /** Mark mechanics as hidden — players should discover them. */
+  hidden_mechanics?: boolean
+  /** Extra props this specific scene needs at the table. */
+  props_required?: string[]
+  /** Slug of an earlier scene whose payload is the answer to this scene. */
+  callback_source?: string
+  /** Slugs of later scenes set up by this scene. */
+  callback_setup?: string[]
+  /** This scene introduces the recurring bell sequence. */
+  bell_sequence_introduced?: boolean
+  /** This scene runs the Sound Meter encounter mechanic. */
+  sound_meter?: SoundMeterConfig
+  /** This scene uses the Redirect Die. */
+  redirect_die?: RedirectDieConfig
+  /** Triggered NPC reset (forget) for this scene. */
+  npc_reset?: NpcResetTrigger
+  /** This scene contains an n-strike escalating failure puzzle. */
+  escalation_failure?: EscalationFailureConfig
+  /** This scene is built around an NPC presentation / slideshow. */
+  presentation?: ScenePresentation
+}
+
+// =====================================================
+// SCENE MEDIA (live-session add-features)
+// -----------------------------------------------------
+// Author-time media configuration for a scene. Persists at
+// `quest_scenes.metadata.media`. Surfaced by the DM's
+// SessionMediaPanel at run time.
+// =====================================================
+
+export interface SfxButton {
+  /** Short label shown on the soundboard button. */
+  label: string
+  /** Direct URL to an audio file (MP3/OGG/WAV). */
+  url: string
+  /** Optional emoji or short icon. */
+  icon?: string
+}
+
+export interface SlideImage {
+  url: string
+  caption?: string
+}
+
+export interface SceneMediaConfig {
+  /** Background ambience track URL (loops). */
+  ambience_url?: string
+  /** Display label for the ambience track (UI only). */
+  ambience_label?: string
+  /** One-tap sound effect buttons (up to ~8). */
+  sfx_buttons?: SfxButton[]
+  /** Slide images used by an NPC presentation (paired with SceneLivePlay.presentation). */
+  presentation_slides?: SlideImage[]
+  /** ElevenLabs voice preset key for auto-narration of this scene's `narration`. */
+  narration_voice_preset?: string
+  /** If true, the DM panel will offer a one-tap "Read scene" TTS button. */
+  enable_tts_narration?: boolean
+  /** If true, the mic Sound Meter is auto-armed when this scene becomes active. */
+  auto_arm_sound_meter?: boolean
+  /** If true, allow camera capture button (player moments / prop photos). */
+  enable_camera_capture?: boolean
+}
+
+/** Row shape of `session_captures` (photos taken during a live session). */
+export interface SessionCapture {
+  id: string
+  session_id: string | null
+  scene_id: string | null
+  quest_id: string
+  captured_by: string | null
+  image_url: string
+  caption: string | null
+  captured_at: string
+}
+
+// =====================================================
 // IDOL SYSTEM SETTINGS
 // =====================================================
 
@@ -575,6 +756,8 @@ export interface QuestSceneInsert {
   choice?: string | null
   sensory_anchors?: SensoryAnchor[]
   pacing?: ScenePacing | null
+  /** Free-form jsonb. Live-Play mechanics live under `metadata.live_play` (see SceneLivePlay). */
+  metadata?: Json
 }
 
 export interface QuestSceneUpdate {
@@ -601,6 +784,8 @@ export interface QuestSceneUpdate {
   choice?: string | null
   sensory_anchors?: SensoryAnchor[]
   pacing?: ScenePacing | null
+  /** Free-form jsonb. Live-Play mechanics live under `metadata.live_play` (see SceneLivePlay). */
+  metadata?: Json
 }
 
 export interface QuestSession {

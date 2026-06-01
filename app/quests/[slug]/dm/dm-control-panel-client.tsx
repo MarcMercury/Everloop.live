@@ -19,7 +19,7 @@ import {
   Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map,
   Volume2, Eye, EyeOff, Sparkles, Flame, Shield, MessageSquare,
   ChevronRight, Zap, Gift, SkipForward, AlertTriangle, Bot, Box,
-  Printer, Feather, Star, Cog,
+  Printer, Feather, Star, Cog, Swords,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,9 +27,12 @@ import { AtmosphereEngine } from '@/components/quests/atmosphere-engine'
 import { DnDQuickReference } from '@/components/quests/dnd-quick-reference'
 import { SafetySummaryCard } from '@/components/quests/safety-summary-card'
 import { WorldCogsPanel } from '@/components/quests/world-cogs-panel'
+import { SessionMediaPanel } from '@/components/quests/session-media-panel'
 import { supabase } from '@/lib/supabase/client'
 import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
+import { CombatTracker } from '@/components/quests/combat-tracker'
+import { DMScreenBar } from '@/components/quests/dm-screen-bar'
 
 const ModelViewerCompact = dynamic(
   () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewerCompact),
@@ -60,7 +63,7 @@ export function DMControlPanelClient({
   const router = useRouter()
   const [session, setSession] = useState(initialSession)
   const [messages, setMessages] = useState(initialMessages)
-  const [activeTab, setActiveTab] = useState<'narrate' | 'players' | 'scenes' | 'npcs' | 'idols' | 'dice' | 'cogs'>('narrate')
+  const [activeTab, setActiveTab] = useState<'narrate' | 'players' | 'scenes' | 'npcs' | 'idols' | 'dice' | 'combat' | 'cogs'>('narrate')
   const [messageInput, setMessageInput] = useState('')
   const [narrationInput, setNarrationInput] = useState('')
   const [whisperTarget, setWhisperTarget] = useState<string | null>(null)
@@ -435,6 +438,7 @@ export function DMControlPanelClient({
             { id: 'npcs' as const, icon: Shield, label: 'NPCs' },
             { id: 'idols' as const, icon: Sparkles, label: 'Idols' },
             { id: 'dice' as const, icon: Dice1, label: 'Dice' },
+            { id: 'combat' as const, icon: Swords, label: 'Combat' },
             { id: 'cogs' as const, icon: Cog, label: 'World Cogs' },
           ].map(tab => (
             <button
@@ -573,6 +577,11 @@ export function DMControlPanelClient({
                   <div className="text-xs text-parchment-muted">{activeScene.dm_notes}</div>
                 </div>
               )}
+              <SessionMediaPanel
+                scene={activeScene ?? null}
+                session={session}
+                questId={campaign.id}
+              />
               <DnDQuickReference />
             </div>
           )}
@@ -829,6 +838,53 @@ export function DMControlPanelClient({
               </div>
             </div>
           )}
+
+          {activeTab === 'combat' && (
+            <div className="flex-1 flex flex-col p-4 gap-3 overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-serif text-parchment flex items-center gap-2">
+                  <Swords className="w-4 h-4 text-rose-400" /> Combat
+                </h3>
+                <Link
+                  href={`/quests/${campaign.slug}/encounters`}
+                  className="text-xs text-gold hover:text-gold/80 underline"
+                >
+                  Encounter Builder →
+                </Link>
+              </div>
+              {session ? (
+                <CombatTracker
+                  sessionId={session.id}
+                  initial={{
+                    initiativeOrder: ((session as unknown as { initiative_order?: unknown }).initiative_order as never[]) ?? [],
+                    currentTurnIndex: (session as unknown as { current_turn_index?: number }).current_turn_index ?? 0,
+                    roundNumber: (session as unknown as { round_number?: number }).round_number ?? 0,
+                    isCombat: (session as unknown as { is_combat?: boolean }).is_combat ?? false,
+                  }}
+                  isDM={true}
+                  onAmbience={async (mood) => {
+                    try {
+                      const res = await fetch('/api/elevenlabs/sfx', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ scene_type: 'combat', mood }),
+                      })
+                      if (!res.ok) return
+                      const blob = await res.blob()
+                      const url = URL.createObjectURL(blob)
+                      const audio = new Audio(url)
+                      audio.volume = 0.6
+                      audio.play().catch(() => {})
+                    } catch {
+                      /* swallow */
+                    }
+                  }}
+                />
+              ) : (
+                <p className="text-xs text-parchment-muted">Start a session to enable combat.</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right Panel: Message Feed */}
@@ -902,6 +958,9 @@ export function DMControlPanelClient({
           )}
         </div>
       </div>
+
+      {/* DM Screen quick-reference popover bar */}
+      <DMScreenBar />
     </div>
   )
 }

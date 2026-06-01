@@ -372,3 +372,42 @@ themselves are encoded in `lib/dnd-rules/`; the structural scene grammar is
 encoded in `lib/dnd-rules/scene-templates.ts`. Do not paste copyrighted
 adventure text into the codebase or surfaces; use only the structural
 patterns and OGL content.
+
+## Live-Play Mechanics (Bell Tree-style one-shots)
+
+The DM module **"The Bell Tree and the Broken World"** introduces a set of
+table-side mechanics the Quest Builder now supports natively. These are
+**author-time configuration** stored in JSONB, not runtime systems:
+
+- **Bell Sequence**: a 5-note physical bell pattern the Narrator establishes
+  early. The pattern is reused across multiple scenes and **becomes the
+  answer** to a later puzzle (e.g. the Memory Gate). Players are never told
+  this — it is a callback.
+- **Sound Meter (1–6)**: a visible boss-encounter meter that rises when
+  players are loud (shouts, verbal spells, loud strategy). Each tick adds
+  bonus damage and heals the boss. Going silent for a full round causes
+  the boss to drop AC and become Vulnerable.
+- **Redirect Die**: auto-scales by party size (4-5p=d6 → 12+p=d20). Used
+  when an attack is being redirected mid-combat.
+- **NPC Reset Triggers**: an NPC who "forgets" the last interaction on a
+  specific cue (e.g. Garron forgets when the sharp bell rings). Players
+  must discover the cue.
+- **Escalation Failures**: n-strike puzzles where each wrong answer
+  causes escalating consequences, terminating in a fail-state (e.g. the
+  Fork → summons The Cleaved on the third strike; the Memory Gate →
+  collapse on the final strike).
+- **NPC Presentations**: an NPC literally delivers a slide deck inside the
+  fiction (e.g. Eidon's 11-slide cosmology lecture: Drift / Fold / First
+  Architects / Pattern / Hollows / Anchors / Shards). The Bell Tree IS a
+  Shard. This is canonical.
+- **Scene Callbacks**: explicit payload links from earlier scenes to later
+  scenes (e.g. Mayor's Note #1 — "THE TREE IS REAL AND THE TREE IS
+  NOTHING" — is the answer to the Bell Tree's final question "WHAT AM I?").
+- **Hidden Mechanics**: any of the above flagged hidden are DM-only and
+  must never be foreshadowed in narration text.
+
+**Storage**: quest-level config at `quests.metadata.liveplay`
+(`LivePlayConfig`); scene-level config at `quest_scenes.metadata.live_play`
+(`SceneLivePlay`). Scene callbacks reference scenes by `metadata.slug`,
+not UUID.
+
