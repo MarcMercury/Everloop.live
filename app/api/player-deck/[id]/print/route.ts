@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import type { PlayerCharacterDB } from '@/types/player-character'
+import type { PlayerCharacter } from '@/types/player-character'
 
 export const runtime = 'nodejs'
 
@@ -20,7 +20,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data } = await supabase.from('player_characters').select('*').eq('id', id).single()
-  const char = data as unknown as PlayerCharacterDB | null
+  const char = data as unknown as PlayerCharacter | null
   if (!char) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (char.user_id !== user.id) {
@@ -101,17 +101,17 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     <thead><tr><th>Save / Skill</th><th>Bonus</th></tr></thead>
     <tbody>
       ${(['strength','dexterity','constitution','intelligence','wisdom','charisma'] as const).map((k) => {
-        const prof = (char.proficiencies?.saving_throws ?? []).map((s) => s.toLowerCase()).includes(k)
+        const prof = (char.proficiencies?.saving_throws ?? []).map((s: string) => s.toLowerCase()).includes(k)
         const bonus = mod(char[k] as number) + (prof ? char.proficiency_bonus : 0)
         return `<tr><td>${k} save${prof ? ' (prof)' : ''}</td><td>${fmt(bonus)}</td></tr>`
       }).join('')}
-      ${(char.proficiencies?.skills ?? []).map((sk) => `<tr><td>${escapeHtml(sk)}</td><td>(prof)</td></tr>`).join('')}
+      ${Object.entries(char.proficiencies?.skills ?? {}).filter(([, v]) => v).map(([sk]) => `<tr><td>${escapeHtml(sk)}</td><td>(prof)</td></tr>`).join('')}
     </tbody>
   </table>
 
   ${char.features?.length ? `
     <h2>Features & Traits</h2>
-    ${char.features.map((f) => `
+    ${char.features.map((f: { name: string; uses_max?: number; uses_remaining?: number; recharge?: string; description?: string }) => `
       <div class="feature">
         <div class="feature-name">${escapeHtml(f.name)}${f.uses_max ? ` <span style="color:#777;font-size:9pt">(${f.uses_remaining ?? 0}/${f.uses_max} ${f.recharge ?? ''})</span>` : ''}</div>
         <div class="feature-desc">${escapeHtml(f.description ?? '')}</div>
@@ -121,7 +121,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 
   ${char.feats?.length ? `
     <h2>Feats</h2>
-    ${char.feats.map((f) => `
+    ${char.feats.map((f: { name: string; description?: string }) => `
       <div class="feature">
         <div class="feature-name">${escapeHtml(f.name)}</div>
         <div class="feature-desc">${escapeHtml(f.description ?? '')}</div>
@@ -134,7 +134,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     <table>
       <thead><tr><th>Lv</th><th>Name</th><th>School</th><th>Notes</th></tr></thead>
       <tbody>
-        ${char.spellcasting.spells_known.map((sp) => `
+        ${char.spellcasting.spells_known.map((sp: { level: number; name: string; school?: string; prepared?: boolean; concentration?: boolean; ritual?: boolean; casting_time?: string }) => `
           <tr>
             <td>${sp.level}</td>
             <td>${escapeHtml(sp.name)}${sp.prepared ? ' ✓' : ''}</td>
@@ -151,7 +151,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     <table>
       <thead><tr><th>Name</th><th>Damage</th><th>Properties</th></tr></thead>
       <tbody>
-        ${char.inventory.weapons.map((w) => `
+        ${char.inventory.weapons.map((w: { name: string; equipped?: boolean; damage?: string; damage_type?: string; properties?: string[] }) => `
           <tr>
             <td>${escapeHtml(w.name)}${w.equipped ? ' ⚔' : ''}</td>
             <td>${escapeHtml(w.damage ?? '')} ${escapeHtml(w.damage_type ?? '')}</td>
@@ -167,7 +167,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
     <table>
       <thead><tr><th>Item</th><th>Qty</th><th>Notes</th></tr></thead>
       <tbody>
-        ${char.inventory.items.map((it) => `
+        ${char.inventory.items.map((it: { name: string; quantity?: number; description?: string }) => `
           <tr>
             <td>${escapeHtml(it.name)}</td>
             <td>${it.quantity ?? 1}</td>

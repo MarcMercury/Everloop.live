@@ -91,7 +91,7 @@ export async function applyLevelUp(input: LevelUpInput) {
       proficiency_bonus: newProf,
       features,
       feats,
-    })
+    } as never)
     .eq('id', input.characterId)
   if (error) throw new Error(error.message)
 

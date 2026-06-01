@@ -139,7 +139,7 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
           dexterity?: number
         } | null
         if (!ch?.id) return null
-        return {
+        const c: Combatant = {
           id: ch.id,
           name: ch.name ?? 'Adventurer',
           initiative: 0,
@@ -150,7 +150,8 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
           conditions: [],
           isPC: true,
           characterId: ch.id,
-        } satisfies Combatant
+        }
+        return c
       })
       .filter((c): c is Combatant => c != null)
 

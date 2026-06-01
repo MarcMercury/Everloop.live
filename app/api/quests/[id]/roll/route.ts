@@ -39,7 +39,7 @@ export async function POST(
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const formula = typeof body.formula === 'string' ? body.formula.slice(0, 80) : null
-  const results = Array.isArray(body.results) ? body.results.filter((n): n is number => typeof n === 'number') : []
+  const results = Array.isArray(body.results) ? (body.results as unknown[]).filter((n): n is number => typeof n === 'number') : []
   const modifier = typeof body.modifier === 'number' ? body.modifier : 0
   const total = typeof body.total === 'number' ? body.total : 0
   const isCriticalHit = body.isCriticalHit === true
@@ -47,7 +47,7 @@ export async function POST(
   const rollType = typeof body.rollType === 'string' ? body.rollType.slice(0, 40) : 'custom'
   const rollerName = typeof body.rollerName === 'string' ? body.rollerName.slice(0, 80) : null
   const sessionIdInput = typeof body.sessionId === 'string' ? body.sessionId : null
-  const visibleTo = Array.isArray(body.visibleTo) ? body.visibleTo.filter((v): v is string => typeof v === 'string') : []
+  const visibleTo = Array.isArray(body.visibleTo) ? (body.visibleTo as unknown[]).filter((v): v is string => typeof v === 'string') : []
 
   if (!formula || results.length === 0) {
     return NextResponse.json({ error: 'formula and results are required' }, { status: 400 })
@@ -117,7 +117,7 @@ export async function POST(
       roll_data: rollData,
       character_name: rollerName,
       visible_to: visibleTo,
-    })
+    } as never)
     .select('id, created_at')
     .single()
 

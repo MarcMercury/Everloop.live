@@ -40,7 +40,7 @@ export async function createHomebrew(input: CreateInput): Promise<{ id?: string;
       tags: input.tags ?? [],
       extended_lore: input.data ?? {},
       metadata: { is_homebrew: true, kind: input.kind },
-    })
+    } as never)
     .select('id, slug')
     .single()
 

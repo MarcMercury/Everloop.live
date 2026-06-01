@@ -53,6 +53,7 @@ export function useSharedRolls(questId: string | null, maxHistory: number = 30) 
 
   useEffect(() => {
     if (!questId) return
+    const qid = questId
     const supabase = createClient()
     let cancelled = false
 
@@ -60,7 +61,7 @@ export function useSharedRolls(questId: string | null, maxHistory: number = 30) 
       const { data } = await supabase
         .from('quest_messages')
         .select('id, created_at, roll_data, character_name, message_type')
-        .eq('quest_id', questId)
+        .eq('quest_id', qid)
         .eq('message_type', 'roll')
         .order('created_at', { ascending: false })
         .limit(maxHistory)

@@ -56,7 +56,7 @@ export async function saveVttState(sceneId: string, state: VttState) {
   const metadata = { ...(scene.metadata ?? {}), vtt: state }
   const { error } = await supabase
     .from('quest_scenes')
-    .update({ metadata })
+    .update({ metadata } as never)
     .eq('id', sceneId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)

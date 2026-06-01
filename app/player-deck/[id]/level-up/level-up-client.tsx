@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button'
 import { ChevronRight, ChevronLeft, Sparkles, Dices, Plus, Trophy } from 'lucide-react'
 import { hitDieForClass, isAsiLevel, averageHpGain, rollHpGain, proficiencyBonusForLevel } from '@/lib/dnd-rules/level-up'
 import { applyLevelUp } from '@/lib/actions/level-up'
-import type { PlayerCharacterDB } from '@/types/player-character'
+import type { PlayerCharacter } from '@/types/player-character'
 
 type Step = 'hp' | 'asi' | 'features' | 'review'
 type AbilityKey = 'strength' | 'dexterity' | 'constitution' | 'intelligence' | 'wisdom' | 'charisma'
 const ABILITIES: AbilityKey[] = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
 
-interface Props { character: PlayerCharacterDB }
+interface Props { character: PlayerCharacter }
 
 interface FeatureDraft {
   name: string
