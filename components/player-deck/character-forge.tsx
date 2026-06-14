@@ -17,7 +17,7 @@ import {
 import type {
   PlayerCharacterInsert,
   SpellcastingData, ProficiencyData, InventoryData,
-  FeatureEntry, WeaponEntry, CompanionEntry
+  FeatureEntry, WeaponEntry, CompanionEntry, FeatEntry
 } from '@/types/player-character'
 import {
   DND_CLASSES, DND_RACES, DND_ALIGNMENTS, DND_BACKGROUNDS,
@@ -41,7 +41,13 @@ import {
   lookupSpellDetail,
 } from '@/lib/data'
 import type { RaceData, ClassData, BackgroundData, WeaponData, ArmorData, InvocationData, FightingStyleData, ManeuverData, RacialSpellEntry } from '@/lib/data'
+import { FEATS, getFeat, meetsFeatPrereq } from '@/lib/data'
+import type { FeatData } from '@/lib/data'
 import { PortraitGenerator } from './portrait-generator'
+import {
+  InfoButton, SpellStudyButton, FeatStudyButton, TextStudyButton,
+} from './forge-info'
+import { InfoSection, InfoBullets } from './info-popover'
 
 // ── CONSTANTS ──────────────────────────────────────────
 
@@ -110,6 +116,37 @@ const HIT_DIE_MAP: Record<string, number> = {
   'd6': 6, 'd8': 8, 'd10': 10, 'd12': 12,
 }
 
+/** Number of Ability Score Improvement / feat opportunities a class has reached by a given level. */
+function asiOpportunities(cls: string, level: number): number {
+  const base = [4, 8, 12, 16, 19].filter(l => l <= level).length
+  let extra = 0
+  if (cls === 'Fighter') extra = [6, 14].filter(l => l <= level).length
+  if (cls === 'Rogue') extra = [10].filter(l => l <= level).length
+  return base + extra
+}
+
+/** Display-name keyed skill reference for study popovers in the forge. */
+const SKILL_STUDY: Record<string, { ability: string; desc: string }> = {
+  'Acrobatics': { ability: 'Dexterity', desc: 'Stay on your feet in tricky situations — balancing, tumbling, diving, and other acrobatic stunts.' },
+  'Animal Handling': { ability: 'Wisdom', desc: 'Calm, control, or read the intentions of a domesticated animal, or keep a mount under control.' },
+  'Arcana': { ability: 'Intelligence', desc: 'Recall lore about spells, magic items, eldritch symbols, magical traditions, and the planes.' },
+  'Athletics': { ability: 'Strength', desc: 'Climbing, jumping, swimming, grappling, and other feats of physical exertion.' },
+  'Deception': { ability: 'Charisma', desc: 'Convincingly hide the truth through words or actions — lies, disguises, and misdirection.' },
+  'History': { ability: 'Intelligence', desc: 'Recall lore about historical events, legendary people, ancient kingdoms, wars, and civilizations.' },
+  'Insight': { ability: 'Wisdom', desc: 'Determine the true intentions of a creature — detecting lies or predicting its next move.' },
+  'Intimidation': { ability: 'Charisma', desc: 'Influence someone through overt threats, hostile actions, or menacing presence.' },
+  'Investigation': { ability: 'Intelligence', desc: 'Look for clues and make deductions — finding hidden objects, traps, or weak points.' },
+  'Medicine': { ability: 'Wisdom', desc: 'Stabilize a dying companion or diagnose an illness.' },
+  'Nature': { ability: 'Intelligence', desc: 'Recall lore about terrain, plants, animals, the weather, and natural cycles.' },
+  'Perception': { ability: 'Wisdom', desc: 'Spot, hear, or otherwise detect the presence of something using your senses.' },
+  'Performance': { ability: 'Charisma', desc: 'Delight an audience with music, dance, acting, storytelling, or other entertainment.' },
+  'Persuasion': { ability: 'Charisma', desc: 'Influence someone with tact, social grace, or good nature — friendly negotiation and etiquette.' },
+  'Religion': { ability: 'Intelligence', desc: 'Recall lore about deities, rites, prayers, religious hierarchies, holy symbols, and cults.' },
+  'Sleight of Hand': { ability: 'Dexterity', desc: 'Perform an act of legerdemain or manual trickery — planting an object, picking a pocket, or concealing a weapon.' },
+  'Stealth': { ability: 'Dexterity', desc: 'Conceal yourself from enemies, slip past guards, or sneak up on someone unnoticed.' },
+  'Survival': { ability: 'Wisdom', desc: 'Follow tracks, hunt game, navigate the wilderness, and avoid natural hazards.' },
+}
+
 // ── MAIN COMPONENT ─────────────────────────────────────
 
 export function CharacterForge() {
@@ -169,6 +206,10 @@ export function CharacterForge() {
   const [selectedInvocations, setSelectedInvocations] = useState<string[]>([])
   const [tomeCantrips, setTomeCantrips] = useState<string[]>([]) // Pact of Tome: 3 cantrips from any class
   const [selectedManeuvers, setSelectedManeuvers] = useState<string[]>([]) // Battle Master
+
+  // Skill proficiencies (chosen from class skill list) + feats (ASI-level choices)
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [selectedFeats, setSelectedFeats] = useState<string[]>([])
 
   // ── Derived Values ──
   const classInfo = CLASS_INFO[charClass]
@@ -268,6 +309,23 @@ export function CharacterForge() {
       }
       profData.tool_proficiencies = [...profData.tool_proficiencies, ...bgData.toolProfs]
     }
+
+    // Add chosen class skill proficiencies
+    for (const skill of selectedSkills) {
+      const key = skill.toLowerCase().replace(/ /g, '_') as import('@/types/player-character').SkillName
+      profData.skills[key] = 'proficient'
+    }
+
+    // Build feats list from chosen feats
+    const featList: FeatEntry[] = selectedFeats.map(name => {
+      const f = getFeat(name)
+      return {
+        name,
+        source: 'Feat',
+        level_acquired: level,
+        description: f ? `${f.desc} ${f.effects.join('; ')}` : '',
+      }
+    })
 
     // Auto-populate features from class data
     const featureList: FeatureEntry[] = classData
@@ -483,6 +541,7 @@ export function CharacterForge() {
       spellcasting: JSON.parse(JSON.stringify(spellData)),
       proficiencies: JSON.parse(JSON.stringify(profData)),
       features: JSON.parse(JSON.stringify(featureList)),
+      feats: JSON.parse(JSON.stringify(featList)),
       inventory: JSON.parse(JSON.stringify({
         weapons,
         armor: armorName ? { name: armorName, base_ac: armorAC, type: 'medium' } : null,
@@ -583,6 +642,8 @@ export function CharacterForge() {
             setPactBoon={setPactBoon}
             selectedManeuvers={selectedManeuvers}
             setSelectedManeuvers={setSelectedManeuvers}
+            selectedSkills={selectedSkills}
+            setSelectedSkills={setSelectedSkills}
           />
         )}
         {currentStep.id === 'abilities' && (
@@ -594,6 +655,11 @@ export function CharacterForge() {
             standardAssignment={standardAssignment}
             assignStandardScore={assignStandardScore}
             pointBuyTotal={pointBuyTotal}
+            charClass={charClass}
+            level={level}
+            finalAbilities={finalAbilities}
+            selectedFeats={selectedFeats}
+            setSelectedFeats={setSelectedFeats}
           />
         )}
         {currentStep.id === 'description' && (
@@ -788,9 +854,18 @@ function StepRace({
                     </Badge>
                   ))}
                   {raceData.traits.map((trait, i) => (
-                    <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted" title={trait.desc}>
-                      {trait.name}
-                    </Badge>
+                    <span key={i} className="inline-flex items-center gap-1">
+                      <Badge variant="outline" className="border-gold-500/20 text-parchment-muted">
+                        {trait.name}
+                      </Badge>
+                      <TextStudyButton
+                        title={trait.name}
+                        subtitle={`${race} Trait`}
+                        description={trait.desc}
+                        accent="#34d399"
+                        className="text-parchment-muted/50 hover:text-emerald-300 p-1 rounded touch-target"
+                      />
+                    </span>
                   ))}
                 </>
               ) : raceInfo?.traits.map((trait, i) => (
@@ -838,9 +913,18 @@ function StepRace({
                   </Badge>
                 ))}
                 {raceData.subraces.find(sr => sr.name === subrace)!.traits.map((t, i) => (
-                  <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted text-[10px]" title={t.desc}>
-                    {t.name}
-                  </Badge>
+                  <span key={i} className="inline-flex items-center gap-1">
+                    <Badge variant="outline" className="border-gold-500/20 text-parchment-muted text-[10px]">
+                      {t.name}
+                    </Badge>
+                    <TextStudyButton
+                      title={t.name}
+                      subtitle={`${subrace} Trait`}
+                      description={t.desc}
+                      accent="#34d399"
+                      className="text-parchment-muted/50 hover:text-emerald-300 p-0.5 rounded touch-target"
+                    />
+                  </span>
                 ))}
               </div>
             )}
@@ -858,6 +942,7 @@ function StepClass({
   charClass, setCharClass, subclass, setSubclass, level, setLevel,
   fightingStyle, setFightingStyle, pactBoon, setPactBoon,
   selectedManeuvers, setSelectedManeuvers,
+  selectedSkills, setSelectedSkills,
 }: {
   charClass: string; setCharClass: (v: string) => void
   subclass: string; setSubclass: (v: string) => void
@@ -865,6 +950,7 @@ function StepClass({
   fightingStyle: string; setFightingStyle: (v: string) => void
   pactBoon: string; setPactBoon: (v: string) => void
   selectedManeuvers: string[]; setSelectedManeuvers: (v: string[]) => void
+  selectedSkills: string[]; setSelectedSkills: (v: string[]) => void
 }) {
   const cd = getClass(charClass)
   return (
@@ -879,7 +965,7 @@ function StepClass({
           return (
             <button
               key={c}
-              onClick={() => { setCharClass(c); setSubclass('') }}
+              onClick={() => { setCharClass(c); setSubclass(''); setSelectedSkills([]) }}
               className={`text-left p-3 rounded-lg border transition-all touch-target-lg ${
                 isSelected
                   ? 'border-gold-500/50 bg-gold-500/10 shadow-lg shadow-gold-500/5'
@@ -943,13 +1029,22 @@ function StepClass({
           )}
 
           <div className="mt-4">
-            <span className="text-xs text-gold-500 uppercase tracking-wider">Key Features</span>
+            <span className="text-xs text-gold-500 uppercase tracking-wider">Class Features (to Lv{level})</span>
             <div className="flex flex-wrap gap-2 mt-1">
               {cd ? (
-                getClassFeaturesAtLevel(charClass, Math.max(level, 3)).slice(0, 5).map((f, i) => (
-                  <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted" title={f.desc}>
-                    {f.name} {f.level > 1 ? `(Lv${f.level})` : ''}
-                  </Badge>
+                getClassFeaturesAtLevel(charClass, Math.max(level, 1)).map((f, i) => (
+                  <span key={i} className="inline-flex items-center gap-1">
+                    <Badge variant="outline" className="border-gold-500/20 text-parchment-muted">
+                      {f.name} {f.level > 1 ? `(Lv${f.level})` : ''}
+                    </Badge>
+                    <TextStudyButton
+                      title={f.name}
+                      subtitle={`${charClass} · Level ${f.level}`}
+                      description={f.desc}
+                      accent={CLASS_COLORS[charClass]}
+                      className="text-parchment-muted/50 hover:text-gold-500 p-1 rounded touch-target"
+                    />
+                  </span>
                 ))
               ) : CLASS_INFO[charClass]?.features.map((f, i) => (
                 <Badge key={i} variant="outline" className="border-gold-500/20 text-parchment-muted">
@@ -974,7 +1069,25 @@ function StepClass({
           {/* Subclass + Level */}
           <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gold-500/10">
             <div>
-              <Label className="text-parchment-muted text-xs">{cd?.subclassName || 'Subclass'} {cd ? `(at Lv${cd.subclassLevel})` : ''}</Label>
+              <Label className="text-parchment-muted text-xs flex items-center gap-1.5">
+                {cd?.subclassName || 'Subclass'} {cd ? `(at Lv${cd.subclassLevel})` : ''}
+                {cd && cd.subclasses.length > 0 && (
+                  <InfoButton
+                    title={`${charClass} — ${cd.subclassName}s`}
+                    subtitle={`Choose at Level ${cd.subclassLevel}`}
+                    accent={CLASS_COLORS[charClass]}
+                  >
+                    <div className="space-y-3">
+                      {cd.subclasses.map(sc => (
+                        <div key={sc.name}>
+                          <div className="text-sm font-medium text-parchment">{sc.name}</div>
+                          <p className="text-xs text-parchment-muted mt-0.5">{sc.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </InfoButton>
+                )}
+              </Label>
               {cd && cd.subclasses.length > 0 ? (
                 <select
                   value={subclass}
@@ -1028,6 +1141,69 @@ function StepClass({
           </div>
         </Card>
       )}
+
+      {/* Skill Proficiencies — chosen from class list */}
+      {cd && cd.skillChoice.from.length > 0 && (() => {
+        const max = cd.skillChoice.count
+        const fromList = cd.skillChoice.from
+        function toggleSkill(skill: string) {
+          if (selectedSkills.includes(skill)) {
+            setSelectedSkills(selectedSkills.filter(s => s !== skill))
+          } else if (selectedSkills.filter(s => fromList.includes(s)).length < max) {
+            setSelectedSkills([...selectedSkills, skill])
+          }
+        }
+        const chosen = selectedSkills.filter(s => fromList.includes(s)).length
+        return (
+          <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
+                <Star className="w-4 h-4" /> Skill Proficiencies
+              </h3>
+              <span className="text-xs text-parchment-muted">{chosen} / {max} selected</span>
+            </div>
+            <p className="text-xs text-parchment-muted">
+              Choose {max} skill{max === 1 ? '' : 's'} your {charClass} training grants. Tap ⓘ to study what each covers.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {fromList.map(skill => {
+                const isSelected = selectedSkills.includes(skill)
+                const isDisabled = !isSelected && chosen >= max
+                const ref = SKILL_STUDY[skill]
+                return (
+                  <div key={skill} className="relative">
+                    <button
+                      onClick={() => toggleSkill(skill)}
+                      disabled={isDisabled}
+                      className={`w-full p-2.5 pr-8 rounded-lg border text-left text-sm transition-all ${
+                        isSelected
+                          ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200'
+                          : isDisabled
+                          ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                          : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-emerald-500/25 hover:bg-emerald-500/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isSelected && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                        {skill}
+                      </span>
+                    </button>
+                    <span className="absolute top-1.5 right-1.5">
+                      <TextStudyButton
+                        title={skill}
+                        subtitle={ref ? `${ref.ability} skill` : 'Skill'}
+                        description={ref?.desc}
+                        accent="#34d399"
+                        className="text-parchment-muted/50 hover:text-emerald-300 p-1 rounded touch-target"
+                      />
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        )
+      })()}
 
       {/* Fighting Style Picker */}
       {['Fighter', 'Ranger', 'Paladin'].includes(charClass) && (
@@ -1152,11 +1328,14 @@ function StepClass({
 function StepAbilities({
   method, setMethod, abilities, setAbilityScore,
   standardAssignment, assignStandardScore, pointBuyTotal,
+  charClass, level, finalAbilities, selectedFeats, setSelectedFeats,
 }: {
   method: AbilityMethod; setMethod: (v: AbilityMethod) => void
   abilities: number[]; setAbilityScore: (i: number, v: number) => void
   standardAssignment: (number | null)[]; assignStandardScore: (i: number, v: number | null) => void
   pointBuyTotal: number
+  charClass: string; level: number; finalAbilities: number[]
+  selectedFeats: string[]; setSelectedFeats: (v: string[]) => void
 }) {
   const usedStandard = new Set(standardAssignment.filter(v => v !== null))
 
@@ -1283,6 +1462,75 @@ function StepAbilities({
           </Card>
         ))}
       </div>
+
+      {/* Feats — optional; available at ASI levels (4/8/12/16/19, + class extras) */}
+      {(() => {
+        const slots = asiOpportunities(charClass, level)
+        const cd = getClass(charClass)
+        const abilityRecord: Record<string, number> = {
+          strength: finalAbilities[0], dexterity: finalAbilities[1], constitution: finalAbilities[2],
+          intelligence: finalAbilities[3], wisdom: finalAbilities[4], charisma: finalAbilities[5],
+        }
+        const profList = (cd?.armorProfs ?? []).map(p => `${p} armor`.toLowerCase())
+          .concat((cd?.weaponProfs ?? []).map(p => p.toLowerCase()))
+        function toggleFeat(name: string) {
+          if (selectedFeats.includes(name)) setSelectedFeats(selectedFeats.filter(f => f !== name))
+          else if (selectedFeats.length < slots) setSelectedFeats([...selectedFeats, name])
+        }
+        return (
+          <Card className="p-5 bg-teal-rich/60 border-gold-500/15 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-serif text-gold-500 flex items-center gap-2">
+                <Star className="w-4 h-4" /> Feats
+              </h3>
+              <span className="text-xs text-parchment-muted">
+                {slots > 0 ? `${selectedFeats.length} / ${slots} selected` : 'Unlocks at Lv4'}
+              </span>
+            </div>
+            <p className="text-xs text-parchment-muted">
+              {slots > 0
+                ? `You may take a feat in place of an Ability Score Improvement. At Level ${level}, your ${charClass} has reached ${slots} such ${slots === 1 ? 'opportunity' : 'opportunities'}. Tap ⓘ to study each feat.`
+                : 'Feats become available at Level 4 (and certain class levels). You can still browse and study them below.'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto">
+              {FEATS.map(feat => {
+                const isSelected = selectedFeats.includes(feat.name)
+                const meets = meetsFeatPrereq(feat, abilityRecord, profList)
+                const isDisabled = !isSelected && (slots === 0 || selectedFeats.length >= slots)
+                return (
+                  <div key={feat.name} className="relative">
+                    <button
+                      onClick={() => toggleFeat(feat.name)}
+                      disabled={isDisabled}
+                      className={`w-full p-2.5 pr-8 rounded-lg border text-left transition-all ${
+                        isSelected
+                          ? 'border-gold-500/50 bg-gold-500/15'
+                          : isDisabled
+                          ? 'border-gold-500/5 bg-charcoal-900/30 cursor-not-allowed opacity-50'
+                          : 'border-gold-500/10 bg-charcoal-900/50 hover:border-gold-500/30'
+                      }`}
+                    >
+                      <div className={`text-sm font-medium flex items-center gap-1.5 ${isSelected ? 'text-gold-500' : 'text-parchment'}`}>
+                        {isSelected && <Check className="w-3 h-3 flex-shrink-0" />}
+                        {feat.name}
+                      </div>
+                      <div className="text-[10px] text-parchment-muted mt-0.5 line-clamp-1">{feat.desc}</div>
+                      {feat.prerequisite !== 'None' && (
+                        <span className={`text-[9px] ${meets ? 'text-emerald-400' : 'text-amber-400'}`}>
+                          {meets ? '✓ ' : '⚠ '}Req: {feat.prerequisite}
+                        </span>
+                      )}
+                    </button>
+                    <span className="absolute top-1.5 right-1.5">
+                      <FeatStudyButton feat={feat} className="text-parchment-muted/50 hover:text-gold-500 p-1 rounded touch-target" />
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
+        )
+      })()}
     </div>
   )
 }
@@ -1456,7 +1704,7 @@ function StepDescription({
             {background && (() => {
               const bg = getBackground(background)
               return bg ? (
-                <div className="flex flex-wrap gap-1.5 mt-2">
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
                   {bg.skillProfs.map(s => (
                     <Badge key={s} variant="outline" className="border-emerald-500/20 text-emerald-400 text-[10px]">{s}</Badge>
                   ))}
@@ -1464,6 +1712,37 @@ function StepDescription({
                     <Badge key={t} variant="outline" className="border-blue-500/20 text-blue-300 text-[10px]">{t}</Badge>
                   ))}
                   <Badge variant="outline" className="border-gold-500/20 text-gold-500 text-[10px]">{bg.feature}</Badge>
+                  <InfoButton
+                    title={background}
+                    subtitle="Background"
+                    accent="#d4a84b"
+                    className="text-parchment-muted/50 hover:text-gold-500 p-0.5 rounded touch-target"
+                  >
+                    <div className="space-y-3">
+                      <InfoSection label={`Feature: ${bg.feature}`}>
+                        <p className="text-parchment/90">{bg.featureDesc}</p>
+                      </InfoSection>
+                      <InfoSection label="Skill Proficiencies">
+                        <p className="text-parchment/90">{bg.skillProfs.join(', ')}</p>
+                      </InfoSection>
+                      {bg.toolProfs.length > 0 && (
+                        <InfoSection label="Tool Proficiencies">
+                          <p className="text-parchment/90">{bg.toolProfs.join(', ')}</p>
+                        </InfoSection>
+                      )}
+                      {bg.languages > 0 && (
+                        <InfoSection label="Languages">
+                          <p className="text-parchment/90">{bg.languages} of your choice</p>
+                        </InfoSection>
+                      )}
+                      <InfoSection label="Starting Equipment">
+                        <InfoBullets items={bg.equipment} />
+                      </InfoSection>
+                      <InfoSection label="Starting Gold">
+                        <p className="text-parchment/90">{bg.gold} gp</p>
+                      </InfoSection>
+                    </div>
+                  </InfoButton>
                 </div>
               ) : null
             })()}
@@ -2249,9 +2528,12 @@ function StepSpells({
             <p className="text-xs text-parchment-muted">These are innate spells from your racial heritage.</p>
             <div className="flex flex-wrap gap-2">
               {racialSpells.map((rs, i) => (
-                <Badge key={i} variant="outline" className="border-emerald-500/30 text-emerald-400">
-                  {rs.spell} {rs.spellLevel > 0 ? `(Lv${rs.spellLevel})` : '(Cantrip)'} — at character Lv{rs.level}
-                </Badge>
+                <span key={i} className="inline-flex items-center gap-1">
+                  <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                    {rs.spell} {rs.spellLevel > 0 ? `(Lv${rs.spellLevel})` : '(Cantrip)'} — at character Lv{rs.level}
+                  </Badge>
+                  <SpellStudyButton name={rs.spell} className="text-parchment-muted/50 hover:text-emerald-300 p-1 rounded touch-target" />
+                </span>
               ))}
             </div>
           </Card>
@@ -2310,9 +2592,12 @@ function StepSpells({
           <p className="text-xs text-parchment-muted">Auto-granted from your race. These don&apos;t count against your spells known.</p>
           <div className="flex flex-wrap gap-2">
             {racialSpells.map((rs, i) => (
-              <Badge key={i} variant="outline" className="border-emerald-500/30 text-emerald-400">
-                {rs.spell} {rs.spellLevel > 0 ? `(Lv${rs.spellLevel})` : '(Cantrip)'}
-              </Badge>
+              <span key={i} className="inline-flex items-center gap-1">
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                  {rs.spell} {rs.spellLevel > 0 ? `(Lv${rs.spellLevel})` : '(Cantrip)'}
+                </Badge>
+                <SpellStudyButton name={rs.spell} className="text-parchment-muted/50 hover:text-emerald-300 p-1 rounded touch-target" />
+              </span>
             ))}
           </div>
         </Card>
@@ -2327,9 +2612,12 @@ function StepSpells({
           <p className="text-xs text-parchment-muted">Auto-granted by your subclass. These don&apos;t count against cantrips known.</p>
           <div className="flex flex-wrap gap-2">
             {bonusCantrips.map(name => (
-              <Badge key={name} variant="outline" className="border-purple-500/30 text-purple-300">
-                <Check className="w-3 h-3 mr-1" /> {name}
-              </Badge>
+              <span key={name} className="inline-flex items-center gap-1">
+                <Badge variant="outline" className="border-purple-500/30 text-purple-300">
+                  <Check className="w-3 h-3 mr-1" /> {name}
+                </Badge>
+                <SpellStudyButton name={name} className="text-parchment-muted/50 hover:text-purple-300 p-1 rounded touch-target" />
+              </span>
             ))}
           </div>
         </Card>
@@ -2351,23 +2639,27 @@ function StepSpells({
               const isSelected = selectedCantrips.includes(name)
               const isDisabled = !isSelected && selectedCantrips.length >= maxCantrips
               return (
-                <button
-                  key={name}
-                  onClick={() => toggleCantrip(name)}
-                  disabled={isDisabled}
-                  className={`p-2.5 rounded-lg border text-left text-sm transition-all ${
-                    isSelected
-                      ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
-                      : isDisabled
-                      ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
-                      : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
-                    {name}
+                <div key={name} className="relative">
+                  <button
+                    onClick={() => toggleCantrip(name)}
+                    disabled={isDisabled}
+                    className={`w-full p-2.5 pr-8 rounded-lg border text-left text-sm transition-all ${
+                      isSelected
+                        ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
+                        : isDisabled
+                        ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                        : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                      {name}
+                    </span>
+                  </button>
+                  <span className="absolute top-1.5 right-1.5">
+                    <SpellStudyButton name={name} className="text-parchment-muted/50 hover:text-purple-300 p-1 rounded touch-target" />
                   </span>
-                </button>
+                </div>
               )
             })}
           </div>
@@ -2393,23 +2685,27 @@ function StepSpells({
                 const isSelected = tomeCantrips.includes(name)
                 const isDisabled = !isSelected && tomeCantrips.length >= tomeMax
                 return (
-                  <button
-                    key={name}
-                    onClick={() => toggleTomeCantrip(name)}
-                    disabled={isDisabled}
-                    className={`p-2.5 rounded-lg border text-left text-sm transition-all ${
-                      isSelected
-                        ? 'border-amber-500/50 bg-amber-500/15 text-amber-200'
-                        : isDisabled
-                        ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
-                        : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-amber-500/25 hover:bg-amber-500/5'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {isSelected && <Check className="w-3 h-3 text-amber-400 flex-shrink-0" />}
-                      {name}
+                  <div key={name} className="relative">
+                    <button
+                      onClick={() => toggleTomeCantrip(name)}
+                      disabled={isDisabled}
+                      className={`w-full p-2.5 pr-8 rounded-lg border text-left text-sm transition-all ${
+                        isSelected
+                          ? 'border-amber-500/50 bg-amber-500/15 text-amber-200'
+                          : isDisabled
+                          ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                          : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-amber-500/25 hover:bg-amber-500/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isSelected && <Check className="w-3 h-3 text-amber-400 flex-shrink-0" />}
+                        {name}
+                      </span>
+                    </button>
+                    <span className="absolute top-1.5 right-1.5">
+                      <SpellStudyButton name={name} className="text-parchment-muted/50 hover:text-amber-300 p-1 rounded touch-target" />
                     </span>
-                  </button>
+                  </div>
                 )
               })}
           </div>
@@ -2430,9 +2726,12 @@ function StepSpells({
               <span className="text-xs text-gold-500/70 uppercase tracking-wider">Level {lvl}</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {spells.map(name => (
-                  <Badge key={name} variant="outline" className="border-purple-500/20 text-purple-300 text-[10px]">
-                    {name}
-                  </Badge>
+                  <span key={name} className="inline-flex items-center gap-1">
+                    <Badge variant="outline" className="border-purple-500/20 text-purple-300 text-[10px]">
+                      {name}
+                    </Badge>
+                    <SpellStudyButton name={name} className="text-parchment-muted/50 hover:text-purple-300 p-0.5 rounded touch-target" />
+                  </span>
                 ))}
               </div>
             </div>
@@ -2466,24 +2765,28 @@ function StepSpells({
                 const isBonus = subBonus.includes(name) && !classSpells.includes(name)
                 const isDisabled = !isSelected && atLimit
                 return (
-                  <button
-                    key={name}
-                    onClick={() => toggleSpell(spellLevel, name)}
-                    disabled={isDisabled}
-                    className={`p-2.5 rounded-lg border text-left text-sm transition-all ${
-                      isSelected
-                        ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
-                        : isDisabled
-                        ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
-                        : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
-                    }`}
-                  >
-                    <span className="flex items-center gap-1.5">
-                      {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
-                      {name}
-                      {isBonus && <span className="text-[9px] text-amber-400 ml-auto">bonus</span>}
+                  <div key={name} className="relative">
+                    <button
+                      onClick={() => toggleSpell(spellLevel, name)}
+                      disabled={isDisabled}
+                      className={`w-full p-2.5 pr-8 rounded-lg border text-left text-sm transition-all ${
+                        isSelected
+                          ? 'border-purple-500/50 bg-purple-500/15 text-purple-200'
+                          : isDisabled
+                          ? 'border-gold-500/5 bg-charcoal-900/30 text-parchment-muted/30 cursor-not-allowed'
+                          : 'border-gold-500/10 bg-charcoal-900/50 text-parchment hover:border-purple-500/25 hover:bg-purple-500/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5">
+                        {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                        {name}
+                        {isBonus && <span className="text-[9px] text-amber-400 ml-auto">bonus</span>}
+                      </span>
+                    </button>
+                    <span className="absolute top-1.5 right-1.5">
+                      <SpellStudyButton name={name} className="text-parchment-muted/50 hover:text-purple-300 p-1 rounded touch-target" />
                     </span>
-                  </button>
+                  </div>
                 )
               })}
             </div>
