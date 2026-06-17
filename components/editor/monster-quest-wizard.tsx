@@ -114,6 +114,8 @@ const MOVEMENT_TYPES: { value: MovementType; label: string }[] = [
 const STEPS = [
   'Identity & Role',
   'Combat Stats',
+  'Abilities & Senses',
+  'Defenses',
   'Actions & Traits',
   'Everloop Lore',
   'Art & Preview',
@@ -523,8 +525,14 @@ export function MonsterQuestWizard() {
       case 1:
         return cr > 0 && hp > 0 && ac > 0
       case 2:
-        return actions.some((a) => a.name.trim())
+        // Abilities & Senses — abilities default to valid scores, nothing to gate.
+        return true
       case 3:
+        // Defenses — all damage/condition handling is optional.
+        return true
+      case 4:
+        return actions.some((a) => a.name.trim())
+      case 5:
         return whatBrokeHere.trim() && whatLeakedThrough.trim() && drawnTo.trim()
       default:
         return true
