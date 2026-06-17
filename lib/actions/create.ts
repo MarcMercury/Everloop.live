@@ -653,11 +653,12 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
       id: string
       created_by: string
       status: string
+      extended_lore: Record<string, unknown> | null
     }
 
     const { data: existing, error: checkError } = await supabase
       .from('canon_entities')
-      .select('id, created_by, status')
+      .select('id, created_by, status, extended_lore')
       .eq('id', input.id)
       .single() as { data: EntityCheck | null; error: Error | null }
 
@@ -682,17 +683,24 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
     const adminClient = createAdminClient()
     const writeClient = adminClient ?? supabase
 
+    // Merge with existing extended_lore so structured data authored elsewhere
+    // (e.g. a Quest Monster's `monster_stats`, `everloop_lore`, `region_id`)
+    // survives a prose-level edit. Only the keys the simple editor manages
+    // are overwritten.
+    const mergedExtendedLore = {
+      ...(existing.extended_lore || {}),
+      tagline: input.tagline,
+      image_url: input.imageUrl || null,
+      is_user_created: true,
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: updateError } = await (writeClient as any)
       .from('canon_entities')
       .update({
         name: input.name,
         description: input.description,
-        extended_lore: {
-          tagline: input.tagline,
-          image_url: input.imageUrl || null,
-          is_user_created: true,
-        },
+        extended_lore: mergedExtendedLore,
         updated_at: new Date().toISOString(),
       })
       .eq('id', input.id)

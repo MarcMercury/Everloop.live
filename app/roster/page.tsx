@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { DeleteEntityButton } from './delete-entity-button'
 import { SubmitToCanonButton } from './submit-to-canon-button'
+import { RosterSearch } from './roster-search'
 
 const typeIcons: Record<string, typeof User> = {
   character: User,
@@ -81,7 +82,7 @@ async function getUserEntities(
 export default async function RosterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; status?: string }>
+  searchParams: Promise<{ type?: string; status?: string; q?: string }>
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -93,13 +94,22 @@ export default async function RosterPage({
   const params = await searchParams
   const typeFilter = params.type as 'character' | 'location' | 'creature' | undefined
   const statusFilter = (params.status || 'all') as 'draft' | 'proposed' | 'canonical' | 'all'
+  const searchQuery = (params.q || '').trim().toLowerCase()
 
   const allEntities = await getUserEntities(user.id, statusFilter)
   const usageStats = await getUserEntityUsageStats(user.id)
   const usageMap = new Map(usageStats.map(s => [s.entityId, s]))
-  const entities = typeFilter 
-    ? allEntities.filter(e => e.type === typeFilter)
-    : allEntities
+  const entities = allEntities
+    .filter(e => (typeFilter ? e.type === typeFilter : true))
+    .filter(e => {
+      if (!searchQuery) return true
+      const tagline = e.extended_lore?.tagline ?? ''
+      return (
+        e.name.toLowerCase().includes(searchQuery) ||
+        tagline.toLowerCase().includes(searchQuery) ||
+        (e.description?.toLowerCase().includes(searchQuery) ?? false)
+      )
+    })
 
   // Count by type for badges
   const typeCounts = {
@@ -135,6 +145,11 @@ export default async function RosterPage({
               Create New
             </Button>
           </Link>
+        </div>
+
+        {/* Search */}
+        <div className="mb-6">
+          <RosterSearch initialQuery={params.q || ''} />
         </div>
 
         {/* Filter Tabs */}
@@ -228,18 +243,37 @@ export default async function RosterPage({
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gold/10 flex items-center justify-center">
                 <Sparkles className="w-10 h-10 text-gold" />
               </div>
-              <h2 className="text-xl font-serif text-parchment mb-2">
-                Your Roster is Empty
-              </h2>
-              <p className="text-parchment-muted mb-6">
-                Start building your collection of characters, locations, and creatures.
-              </p>
-              <Link href="/create">
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Create Your First Entity
-                </Button>
-              </Link>
+              {searchQuery ? (
+                <>
+                  <h2 className="text-xl font-serif text-parchment mb-2">
+                    No Matches Found
+                  </h2>
+                  <p className="text-parchment-muted mb-6">
+                    No entities in your roster match &ldquo;{params.q}&rdquo;. Try a
+                    different search or clear it to see everything.
+                  </p>
+                  <Link href={`/roster?${typeFilter ? `type=${typeFilter}&` : ''}status=${statusFilter}`}>
+                    <Button variant="outline" className="gap-2">
+                      Clear Search
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-serif text-parchment mb-2">
+                    Your Roster is Empty
+                  </h2>
+                  <p className="text-parchment-muted mb-6">
+                    Start building your collection of characters, locations, and creatures.
+                  </p>
+                  <Link href="/create">
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Create Your First Entity
+                    </Button>
+                  </Link>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (

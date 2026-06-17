@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
 import { BookOpen, Swords, ChevronRight, ArrowLeft } from 'lucide-react'
+import { getEntity } from '@/lib/actions/create'
+import { CreateEntityForm } from '@/app/create/[type]/create-form'
 
 const monsterPurposes = [
   {
@@ -29,7 +31,11 @@ const monsterPurposes = [
   },
 ]
 
-export default async function CreateMonsterPage() {
+export default async function CreateMonsterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>
+}) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -37,6 +43,48 @@ export default async function CreateMonsterPage() {
 
   if (!user) {
     redirect('/login?redirected=true')
+  }
+
+  const { edit: editId } = await searchParams
+
+  // ── Edit mode ──────────────────────────────────────────────
+  // The static /create/monster route shadows the dynamic [type] route, so
+  // monster edits from the Roster land here. Render the entity editor
+  // directly (prose-level fields; any quest stat block is preserved by
+  // updateEntity's extended_lore merge).
+  if (editId) {
+    const result = await getEntity(editId)
+
+    if (!result.success || !result.entity || result.entity.type !== 'monster') {
+      redirect('/roster')
+    }
+
+    const entity = result.entity!
+    const initialData = {
+      id: entity.id,
+      name: entity.name,
+      tagline: entity.extended_lore?.tagline || '',
+      description: entity.description || '',
+      imageUrl: entity.extended_lore?.image_url || null,
+    }
+
+    return (
+      <div className="min-h-screen">
+        <div className="container mx-auto px-6 py-12">
+          <div className="max-w-2xl mx-auto mb-10">
+            <h1 className="text-3xl md:text-4xl font-serif text-parchment mb-2">
+              Edit <span className="text-red-400">Monster</span>
+            </h1>
+            <p className="text-parchment-muted">
+              Refine this Drift-born horror. Its name, tagline, description, and image
+              are editable here; any campaign stat block stays intact.
+            </p>
+          </div>
+
+          <CreateEntityForm type="monster" initialData={initialData} isEditMode />
+        </div>
+      </div>
+    )
   }
 
   return (
