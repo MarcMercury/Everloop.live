@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The lore agent reads these hand-authored lore books from disk at runtime.
+  outputFileTracingIncludes: {
+    '/**': [
+      './app/stories/narrative-history/page.tsx',
+      './app/stories/four-loops-of-curiosities/page.tsx',
+      './app/stories/known-wonders-of-the-everloop/page.tsx',
+    ],
+  },
   images: {
     remotePatterns: [
       {

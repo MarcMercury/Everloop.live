@@ -266,6 +266,10 @@ export function TiptapEditor({
   const [entityPopoverPosition, setEntityPopoverPosition] = useState({ x: 0, y: 0 })
   
   const editor = useEditor({
+    // TipTap 3: avoid SSR hydration mismatches and keep v2 re-render semantics
+    // so toolbar active states update on every transaction.
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     extensions: [
       StarterKit.configure({
         heading: {

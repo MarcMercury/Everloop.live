@@ -14,7 +14,8 @@
  */
 
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
-import ReactFlow, {
+import {
+  ReactFlow,
   Background,
   Controls,
   MiniMap,
@@ -32,8 +33,8 @@ import ReactFlow, {
   type NodeProps,
   ReactFlowProvider,
   useReactFlow,
-} from 'reactflow'
-import 'reactflow/dist/style.css'
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
 import {
   Sparkles,
   MapPin,
@@ -79,7 +80,7 @@ export interface QuestSummary {
   status?: string | null
 }
 
-export interface QuestNodeData {
+export type QuestNodeData = {
   kind: QuestNodeKind
   label: string
   description?: string
@@ -213,7 +214,7 @@ const PALETTE_KINDS: QuestNodeKind[] = [
 // Custom node renderer
 // ---------------------------------------------------------------------------
 
-function QuestNode({ data, selected }: NodeProps<QuestNodeData>) {
+function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
   const meta = KIND_META[data.kind]
   const Icon = meta.icon
   const isTerminal = data.kind === 'start' || data.kind === 'climax'

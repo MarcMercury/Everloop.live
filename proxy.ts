@@ -8,14 +8,14 @@ interface CookieToSet {
 }
 
 /**
- * Middleware for session refresh and auth protection.
+ * Proxy (formerly middleware) for session refresh and auth protection.
  * 
  * This middleware:
  * 1. Refreshes the auth session on every request (keeps user logged in)
  * 2. Protects authenticated routes from unauthenticated users
  * 3. Handles cookie management for persistent sessions
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -91,10 +91,7 @@ export async function middleware(request: NextRequest) {
   return supabaseResponse
 }
 
-// Force Node.js runtime — Supabase SSR cookie handling is more reliable on Node
-// than Edge, and avoids subtle differences in cookie serialization.
-export const runtime = 'nodejs'
-
+// Next 16 proxy always runs on the Node.js runtime (required for Supabase SSR).
 export const config = {
   matcher: [
     /*

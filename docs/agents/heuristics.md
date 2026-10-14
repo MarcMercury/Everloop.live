@@ -97,7 +97,9 @@
 | Heuristic | Added |
 |-----------|-------|
 | The Everloop is **quest-only** at the UI layer. Do NOT add Campaign-named routes or surfaces. | 2026-05 |
-| Internally, "Quest" data still lives in the `campaigns*` DB tables. Renaming is gated on `supabase/migrations/PENDING_quest_rename.sql`. Use the campaign table names in `from()` calls until the migration runs. | 2026-05 |
+| Quest tables are named `quests`, `quest_players`, `quest_scenes`, `quest_sessions`, `quest_messages`, `quest_dice_rolls`, `quest_npcs` (rename applied in `20260522000000_quest_rename.sql`). FK columns were renamed `campaign_id` → `quest_id`. Never use `campaign*` names in queries (TS params named `campaignId` are legacy naming only). | 2026-10 |
+| Never name server actions with a `use` prefix (`useIdol`, `useTemplate`) — ESLint treats them as React hooks. Use `spend*`/`apply*`/`consume*`. | 2026-10 |
+| RLS is row-level only — DM-only columns (`dm_notes`, `secrets`, `secret_info`) are readable by any player who can see the row. Put secrets in separate DM-only tables/views. | 2026-10 |
 | D&D rules live in `lib/dnd-rules/` (actions, conditions, combat, rest, spellcasting, encounters, scene-templates). Import from `@/lib/dnd-rules` — do not redefine constants in components. | 2026-05 |
 | Quest printable HTML: `GET /api/quests/[id]/print` (add `?print=1` to auto-open print dialog). Backed by `lib/quest-print.ts`. | 2026-05 |
 | Quest scene map generation: `POST /api/quests/[id]/map` with `{ sceneId, prompt?, style? }`. Only the quest's `dm_id` can call it. | 2026-05 |

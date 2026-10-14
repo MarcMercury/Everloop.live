@@ -7,7 +7,7 @@ import { ArrowLeft, User, Calendar, BookOpen, Clock, Sparkles } from 'lucide-rea
 import { CANON_STORY_STATUSES, calculateReadingTime } from '@/lib/utils'
 
 interface StoryPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 interface AuthorProfile {
@@ -211,7 +211,7 @@ function EntityWikiCard({ entity }: { entity: CanonEntity }) {
 }
 
 export async function generateMetadata({ params }: StoryPageProps) {
-  const story = await getStory(params.slug)
+  const story = await getStory((await params).slug)
 
   if (!story) return { title: 'Story Not Found' }
 
@@ -222,7 +222,7 @@ export async function generateMetadata({ params }: StoryPageProps) {
 }
 
 export default async function StoryReaderPage({ params }: StoryPageProps) {
-  const story = await getStory(params.slug)
+  const story = await getStory((await params).slug)
 
   if (!story) notFound()
 

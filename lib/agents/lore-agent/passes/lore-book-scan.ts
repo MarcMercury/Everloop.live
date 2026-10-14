@@ -104,7 +104,8 @@ export async function runLoreBookScan(
 
     const root = process.cwd()
     for (const book of LORE_BOOKS) {
-      const text = extractText(path.join(root, book.file))
+      // Files are traced explicitly via outputFileTracingIncludes in next.config.mjs.
+      const text = extractText(path.join(/* turbopackIgnore: true */ root, book.file))
       if (text === null) {
         counters.books_unreadable++
         notes.push(`could not read ${book.file}`)

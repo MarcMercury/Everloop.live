@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Search, X, Sparkles } from 'lucide-react'
 import { getArchiveForPicker } from '@/lib/actions/entity-linker'
-import type { Node, Edge } from 'reactflow'
+import type { Node, Edge } from '@xyflow/react'
 
 export interface ArchiveEntity {
   id: string

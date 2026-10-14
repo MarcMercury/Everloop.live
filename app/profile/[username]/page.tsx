@@ -18,7 +18,7 @@ import {
 import { CANON_STORY_STATUSES, calculateReadingTime } from '@/lib/utils'
 
 interface ProfilePageProps {
-  params: { username: string }
+  params: Promise<{ username: string }>
 }
 
 interface ProfileData {
@@ -144,7 +144,7 @@ function getSnippet(text: string | null): string {
 }
 
 export async function generateMetadata({ params }: ProfilePageProps) {
-  const profile = await getProfile(params.username)
+  const profile = await getProfile((await params).username)
 
   if (!profile) return { title: 'Author Not Found | Everloop' }
 
@@ -156,7 +156,7 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 }
 
 export default async function AuthorProfilePage({ params }: ProfilePageProps) {
-  const profile = await getProfile(params.username)
+  const profile = await getProfile((await params).username)
 
   if (!profile) notFound()
 
