@@ -25,8 +25,8 @@ export async function CanonRefs({ searchTerm }: { searchTerm: string }) {
             >
               <span className="font-medium">{r.name}</span>
               <span className="text-parchment-muted/60 ml-2 text-xs uppercase">{r.type}</span>
-              {r.summary && (
-                <span className="block text-xs text-parchment-muted mt-0.5 line-clamp-1">{r.summary}</span>
+              {r.description && (
+                <span className="block text-xs text-parchment-muted mt-0.5 line-clamp-1">{r.description}</span>
               )}
             </Link>
           </li>

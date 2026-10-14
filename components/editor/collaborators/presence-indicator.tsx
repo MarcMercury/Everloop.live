@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -68,7 +68,8 @@ export function PresenceIndicator({ storyId, currentUser }: PresenceIndicatorPro
       const users: Presence[] = []
       
       Object.values(state).forEach((presenceList) => {
-        presenceList.forEach((p: any) => {
+        presenceList.forEach((entry) => {
+          const p = entry as unknown as { id: string; username: string; displayName: string | null; avatarUrl: string | null }
           // Don't show current user
           if (p.id !== currentUser.id) {
             users.push({

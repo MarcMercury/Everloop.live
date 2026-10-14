@@ -241,7 +241,7 @@ export function removeCondition(
 
 // ─── Spell Slot Tracking ────────────────────────────────
 
-export function useSpellSlot(
+export function expendSpellSlot(
   combatant: PlayerCombatant,
   level: string
 ): PlayerCombatant {
@@ -276,7 +276,7 @@ export function recoverSpellSlot(
 
 // ─── Ammo / Resource Tracking ───────────────────────────
 
-export function useAmmo(
+export function expendAmmo(
   combatant: PlayerCombatant,
   ammoType: string,
   count = 1
@@ -312,7 +312,7 @@ export function recoverAmmo(
 
 // ─── Feature Uses (Channel Divinity, etc.) ──────────────
 
-export function useFeature(
+export function expendFeature(
   combatant: PlayerCombatant,
   featureName: string
 ): PlayerCombatant {

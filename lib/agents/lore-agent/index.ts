@@ -57,7 +57,7 @@ export async function runLoreAgent(input: RunLoreAgentInput): Promise<RunLoreAge
         trigger: input.trigger,
         trigger_ref: input.triggerRef ?? null,
         status: 'running',
-      } as never)
+      })
       .select('id')
       .maybeSingle()
     if (error) {
@@ -86,7 +86,7 @@ export async function runLoreAgent(input: RunLoreAgentInput): Promise<RunLoreAge
         finished_at: new Date().toISOString(),
         status,
         summary: { passes, totals },
-      } as never)
+      })
       .eq('id', runId)
   }
 

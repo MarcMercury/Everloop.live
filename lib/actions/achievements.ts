@@ -131,7 +131,7 @@ export async function getUserAchievements(): Promise<{
     return { data: null, error: error.message }
   }
   
-  return { data: data as UserAchievement[], error: null }
+  return { data: data as unknown as UserAchievement[], error: null }
 }
 
 /**
@@ -192,7 +192,7 @@ export async function markAchievementsNotified(achievementIds: string[]): Promis
   }
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from('user_achievements')
     .update({ notified: true })
     .eq('user_id', user.id)
@@ -220,7 +220,7 @@ export async function getPendingAchievements(): Promise<{
   }
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from('user_achievements')
     .select(`
       *,
@@ -234,7 +234,7 @@ export async function getPendingAchievements(): Promise<{
     return { data: null, error: error.message }
   }
   
-  return { data: data as UserAchievement[], error: null }
+  return { data: data as unknown as UserAchievement[], error: null }
 }
 
 /**
@@ -257,12 +257,12 @@ export async function getAchievementStats(): Promise<{
   }
   
   // Get all achievements
-  const { data: achievements } = await (supabase as any)
+  const { data: achievements } = await supabase
     .from('achievements')
     .select('id, tier, points') as { data: { id: string; tier: string; points: number }[] | null }
   
   // Get user's unlocked achievements
-  const { data: unlocked } = await (supabase as any)
+  const { data: unlocked } = await supabase
     .from('user_achievements')
     .select('achievement_id')
     .eq('user_id', user.id) as { data: { achievement_id: string }[] | null }
@@ -315,7 +315,7 @@ export async function getProfileAchievements(userId: string): Promise<{
   const supabase = await createClient()
   
   // Get user's unlocked achievements (top 6 by points/rarity)
-  const { data: unlocked, error } = await (supabase as any)
+  const { data: unlocked, error } = await supabase
     .from('user_achievements')
     .select(`
       *,
@@ -323,14 +323,14 @@ export async function getProfileAchievements(userId: string): Promise<{
     `)
     .eq('user_id', userId)
     .order('unlocked_at', { ascending: false })
-    .limit(6) as { data: any[] | null; error: any }
+    .limit(6)
   
   if (error) {
     return { data: null, error: error.message }
   }
   
   // Get total count and points
-  const { data: allUnlocked } = await (supabase as any)
+  const { data: allUnlocked } = await supabase
     .from('user_achievements')
     .select(`
       achievement:achievements(points)
@@ -344,7 +344,7 @@ export async function getProfileAchievements(userId: string): Promise<{
   
   return {
     data: {
-      featured: (unlocked || []) as UserAchievement[],
+      featured: (unlocked || []) as unknown as UserAchievement[],
       total_count: allUnlocked?.length || 0,
       total_points: totalPoints
     },

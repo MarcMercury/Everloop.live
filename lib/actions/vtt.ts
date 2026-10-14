@@ -1,5 +1,6 @@
 'use server'
 
+import type { Json } from '@/types/database'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
@@ -53,10 +54,10 @@ async function assertCanEditScene(sceneId: string) {
 
 export async function saveVttState(sceneId: string, state: VttState) {
   const { supabase, scene, quest } = await assertCanEditScene(sceneId)
-  const metadata = { ...(scene.metadata ?? {}), vtt: state }
+  const metadata = { ...(scene.metadata ?? {}), vtt: state } as unknown as Json
   const { error } = await supabase
     .from('quest_scenes')
-    .update({ metadata } as never)
+    .update({ metadata })
     .eq('id', sceneId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)

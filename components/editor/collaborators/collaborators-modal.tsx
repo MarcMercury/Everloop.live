@@ -5,7 +5,6 @@ import {
   Users, 
   X, 
   Plus, 
-  Search, 
   Loader2, 
   UserPlus, 
   Crown,

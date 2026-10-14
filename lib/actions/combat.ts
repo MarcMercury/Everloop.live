@@ -11,24 +11,9 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { rollInitiative } from '@/lib/dnd-rules/combat'
 import type { DndCondition } from '@/types/player-character'
+import type { Combatant } from '@/types/quest'
 
-export interface Combatant {
-  id: string
-  name: string
-  initiative: number
-  dexMod: number
-  hp: number
-  maxHp: number
-  tempHp?: number
-  ac: number
-  conditions: DndCondition[]
-  isPC: boolean
-  characterId?: string | null
-  monsterKey?: string | null
-  notes?: string
-  /** Sequence number used to disambiguate duplicates ("Goblin 1", "Goblin 2"). */
-  seq?: number
-}
+export type { Combatant }
 
 export interface CombatState {
   initiativeOrder: Combatant[]
@@ -88,7 +73,7 @@ export async function startCombat(input: StartCombatInput): Promise<CombatState>
       current_turn_index: 0,
       round_number: 1,
       is_combat: true,
-    } as never)
+    })
     .eq('id', input.sessionId)
   if (error) throw new Error(error.message)
 
@@ -105,7 +90,7 @@ export async function endCombat(sessionId: string) {
       current_turn_index: 0,
       round_number: 0,
       is_combat: false,
-    } as never)
+    })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -132,7 +117,7 @@ export async function advanceTurn(sessionId: string) {
 
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ current_turn_index: next, round_number: round } as never)
+    .update({ current_turn_index: next, round_number: round })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -155,7 +140,7 @@ export async function patchCombatant(input: PatchCombatantInput) {
   const updated = order.map((c) => (c.id === input.combatantId ? { ...c, ...input.patch } : c))
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ initiative_order: updated } as never)
+    .update({ initiative_order: updated })
     .eq('id', input.sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -178,7 +163,7 @@ export async function adjustCombatantHp(sessionId: string, combatantId: string, 
   })
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ initiative_order: updated } as never)
+    .update({ initiative_order: updated })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -202,7 +187,7 @@ export async function toggleCombatantCondition(sessionId: string, combatantId: s
   })
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ initiative_order: updated as never } as never)
+    .update({ initiative_order: updated })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -225,7 +210,7 @@ export async function removeCombatant(sessionId: string, combatantId: string) {
   if (cur >= updated.length) cur = 0
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ initiative_order: updated, current_turn_index: cur } as never)
+    .update({ initiative_order: updated, current_turn_index: cur })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)
@@ -242,7 +227,7 @@ export async function addCombatant(sessionId: string, combatant: Combatant) {
   const next = [...order, combatant].sort((a, b) => b.initiative - a.initiative)
   const { error } = await supabase
     .from('quest_sessions')
-    .update({ initiative_order: next } as never)
+    .update({ initiative_order: next })
     .eq('id', sessionId)
   if (error) throw new Error(error.message)
   if (quest.slug) revalidatePath(`/quests/${quest.slug}`)

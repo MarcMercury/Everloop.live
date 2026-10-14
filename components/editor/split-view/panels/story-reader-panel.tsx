@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Search, Loader2, BookOpen, User, ChevronRight, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 interface CanonStory {

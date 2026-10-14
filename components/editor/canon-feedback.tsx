@@ -78,7 +78,7 @@ export function CanonFeedback({
           <BookOpen className="w-5 h-5 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium text-muted-foreground">Canon Check Pending</p>
-            <p className="text-xs text-muted-foreground/80">Click "Check Canon" to analyze your story</p>
+            <p className="text-xs text-muted-foreground/80">Click &ldquo;Check Canon&rdquo; to analyze your story</p>
           </div>
         </div>
       </div>

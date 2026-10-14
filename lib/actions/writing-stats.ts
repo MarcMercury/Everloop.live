@@ -38,8 +38,8 @@ export async function startWritingSession(
   }
 
   const { data, error } = await supabase
-    .from('writing_sessions' as unknown as never)
-    .insert(sessionData as unknown as never)
+    .from('writing_sessions')
+    .insert(sessionData)
     .select()
     .single()
 
@@ -64,7 +64,7 @@ export async function updateSessionWords(
 
   // Get the session to calculate words written
   const { data: session } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select('words_at_start')
     .eq('id', sessionId)
     .eq('user_id', user.id)
@@ -77,11 +77,11 @@ export async function updateSessionWords(
   const wordsWritten = currentWords - (session as unknown as WritingSession).words_at_start
 
   const { error } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .update({
       words_at_end: currentWords,
       words_written: Math.max(0, wordsWritten),
-    } as unknown as never)
+    })
     .eq('id', sessionId)
     .eq('user_id', user.id)
 
@@ -106,7 +106,7 @@ export async function endWritingSession(
 
   // Get the session
   const { data: session } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select('*')
     .eq('id', sessionId)
     .eq('user_id', user.id)
@@ -123,14 +123,14 @@ export async function endWritingSession(
   const wordsWritten = finalWords - typedSession.words_at_start
 
   const { error } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .update({
       ended_at: now.toISOString(),
       duration_seconds: durationSeconds,
       words_at_end: finalWords,
       words_written: Math.max(0, wordsWritten),
       is_active: false,
-    } as unknown as never)
+    })
     .eq('id', sessionId)
     .eq('user_id', user.id)
 
@@ -156,7 +156,7 @@ export async function endAllActiveSessions(): Promise<void> {
 
   // Get all active sessions
   const { data: sessions } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_active', true)
@@ -168,12 +168,12 @@ export async function endAllActiveSessions(): Promise<void> {
     const durationSeconds = Math.floor((now.getTime() - startedAt.getTime()) / 1000)
 
     await supabase
-      .from('writing_sessions' as unknown as never)
+      .from('writing_sessions')
       .update({
         ended_at: now.toISOString(),
         duration_seconds: durationSeconds,
         is_active: false,
-      } as unknown as never)
+      })
       .eq('id', session.id)
   }
 }
@@ -185,7 +185,7 @@ export async function getActiveSession(): Promise<WritingSession | null> {
   if (!user) return null
 
   const { data } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select('*')
     .eq('user_id', user.id)
     .eq('is_active', true)
@@ -209,7 +209,7 @@ async function aggregateDailyStats(userId: string, date: Date): Promise<void> {
 
   // Get all sessions for the day
   const { data: sessions } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select(`
       *,
       stories:story_id (id, title)
@@ -246,7 +246,7 @@ async function aggregateDailyStats(userId: string, date: Date): Promise<void> {
 
   // Get user's daily goal
   const { data: goals } = await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .select('daily_word_goal')
     .eq('user_id', userId)
     .single()
@@ -255,7 +255,7 @@ async function aggregateDailyStats(userId: string, date: Date): Promise<void> {
 
   // Upsert daily stats
   const { error } = await supabase
-    .from('daily_writing_stats' as unknown as never)
+    .from('daily_writing_stats')
     .upsert({
       user_id: userId,
       date: dateStr,
@@ -265,7 +265,7 @@ async function aggregateDailyStats(userId: string, date: Date): Promise<void> {
       stories_worked_on: Array.from(storyMap.values()),
       daily_goal: dailyGoal,
       goal_met: totalWords >= dailyGoal,
-    } as unknown as never, {
+    }, {
       onConflict: 'user_id,date',
     })
 
@@ -282,7 +282,7 @@ async function updateStreak(userId: string, dateStr: string, goalMet: boolean): 
 
   // Get current goals record
   const { data: goals } = await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .select('*')
     .eq('user_id', userId)
     .single()
@@ -292,13 +292,13 @@ async function updateStreak(userId: string, dateStr: string, goalMet: boolean): 
   if (!typedGoals) {
     // Create initial goals record
     await supabase
-      .from('writing_goals' as unknown as never)
+      .from('writing_goals')
       .insert({
         user_id: userId,
         current_streak: goalMet ? 1 : 0,
         longest_streak: goalMet ? 1 : 0,
         last_writing_date: dateStr,
-      } as unknown as never)
+      })
     return
   }
 
@@ -333,12 +333,12 @@ async function updateStreak(userId: string, dateStr: string, goalMet: boolean): 
   const longestStreak = Math.max(typedGoals.longest_streak, newStreak)
 
   await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .update({
       current_streak: newStreak,
       longest_streak: longestStreak,
       last_writing_date: dateStr,
-    } as unknown as never)
+    })
     .eq('user_id', userId)
 }
 
@@ -360,7 +360,7 @@ export async function getWritingStatsSummary(
 
   // Get daily stats for the period
   const { data: dailyStats } = await supabase
-    .from('daily_writing_stats' as unknown as never)
+    .from('daily_writing_stats')
     .select('*')
     .eq('user_id', user.id)
     .gte('date', startDateStr)
@@ -370,7 +370,7 @@ export async function getWritingStatsSummary(
 
   // Get goals for streak info
   const { data: goals } = await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .select('*')
     .eq('user_id', user.id)
     .single()
@@ -406,7 +406,7 @@ export async function getDailyStats(days: number = 30): Promise<DailyWritingStat
   const startDateStr = startDate.toISOString().split('T')[0]
 
   const { data } = await supabase
-    .from('daily_writing_stats' as unknown as never)
+    .from('daily_writing_stats')
     .select('*')
     .eq('user_id', user.id)
     .gte('date', startDateStr)
@@ -422,7 +422,7 @@ export async function getRecentSessions(limit: number = 10): Promise<WritingSess
   if (!user) return []
 
   const { data } = await supabase
-    .from('writing_sessions' as unknown as never)
+    .from('writing_sessions')
     .select(`
       *,
       stories:story_id (id, title, slug)
@@ -446,7 +446,7 @@ export async function getWritingGoals(): Promise<WritingGoals | null> {
   if (!user) return null
 
   const { data } = await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .select('*')
     .eq('user_id', user.id)
     .single()
@@ -454,13 +454,13 @@ export async function getWritingGoals(): Promise<WritingGoals | null> {
   if (!data) {
     // Create default goals
     const { data: newGoals } = await supabase
-      .from('writing_goals' as unknown as never)
+      .from('writing_goals')
       .insert({
         user_id: user.id,
         daily_word_goal: 500,
         weekly_word_goal: 3500,
         monthly_word_goal: 15000,
-      } as unknown as never)
+      })
       .select()
       .single()
 
@@ -481,11 +481,11 @@ export async function updateWritingGoals(
   }
 
   const { error } = await supabase
-    .from('writing_goals' as unknown as never)
+    .from('writing_goals')
     .upsert({
       user_id: user.id,
       ...goals,
-    } as unknown as never, {
+    }, {
       onConflict: 'user_id',
     })
 

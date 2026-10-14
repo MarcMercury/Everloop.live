@@ -194,7 +194,7 @@ export function SessionZeroModal({ questId, questTitle, open, onOpenChange, onCo
                 Heart anchors — what your character holds dear
               </label>
               <p className="text-[11px] text-slate-500 mb-3">
-                Up to {MAX_ANCHORS}. The DM will see these and may weave them in. Examples: <span className="text-slate-400">"My sister in Vale"</span>, <span className="text-slate-400">"The owl, Cob"</span>, <span className="text-slate-400">"Restoring my house's honor"</span>.
+                Up to {MAX_ANCHORS}. The DM will see these and may weave them in. Examples: <span className="text-slate-400">&ldquo;My sister in Vale&rdquo;</span>, <span className="text-slate-400">&ldquo;The owl, Cob&rdquo;</span>, <span className="text-slate-400">&ldquo;Restoring my house&rsquo;s honor&rdquo;</span>.
               </p>
               <div className="space-y-2">
                 {anchors.map((a, i) => (

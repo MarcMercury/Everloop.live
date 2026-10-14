@@ -109,7 +109,7 @@ export async function createShard(input: ShardInsert): Promise<{ data: ShardReco
       state: input.state || 'dormant',
       power_level: input.power_level || 1,
       history: [],
-    } as never)
+    })
     .select()
     .single()
 
@@ -131,7 +131,7 @@ export async function updateShard(id: string, input: ShardUpdate): Promise<{ dat
   if (!gate.ok) return { data: null, error: gate.error }
   const { adminClient } = gate
 
-  const updateData: Record<string, unknown> = {}
+  const updateData: ShardUpdate = {}
   if (input.name !== undefined) updateData.name = input.name
   if (input.shard_number !== undefined) updateData.shard_number = input.shard_number
   if (input.description !== undefined) updateData.description = input.description
@@ -151,7 +151,7 @@ export async function updateShard(id: string, input: ShardUpdate): Promise<{ dat
 
   const { data, error } = await adminClient
     .from('shards')
-    .update(updateData as never)
+    .update(updateData)
     .eq('id', id)
     .select()
     .single()
@@ -250,7 +250,7 @@ export async function recordShardEvent(input: {
       story_id: input.story_id || null,
       description: input.description,
       world_impact: input.world_impact || null,
-    } as never)
+    })
 
   if (error) {
     console.error('[recordShardEvent] Error:', error)

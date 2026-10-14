@@ -126,7 +126,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
           </form>
           {search && (
             <div className="mt-2 text-sm text-parchment-muted text-center">
-              Showing results for "{search}".
+              Showing results for &ldquo;{search}&rdquo;.
               <Link href="/stories" className="text-gold ml-2 hover:underline">Clear</Link>
             </div>
           )}

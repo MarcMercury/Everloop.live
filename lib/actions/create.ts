@@ -5,6 +5,7 @@ import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import OpenAI from 'openai'
 import { revalidatePath } from 'next/cache'
+import type { Json } from '@/types/database'
 import type { CanonEntityType } from '@/types/database'
 
 // Lazy initialization of OpenAI client for DALL-E
@@ -322,9 +323,8 @@ export async function saveEntity(input: SaveEntityInput): Promise<{
     // Cast to CanonEntityType for type safety
     const entityType = input.type as CanonEntityType
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase
-      .from('canon_entities') as any)
+    const { data, error } = await supabase
+      .from('canon_entities')
       .insert({
         name: input.name,
         slug,
@@ -921,14 +921,13 @@ export async function saveQuestMonster(input: SaveQuestMonsterInput): Promise<{
         converted_from_story: true,
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase
-        .from('canon_entities') as any)
+      const { data, error } = await supabase
+        .from('canon_entities')
         .update({
           name: input.name,
           slug,
           description: input.description,
-          extended_lore: extendedLore,
+          extended_lore: extendedLore as unknown as Json,
           metadata: mergedMetadata,
         })
         .eq('id', input.sourceEntityId)
@@ -951,9 +950,8 @@ export async function saveQuestMonster(input: SaveQuestMonsterInput): Promise<{
     }
 
     // ─── CREATE MODE: insert a brand new campaign monster ───
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase
-      .from('canon_entities') as any)
+    const { data, error } = await supabase
+      .from('canon_entities')
       .insert({
         name: input.name,
         slug,
@@ -961,7 +959,7 @@ export async function saveQuestMonster(input: SaveQuestMonsterInput): Promise<{
         description: input.description,
         status: 'draft',
         created_by: user.id,
-        extended_lore: extendedLore,
+        extended_lore: extendedLore as unknown as Json,
         metadata: baseMetadata,
       })
       .select('id, slug')

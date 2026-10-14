@@ -109,10 +109,10 @@ export async function POST(request: NextRequest) {
 
     let worldStateContext = ''
     if (convergence) {
-      worldStateContext += `\nWorld Phase: ${(convergence as Record<string, unknown>).world_phase}`
-      worldStateContext += `\nGlobal Fray Intensity: ${((convergence as Record<string, unknown>).global_fray_intensity as number * 100).toFixed(1)}%`
-      worldStateContext += `\nShards Gathered: ${(convergence as Record<string, unknown>).gathered_shards}/${(convergence as Record<string, unknown>).total_shards}`
-      worldStateContext += `\nConvergence: ${(convergence as Record<string, unknown>).convergence_percentage}%`
+      worldStateContext += `\nWorld Phase: ${convergence.world_phase}`
+      worldStateContext += `\nGlobal Fray Intensity: ${(Number(convergence.global_fray_intensity) * 100).toFixed(1)}%`
+      worldStateContext += `\nShards Gathered: ${convergence.gathered_shards}/${convergence.total_shards}`
+      worldStateContext += `\nConvergence: ${convergence.convergence_percentage}%`
     }
 
     if (regionalStates && regionalStates.length > 0) {

@@ -447,7 +447,7 @@ function formatContent(text: string, accentClass: string): string {
   // Format each paragraph
   return paragraphs.map((p, i) => {
     // Escape HTML first to prevent XSS, then apply safe formatting
-    let html = escapeHtml(p.trim())
+    const html = escapeHtml(p.trim())
       .replace(/\n/g, '<br />')
       // Preserve emphasis if present (applied after escaping, safe patterns only)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

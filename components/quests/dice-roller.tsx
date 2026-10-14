@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, Dices } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Dices } from 'lucide-react'
 
 /**
  * Visual Dice Roller

@@ -8,6 +8,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { DND_CONDITIONS, type DndCondition } from '@/types/player-character'
 import {
   rollGroupInitiative,
   sortByInitiative,
@@ -16,10 +17,10 @@ import {
   applyHealing,
   addCondition,
   removeCondition,
-  useSpellSlot,
+  expendSpellSlot,
   recoverSpellSlot,
-  useFeature,
-  useAmmo,
+  expendFeature,
+  expendAmmo,
   recoverAmmo,
   shortRest,
   longRest,
@@ -157,22 +158,22 @@ export async function POST(request: NextRequest) {
       // ─── Conditions ───────────────────────────────────
       case 'add-condition': {
         if (!combat_state || !combatant_id) return NextResponse.json({ error: 'combat_state and combatant_id required' }, { status: 400 })
-        const condition = params.condition as string
-        if (!condition) return NextResponse.json({ error: 'condition required' }, { status: 400 })
+        const condition = params.condition as DndCondition
+        if (!DND_CONDITIONS.includes(condition)) return NextResponse.json({ error: 'valid condition required' }, { status: 400 })
 
         const combatants = combat_state.combatants.map((c: Combatant) =>
-          c.id === combatant_id ? addCondition(c, condition as any) : c
+          c.id === combatant_id ? addCondition(c, condition) : c
         )
         return NextResponse.json({ ...combat_state, combatants })
       }
 
       case 'remove-condition': {
         if (!combat_state || !combatant_id) return NextResponse.json({ error: 'combat_state and combatant_id required' }, { status: 400 })
-        const condition = params.condition as string
-        if (!condition) return NextResponse.json({ error: 'condition required' }, { status: 400 })
+        const condition = params.condition as DndCondition
+        if (!DND_CONDITIONS.includes(condition)) return NextResponse.json({ error: 'valid condition required' }, { status: 400 })
 
         const combatants = combat_state.combatants.map((c: Combatant) =>
-          c.id === combatant_id ? removeCondition(c, condition as any) : c
+          c.id === combatant_id ? removeCondition(c, condition) : c
         )
         return NextResponse.json({ ...combat_state, combatants })
       }
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
         if (!level) return NextResponse.json({ error: 'level required' }, { status: 400 })
 
         const combatants = combat_state.combatants.map((c: Combatant) =>
-          c.id === combatant_id && !c.is_npc ? useSpellSlot(c as PlayerCombatant, level) : c
+          c.id === combatant_id && !c.is_npc ? expendSpellSlot(c as PlayerCombatant, level) : c
         )
         return NextResponse.json({ ...combat_state, combatants })
       }
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
         if (!featureName) return NextResponse.json({ error: 'feature_name required' }, { status: 400 })
 
         const combatants = combat_state.combatants.map((c: Combatant) =>
-          c.id === combatant_id && !c.is_npc ? useFeature(c as PlayerCombatant, featureName) : c
+          c.id === combatant_id && !c.is_npc ? expendFeature(c as PlayerCombatant, featureName) : c
         )
         return NextResponse.json({ ...combat_state, combatants })
       }
@@ -221,7 +222,7 @@ export async function POST(request: NextRequest) {
         if (!ammoType) return NextResponse.json({ error: 'ammo_type required' }, { status: 400 })
 
         const combatants = combat_state.combatants.map((c: Combatant) =>
-          c.id === combatant_id && !c.is_npc ? useAmmo(c as PlayerCombatant, ammoType, count) : c
+          c.id === combatant_id && !c.is_npc ? expendAmmo(c as PlayerCombatant, ammoType, count) : c
         )
         return NextResponse.json({ ...combat_state, combatants })
       }

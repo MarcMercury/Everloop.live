@@ -124,7 +124,7 @@ export async function POST() {
         // Update the entity with the new embedding
         const { error: updateError } = await adminClient
           .from('canon_entities')
-          .update({ embedding } as never)
+          .update({ embedding })
           .eq('id', entity.id)
         
         if (updateError) {

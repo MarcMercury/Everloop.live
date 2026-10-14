@@ -3,7 +3,8 @@
  * Core types for the Everloop Live Quest Engine
  */
 
-import { Json } from './database'
+import type { Json } from './database'
+import type { DndCondition } from './player-character'
 
 // =====================================================
 // ENUMS
@@ -475,15 +476,23 @@ export interface NpcStats {
 // INITIATIVE ORDER
 // =====================================================
 
-export interface InitiativeEntry {
-  id: string        // player_id or npc_id
+/** One entry of `quest_sessions.initiative_order` (JSONB), managed by lib/actions/combat.ts. */
+export interface Combatant {
+  id: string
   name: string
-  type: 'player' | 'npc'
   initiative: number
-  is_active: boolean
-  hp?: number
-  max_hp?: number
-  conditions?: string[]
+  dexMod: number
+  hp: number
+  maxHp: number
+  tempHp?: number
+  ac: number
+  conditions: DndCondition[]
+  isPC: boolean
+  characterId?: string | null
+  monsterKey?: string | null
+  notes?: string
+  /** Sequence number used to disambiguate duplicates ("Goblin 1", "Goblin 2"). */
+  seq?: number
 }
 
 // =====================================================
@@ -498,6 +507,18 @@ export interface DiceRollData {
   advantage_type: AdvantageType
   is_critical_hit: boolean
   is_critical_fail: boolean
+}
+
+/** Shape written by the shared dice tray (`/api/quests/[id]/roll`). */
+export interface SharedRollData {
+  formula: string
+  results: number[]
+  modifier: number
+  total: number
+  isCriticalHit: boolean
+  isCriticalFail: boolean
+  rollType?: string | null
+  rollerName?: string | null
 }
 
 // =====================================================
@@ -795,7 +816,7 @@ export interface QuestSession {
   title: string | null
   status: SessionStatus
   active_scene_id: string | null
-  initiative_order: InitiativeEntry[]
+  initiative_order: Combatant[]
   current_turn_index: number
   round_number: number
   is_combat: boolean
@@ -823,7 +844,7 @@ export interface QuestMessage {
   message_type: MessageType
   content: string
   visible_to: string[]
-  roll_data: DiceRollData | null
+  roll_data: DiceRollData | SharedRollData | null
   reference_data: Json | null
   character_name: string | null
   is_hidden: boolean

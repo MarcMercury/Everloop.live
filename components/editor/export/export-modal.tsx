@@ -160,7 +160,7 @@ export function ExportModal({
             Export Story
           </DialogTitle>
           <DialogDescription className="text-parchment-muted">
-            Download "{storyTitle}" in your preferred format
+            Download &ldquo;{storyTitle}&rdquo; in your preferred format
           </DialogDescription>
         </DialogHeader>
 
@@ -295,7 +295,7 @@ export function ExportModal({
           {/* PDF Print Instructions */}
           <div className="p-3 rounded-lg bg-teal-rich/30 border border-gold/10">
             <p className="text-xs text-parchment-muted">
-              <strong className="text-parchment">PDF Tip:</strong> Use the "PDF (Print)" option, then 
+              <strong className="text-parchment">PDF Tip:</strong> Use the &ldquo;PDF (Print)&rdquo; option, then 
               open the downloaded HTML file in your browser and use Print → Save as PDF for the best results.
             </p>
           </div>

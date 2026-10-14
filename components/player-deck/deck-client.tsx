@@ -8,13 +8,12 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import {
   Plus, Swords, Heart, Shield, Sparkles, Star,
-  Scroll, Flame, Crown, Users, Search, LayoutGrid,
-  List, SlidersHorizontal, ArrowUpDown, Filter,
-  Zap, Wind, Target, Eye, X
+  Scroll, Flame, Users, Search, LayoutGrid,
+  List, SlidersHorizontal, ArrowUpDown,
+  Zap, X
 } from 'lucide-react'
 import type { PlayerCharacter } from '@/types/player-character'
-import {
-  abilityModifier, formatModifier, hpPercentage, CLASS_COLORS, DND_CLASSES
+import { formatModifier, hpPercentage, CLASS_COLORS
 } from '@/types/player-character'
 
 type SortKey = 'name' | 'level' | 'updated' | 'class' | 'hp'

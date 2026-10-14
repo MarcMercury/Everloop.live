@@ -24,7 +24,7 @@ export async function getTemplates(
   const supabase = await createClient()
   
   let query = supabase
-    .from('story_templates' as unknown as never)
+    .from('story_templates')
     .select('*')
     .order('is_featured', { ascending: false })
     .order('use_count', { ascending: false })
@@ -51,7 +51,7 @@ export async function getTemplate(templateId: string): Promise<StoryTemplate | n
   const supabase = await createClient()
   
   const { data, error } = await supabase
-    .from('story_templates' as unknown as never)
+    .from('story_templates')
     .select('*')
     .eq('id', templateId)
     .single()
@@ -68,7 +68,7 @@ export async function getSystemTemplates(scope?: StoryScope): Promise<StoryTempl
   const supabase = await createClient()
   
   let query = supabase
-    .from('story_templates' as unknown as never)
+    .from('story_templates')
     .select('*')
     .eq('template_type', 'system')
     .order('is_featured', { ascending: false })
@@ -95,7 +95,7 @@ export async function getUserTemplates(): Promise<StoryTemplate[]> {
   if (!user) return []
   
   const { data, error } = await supabase
-    .from('story_templates' as unknown as never)
+    .from('story_templates')
     .select('*')
     .eq('created_by', user.id)
     .eq('template_type', 'user')
@@ -130,8 +130,8 @@ export async function createTemplate(
   }
 
   const { data, error } = await supabase
-    .from('story_templates' as unknown as never)
-    .insert(templateData as unknown as never)
+    .from('story_templates')
+    .insert(templateData)
     .select()
     .single()
 
@@ -156,8 +156,8 @@ export async function updateTemplate(
   }
 
   const { error } = await supabase
-    .from('story_templates' as unknown as never)
-    .update(updates as unknown as never)
+    .from('story_templates')
+    .update(updates)
     .eq('id', templateId)
     .eq('created_by', user.id)
 
@@ -181,7 +181,7 @@ export async function deleteTemplate(
   }
 
   const { error } = await supabase
-    .from('story_templates' as unknown as never)
+    .from('story_templates')
     .delete()
     .eq('id', templateId)
     .eq('created_by', user.id)
@@ -200,7 +200,7 @@ export async function deleteTemplate(
 // Template Usage
 // ============================================================================
 
-export async function useTemplate(
+export async function applyTemplate(
   templateId: string
 ): Promise<{ success: boolean; template?: StoryTemplate; error?: string }> {
   const supabase = await createClient()
@@ -212,7 +212,7 @@ export async function useTemplate(
   }
 
   // Increment use count (using RPC function)
-  await supabase.rpc('increment_template_use_count' as never, { template_id: templateId } as never)
+  await supabase.rpc('increment_template_use_count', { template_id: templateId })
 
   return { success: true, template }
 }

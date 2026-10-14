@@ -52,7 +52,8 @@ export async function getCanonEntities(options?: {
     return []
   }
   
-  return data || []
+  // Relationships are not declared in types/database.ts, so the FK join is untyped.
+  return (data ?? []) as unknown as CanonEntityWithAuthor[]
 }
 
 /**
@@ -76,7 +77,7 @@ export async function getCanonEntityBySlug(slug: string): Promise<CanonEntityWit
     return null
   }
 
-  return data
+  return data as unknown as CanonEntityWithAuthor
 }
 
 /**

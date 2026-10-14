@@ -173,9 +173,8 @@ export default function ProfileSettingsPage() {
       updated_at: new Date().toISOString(),
     }
     
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase
-      .from('profiles') as any)
+    const { error } = await supabase
+      .from('profiles')
       .update(updateData)
       .eq('id', profile.id)
     

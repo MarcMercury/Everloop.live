@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       captured_by: user.id,
       image_url: imageUrl,
       caption,
-    } as never)
+    })
     .select()
     .single()
 

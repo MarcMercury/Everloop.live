@@ -47,7 +47,7 @@ export async function getChapters(storyId: string): Promise<ChapterResult> {
   if (!isOwner && !isPublished) {
     // Check if user is a collaborator
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', storyId)
       .eq('user_id', user.id)
@@ -114,7 +114,7 @@ export async function getChapter(chapterId: string): Promise<ChapterResult> {
 
   if (!isOwner && !isPublished) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', chapterData.story_id)
       .eq('user_id', user.id)
@@ -183,7 +183,7 @@ export async function createChapter(storyId: string, title?: string): Promise<Ch
 
   const { data, error } = await supabase
     .from('story_chapters')
-    .insert(chapterData as never)
+    .insert(chapterData)
     .select()
     .single()
 
@@ -236,7 +236,7 @@ export async function updateChapter(
     .update({
       ...updates,
       updated_at: new Date().toISOString(),
-    } as never)
+    })
     .eq('id', chapterId)
     .select()
     .single()
@@ -373,7 +373,7 @@ export async function reorderChapters(
   const updates = chapterIds.map((id, index) => 
     supabase
       .from('story_chapters')
-      .update({ chapter_order: index } as never)
+      .update({ chapter_order: index })
       .eq('id', id)
   )
 

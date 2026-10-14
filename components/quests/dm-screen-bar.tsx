@@ -8,7 +8,6 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { BookOpen, Shield, Swords, Target, Sparkles, Zap, X } from 'lucide-react'
 import {
   STANDARD_ACTIONS,

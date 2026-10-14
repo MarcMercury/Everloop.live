@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { fetchRoster, type RosterEntity } from '@/lib/actions/roster'
 import { weaveEntityIntoStory } from '@/lib/actions/weave'
-import { X, User, Users, Loader2, Search, ChevronRight, Globe, Lock, MapPin, Sparkles, Package, Shield, Brain, Calendar, Wand2 } from 'lucide-react'
+import { X, User, Users, Loader2, Search, Globe, Lock, MapPin, Sparkles, Package, Shield, Brain, Calendar, Wand2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 const typeIcons: Record<string, typeof User> = {

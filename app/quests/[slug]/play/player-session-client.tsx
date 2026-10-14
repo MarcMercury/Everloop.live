@@ -1,17 +1,16 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { sendMessage, rollDiceAction, useIdol } from '@/lib/actions/quests'
+import { sendMessage, rollDiceAction, spendIdol } from '@/lib/actions/quests'
 import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/quest'
 import type {
   Quest, QuestPlayer, QuestScene, QuestSession,
   QuestMessage, NarrativeIdol, SceneMood, RollType,
 } from '@/types/quest'
 import {
-  Send, Dice1, Users, Heart, Shield, Sparkles, Eye,
-  Swords, ArrowLeft, Flame, Zap, EyeOff, MessageSquare,
+  Send, Dice1, Users, Heart, Shield, Sparkles, ArrowLeft, Zap, EyeOff,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -128,7 +127,7 @@ export function PlayerSessionClient({
     const effect = prompt(`Describe how you use "${idol.name}" (${IDOL_DEFINITIONS[idol.power as keyof typeof IDOL_DEFINITIONS]?.description ?? idol.power}):`)
     if (!effect) return
     setLoading(true)
-    await useIdol(idol.id, session.id, campaign.id, effect)
+    await spendIdol(idol.id, session.id, campaign.id, effect)
     setIdols(prev => prev.filter(i => i.id !== idol.id))
     router.refresh()
     setLoading(false)

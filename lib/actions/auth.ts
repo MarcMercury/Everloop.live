@@ -46,7 +46,7 @@ export async function login(formData: FormData): Promise<AuthResult> {
   // Update last_sign_in_at in profiles
   const { error: loginUpdateError } = await supabase
     .from('profiles')
-    .update({ last_sign_in_at: new Date().toISOString() } as never)
+    .update({ last_sign_in_at: new Date().toISOString() })
     .eq('id', data.user.id)
 
   if (loginUpdateError) {
@@ -79,7 +79,7 @@ export async function login(formData: FormData): Promise<AuthResult> {
           id: data.user.id,
           username: candidate,
           display_name: data.user.user_metadata?.display_name || candidate,
-        } as never)
+        })
 
       if (!createError) break
 
@@ -214,7 +214,7 @@ export async function signup(formData: FormData): Promise<AuthResult> {
         display_name: username,
         role: 'writer',
         reputation_score: 0,
-      } as never)
+      })
 
     if (profileError && !profileError.message.toLowerCase().includes('duplicate')) {
       console.error('[signup] Backstop profile insert failed:', profileError)

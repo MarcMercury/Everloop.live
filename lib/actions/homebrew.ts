@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import type { Json } from '@/types/database'
 
 type HomebrewKind = 'creature' | 'artifact' | 'concept' | 'location' | 'character'
 
@@ -38,9 +39,9 @@ export async function createHomebrew(input: CreateInput): Promise<{ id?: string;
       created_by: user.id,
       status: 'draft',
       tags: input.tags ?? [],
-      extended_lore: input.data ?? {},
+      extended_lore: (input.data ?? {}) as Json,
       metadata: { is_homebrew: true, kind: input.kind },
-    } as never)
+    })
     .select('id, slug')
     .single()
 

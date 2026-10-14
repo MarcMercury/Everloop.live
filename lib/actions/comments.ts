@@ -68,7 +68,7 @@ export async function getStoryComments(
   const storyRow = story as { id: string; author_id: string }
   if (storyRow.author_id !== user.id) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', storyId)
       .eq('user_id', user.id)
@@ -182,7 +182,7 @@ export async function createComment(
 
   const { data: comment, error } = await supabase
     .from('story_comments')
-    .insert(insertData as unknown as never)
+    .insert(insertData)
     .select()
     .single()
 
@@ -237,7 +237,7 @@ export async function replyToComment(
 
   const { data: comment, error } = await supabase
     .from('story_comments')
-    .insert(insertData as unknown as never)
+    .insert(insertData)
     .select()
     .single()
 
@@ -265,7 +265,7 @@ export async function updateComment(
 
   const { data: comment, error } = await supabase
     .from('story_comments')
-    .update(updates as unknown as never)
+    .update(updates)
     .eq('id', commentId)
     .eq('user_id', user.id)
     .select()
@@ -418,7 +418,7 @@ export async function shiftCommentPositions(
       .update({
         position_start: update.position_start,
         position_end: update.position_end,
-      } as unknown as never)
+      })
       .eq('id', update.id)
   }
 

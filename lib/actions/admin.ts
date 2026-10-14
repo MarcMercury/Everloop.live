@@ -66,7 +66,7 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
       is_published: true,
       published_at: now,
       updated_at: now,
-    } as never)
+    })
     .eq('id', storyId)
 
   if (error) {
@@ -81,7 +81,7 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
     decision: 'approve',
     feedback: reviewNotes || 'Approved by admin',
     is_ai_review: false,
-  } as never)
+  })
 
   revalidatePath('/admin')
   revalidatePath('/stories')
@@ -116,7 +116,7 @@ export async function requestRevisionStory(storyId: string, feedback: string) {
     .update({
       canon_status: 'revision_requested',
       updated_at: new Date().toISOString(),
-    } as never)
+    })
     .eq('id', storyId)
 
   if (error) {
@@ -127,10 +127,10 @@ export async function requestRevisionStory(storyId: string, feedback: string) {
   await supabase.from('story_reviews').insert({
     story_id: storyId,
     reviewer_id: userId,
-    decision: 'revision_requested',
+    decision: 'request_revision',
     feedback: feedback.trim(),
     is_ai_review: false,
-  } as never)
+  })
 
   revalidatePath('/admin')
   revalidatePath('/dashboard')
@@ -151,7 +151,7 @@ export async function rejectStory(storyId: string, reason: string) {
     .update({ 
       canon_status: 'rejected',
       updated_at: new Date().toISOString(),
-    } as never)
+    })
     .eq('id', storyId)
   
   if (error) {
@@ -166,7 +166,7 @@ export async function rejectStory(storyId: string, reason: string) {
     decision: 'reject',
     feedback: reason,
     is_ai_review: false,
-  } as never)
+  })
   
   revalidatePath('/admin')
   revalidatePath('/stories')
@@ -200,7 +200,7 @@ export async function updateCanonEntity(
   
   const { error } = await supabase
     .from('canon_entities')
-    .update(updateData as never)
+    .update(updateData)
     .eq('id', entityId)
   
   if (error) {
@@ -258,7 +258,7 @@ export async function createCanonEntity(data: {
       status: data.status || 'proposed',
       stability_rating: data.stability_rating || 50,
       created_by: userId,
-    } as never)
+    })
   
   if (error) {
     console.error('Create entity error:', error)
@@ -305,7 +305,7 @@ export async function canonizeEntity(entityId: string): Promise<{
       status: 'canonical',
       approved_by: userId,
       updated_at: new Date().toISOString(),
-    } as never)
+    })
     .eq('id', entityId)
     .select('id, embedding')
     .maybeSingle() as {
@@ -414,7 +414,7 @@ export async function hydrateEntity(entityId: string) {
       .update({
         embedding: embedding,
         updated_at: new Date().toISOString(),
-      } as never)
+      })
       .eq('id', entityId)
       .select('id') as { data: Array<{ id: string }> | null; error: Error | null }
 
@@ -549,7 +549,7 @@ export async function toggleUserAdmin(userId: string, makeAdmin: boolean) {
 
   const { error } = await adminClient
     .from('profiles')
-    .update({ is_admin: makeAdmin, updated_at: new Date().toISOString() } as never)
+    .update({ is_admin: makeAdmin, updated_at: new Date().toISOString() })
     .eq('id', userId)
 
   if (error) {

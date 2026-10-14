@@ -57,7 +57,7 @@ async function tryOpenAI(opts: GenerateImageOptions): Promise<Buffer> {
   }
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   // Only allow valid OpenAI sizes. For square, only 1024x1024 is supported.
-  const size: '1024x1024' = '1024x1024'
+  const size = '1024x1024' as const
   const response = await client.images.generate({
     model: 'gpt-image-1',
     prompt: opts.prompt,

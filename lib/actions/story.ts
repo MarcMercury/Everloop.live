@@ -126,7 +126,7 @@ export async function submitStory(
   // Insert the story - using type assertion to handle Supabase type inference issues
   const { data, error } = await supabase
     .from('stories')
-    .insert(storyData as never)
+    .insert(storyData)
     .select('id')
     .single()
   
@@ -178,7 +178,7 @@ export async function saveDraft(
     
     const { error } = await supabase
       .from('stories')
-      .update(updateData as never)
+      .update(updateData)
       .eq('id', storyId)
       .eq('author_id', user.id)
     
@@ -210,7 +210,7 @@ export async function saveDraft(
     
     const { data, error } = await supabase
       .from('stories')
-      .insert(draftData as never)
+      .insert(draftData)
       .select('id')
       .single()
     
@@ -289,7 +289,7 @@ export async function submitStoryById(storyId: string): Promise<SubmitStoryResul
   // Update the story status to submitted
   const { error: updateError } = await supabase
     .from('stories')
-    .update({ canon_status: 'submitted' } as never)
+    .update({ canon_status: 'submitted' })
     .eq('id', storyId)
   
   if (updateError) {
@@ -344,9 +344,9 @@ export async function deleteStory(storyId: string): Promise<{ success: boolean; 
     supabase.from('story_reviews').delete().eq('story_id', storyId),
     supabase.from('story_comments').delete().eq('story_id', storyId),
     supabase.from('story_chapters').delete().eq('story_id', storyId),
-    supabase.from('story_revisions' as never).delete().eq('story_id', storyId),
-    supabase.from('story_collaborators' as never).delete().eq('story_id', storyId),
-    supabase.from('writing_sessions' as unknown as never).delete().eq('story_id', storyId),
+    supabase.from('story_revisions').delete().eq('story_id', storyId),
+    supabase.from('story_collaborators').delete().eq('story_id', storyId),
+    supabase.from('writing_sessions').delete().eq('story_id', storyId),
   ])
   
   // Delete the story
@@ -441,7 +441,7 @@ export async function createDraftStory(
   // Insert the story
   const { data, error } = await supabase
     .from('stories')
-    .insert(storyData as never)
+    .insert(storyData)
     .select('id')
     .single()
   

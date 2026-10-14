@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { 
   X, 
-  Check, 
   MessageSquare, 
   Lightbulb, 
   HelpCircle, 
@@ -19,7 +18,6 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { 
   createComment, 
-  updateComment, 
   deleteComment, 
   resolveComment,
   replyToComment,

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import type { SceneMood } from '@/types/quest'
 
 /**
  * AI Co-DM System
@@ -101,7 +102,7 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
           prompt_type: input.type,
           suggested_mood: suggestedMood,
         },
-      } as never)
+      })
 
     // Auto-update scene mood if narration suggests a shift
     if (suggestedMood && suggestedMood !== input.context?.sceneMood) {
@@ -115,7 +116,7 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
       if (sessionRow?.active_scene_id) {
         await supabase
           .from('quest_scenes')
-          .update({ mood: suggestedMood } as never)
+          .update({ mood: suggestedMood })
           .eq('id', sessionRow.active_scene_id)
           .eq('quest_id', input.campaignId)
       }
@@ -207,7 +208,7 @@ export async function generateConsequence(
 // MOOD DETECTION
 // =====================================================
 
-const MOOD_KEYWORDS: Record<string, string[]> = {
+const MOOD_KEYWORDS: Partial<Record<SceneMood, string[]>> = {
   tense: ['tension', 'uneasy', 'danger', 'threat', 'watchful', 'nervous', 'tight', 'braced', 'standoff', 'edge'],
   mysterious: ['mystery', 'strange', 'whisper', 'shadow', 'riddle', 'enigma', 'shimmer', 'unknown', 'faint', 'veil'],
   peaceful: ['calm', 'gentle', 'warm', 'quiet', 'serene', 'sunlight', 'breeze', 'rest', 'tranquil', 'birdsong'],
@@ -223,7 +224,7 @@ const MOOD_KEYWORDS: Record<string, string[]> = {
  * Detect the dominant mood from AI-generated narrative content.
  * Uses keyword frequency scoring across mood categories.
  */
-function detectMoodFromContent(content: string): string | undefined {
+function detectMoodFromContent(content: string): SceneMood | undefined {
   const lower = content.toLowerCase()
   const scores: Record<string, number> = {}
 
@@ -235,12 +236,12 @@ function detectMoodFromContent(content: string): string | undefined {
   }
 
   // Find highest scoring mood (minimum 2 keyword hits to avoid false positives)
-  let bestMood: string | undefined
+  let bestMood: SceneMood | undefined
   let bestScore = 1 // threshold: at least 2 hits
   for (const [mood, score] of Object.entries(scores)) {
     if (score > bestScore) {
       bestScore = score
-      bestMood = mood
+      bestMood = mood as SceneMood
     }
   }
 
@@ -510,7 +511,7 @@ Generate faction moves. Return a JSON object with this exact structure:
             fray_shift: event.frayShift,
             suggested_mood: event.mood,
           },
-        } as never)
+        })
     }
 
     // Post the narrative summary
@@ -524,7 +525,7 @@ Generate faction moves. Return a JSON object with this exact structure:
           message_type: 'narration',
           content: `🌍 *The world turns...*\n\n${parsed.narrativeSummary}`,
           reference_data: { world_clock: true, summary: true, trigger },
-        } as never)
+        })
     }
 
     // Update fray intensity based on cumulative faction shifts
@@ -533,7 +534,7 @@ Generate faction moves. Return a JSON object with this exact structure:
       const newFray = Math.max(0, Math.min(1, fray + totalFrayShift))
       await supabase
         .from('quests')
-        .update({ fray_intensity: newFray } as never)
+        .update({ fray_intensity: newFray })
         .eq('id', campaignId)
     }
 

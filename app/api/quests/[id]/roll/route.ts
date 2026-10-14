@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import type { SharedRollData } from '@/types/quest'
 
 export const runtime = 'nodejs'
 
@@ -93,7 +94,7 @@ export async function POST(
     return NextResponse.json({ error: 'No active session for this quest' }, { status: 400 })
   }
 
-  const rollData = {
+  const rollData: SharedRollData = {
     formula,
     results,
     modifier,
@@ -117,7 +118,7 @@ export async function POST(
       roll_data: rollData,
       character_name: rollerName,
       visible_to: visibleTo,
-    } as never)
+    })
     .select('id, created_at')
     .single()
 

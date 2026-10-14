@@ -1,4 +1,3 @@
-// @ts-nocheck — campaign tables not yet in generated Supabase types
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
@@ -22,15 +21,22 @@ import type {
   AdvantageType,
   IdolPower,
   IdolType,
+  QuestStatus,
+  GameMode,
+  HeartAnchor,
+  NpcType,
+  NpcStats,
+  WorldCog,
 } from '@/types/quest'
+import type { Json } from '@/types/database'
 
 // =====================================================
 // CAMPAIGNS
 // =====================================================
 
 export async function getQuests(filters?: {
-  status?: string
-  game_mode?: string
+  status?: QuestStatus
+  game_mode?: GameMode
   is_public?: boolean
 }): Promise<{ success: boolean; campaigns?: Quest[]; error?: string }> {
   const supabase = await createClient()
@@ -294,7 +300,7 @@ export async function updatePlayerStatus(
     return { success: false, error: 'Only the DM can manage players' }
   }
 
-  const updates: Record<string, unknown> = { status }
+  const updates: Partial<QuestPlayer> = { status }
   if (status === 'accepted') updates.joined_at = new Date().toISOString()
 
   const { error } = await supabase
@@ -396,7 +402,7 @@ export async function getSessionZero(questId: string): Promise<{
     lines_text: string | null
     veils_text: string | null
     tone_preference: 'light' | 'mixed' | 'dark' | null
-    heart_anchors: Array<{ label: string; note?: string }>
+    heart_anchors: HeartAnchor[]
     session_zero_completed_at: string | null
   }
   error?: string
@@ -568,7 +574,7 @@ export async function setSpotlightPlayers(
 // =====================================================
 
 export async function listWorldCogs(questId: string): Promise<{
-  success: boolean; data?: any[]; error?: string
+  success: boolean; data?: WorldCog[]; error?: string
 }> {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -577,7 +583,7 @@ export async function listWorldCogs(questId: string): Promise<{
     .eq('quest_id', questId)
     .order('created_at', { ascending: true })
   if (error) return { success: false, error: error.message }
-  return { success: true, data: data ?? [] }
+  return { success: true, data: (data ?? []) as WorldCog[] }
 }
 
 async function assertDmOfQuest(questId: string) {
@@ -605,7 +611,7 @@ export async function createWorldCog(input: {
   visible_to_players?: boolean
   shard_ref?: number | null
   fray_ref?: string | null
-}): Promise<{ success: boolean; data?: any; error?: string }> {
+}): Promise<{ success: boolean; data?: WorldCog; error?: string }> {
   const g = await assertDmOfQuest(input.quest_id)
   if (!g.ok) return { success: false, error: g.error }
   const { data, error } = await g.supabase
@@ -625,7 +631,7 @@ export async function createWorldCog(input: {
     .single()
   if (error) return { success: false, error: error.message }
   if (g.slug) revalidatePath(`/quests/${g.slug}/dm`)
-  return { success: true, data }
+  return { success: true, data: data as WorldCog }
 }
 
 export async function updateWorldCog(
@@ -817,7 +823,7 @@ export async function startSession(
   // Update campaign status
   await supabase
     .from('quests')
-    .update({ status: 'in_progress' })
+    .update({ status: 'active' })
     .eq('id', campaignId)
     .eq('dm_id', user.id)
 
@@ -876,23 +882,20 @@ export async function endSession(sessionId: string, campaignId: string, summary?
     return { success: false, error: error.message }
   }
 
-  // Increment campaign session count
-  await supabase.rpc('increment_campaign_sessions', { quest_id: campaignId }).catch(() => {
-    // Fallback: manual increment
-    supabase
+  // Increment quest session count (no RPC exists for this; read-then-write is
+  // acceptable because only the DM ends sessions).
+  const { data: questCount } = await supabase
+    .from('quests')
+    .select('session_count')
+    .eq('id', campaignId)
+    .single()
+  if (questCount) {
+    const { error: countError } = await supabase
       .from('quests')
-      .select('session_count')
+      .update({ session_count: (questCount.session_count ?? 0) + 1 })
       .eq('id', campaignId)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          supabase
-            .from('quests')
-            .update({ session_count: (data.session_count ?? 0) + 1 })
-            .eq('id', campaignId)
-        }
-      })
-  })
+    if (countError) console.error('Error incrementing session count:', countError)
+  }
 
   revalidatePath(`/quests/${campaignId}`)
   return { success: true }
@@ -949,7 +952,7 @@ export async function sendMessage(input: {
   content: string
   visible_to?: string[]
   roll_data?: DiceRollData
-  reference_data?: Record<string, unknown>
+  reference_data?: Json
   character_name?: string
   tone?: 'hushed' | 'steady' | 'urgent' | 'grim' | 'wondrous' | null
 }): Promise<{ success: boolean; message?: QuestMessage; error?: string }> {
@@ -1166,10 +1169,19 @@ export async function grantIdol(input: {
   }
 
   // Update player idol count
-  await supabase.rpc('increment_player_idols', {
-    p_campaign_id: input.quest_id,
-    p_user_id: input.player_id,
-  }).catch(() => {})
+  const { data: holder } = await supabase
+    .from('quest_players')
+    .select('id, idols_held')
+    .eq('quest_id', input.quest_id)
+    .eq('user_id', input.player_id)
+    .maybeSingle()
+  if (holder) {
+    const { error: idolCountError } = await supabase
+      .from('quest_players')
+      .update({ idols_held: (holder.idols_held ?? 0) + 1 })
+      .eq('id', holder.id)
+    if (idolCountError) console.error('Error incrementing idol count:', idolCountError)
+  }
 
   // Send message
   await sendMessage({
@@ -1183,7 +1195,7 @@ export async function grantIdol(input: {
   return { success: true, idol: data as unknown as NarrativeIdol }
 }
 
-export async function useIdol(idolId: string, sessionId: string, campaignId: string, effect: string): Promise<{
+export async function spendIdol(idolId: string, sessionId: string, campaignId: string, effect: string): Promise<{
   success: boolean; error?: string
 }> {
   const supabase = await createClient()
@@ -1222,7 +1234,7 @@ export async function useIdol(idolId: string, sessionId: string, campaignId: str
     quest_id: campaignId,
     message_type: 'idol',
     content: `⚡ **${(idol as Record<string, unknown>).name}** has been activated! ${effect}. The Everloop trembles...`,
-    reference_data: { idol_id: idolId, power: (idol as Record<string, unknown>).power },
+    reference_data: { idol_id: idolId, power: String((idol as Record<string, unknown>).power ?? '') },
   })
 
   revalidatePath(`/quests/${campaignId}`)
@@ -1252,13 +1264,13 @@ export async function createNpc(input: {
   quest_id: string
   name: string
   description?: string
-  npc_type?: string
+  npc_type?: NpcType
   personality?: string
   voice_style?: string
   motivations?: string
   secrets?: string
   canon_entity_id?: string
-  stats?: Record<string, unknown>
+  stats?: NpcStats
 }): Promise<{ success: boolean; npc?: QuestNpc; error?: string }> {
   const supabase = await createClient()
 

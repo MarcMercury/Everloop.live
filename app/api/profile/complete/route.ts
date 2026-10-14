@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       }
       const { error: updateError } = await dbClient
         .from('profiles')
-        .update(updateData as never)
+        .update(updateData)
         .eq('id', user.id)
       
       if (updateError) {
@@ -117,12 +117,12 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: trimmedUsername,
         display_name: displayName?.trim() || trimmedUsername,
-        role: 'writer',
+        role: 'writer' as const,
         reputation_score: 0,
       }
       const { error: insertError } = await dbClient
         .from('profiles')
-        .insert(insertData as never)
+        .insert(insertData)
       
       if (insertError) {
         console.error('Profile creation error:', insertError)

@@ -131,19 +131,19 @@ export async function getEntityCrossReferences(entityId: string): Promise<Entity
   // compatibility with existing consumers, and all rows are surfaced under `quests`.
   const { data: quests } = await supabase
     .from('quests')
-    .select('id, title, slug, quest_type, status, game_mode')
+    .select('id, title, slug, status, game_mode')
     .contains('referenced_entities', [entityId])
-    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress', 'available', 'featured'])
+    .in('status', ['lobby', 'ready', 'active', 'paused', 'complete'])
     .order('updated_at', { ascending: false })
     .limit(20)
 
   if (quests) {
-    result.quests = (quests as Array<Record<string, unknown>>).map((q) => ({
-      id: q.id as string,
-      title: q.title as string,
-      slug: q.slug as string,
-      quest_type: (q.quest_type as string) ?? (q.game_mode as string) ?? '',
-      status: q.status as string,
+    result.quests = quests.map((q) => ({
+      id: q.id,
+      title: q.title,
+      slug: q.slug,
+      quest_type: q.game_mode ?? '',
+      status: q.status,
     }))
   }
 

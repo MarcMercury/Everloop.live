@@ -104,8 +104,8 @@ export async function createRevision(
   }
   
   const { data, error } = await supabase
-    .from('story_revisions' as never)
-    .insert({ ...insertData, created_by: user.id } as never)
+    .from('story_revisions')
+    .insert({ ...insertData, created_by: user.id })
     .select('*')
     .single()
   
@@ -151,7 +151,7 @@ export async function getRevisions(
   const storyRow = storyCheck as { id: string; author_id: string }
   if (storyRow.author_id !== user.id) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', storyId)
       .eq('user_id', user.id)
@@ -164,7 +164,7 @@ export async function getRevisions(
   }
 
   let query = supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .select('*')
     .eq('story_id', storyId)
     .order('revision_number', { ascending: false })
@@ -209,7 +209,7 @@ export async function getRevision(revisionId: string): Promise<RevisionResult> {
   }
   
   const { data, error } = await supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .select('*')
     .eq('id', revisionId)
     .single()
@@ -234,7 +234,7 @@ export async function getRevision(revisionId: string): Promise<RevisionResult> {
   const storyRow = storyCheck as { id: string; author_id: string }
   if (storyRow.author_id !== user.id) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', revision.story_id)
       .eq('user_id', user.id)
@@ -279,7 +279,7 @@ export async function getLatestRevision(
   const storyRow = storyCheck as { id: string; author_id: string }
   if (storyRow.author_id !== user.id) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', storyId)
       .eq('user_id', user.id)
@@ -292,7 +292,7 @@ export async function getLatestRevision(
   }
 
   let query = supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .select('*')
     .eq('story_id', storyId)
     .order('revision_number', { ascending: false })
@@ -460,7 +460,7 @@ export async function deleteRevision(revisionId: string): Promise<{ success: boo
   
   // Verify ownership: fetch revision -> story -> check author
   const { data: revision } = await supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .select('id, story_id')
     .eq('id', revisionId)
     .single()
@@ -481,7 +481,7 @@ export async function deleteRevision(revisionId: string): Promise<{ success: boo
   }
   
   const { error } = await supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .delete()
     .eq('id', revisionId)
   
@@ -522,7 +522,7 @@ export async function cleanupOldRevisions(
 
   // Get all auto revisions sorted by age
   const { data: revisions, error: fetchError } = await supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .select('id, revision_number')
     .eq('story_id', storyId)
     .eq('revision_type', 'auto')
@@ -541,7 +541,7 @@ export async function cleanupOldRevisions(
   const idsToDelete = revisionsToDelete.map(r => r.id)
   
   const { error: deleteError } = await supabase
-    .from('story_revisions' as never)
+    .from('story_revisions')
     .delete()
     .in('id', idsToDelete)
   
@@ -596,7 +596,7 @@ export async function restoreRevision(
         content: revision.content,
         content_text: revision.content_text,
         word_count: revision.word_count,
-      } as never)
+      })
       .eq('id', revision.chapter_id)
     
     if (error) {
@@ -612,7 +612,7 @@ export async function restoreRevision(
         content: revision.content,
         content_text: revision.content_text,
         word_count: revision.word_count,
-      } as never)
+      })
       .eq('id', revision.story_id)
     
     if (error) {

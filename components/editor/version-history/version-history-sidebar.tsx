@@ -11,7 +11,6 @@ import {
   Save,
   Send,
   BookOpen,
-  Trash2,
   AlertCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'

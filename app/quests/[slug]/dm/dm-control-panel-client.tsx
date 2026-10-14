@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
@@ -8,17 +8,15 @@ import {
   rollDiceAction, grantIdol, updateScene, setQuillHolder,
   setSpotlightPlayers,
 } from '@/lib/actions/quests'
-import { generateAINarration, generateSceneNarration, generateConsequence } from '@/lib/actions/ai-dm'
+import { generateAINarration, generateSceneNarration } from '@/lib/actions/ai-dm'
 import { MOOD_THEMES, IDOL_DEFINITIONS } from '@/types/quest'
 import type {
   Quest, QuestPlayer, QuestScene, QuestSession,
   QuestMessage, QuestNpc, NarrativeIdol,
-  SceneMood, IdolPower, IdolType, MessageTone,
+  SceneMood, IdolPower, MessageTone,
 } from '@/types/quest'
 import {
-  Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map,
-  Volume2, Eye, EyeOff, Sparkles, Flame, Shield, MessageSquare,
-  ChevronRight, Zap, Gift, SkipForward, AlertTriangle, Bot, Box,
+  Play, Square, ArrowLeft, Send, Dice1, Crown, Users, Map, EyeOff, Sparkles, Flame, Shield, MessageSquare, Zap, Bot,
   Printer, Feather, Star, Cog, Swords,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'

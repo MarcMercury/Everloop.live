@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useMemo, useCallback } from 'react'
+import { useState, useTransition, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,28 +10,25 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import {
   ChevronRight, ChevronLeft, Check, Loader2,
-  Swords, Shield, Heart, Sparkles, User,
+  Swords, Shield, Sparkles, User,
   BookOpen, Backpack, Scroll, Star, Flame,
-  Dices, Plus, Minus, RotateCcw, Zap, Wand2, X, Ruler
+  Dices, Plus, Minus, Zap, Wand2, X, Ruler
 } from 'lucide-react'
 import type {
   PlayerCharacterInsert,
-  SpellcastingData, ProficiencyData, InventoryData,
-  FeatureEntry, WeaponEntry, CompanionEntry, FeatEntry
+  FeatureEntry, WeaponEntry, FeatEntry
 } from '@/types/player-character'
 import {
   DND_CLASSES, DND_RACES, DND_ALIGNMENTS, DND_BACKGROUNDS,
   CLASS_COLORS, abilityModifier, formatModifier,
-  defaultSpellcasting, defaultProficiencies, defaultInventory
+  defaultSpellcasting, defaultProficiencies
 } from '@/types/player-character'
 import { createPlayerCharacter } from '@/lib/actions/player-characters'
 import {
-  getRace, getRaceNames, getRaceAbilityBonuses,
-  getClass, getClassNames, getClassFeaturesAtLevel, isSpellcaster,
-  getSpellSlots, getMaxSpellLevel,
-  getAvailableSpells, getCantrips, getSpellsAtLevel, getAllCantrips,
-  getBackground, getBackgroundNames,
-  BACKGROUNDS,
+  getRace, getRaceAbilityBonuses,
+  getClass, getClassFeaturesAtLevel, isSpellcaster,
+  getSpellSlots, getMaxSpellLevel, getCantrips, getSpellsAtLevel, getAllCantrips,
+  getBackground,
   WEAPONS as DND_WEAPONS, ARMOR as DND_ARMOR,
   EQUIPMENT_PACKS as DND_EQUIPMENT_PACKS,
   getAvailableInvocations, getInvocationCount,
@@ -40,9 +37,7 @@ import {
   getRacialSpells,
   lookupSpellDetail,
 } from '@/lib/data'
-import type { RaceData, ClassData, BackgroundData, WeaponData, ArmorData, InvocationData, FightingStyleData, ManeuverData, RacialSpellEntry } from '@/lib/data'
 import { FEATS, getFeat, meetsFeatPrereq } from '@/lib/data'
-import type { FeatData } from '@/lib/data'
 import { PortraitGenerator } from './portrait-generator'
 import {
   InfoButton, SpellStudyButton, FeatStudyButton, TextStudyButton,

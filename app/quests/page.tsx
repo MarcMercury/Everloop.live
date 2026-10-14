@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getConvergenceState } from '@/lib/data/world-state'
 import { GAME_MODE_INFO } from '@/types/quest'
-import type { GameMode, QuestStatus } from '@/types/quest'
+import type { GameMode } from '@/types/quest'
 import { Plus, Users, Clock, Flame, Search, Swords, Target, Skull, Eye } from 'lucide-react'
 import { WorldPulse, FrayIndicator, MonsterWarning } from '@/components/world-pulse'
 
@@ -18,7 +18,7 @@ export default async function QuestsPage() {
     .from('quests')
     .select('*, dm:profiles!quests_dm_id_fkey(id, username, display_name, avatar_url)')
     .eq('is_public', true)
-    .in('status', ['lobby', 'ready', 'active', 'recruiting', 'in_progress'])
+    .in('status', ['lobby', 'ready', 'active'])
     .order('updated_at', { ascending: false })
 
   const campaigns = (campaignsData ?? []) as unknown as QuestRow[]

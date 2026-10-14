@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     
     // Get the session
     const { data: session } = await supabase
-      .from('writing_sessions' as unknown as never)
+      .from('writing_sessions')
       .select('*')
       .eq('id', sessionId)
       .eq('user_id', user.id)
@@ -44,14 +44,14 @@ export async function POST(request: NextRequest) {
     
     // Update the session
     const { error: updateError } = await supabase
-      .from('writing_sessions' as unknown as never)
+      .from('writing_sessions')
       .update({
         ended_at: now.toISOString(),
         duration_seconds: durationSeconds,
         words_at_end: wordCount || typedSession.words_at_start,
         words_written: wordsWritten,
         is_active: false,
-      } as unknown as never)
+      })
       .eq('id', sessionId)
       .eq('user_id', user.id)
     

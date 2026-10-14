@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import { useSplitView } from './split-view-context'
 import { ResizablePanel } from './resizable-panel'
 import { LoreBrowserPanel } from './panels/lore-browser-panel'
@@ -8,7 +7,7 @@ import { StoryReaderPanel } from './panels/story-reader-panel'
 import { NotesPanel } from './panels/notes-panel'
 import { VoiceTonePanel } from './panels/voice-tone-panel'
 import { EntityLinkPanel } from './panels/entity-link-panel'
-import { X, BookOpen, ScrollText, FileText, PanelRightClose, Sparkles, Link2 } from 'lucide-react'
+import { BookOpen, ScrollText, FileText, PanelRightClose, Sparkles, Link2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 

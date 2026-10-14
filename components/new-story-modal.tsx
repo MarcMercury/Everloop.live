@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { PenLine, BookOpen, ScrollText, Sparkles, Loader2 } from 'lucide-react'
+import { PenLine, BookOpen, ScrollText, Sparkles } from 'lucide-react'
 import { createDraftStory } from '@/lib/actions/story'
 import { TemplatePicker } from '@/components/template-picker'
 import type { StoryScope, StoryTemplate, Json } from '@/types/database'

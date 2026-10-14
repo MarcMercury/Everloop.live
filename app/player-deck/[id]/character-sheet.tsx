@@ -2,15 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Heart, Shield, Swords, Zap, BookOpen, Scroll,
+  Heart, Shield, Swords, Zap, BookOpen,
   Backpack, Star, Sparkles, Moon, Sun, Flame, 
   Skull, Eye, ArrowLeft, Pencil, Dices, Target,
-  ChevronDown, ChevronUp, Timer, Brain,
+  ChevronDown, ChevronUp, Brain,
   CircleDot, Wind, PawPrint, MessageCircle,
   Loader2, Palette, X as XIcon, Info, Trophy, Printer,
 } from 'lucide-react'
@@ -98,7 +98,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   }
   
   // Spell slot usage
-  function useSpellSlot(level: string) {
+  function expendSpellSlot(level: string) {
     const slots = { ...char.spellcasting.spell_slots }
     if (slots[level] && slots[level].used < slots[level].max) {
       slots[level] = { ...slots[level], used: slots[level].used + 1 }
@@ -259,7 +259,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
   }
   
   // Feature use tracking
-  function useFeature(index: number) {
+  function expendFeature(index: number) {
     const features = [...char.features]
     if (features[index].uses_remaining && features[index].uses_remaining! > 0) {
       features[index] = { ...features[index], uses_remaining: features[index].uses_remaining! - 1 }
@@ -1201,7 +1201,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                                   ? 'bg-blue-500/20 border-blue-400/50 hover:bg-blue-500/30'
                                   : 'bg-charcoal-900 border-charcoal-900/50 opacity-40'
                               }`}
-                              onClick={() => i < slot.max - slot.used ? useSpellSlot(level) : restoreSpellSlot(level)}
+                              onClick={() => i < slot.max - slot.used ? expendSpellSlot(level) : restoreSpellSlot(level)}
                               title={i < slot.max - slot.used ? 'Click to use' : 'Click to restore'}
                             >
                               <Sparkles className={`w-3 h-3 mx-auto ${
@@ -1311,7 +1311,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
           <TabsContent value="features" className="space-y-2">
             {char.features?.length > 0 ? (
               char.features.map((feature, i) => (
-                <FeatureCard key={i} feature={feature} onUse={() => useFeature(i)} />
+                <FeatureCard key={i} feature={feature} onUse={() => expendFeature(i)} />
               ))
             ) : (
               <div className="text-center py-12 text-parchment-muted">

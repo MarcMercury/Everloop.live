@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       // Update last_sign_in_at for returning OAuth users
       const { error: updateError } = await supabase
         .from('profiles')
-        .update({ last_sign_in_at: new Date().toISOString() } as never)
+        .update({ last_sign_in_at: new Date().toISOString() })
         .eq('id', data.user.id)
       
       if (updateError) {
@@ -55,7 +55,7 @@ export async function GET(request: Request) {
             avatar_url: metadata.avatar_url || metadata.picture || null,
             role: 'writer',
             reputation_score: 0,
-          } as never)
+          })
         
         if (profileError) {
           console.error('Error creating profile for OAuth user:', profileError)

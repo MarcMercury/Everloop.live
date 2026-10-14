@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { joinQuest, selectCharacter, updateQuest, updatePlayerStatus } from '@/lib/actions/quests'
@@ -303,9 +304,9 @@ export function QuestLobbyClient({
         ) : (
           <div className="text-center">
             <p className="text-sm text-parchment-muted mb-3">No characters yet.</p>
-            <a href="/player-deck/create" className="text-sm text-gold hover:text-gold/80">
+            <Link href="/player-deck/create" className="text-sm text-gold hover:text-gold/80">
               Create a character →
-            </a>
+            </Link>
           </div>
         )}
         {error && <p className="text-xs text-red-400 mt-2">{error}</p>}

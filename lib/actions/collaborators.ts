@@ -5,7 +5,6 @@ import type {
   StoryCollaborator, 
   StoryCollaboratorInsert,
   StoryInvitation,
-  StoryInvitationInsert,
   CollaboratorRole 
 } from '@/types/database'
 
@@ -93,7 +92,7 @@ export async function getStoryRole(storyId: string): Promise<StoryRoleResult> {
   
   // Check collaborator role
   const { data: collab } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select('role')
     .eq('story_id', storyId)
     .eq('user_id', user.id)
@@ -142,7 +141,7 @@ export async function getCollaborators(storyId: string): Promise<CollaboratorsLi
   const storyRow = story as { id: string; author_id: string }
   if (storyRow.author_id !== user.id) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('id')
       .eq('story_id', storyId)
       .eq('user_id', user.id)
@@ -155,7 +154,7 @@ export async function getCollaborators(storyId: string): Promise<CollaboratorsLi
   }
   
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select(`
       *,
       user:profiles!user_id (
@@ -230,7 +229,7 @@ export async function addCollaborator(
   
   // Check if already a collaborator
   const { data: existing } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select('id')
     .eq('story_id', storyId)
     .eq('user_id', targetUser.id)
@@ -249,8 +248,8 @@ export async function addCollaborator(
   }
   
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
-    .insert(insertData as never)
+    .from('story_collaborators')
+    .insert(insertData)
     .select(`
       *,
       user:profiles!user_id (
@@ -288,7 +287,7 @@ export async function updateCollaboratorRole(
   
   // Get the collaborator to find the story
   const { data: collab } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select('story_id')
     .eq('id', collaboratorId)
     .single()
@@ -312,8 +311,8 @@ export async function updateCollaboratorRole(
   
   // Update the role
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
-    .update({ role: newRole } as never)
+    .from('story_collaborators')
+    .update({ role: newRole })
     .eq('id', collaboratorId)
     .select(`
       *,
@@ -351,7 +350,7 @@ export async function removeCollaborator(
   
   // Get the collaborator
   const { data: collab } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select('story_id, user_id')
     .eq('id', collaboratorId)
     .single()
@@ -379,8 +378,8 @@ export async function removeCollaborator(
   
   // Soft delete by setting is_active = false
   const { error } = await supabase
-    .from('story_collaborators' as never)
-    .update({ is_active: false } as never)
+    .from('story_collaborators')
+    .update({ is_active: false })
     .eq('id', collaboratorId)
   
   if (error) {
@@ -408,8 +407,8 @@ export async function acceptCollaboration(
   
   // Update to accepted
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
-    .update({ accepted_at: new Date().toISOString() } as never)
+    .from('story_collaborators')
+    .update({ accepted_at: new Date().toISOString() })
     .eq('id', collaboratorId)
     .eq('user_id', user.id) // Ensure user can only accept their own
     .is('accepted_at', null) // Only if not already accepted
@@ -447,7 +446,7 @@ export async function getPendingInvitations(): Promise<CollaboratorsListResult> 
   
   // Get collaborations that haven't been accepted yet
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select(`
       *,
       story:stories (
@@ -503,7 +502,7 @@ export async function getCollaboratingStories(): Promise<{
   }
   
   const { data, error } = await supabase
-    .from('story_collaborators' as never)
+    .from('story_collaborators')
     .select(`
       role,
       story:stories (

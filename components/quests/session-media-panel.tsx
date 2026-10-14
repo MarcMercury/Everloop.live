@@ -16,7 +16,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, Camera, Mic, MicOff, Music, Pause, Play, Search, Square, Upload, Volume2, VolumeX, Loader2, X, Image as ImageIcon } from 'lucide-react'
+import { Camera, Mic, MicOff, Music, Play, Search, Square, Upload, Volume2, VolumeX, Loader2, X } from 'lucide-react'
 import { useAudioPlayer } from '@/lib/media/use-audio-player'
 import { useMicSoundMeter } from '@/lib/media/use-mic-sound-meter'
 import { useCameraCapture } from '@/lib/media/use-camera-capture'

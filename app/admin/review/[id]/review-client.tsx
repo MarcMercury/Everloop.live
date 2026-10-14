@@ -9,7 +9,6 @@ import { approveStory, rejectStory, requestRevisionStory } from '@/lib/actions/a
 import { getStoryStatusLabel } from '@/lib/utils'
 import { 
   ArrowLeft, 
-  CheckCircle, 
   XCircle, 
   Loader2, 
   User, 

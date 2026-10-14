@@ -1,5 +1,6 @@
 'use client'
 
+import type { Json } from '@/types/database'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
@@ -302,7 +303,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
         .map(s => s.trim())
         .filter(Boolean)
         .map(label => ({ label })),
-      metadata: combinedMeta as never,
+      metadata: combinedMeta as Json | undefined,
     })
     if (result.success && result.scene) {
       setScenes(prev => [...prev, result.scene!])

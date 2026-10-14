@@ -43,7 +43,7 @@ export default async function WriteStoryPage({ params }: WriteStoryPageProps) {
   let hasEditAccess = isOwner
   if (!isOwner) {
     const { data: collab } = await supabase
-      .from('story_collaborators' as never)
+      .from('story_collaborators')
       .select('role')
       .eq('story_id', id)
       .eq('user_id', user.id)

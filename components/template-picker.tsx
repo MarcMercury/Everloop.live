@@ -6,7 +6,6 @@ import {
   ScrollText, 
   Sparkles, 
   FileText,
-  Users,
   Eye,
   Loader2,
   ChevronRight,
@@ -15,7 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { getSystemTemplates, useTemplate } from '@/lib/actions/templates'
+import { getSystemTemplates, applyTemplate } from '@/lib/actions/templates'
 import type { StoryTemplate, StoryScope, Json } from '@/types/database'
 
 interface TemplatePickerProps {
@@ -49,7 +48,7 @@ export function TemplatePicker({ scope, onSelect, onCancel, isLoading }: Templat
 
   const handleTemplateSelect = useCallback(async (template: StoryTemplate) => {
     // Track usage
-    await useTemplate(template.id)
+    await applyTemplate(template.id)
     onSelect(template)
   }, [onSelect])
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Volume2, VolumeX, Music, Wind } from 'lucide-react'
+import { Volume2, VolumeX, Music } from 'lucide-react'
 import type { SceneMood } from '@/types/quest'
 
 /**

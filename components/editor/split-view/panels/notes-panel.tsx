@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Save, Loader2, FileText } from 'lucide-react'
+import { Loader2, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface NotesPanelProps {

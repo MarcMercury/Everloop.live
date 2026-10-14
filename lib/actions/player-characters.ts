@@ -96,7 +96,7 @@ export async function createPlayerCharacter(input: Omit<PlayerCharacterInsert, '
   
   const { data, error } = await supabase
     .from('player_characters')
-    .insert(insertData as never)
+    .insert(insertData)
     .select()
     .single()
   
@@ -131,7 +131,7 @@ export async function updatePlayerCharacter(id: string, updates: PlayerCharacter
 
   const { data, error } = await supabase
     .from('player_characters')
-    .update(updates as never)
+    .update(updates)
     .eq('id', id)
     .eq('user_id', user.id)
     .select()
@@ -168,7 +168,7 @@ export async function updateCharacterHP(id: string, current_hp: number, temp_hp?
   
   const { error } = await supabase
     .from('player_characters')
-    .update(updateData as never)
+    .update(updateData)
     .eq('id', id)
     .eq('user_id', user.id)
   
@@ -195,7 +195,7 @@ export async function updateSpellSlots(id: string, spellcasting: Record<string, 
   
   const { error } = await supabase
     .from('player_characters')
-    .update({ spellcasting } as never)
+    .update({ spellcasting })
     .eq('id', id)
     .eq('user_id', user.id)
   
@@ -222,7 +222,7 @@ export async function updateCharacterStatus(id: string, status: Record<string, u
   
   const { error } = await supabase
     .from('player_characters')
-    .update({ status } as never)
+    .update({ status })
     .eq('id', id)
     .eq('user_id', user.id)
   
@@ -249,7 +249,7 @@ export async function updateFeatureUses(id: string, features: Record<string, unk
   
   const { error } = await supabase
     .from('player_characters')
-    .update({ features } as never)
+    .update({ features })
     .eq('id', id)
     .eq('user_id', user.id)
   
