@@ -77,7 +77,7 @@ export default function EverloopGamePage() {
           </div>
 
           {/* Hero Image */}
-          <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-12 border border-gold/20">
+          <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-12 border border-gold/20">
             <Image
               src="/game/full-set.png"
               alt="The complete Everloop game set laid out on a dark stone table"
@@ -85,7 +85,7 @@ export default function EverloopGamePage() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
             <div className="absolute bottom-0 inset-x-0 p-8 text-center">
               <h1 className="text-3xl md:text-5xl font-serif mb-2">
                 <span className="text-gold">EVERLOOP</span>
@@ -240,7 +240,7 @@ export default function EverloopGamePage() {
               </p>
 
               {/* Modifier & Reaction cards image */}
-              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden mb-8 border border-gold/10">
+              <div className="relative w-full aspect-2/1 rounded-lg overflow-hidden mb-8 border border-gold/10">
                 <Image
                   src="/game/modifier-cards.png"
                   alt="Modifier and Reaction cards — Split, Inverse, Loop, Shield, and Compass"
@@ -327,7 +327,7 @@ export default function EverloopGamePage() {
                   },
                 ].map((step) => (
                   <div key={step.step} className="flex gap-4 p-4 rounded-lg bg-teal-rich/50 border border-gold/10">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center">
+                    <div className="shrink-0 w-10 h-10 rounded-full bg-gold/15 border border-gold/30 flex items-center justify-center">
                       <span className="text-gold font-serif font-semibold">{step.step}</span>
                     </div>
                     <div>

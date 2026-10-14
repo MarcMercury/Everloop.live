@@ -130,7 +130,7 @@ export function SessionZeroModal({ questId, questTitle, open, onOpenChange, onCo
                 onChange={(e) => setLines(e.target.value.slice(0, 1000))}
                 rows={3}
                 placeholder="Topics that must not appear at the table. E.g. harm to children, graphic torture, real-world hate."
-                className="w-full bg-slate-900 border border-rose-900/40 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-rose-500/40 resize-none"
+                className="w-full bg-slate-900 border border-rose-900/40 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-rose-500/40 resize-none"
               />
               <p className="text-[11px] text-slate-500 mt-1">
                 Hard limit. The DM will keep these out of the quest. {lines.length}/1000
@@ -148,7 +148,7 @@ export function SessionZeroModal({ questId, questTitle, open, onOpenChange, onCo
                 onChange={(e) => setVeils(e.target.value.slice(0, 1000))}
                 rows={3}
                 placeholder="Topics that may exist off-screen but should not be played out in detail."
-                className="w-full bg-slate-900 border border-amber-900/40 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/40 resize-none"
+                className="w-full bg-slate-900 border border-amber-900/40 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 resize-none"
               />
               <p className="text-[11px] text-slate-500 mt-1">
                 Soft limit. The DM will narrate around these. {veils.length}/1000
@@ -204,13 +204,13 @@ export function SessionZeroModal({ questId, questTitle, open, onOpenChange, onCo
                         value={a.label}
                         onChange={(e) => updateAnchor(i, { label: e.target.value.slice(0, 80) })}
                         placeholder={`Anchor ${i + 1}`}
-                        className="w-full bg-slate-900 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-pink-500/40"
+                        className="w-full bg-slate-900 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-pink-500/40"
                       />
                       <input
                         value={a.note || ''}
                         onChange={(e) => updateAnchor(i, { note: e.target.value.slice(0, 200) })}
                         placeholder="Why it matters (optional)"
-                        className="w-full bg-slate-900/60 border border-slate-800/60 rounded-md px-3 py-1.5 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-pink-500/30"
+                        className="w-full bg-slate-900/60 border border-slate-800/60 rounded-md px-3 py-1.5 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-hidden focus:ring-1 focus:ring-pink-500/30"
                       />
                     </div>
                     {anchors.length > 1 && (

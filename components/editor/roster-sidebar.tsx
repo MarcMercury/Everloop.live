@@ -174,7 +174,7 @@ export function RosterSidebar({
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg bg-navy/50 border border-charcoal-700
                          text-foreground placeholder:text-muted-foreground/50
-                         focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-none"
+                         focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-hidden"
             />
           </div>
           

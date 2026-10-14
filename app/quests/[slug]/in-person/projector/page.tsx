@@ -75,7 +75,7 @@ function ProjectorInner() {
             className="max-w-full max-h-full object-contain"
           />
           {(payload.caption || payload.sceneTitle) && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-6 text-center">
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/90 via-black/60 to-transparent p-6 text-center">
               {payload.sceneTitle && (
                 <div className="text-xs uppercase tracking-[0.3em] text-amber-200/80 mb-1">
                   {payload.sceneTitle}

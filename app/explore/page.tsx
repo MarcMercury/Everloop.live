@@ -151,7 +151,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                   'inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm transition-all',
                   'border',
                   isActive
-                    ? 'bg-gold/15 border-gold/50 text-gold shadow-sm shadow-gold/10'
+                    ? 'bg-gold/15 border-gold/50 text-gold shadow-xs shadow-gold/10'
                     : 'bg-teal-rich/50 border-gold/10 text-parchment-muted hover:border-gold/25 hover:text-parchment'
                 )}
               >

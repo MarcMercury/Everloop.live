@@ -18,7 +18,7 @@ export default function NotFound() {
         <div className="flex items-center justify-center gap-3 pt-2">
           <Link
             href="/"
-            className="inline-flex items-center px-4 py-2 rounded-md bg-gradient-to-b from-gold to-gold-600 text-charcoal text-sm font-medium shadow-md shadow-gold/20 hover:from-gold-400 hover:to-gold-500 transition-all"
+            className="inline-flex items-center px-4 py-2 rounded-md bg-linear-to-b from-gold to-gold-600 text-charcoal text-sm font-medium shadow-md shadow-gold/20 hover:from-gold-400 hover:to-gold-500 transition-all"
           >
             Return home
           </Link>

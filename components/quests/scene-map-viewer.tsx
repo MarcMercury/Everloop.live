@@ -40,7 +40,7 @@ export function SceneMapViewer({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="block focus:outline-none focus:ring-2 focus:ring-gold/40 rounded"
+          className="block focus:outline-hidden focus:ring-2 focus:ring-gold/40 rounded"
           title="Expand map"
         >
           <MapWithHexOverlay
@@ -93,7 +93,7 @@ function ExpandedMap({
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-100 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div

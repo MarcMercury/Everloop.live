@@ -313,7 +313,7 @@ export function MobileMenu({ isOpen, onClose, children }: MobileMenuProps) {
     <div className="fixed inset-0 z-50 md:hidden">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs"
         onClick={onClose}
       />
       

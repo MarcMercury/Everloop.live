@@ -130,7 +130,7 @@ export function InPersonDashboardClient({
       {/* ============================================
           TOP BAR
           ============================================ */}
-      <header className="sticky top-0 z-20 border-b border-gold/20 bg-teal-deep/95 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-gold/20 bg-teal-deep/95 backdrop-blur-sm">
         <div className="max-w-[1800px] mx-auto px-4 py-3 flex items-center gap-3 flex-wrap">
           <Link
             href={`/quests/${quest.slug}`}
@@ -153,7 +153,7 @@ export function InPersonDashboardClient({
             <Link
               href={`/quests/${quest.slug}/in-person/projector?sessionId=${session.id}`}
               target="_blank"
-              className="btn-outline-fantasy text-xs flex items-center gap-1.5 !py-1.5"
+              className="btn-outline-fantasy text-xs flex items-center gap-1.5 py-1.5!"
             >
               <Monitor className="w-3.5 h-3.5" />
               Open Projector
@@ -161,7 +161,7 @@ export function InPersonDashboardClient({
             <Link
               href={`/api/quests/${quest.id}/print?print=1`}
               target="_blank"
-              className="btn-outline-fantasy text-xs flex items-center gap-1.5 !py-1.5"
+              className="btn-outline-fantasy text-xs flex items-center gap-1.5 py-1.5!"
             >
               <Printer className="w-3.5 h-3.5" />
               Packet
@@ -170,7 +170,7 @@ export function InPersonDashboardClient({
               onClick={handleEndSession}
               disabled={endingSession}
               variant="ghost"
-              className="text-red-300 hover:bg-red-500/10 text-xs !py-1.5"
+              className="text-red-300 hover:bg-red-500/10 text-xs py-1.5!"
             >
               <Square className="w-3.5 h-3.5 mr-1" />
               End
@@ -558,7 +558,7 @@ function ImageBoardPanel({
               size="sm"
               onClick={() => { if (manualUrl) { pushImage(manualUrl, null); setManualUrl('') } }}
               disabled={!manualUrl}
-              className="btn-fantasy text-xs !py-1"
+              className="btn-fantasy text-xs py-1!"
             >
               Push
             </Button>
@@ -773,11 +773,11 @@ function CombatTrackerPanel({
           <div className="text-center py-4 space-y-2">
             <div className="text-xs text-parchment-muted">No combatants yet.</div>
             <div className="flex gap-2 justify-center">
-              <Button size="sm" onClick={importPartyAndNpcs} className="btn-fantasy text-xs !py-1">
+              <Button size="sm" onClick={importPartyAndNpcs} className="btn-fantasy text-xs py-1!">
                 <Plus className="w-3 h-3 mr-1" />
                 Add Party + NPCs
               </Button>
-              <Button size="sm" onClick={rollAllInitiative} variant="ghost" className="text-xs !py-1 text-parchment-muted">
+              <Button size="sm" onClick={rollAllInitiative} variant="ghost" className="text-xs py-1! text-parchment-muted">
                 <Dice5 className="w-3 h-3 mr-1" />
                 Roll All
               </Button>
@@ -802,9 +802,9 @@ function CombatTrackerPanel({
               >
                 <div className="flex items-center gap-2">
                   {c.type === 'player' ? (
-                    <Crown className="w-3 h-3 text-gold flex-shrink-0" />
+                    <Crown className="w-3 h-3 text-gold shrink-0" />
                   ) : (
-                    <span className="text-[10px] text-parchment-muted flex-shrink-0">NPC</span>
+                    <span className="text-[10px] text-parchment-muted shrink-0">NPC</span>
                   )}
                   <Input
                     type="number"
@@ -819,7 +819,7 @@ function CombatTrackerPanel({
                   )}
                   <button
                     onClick={() => removeCombatant(c.id)}
-                    className="text-parchment-muted hover:text-red-300 flex-shrink-0"
+                    className="text-parchment-muted hover:text-red-300 shrink-0"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -848,7 +848,7 @@ function CombatTrackerPanel({
                         type="number"
                         value={c.hp}
                         onChange={e => setHpDirect(c.id, parseInt(e.target.value) || 0)}
-                        className="w-10 bg-transparent text-center outline-none"
+                        className="w-10 bg-transparent text-center outline-hidden"
                       />
                       <span className="opacity-70">/ {c.maxHp}</span>
                     </div>
@@ -898,7 +898,7 @@ function CombatTrackerPanel({
           size="sm"
           onClick={addAdHoc}
           disabled={!newName.trim()}
-          className="btn-fantasy text-xs !py-1 !px-2 h-7"
+          className="btn-fantasy text-xs py-1! px-2! h-7"
         >
           <Plus className="w-3 h-3" />
         </Button>

@@ -203,7 +203,7 @@ function BookSpine({
 
   return (
     <div
-      className={`relative flex-shrink-0 group transition-all duration-300 ${
+      className={`relative shrink-0 group transition-all duration-300 ${
         isReal ? 'cursor-pointer hover:-translate-y-3 hover:z-10' : ''
       }`}
       style={{
@@ -255,13 +255,13 @@ function BookSpine({
         {style.hasGoldEmboss && (
           <>
             <div
-              className="absolute top-3 left-1 right-1 h-[1px]"
+              className="absolute top-3 left-1 right-1 h-px"
               style={{
                 background: `linear-gradient(90deg, transparent, ${style.accent}88, transparent)`,
               }}
             />
             <div
-              className="absolute top-5 left-1 right-1 h-[1px]"
+              className="absolute top-5 left-1 right-1 h-px"
               style={{
                 background: `linear-gradient(90deg, transparent, ${style.accent}55, transparent)`,
               }}
@@ -300,13 +300,13 @@ function BookSpine({
         {style.hasGoldEmboss && (
           <>
             <div
-              className="absolute bottom-5 left-1 right-1 h-[1px]"
+              className="absolute bottom-5 left-1 right-1 h-px"
               style={{
                 background: `linear-gradient(90deg, transparent, ${style.accent}55, transparent)`,
               }}
             />
             <div
-              className="absolute bottom-3 left-1 right-1 h-[1px]"
+              className="absolute bottom-3 left-1 right-1 h-px"
               style={{
                 background: `linear-gradient(90deg, transparent, ${style.accent}88, transparent)`,
               }}

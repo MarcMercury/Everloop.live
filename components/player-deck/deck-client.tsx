@@ -374,12 +374,12 @@ function CharacterTile({ character }: { character: PlayerCharacter }) {
 
   return (
     <Link href={`/player-deck/${character.id}`}>
-      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border-gold-500/10 hover:border-gold-500/30 bg-gradient-to-b from-teal-rich/80 to-charcoal-900/80 character-tile">
+      <Card className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl border-gold-500/10 hover:border-gold-500/30 bg-linear-to-b from-teal-rich/80 to-charcoal-900/80 character-tile">
         {/* Class color accent */}
         <div className="absolute top-0 left-0 right-0 h-1 opacity-80 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: classColor }} />
 
         {/* Portrait */}
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="relative aspect-3/4 overflow-hidden">
           {character.portrait_url ? (
             <img
               src={character.portrait_url}
@@ -397,7 +397,7 @@ function CharacterTile({ character }: { character: PlayerCharacter }) {
             </div>
           )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-charcoal-900 via-transparent to-transparent" />
 
           {/* Level badge */}
           <div
@@ -441,14 +441,14 @@ function CharacterTile({ character }: { character: PlayerCharacter }) {
         {/* Stats Bar */}
         <div className="p-3 md:p-4 space-y-2">
           <div className="flex items-center gap-2">
-            <Heart className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+            <Heart className="w-3.5 h-3.5 text-red-400 shrink-0" />
             <div className="flex-1 h-2 bg-charcoal-950 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${hp > 50 ? 'bg-emerald-500' : hp > 25 ? 'bg-amber-500' : 'bg-red-500'}`}
                 style={{ width: `${hp}%` }}
               />
             </div>
-            <span className="text-xs text-parchment-muted font-mono min-w-[3rem] text-right">
+            <span className="text-xs text-parchment-muted font-mono min-w-12 text-right">
               {character.current_hp}/{character.max_hp}
             </span>
           </div>
@@ -483,9 +483,9 @@ function CharacterRow({ character }: { character: PlayerCharacter }) {
 
   return (
     <Link href={`/player-deck/${character.id}`}>
-      <Card className="group flex items-center gap-4 p-3 md:p-4 cursor-pointer transition-all duration-200 hover:border-gold-500/30 border-gold-500/10 bg-gradient-to-r from-teal-rich/60 to-charcoal-900/60">
+      <Card className="group flex items-center gap-4 p-3 md:p-4 cursor-pointer transition-all duration-200 hover:border-gold-500/30 border-gold-500/10 bg-linear-to-r from-teal-rich/60 to-charcoal-900/60">
         {/* Mini Portrait */}
-        <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden flex-shrink-0 border" style={{ borderColor: `${classColor}40` }}>
+        <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden shrink-0 border" style={{ borderColor: `${classColor}40` }}>
           {character.portrait_url ? (
             <img src={character.portrait_url} alt={character.name} className="w-full h-full object-cover" />
           ) : (
@@ -502,16 +502,16 @@ function CharacterRow({ character }: { character: PlayerCharacter }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-sm md:text-base font-serif text-parchment font-medium truncate">{character.name}</h3>
-            <Badge variant="outline" className="text-[10px] flex-shrink-0" style={{ borderColor: `${classColor}40`, color: classColor }}>
+            <Badge variant="outline" className="text-[10px] shrink-0" style={{ borderColor: `${classColor}40`, color: classColor }}>
               Lvl {character.level}
             </Badge>
             {hasConditions && (
-              <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 flex-shrink-0">
+              <Badge variant="outline" className="text-[10px] border-red-500/30 text-red-400 shrink-0">
                 {character.status.conditions.length} condition{character.status.conditions.length !== 1 ? 's' : ''}
               </Badge>
             )}
             {!character.is_active && (
-              <Badge variant="outline" className="text-[10px] border-parchment-muted/20 text-parchment-muted/50 flex-shrink-0">
+              <Badge variant="outline" className="text-[10px] border-parchment-muted/20 text-parchment-muted/50 shrink-0">
                 Retired
               </Badge>
             )}
@@ -523,7 +523,7 @@ function CharacterRow({ character }: { character: PlayerCharacter }) {
         </div>
 
         {/* Quick Stats */}
-        <div className="hidden sm:flex items-center gap-4 text-xs text-parchment-muted flex-shrink-0">
+        <div className="hidden sm:flex items-center gap-4 text-xs text-parchment-muted shrink-0">
           <div className="flex items-center gap-1.5">
             <Heart className="w-3.5 h-3.5 text-red-400" />
             <div className="w-16 h-1.5 bg-charcoal-950 rounded-full overflow-hidden">
@@ -540,7 +540,7 @@ function CharacterRow({ character }: { character: PlayerCharacter }) {
         </div>
 
         {/* Mobile quick stat */}
-        <div className="sm:hidden flex items-center gap-2 text-xs flex-shrink-0">
+        <div className="sm:hidden flex items-center gap-2 text-xs shrink-0">
           <span className="font-mono text-parchment">{character.current_hp}/{character.max_hp}</span>
           <Shield className="w-3 h-3 text-parchment-muted" />
           <span className="text-parchment-muted">{character.armor_class}</span>

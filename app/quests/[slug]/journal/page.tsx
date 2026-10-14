@@ -152,7 +152,7 @@ function Entry({ m }: { m: MessageRow }) {
       <span className="text-[10px] text-parchment-muted/60 font-mono w-10 shrink-0 mt-0.5">{time}</span>
       <span className={`shrink-0 mt-0.5 ${color}`}>{icon}</span>
       <span className="text-xs font-medium text-parchment-muted shrink-0 w-24 truncate mt-0.5">{author}:</span>
-      <span className={`text-sm ${color} break-words`}>
+      <span className={`text-sm ${color} wrap-break-word`}>
         {m.message_type === 'roll' && m.roll_data ? (
           <>
             {m.roll_data.formula} = <span className="font-mono font-bold">{m.roll_data.total}</span>

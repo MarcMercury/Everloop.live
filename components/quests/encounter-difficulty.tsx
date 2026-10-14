@@ -82,7 +82,7 @@ export function EncounterDifficulty() {
         value={partyText}
         onChange={(e) => setPartyText(e.target.value)}
         placeholder="3,3,3,3"
-        className="w-full mb-3 rounded bg-teal-rich/50 border border-gold/20 text-parchment text-sm p-2 focus:outline-none focus:ring-2 focus:ring-gold/40"
+        className="w-full mb-3 rounded bg-teal-rich/50 border border-gold/20 text-parchment text-sm p-2 focus:outline-hidden focus:ring-2 focus:ring-gold/40"
       />
 
       <div className="space-y-2 mb-2">
@@ -91,7 +91,7 @@ export function EncounterDifficulty() {
             <select
               value={m.cr}
               onChange={(e) => updateMonster(m.id, { cr: e.target.value })}
-              className="rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-none"
+              className="rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-hidden"
             >
               {CR_OPTIONS.map((cr) => (
                 <option key={cr} value={cr}>
@@ -106,7 +106,7 @@ export function EncounterDifficulty() {
               onChange={(e) =>
                 updateMonster(m.id, { count: Math.max(1, parseInt(e.target.value, 10) || 1) })
               }
-              className="w-16 rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-none"
+              className="w-16 rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-hidden"
             />
             <span className="text-xs text-parchment-muted">×</span>
             <button

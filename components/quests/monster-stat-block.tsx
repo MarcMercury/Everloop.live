@@ -90,7 +90,7 @@ export function MonsterStatBlock({ stats, name }: Props) {
   const skillsStr = stats.skills.map((s) => `${s.name} ${formatMod(s.bonus)}`).join(', ')
 
   return (
-    <div className="rounded-lg border border-gold/30 bg-charcoal-900/70 backdrop-blur text-parchment shadow-lg p-5 font-serif">
+    <div className="rounded-lg border border-gold/30 bg-charcoal-900/70 backdrop-blur-sm text-parchment shadow-lg p-5 font-serif">
       {/* Header */}
       <div className="border-b border-gold/30 pb-2 mb-3">
         <h2 className="text-2xl font-bold text-gold tracking-wide">{name}</h2>

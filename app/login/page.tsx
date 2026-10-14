@@ -112,7 +112,7 @@ function LoginPageContent() {
           {/* Success display */}
           {success && (
             <div className="mb-4 p-3 rounded-md bg-green-500/10 border border-green-500/30 text-sm text-green-400 flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <CheckCircle className="w-4 h-4 mt-0.5 shrink-0" />
               <span>{success}</span>
             </div>
           )}

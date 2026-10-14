@@ -1,6 +1,570 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@config '../tailwind.config.mts';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility canon-glow {
+  /* Canon glow effect - warmer, more magical */
+  box-shadow:
+    0 0 20px rgba(212, 168, 75, 0.25),
+    0 0 40px rgba(212, 168, 75, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    box-shadow:
+      0 0 30px rgba(212, 168, 75, 0.4),
+      0 0 60px rgba(212, 168, 75, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+}
+
+@utility canon-text {
+  /* Text with canon styling - warm parchment glow */
+  @apply font-serif;
+  color: #d4a84b;
+  text-shadow:
+    0 0 30px rgba(212, 168, 75, 0.5),
+    0 0 60px rgba(212, 168, 75, 0.3);
+}
+
+@utility story-card {
+  /* Parchment-style cards */
+  @apply rounded-lg p-6;
+  background: linear-gradient(
+    135deg,
+    rgba(26, 48, 48, 0.6) 0%,
+    rgba(20, 40, 40, 0.8) 100%
+  );
+  border: 1px solid rgba(212, 168, 75, 0.15);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  @apply transition-all duration-300;
+
+  &:hover {
+    border-color: rgba(212, 168, 75, 0.35);
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(212, 168, 75, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+@utility ornate-border {
+  /* Fantasy border ornament */
+  position: relative;
+
+  &::before {
+    content: '◆';
+    position: absolute;
+    color: rgba(212, 168, 75, 0.4);
+    font-size: 0.5rem;
+  }
+
+  &::after {
+    content: '◆';
+    position: absolute;
+    color: rgba(212, 168, 75, 0.4);
+    font-size: 0.5rem;
+  }
+
+  &::before {
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  &::after {
+    bottom: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@utility prose-everloop {
+  /* Prose styling for story content - warm and readable */
+  @apply prose prose-invert max-w-none;
+  @apply prose-headings:font-serif;
+  --tw-prose-body: #d4c4a8;
+  --tw-prose-headings: #e8dcc4;
+  --tw-prose-links: #d4a84b;
+  --tw-prose-bold: #e8dcc4;
+  --tw-prose-quotes: #a89888;
+  --tw-prose-quote-borders: #d4a84b;
+  @apply prose-p:leading-[1.8];
+  @apply prose-a:no-underline prose-a:hover:underline;
+  @apply prose-blockquote:border-l-2 prose-blockquote:italic prose-blockquote:pl-6;
+}
+
+@utility magic-particle {
+  /* Whimsical floating particles (optional decorative) */
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(
+    circle,
+    rgba(212, 168, 75, 0.8) 0%,
+    transparent 70%
+  );
+  border-radius: 50%;
+  animation: float-up 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@utility btn-fantasy {
+  /* Fantasy button style */
+  position: relative;
+  background: linear-gradient(135deg, #d4a84b 0%, #c9a227 50%, #b8922a 100%);
+  color: #0d1a1a;
+  font-weight: 600;
+  padding: 1rem 2.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  box-shadow:
+    0 4px 15px rgba(212, 168, 75, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 6px 25px rgba(212, 168, 75, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@utility btn-outline-fantasy {
+  /* Secondary outline button */
+  background: transparent;
+  color: #d4a84b;
+  border: 1px solid rgba(212, 168, 75, 0.4);
+  padding: 0.875rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 0 20px rgba(212, 168, 75, 0.05);
+
+  &:hover {
+    border-color: rgba(212, 168, 75, 0.7);
+    background: rgba(212, 168, 75, 0.1);
+    box-shadow:
+      inset 0 0 30px rgba(212, 168, 75, 0.1),
+      0 0 20px rgba(212, 168, 75, 0.1);
+  }
+}
+
+@utility fade-edges {
+  /* Fade effects for atmospheric feel */
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 5%,
+    black 95%,
+    transparent
+  );
+}
+
+@utility glass {
+  /* Glass effect - teal tinted */
+  background: rgba(13, 26, 26, 0.85);
+  backdrop-blur: 12px;
+  border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+}
+
+@utility font-crimson {
+  /* Explicit Crimson Text utility for reader view */
+  font-family: var(--font-crimson), 'Crimson Text', serif;
+}
+
+@utility parchment-bg {
+  /* Parchment background texture */
+  background: linear-gradient(
+    135deg,
+    rgba(26, 48, 48, 0.9) 0%,
+    rgba(20, 36, 36, 0.95) 100%
+  );
+}
+
+@utility shimmer {
+  /* Shimmer effect - warmer */
+  background: linear-gradient(90deg, #142828 0%, #1a3838 50%, #142828 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@utility divider-ornate {
+  /* Decorative divider with fantasy ornaments */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+
+  &::before {
+    content: '';
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 168, 75, 0.5),
+      transparent
+    );
+  }
+
+  &::after {
+    content: '';
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(212, 168, 75, 0.5),
+      transparent
+    );
+  }
+}
+
+@utility text-parchment {
+  /* Warm text colors */
+  color: #e8dcc4;
+}
+
+@utility text-parchment-muted {
+  color: #a89888;
+}
+
+@utility text-amber {
+  color: #d4a84b;
+}
+
+@utility bg-teal-deep {
+  /* Teal backgrounds */
+  background-color: #0d1f1f;
+}
+
+@utility bg-teal-rich {
+  background-color: #142828;
+}
+
+@utility focus-glow {
+  /* Border glow on focus */
+  &:focus {
+    outline: none;
+    border-color: rgba(212, 168, 75, 0.5);
+    box-shadow: 0 0 0 3px rgba(212, 168, 75, 0.15);
+  }
+}
+
+@utility prose-content {
+  /* Reading Mode Styles */
+  & p {
+    margin: 1em 0;
+  }
+
+  & p.first-paragraph {
+    text-indent: 0;
+  }
+
+  & p:not(.first-paragraph) {
+    text-indent: 1.5em;
+  }
+
+  & .drop-cap {
+    float: left;
+    font-size: 3.5em;
+    line-height: 0.8;
+    margin-right: 0.1em;
+    margin-top: 0.1em;
+    font-family: Georgia, serif;
+  }
+
+  & strong {
+    font-weight: 600;
+  }
+
+  & em {
+    font-style: italic;
+  }
+}
+
+@utility float {
+  /* Floating animation for magical elements */
+  animation: gentle-float 6s ease-in-out infinite;
+}
+
+@utility pulse-glow {
+  /* Pulse glow for important elements */
+  animation: pulse-amber 3s ease-in-out infinite;
+}
+
+@utility animate-shrink-x {
+  /* Shrink animation for achievement toast progress */
+  animation: shrink-x linear forwards;
+}
+
+@utility animate-slide-in-left {
+  /* Mobile slide-in animation */
+  animation: slide-in-left 0.3s ease-out;
+}
+
+@utility animate-slide-up {
+  /* Map info panel slide-up */
+  animation: slide-up 0.35s ease-out;
+
+  /* Slide-up entrance for floating panels */
+  animation: slide-up 0.25s ease-out;
+}
+
+@utility animate-fade-in {
+  /* Fade in */
+  animation: fade-in 0.5s ease-out;
+}
+
+@utility safe-area-inset-bottom {
+  /* Safe area insets for mobile notches */
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+@utility safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+@utility focus-paragraphs {
+  /* Focus paragraphs mode for distraction-free */
+  & > *:not(:focus-within) {
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+  }
+
+  & > *:focus-within {
+    opacity: 1;
+  }
+
+  & > *:hover {
+    opacity: 1;
+  }
+}
+
+@utility touch-target {
+  @media (max-width: 768px) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@utility no-select {
+  /* Mobile touch-friendly targets */
+
+  /* Prevent text selection on UI elements */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@utility character-tile {
+  /* ─── Player Deck ─────────────────────────────── */
+
+  /* Character tile card with fantasy border glow */
+  @apply rounded-lg transition-all duration-300;
+  background: linear-gradient(
+    135deg,
+    rgba(26, 48, 48, 0.6) 0%,
+    rgba(20, 40, 40, 0.8) 100%
+  );
+  border: 1px solid rgba(212, 168, 75, 0.15);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  &:hover {
+    border-color: rgba(212, 168, 75, 0.4);
+    transform: translateY(-3px);
+    box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.4),
+      0 0 24px rgba(212, 168, 75, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@utility touch-target-lg {
+  /* Touch-friendly targets for tablet play */
+  min-height: 48px;
+  min-width: 48px;
+  @media (min-width: 768px) and (max-width: 1024px) {
+    min-height: 52px;
+    min-width: 52px;
+  }
+}
+
+@utility dice-result-animate {
+  /* Dice result pop animation */
+  animation: dice-pop 0.4s cubic-bezier(0.17, 0.67, 0.3, 1.33);
+}
+
+@utility nat20-burst {
+  /* NAT 20 celebration burst */
+  animation: nat20 0.6s ease-out;
+}
+
+@utility nat1-shake {
+  /* NAT 1 fumble shake */
+  animation: fumble-shake 0.5s ease-out;
+}
+
+@utility celestial-response {
+  /* Celestial advisor response glow */
+  @apply rounded-lg p-4;
+  background: linear-gradient(
+    135deg,
+    rgba(100, 130, 200, 0.08) 0%,
+    rgba(80, 110, 180, 0.04) 100%
+  );
+  border-left: 2px solid rgba(150, 180, 255, 0.35);
+
+  & p {
+    @apply leading-relaxed;
+    color: #c8d8f0;
+  }
+}
+
+@utility spell-slot {
+  /* Spell slot bubble (filled vs empty) */
+  @apply rounded-full transition-all duration-200 cursor-pointer;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(212, 168, 75, 0.5);
+  background: transparent;
+
+  &.filled {
+    background: radial-gradient(circle, #d4a84b 30%, #b8922a 100%);
+    box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+  }
+
+  &:hover {
+    border-color: rgba(212, 168, 75, 0.8);
+    transform: scale(1.15);
+  }
+}
+
+@utility filled {
+  &.spell-slot {
+    background: radial-gradient(circle, #d4a84b 30%, #b8922a 100%);
+    box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
+  }
+}
+
+@utility hp-bar-healthy {
+  /* HP bar colour transitions */
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+@utility hp-bar-wounded {
+  background: linear-gradient(90deg, #eab308, #ca8a04);
+}
+
+@utility hp-bar-critical {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  animation: hp-pulse 1.2s ease-in-out infinite;
+}
+
+@utility condition-active {
+  /* Condition badge glow */
+  @apply transition-all duration-200;
+  box-shadow: 0 0 8px rgba(212, 168, 75, 0.3);
+}
+
+@utility deck-grid {
+  @media (min-width: 768px) and (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@utility character-sheet-layout {
+  @media (min-width: 768px) and (max-width: 1024px) {
+    font-size: 0.95rem;
+  }
+}
+
+@utility floating-panel {
+  /* Tablet-optimised grid for Player Deck */
+
+  /* Floating panel (dice roller / celestial advisor) */
+  @apply rounded-xl;
+  background: rgba(13, 26, 26, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(212, 168, 75, 0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+
+@utility book-selected-overlay {
+  /* ─── Library Bookshelf ─────────────────────────── */
+
+  /* Full-screen overlay when a book is selected */
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 15, 15, 0.88);
+  backdrop-filter: blur(12px);
+  animation: bookshelf-overlay-in 0.35s ease-out;
+  cursor: pointer;
+}
+
+@utility book-cover-reveal {
+  /* Book cover reveal animation — 3D pull off shelf */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: default;
+  animation: book-pull-off-shelf 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: left center;
+}
+
+@utility book-cover-3d {
+  /* 3D book cover with realistic depth */
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &:hover {
+    transform: perspective(800px) rotateY(-4deg) scale(1.02);
+  }
+}
+
+@utility bookshelf-container {
+  /* Bookshelf container */
+  perspective: 1200px;
+}
 
 @layer base {
   :root {
@@ -142,95 +706,6 @@
 }
 
 @layer components {
-  /* Canon glow effect - warmer, more magical */
-  .canon-glow {
-    box-shadow: 
-      0 0 20px rgba(212, 168, 75, 0.25),
-      0 0 40px rgba(212, 168, 75, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-
-  .canon-glow:hover {
-    box-shadow: 
-      0 0 30px rgba(212, 168, 75, 0.4),
-      0 0 60px rgba(212, 168, 75, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-
-  /* Text with canon styling - warm parchment glow */
-  .canon-text {
-    @apply font-serif;
-    color: #d4a84b;
-    text-shadow: 
-      0 0 30px rgba(212, 168, 75, 0.5),
-      0 0 60px rgba(212, 168, 75, 0.3);
-  }
-
-  /* Parchment-style cards */
-  .story-card {
-    @apply rounded-lg p-6;
-    background: linear-gradient(135deg, 
-      rgba(26, 48, 48, 0.6) 0%, 
-      rgba(20, 40, 40, 0.8) 100%
-    );
-    border: 1px solid rgba(212, 168, 75, 0.15);
-    box-shadow: 
-      0 4px 20px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    @apply transition-all duration-300;
-  }
-
-  .story-card:hover {
-    border-color: rgba(212, 168, 75, 0.35);
-    transform: translateY(-2px);
-    box-shadow: 
-      0 8px 30px rgba(0, 0, 0, 0.4),
-      0 0 20px rgba(212, 168, 75, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  /* Fantasy border ornament */
-  .ornate-border {
-    position: relative;
-  }
-
-  .ornate-border::before,
-  .ornate-border::after {
-    content: "◆";
-    position: absolute;
-    color: rgba(212, 168, 75, 0.4);
-    font-size: 0.5rem;
-  }
-
-  .ornate-border::before { top: -3px; left: 50%; transform: translateX(-50%); }
-  .ornate-border::after { bottom: -3px; left: 50%; transform: translateX(-50%); }
-
-  /* Prose styling for story content - warm and readable */
-  .prose-everloop {
-    @apply prose prose-invert max-w-none;
-    @apply prose-headings:font-serif;
-    --tw-prose-body: #d4c4a8;
-    --tw-prose-headings: #e8dcc4;
-    --tw-prose-links: #d4a84b;
-    --tw-prose-bold: #e8dcc4;
-    --tw-prose-quotes: #a89888;
-    --tw-prose-quote-borders: #d4a84b;
-    @apply prose-p:leading-[1.8];
-    @apply prose-a:no-underline hover:prose-a:underline;
-    @apply prose-blockquote:border-l-2 prose-blockquote:italic prose-blockquote:pl-6;
-  }
-
-  /* Whimsical floating particles (optional decorative) */
-  .magic-particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: radial-gradient(circle, rgba(212, 168, 75, 0.8) 0%, transparent 70%);
-    border-radius: 50%;
-    animation: float-up 8s ease-in-out infinite;
-    pointer-events: none;
-  }
-
   @keyframes float-up {
     0%, 100% { 
       opacity: 0;
@@ -243,191 +718,17 @@
       transform: translateY(-100px) scale(1);
     }
   }
-
-  /* Fantasy button style */
-  .btn-fantasy {
-    position: relative;
-    background: linear-gradient(135deg, #d4a84b 0%, #c9a227 50%, #b8922a 100%);
-    color: #0d1a1a;
-    font-weight: 600;
-    padding: 1rem 2.5rem;
-    border-radius: 0.5rem;
-    border: none;
-    box-shadow: 
-      0 4px 15px rgba(212, 168, 75, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-  }
-
-  .btn-fantasy:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-      0 6px 25px rgba(212, 168, 75, 0.45),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-  }
-
-  .btn-fantasy:active {
-    transform: translateY(0);
-  }
-
-  /* Secondary outline button */
-  .btn-outline-fantasy {
-    background: transparent;
-    color: #d4a84b;
-    border: 1px solid rgba(212, 168, 75, 0.4);
-    padding: 0.875rem 2rem;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    box-shadow: inset 0 0 20px rgba(212, 168, 75, 0.05);
-  }
-
-  .btn-outline-fantasy:hover {
-    border-color: rgba(212, 168, 75, 0.7);
-    background: rgba(212, 168, 75, 0.1);
-    box-shadow: 
-      inset 0 0 30px rgba(212, 168, 75, 0.1),
-      0 0 20px rgba(212, 168, 75, 0.1);
-  }
 }
 
 @layer utilities {
-  /* Fade effects for atmospheric feel */
-  .fade-edges {
-    mask-image: linear-gradient(
-      to bottom,
-      transparent,
-      black 5%,
-      black 95%,
-      transparent
-    );
-  }
-
-  /* Glass effect - teal tinted */
-  .glass {
-    background: rgba(13, 26, 26, 0.85);
-    backdrop-blur: 12px;
-    border-bottom: 1px solid rgba(212, 168, 75, 0.1);
-  }
-
-  /* Explicit Crimson Text utility for reader view */
-  .font-crimson {
-    font-family: var(--font-crimson), 'Crimson Text', serif;
-  }
-
-  /* Parchment background texture */
-  .parchment-bg {
-    background: 
-      linear-gradient(135deg, rgba(26, 48, 48, 0.9) 0%, rgba(20, 36, 36, 0.95) 100%);
-  }
-
-  /* Shimmer effect - warmer */
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      #142828 0%,
-      #1a3838 50%,
-      #142828 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-
   @keyframes shimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
 
-  /* Decorative divider with fantasy ornaments */
-  .divider-ornate {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .divider-ornate::before,
-  .divider-ornate::after {
-    content: "";
-    height: 1px;
-    width: 80px;
-    background: linear-gradient(90deg, transparent, rgba(212, 168, 75, 0.5), transparent);
-  }
-
-  /* Warm text colors */
-  .text-parchment {
-    color: #e8dcc4;
-  }
-
-  .text-parchment-muted {
-    color: #a89888;
-  }
-
-  .text-amber {
-    color: #d4a84b;
-  }
-
-  /* Teal backgrounds */
-  .bg-teal-deep {
-    background-color: #0d1f1f;
-  }
-
-  .bg-teal-rich {
-    background-color: #142828;
-  }
-
-  /* Border glow on focus */
-  .focus-glow:focus {
-    outline: none;
-    border-color: rgba(212, 168, 75, 0.5);
-    box-shadow: 0 0 0 3px rgba(212, 168, 75, 0.15);
-  }
-
-  /* Reading Mode Styles */
-  .prose-content p {
-    margin: 1em 0;
-  }
-
-  .prose-content p.first-paragraph {
-    text-indent: 0;
-  }
-
-  .prose-content p:not(.first-paragraph) {
-    text-indent: 1.5em;
-  }
-
-  .prose-content .drop-cap {
-    float: left;
-    font-size: 3.5em;
-    line-height: 0.8;
-    margin-right: 0.1em;
-    margin-top: 0.1em;
-    font-family: Georgia, serif;
-  }
-
-  .prose-content strong {
-    font-weight: 600;
-  }
-
-  .prose-content em {
-    font-style: italic;
-  }
-
-  /* Floating animation for magical elements */
-  .float {
-    animation: gentle-float 6s ease-in-out infinite;
-  }
-
   @keyframes gentle-float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
-  }
-
-  /* Pulse glow for important elements */
-  .pulse-glow {
-    animation: pulse-amber 3s ease-in-out infinite;
   }
 
   @keyframes pulse-amber {
@@ -439,117 +740,21 @@
     }
   }
 
-  /* Shrink animation for achievement toast progress */
-  .animate-shrink-x {
-    animation: shrink-x linear forwards;
-  }
-
   @keyframes shrink-x {
     from { width: 100%; }
     to { width: 0%; }
   }
-
-  /* Mobile slide-in animation */
   @keyframes slide-in-left {
     from { transform: translateX(-100%); }
     to { transform: translateX(0); }
   }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.3s ease-out;
-  }
-
-  /* Map info panel slide-up */
   @keyframes slide-up {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-
-  .animate-slide-up {
-    animation: slide-up 0.35s ease-out;
-  }
-
-  /* Fade in */
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.5s ease-out;
-  }
-
-  /* Safe area insets for mobile notches */
-  .safe-area-inset-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-
-  .safe-area-inset-top {
-    padding-top: env(safe-area-inset-top, 0);
-  }
-
-  /* Focus paragraphs mode for distraction-free */
-  .focus-paragraphs > *:not(:focus-within) {
-    opacity: 0.4;
-    transition: opacity 0.3s ease;
-  }
-
-  .focus-paragraphs > *:focus-within,
-  .focus-paragraphs > *:hover {
-    opacity: 1;
-  }
-
-  /* Mobile touch-friendly targets */
-  @media (max-width: 768px) {
-    .touch-target {
-      min-height: 44px;
-      min-width: 44px;
-    }
-  }
-
-  /* Prevent text selection on UI elements */
-  .no-select {
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  /* ─── Player Deck ─────────────────────────────── */
-
-  /* Character tile card with fantasy border glow */
-  .character-tile {
-    @apply rounded-lg transition-all duration-300;
-    background: linear-gradient(135deg,
-      rgba(26, 48, 48, 0.6) 0%,
-      rgba(20, 40, 40, 0.8) 100%
-    );
-    border: 1px solid rgba(212, 168, 75, 0.15);
-    box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  }
-
-  .character-tile:hover {
-    border-color: rgba(212, 168, 75, 0.4);
-    transform: translateY(-3px);
-    box-shadow:
-      0 8px 30px rgba(0, 0, 0, 0.4),
-      0 0 24px rgba(212, 168, 75, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  }
-
-  .character-tile:active {
-    transform: translateY(0);
-  }
-
-  /* Touch-friendly targets for tablet play */
-  .touch-target-lg {
-    min-height: 48px;
-    min-width: 48px;
-  }
-
-  /* Dice result pop animation */
-  .dice-result-animate {
-    animation: dice-pop 0.4s cubic-bezier(0.17, 0.67, 0.3, 1.33);
   }
 
   @keyframes dice-pop {
@@ -558,20 +763,10 @@
     100% { transform: scale(1) rotate(0deg); opacity: 1; }
   }
 
-  /* NAT 20 celebration burst */
-  .nat20-burst {
-    animation: nat20 0.6s ease-out;
-  }
-
   @keyframes nat20 {
     0%   { text-shadow: 0 0 0 rgba(212, 168, 75, 0); }
     50%  { text-shadow: 0 0 30px rgba(212, 168, 75, 0.9), 0 0 60px rgba(212, 168, 75, 0.5); }
     100% { text-shadow: 0 0 12px rgba(212, 168, 75, 0.4); }
-  }
-
-  /* NAT 1 fumble shake */
-  .nat1-shake {
-    animation: fumble-shake 0.5s ease-out;
   }
 
   @keyframes fumble-shake {
@@ -583,86 +778,9 @@
     75%  { transform: translateX(-2px); }
   }
 
-  /* Celestial advisor response glow */
-  .celestial-response {
-    @apply rounded-lg p-4;
-    background: linear-gradient(135deg,
-      rgba(100, 130, 200, 0.08) 0%,
-      rgba(80, 110, 180, 0.04) 100%
-    );
-    border-left: 2px solid rgba(150, 180, 255, 0.35);
-  }
-
-  .celestial-response p {
-    @apply leading-relaxed;
-    color: #c8d8f0;
-  }
-
-  /* Spell slot bubble (filled vs empty) */
-  .spell-slot {
-    @apply rounded-full transition-all duration-200 cursor-pointer;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(212, 168, 75, 0.5);
-    background: transparent;
-  }
-
-  .spell-slot.filled {
-    background: radial-gradient(circle, #d4a84b 30%, #b8922a 100%);
-    box-shadow: 0 0 8px rgba(212, 168, 75, 0.4);
-  }
-
-  .spell-slot:hover {
-    border-color: rgba(212, 168, 75, 0.8);
-    transform: scale(1.15);
-  }
-
-  /* HP bar colour transitions */
-  .hp-bar-healthy { background: linear-gradient(90deg, #22c55e, #16a34a); }
-  .hp-bar-wounded { background: linear-gradient(90deg, #eab308, #ca8a04); }
-  .hp-bar-critical {
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-    animation: hp-pulse 1.2s ease-in-out infinite;
-  }
-
   @keyframes hp-pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
-  }
-
-  /* Condition badge glow */
-  .condition-active {
-    @apply transition-all duration-200;
-    box-shadow: 0 0 8px rgba(212, 168, 75, 0.3);
-  }
-
-  /* Tablet-optimised grid for Player Deck */
-  @media (min-width: 768px) and (max-width: 1024px) {
-    .deck-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-    }
-    .character-sheet-layout {
-      font-size: 0.95rem;
-    }
-    .touch-target-lg {
-      min-height: 52px;
-      min-width: 52px;
-    }
-  }
-
-  /* Floating panel (dice roller / celestial advisor) */
-  .floating-panel {
-    @apply rounded-xl;
-    background: rgba(13, 26, 26, 0.95);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(212, 168, 75, 0.2);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  }
-
-  /* Slide-up entrance for floating panels */
-  .animate-slide-up {
-    animation: slide-up 0.25s ease-out;
   }
 
   @keyframes slide-up {
@@ -670,37 +788,9 @@
     to   { transform: translateY(0); opacity: 1; }
   }
 
-  /* ─── Library Bookshelf ─────────────────────────── */
-
-  /* Full-screen overlay when a book is selected */
-  .book-selected-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(8, 15, 15, 0.88);
-    backdrop-filter: blur(12px);
-    animation: bookshelf-overlay-in 0.35s ease-out;
-    cursor: pointer;
-  }
-
   @keyframes bookshelf-overlay-in {
     from { opacity: 0; }
     to { opacity: 1; }
-  }
-
-  /* Book cover reveal animation — 3D pull off shelf */
-  .book-cover-reveal {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    cursor: default;
-    animation: book-pull-off-shelf 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-    transform-origin: left center;
   }
 
   @keyframes book-pull-off-shelf {
@@ -719,20 +809,5 @@
       transform: perspective(800px) rotateY(0deg) scale(1) translateX(0);
       filter: brightness(1);
     }
-  }
-
-  /* 3D book cover with realistic depth */
-  .book-cover-3d {
-    position: relative;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .book-cover-3d:hover {
-    transform: perspective(800px) rotateY(-4deg) scale(1.02);
-  }
-
-  /* Bookshelf container */
-  .bookshelf-container {
-    perspective: 1200px;
   }
 }

@@ -486,7 +486,7 @@ export function WriteClientWithStory({
     <SplitViewProvider>
       <div className="min-h-screen h-screen bg-charcoal flex flex-col">
         {/* Header */}
-        <header className="sticky top-0 z-50 glass border-b border-charcoal-700 flex-shrink-0">
+        <header className="sticky top-0 z-50 glass border-b border-charcoal-700 shrink-0">
           <div className="px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">

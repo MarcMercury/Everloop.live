@@ -33,7 +33,7 @@ export default async function SpellsPage({ searchParams }: PageProps) {
           name="q"
           defaultValue={search}
           placeholder="Search spells…"
-          className="sm:col-span-2 bg-charcoal-950 border border-gold/15 rounded-md px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/60 focus:border-gold/40 focus:outline-none"
+          className="sm:col-span-2 bg-charcoal-950 border border-gold/15 rounded-md px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/60 focus:border-gold/40 focus:outline-hidden"
         />
         <select name="level" defaultValue={params.level ?? ''} className="bg-charcoal-950 border border-gold/15 rounded-md px-3 py-2 text-sm text-parchment">
           <option value="">All levels</option>

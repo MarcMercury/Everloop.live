@@ -344,7 +344,7 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                       {/* Category header – clickable to expand/collapse */}
                       <button
                         onClick={() => toggleCategory(cat.heading)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-white/[0.03]"
+                        className="w-full flex items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-white/3"
                       >
                         <div className="flex items-center gap-2">
                           <span className="text-[11px]">{getCategoryIcon(cat.heading)}</span>
@@ -376,11 +376,11 @@ export default function RegionMapClient({ region }: RegionMapClientProps) {
                           {cat.items.map((item) => (
                             <div
                               key={item}
-                              className="flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors hover:bg-white/[0.04] group"
+                              className="flex items-center gap-2.5 px-2 py-1.5 rounded-md transition-colors hover:bg-white/4 group"
                             >
                               {/* Placeholder for future render thumbnail */}
                               <div
-                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center border"
+                                className="w-7 h-7 rounded shrink-0 flex items-center justify-center border"
                                 style={{
                                   background: `${region.color}08`,
                                   borderColor: `${region.color}15`,

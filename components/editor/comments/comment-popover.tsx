@@ -261,7 +261,7 @@ export function CommentPopover({
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your comment..."
               className="w-full h-20 px-3 py-2 text-sm bg-charcoal-800 border border-charcoal-700 rounded-md 
-                         placeholder:text-muted-foreground/50 focus:border-gold/50 focus:outline-none
+                         placeholder:text-muted-foreground/50 focus:border-gold/50 focus:outline-hidden
                          resize-none"
               autoFocus
             />
@@ -323,7 +323,7 @@ export function CommentPopover({
                   onChange={(e) => setReplyContent(e.target.value)}
                   placeholder="Add a reply..."
                   className="flex-1 px-2 py-1 text-sm bg-charcoal-800 border border-charcoal-700 rounded-md 
-                             placeholder:text-muted-foreground/50 focus:border-gold/50 focus:outline-none"
+                             placeholder:text-muted-foreground/50 focus:border-gold/50 focus:outline-hidden"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()

@@ -234,7 +234,7 @@ function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
 
   return (
     <div
-      className={`relative rounded-lg border-2 bg-gradient-to-br ${meta.bg} ${meta.color} backdrop-blur-sm shadow-lg transition-all min-w-[200px] max-w-[240px] ${
+      className={`relative rounded-lg border-2 bg-linear-to-br ${meta.bg} ${meta.color} backdrop-blur-xs shadow-lg transition-all min-w-[200px] max-w-[240px] ${
         selected ? 'ring-2 ring-gold/70 scale-[1.02]' : ''
       } ${isQuest && data.quest_id ? 'ring-1 ring-fuchsia-400/40' : ''}`}
     >
@@ -242,7 +242,7 @@ function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
         <Handle
           type="target"
           position={Position.Top}
-          className="!w-3 !h-3 !bg-gold !border-2 !border-teal-deep"
+          className="w-3! h-3! bg-gold! border-2! border-teal-deep!"
         />
       )}
 
@@ -258,7 +258,7 @@ function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
             </span>
           )}
         </div>
-        <div className="text-sm font-serif text-parchment leading-tight break-words">
+        <div className="text-sm font-serif text-parchment leading-tight wrap-break-word">
           {data.label || (
             <span className="italic text-parchment-muted/60">Untitled</span>
           )}
@@ -343,7 +343,7 @@ function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
               type="source"
               position={Position.Bottom}
               style={{ left: `${left}%` }}
-              className="!w-3 !h-3 !bg-purple-400 !border-2 !border-teal-deep"
+              className="w-3! h-3! bg-purple-400! border-2! border-teal-deep!"
             />
           )
         })
@@ -351,7 +351,7 @@ function QuestNode({ data, selected }: NodeProps<Node<QuestNodeData>>) {
         <Handle
           type="source"
           position={Position.Bottom}
-          className="!w-3 !h-3 !bg-gold !border-2 !border-teal-deep"
+          className="w-3! h-3! bg-gold! border-2! border-teal-deep!"
         />
       )}
     </div>
@@ -643,7 +643,7 @@ function BuilderInner({
                 e.dataTransfer.effectAllowed = 'move'
               }}
               onClick={() => addNode(kind)}
-              className={`w-full text-left p-2 rounded-md border ${meta.color} bg-gradient-to-br ${meta.bg} hover:scale-[1.02] transition-all cursor-grab active:cursor-grabbing`}
+              className={`w-full text-left p-2 rounded-md border ${meta.color} bg-linear-to-br ${meta.bg} hover:scale-[1.02] transition-all cursor-grab active:cursor-grabbing`}
               title={meta.hint}
             >
               <div className={`flex items-center gap-2 ${meta.accent}`}>
@@ -688,11 +688,11 @@ function BuilderInner({
           proOptions={{ hideAttribution: true }}
         >
           <Background color="#d4af37" gap={24} size={1} style={{ opacity: 0.15 }} />
-          <Controls className="!bg-teal-rich/80 !border-gold/30" />
+          <Controls className="bg-teal-rich/80! border-gold/30!" />
           <MiniMap
             pannable
             zoomable
-            className="!bg-teal-deep/80 !border !border-gold/20"
+            className="bg-teal-deep/80! border! border-gold/20!"
             nodeColor={n => {
               const k = (n.data as QuestNodeData)?.kind ?? 'scene'
               const map: Record<QuestNodeKind, string> = {
@@ -717,7 +717,7 @@ function BuilderInner({
           <button
             type="button"
             onClick={autoLayoutGraph}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur text-xs transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur-sm text-xs transition-colors"
             title="Tidy the flow into a clean top-down layout"
           >
             <Wand2 className="w-3.5 h-3.5" />
@@ -731,7 +731,7 @@ function BuilderInner({
               selectedNode.data.kind === 'start' ||
               selectedNode.data.kind === 'climax'
             }
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-teal-rich/80 border border-gold/30 text-parchment-muted hover:text-gold hover:border-gold/50 backdrop-blur-sm text-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             title="Duplicate the selected beat (⌘D)"
           >
             <Copy className="w-3.5 h-3.5" />
@@ -741,12 +741,12 @@ function BuilderInner({
 
         <div className="absolute top-3 right-3 max-w-xs z-10">
           {validation.ok ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-900/70 border border-emerald-400/40 text-emerald-200 text-xs backdrop-blur">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-900/70 border border-emerald-400/40 text-emerald-200 text-xs backdrop-blur-sm">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Start reaches Climax — flow valid.
             </div>
           ) : (
-            <div className="flex items-start gap-2 px-3 py-1.5 rounded-md bg-amber-900/70 border border-amber-400/40 text-amber-200 text-xs backdrop-blur">
+            <div className="flex items-start gap-2 px-3 py-1.5 rounded-md bg-amber-900/70 border border-amber-400/40 text-amber-200 text-xs backdrop-blur-sm">
               <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
               <div>
                 {validation.warnings.map((w, i) => (
@@ -828,7 +828,7 @@ function NodeInspector({
         <input
           value={node.data.label}
           onChange={e => onChange({ label: e.target.value })}
-          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
+          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/40"
         />
       </Field>
 
@@ -837,7 +837,7 @@ function NodeInspector({
           value={node.data.description ?? ''}
           onChange={e => onChange({ description: e.target.value })}
           rows={10}
-          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-gold/40"
+          className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-y min-h-[200px] focus:outline-hidden focus:ring-2 focus:ring-gold/40"
           placeholder="What happens here? What should the AI co-DM emphasize?"
         />
       </Field>
@@ -851,7 +851,7 @@ function NodeInspector({
                 value={questSearch}
                 onChange={e => setQuestSearch(e.target.value)}
                 placeholder="Search your quests..."
-                className="w-full bg-teal-deep/60 border border-gold/20 rounded pl-7 pr-2 py-1.5 text-xs text-parchment focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
+                className="w-full bg-teal-deep/60 border border-gold/20 rounded pl-7 pr-2 py-1.5 text-xs text-parchment focus:outline-hidden focus:ring-2 focus:ring-fuchsia-400/40"
               />
             </div>
           </Field>
@@ -926,7 +926,7 @@ function NodeInspector({
             value={node.data.monsters ?? ''}
             onChange={e => onChange({ monsters: e.target.value })}
             placeholder="2 Drift-touched wolves, a fractured stalker..."
-            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
+            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/40"
           />
         </Field>
       )}
@@ -937,7 +937,7 @@ function NodeInspector({
             value={node.data.npc_name ?? ''}
             onChange={e => onChange({ npc_name: e.target.value })}
             placeholder="Elder Mira, Keeper of the Hollow..."
-            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
+            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/40"
           />
         </Field>
       )}
@@ -951,7 +951,7 @@ function NodeInspector({
             placeholder={
               'Side with the rebels\nReport to the council\nSlip away unseen'
             }
-            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-none focus:outline-none focus:ring-2 focus:ring-gold/40"
+            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40"
           />
         </Field>
       )}
@@ -962,7 +962,7 @@ function NodeInspector({
             value={node.data.reward ?? ''}
             onChange={e => onChange({ reward: e.target.value })}
             placeholder="A Shard fragment, a name long forgotten..."
-            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
+            className="w-full bg-teal-deep/60 border border-gold/20 rounded px-2 py-1.5 text-sm text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/40"
           />
         </Field>
       )}

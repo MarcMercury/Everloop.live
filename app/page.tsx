@@ -27,7 +27,7 @@ export default function Home() {
       {/* Structure Image */}
       <section className="relative z-10 px-6 pb-16">
         <div className="max-w-4xl mx-auto">
-          <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
+          <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
             <Image
               src="/Maps/New Structure Map.png"
               alt="Structure of the Everloop"
@@ -35,7 +35,7 @@ export default function Home() {
               className="object-cover"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-teal-deep/60 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-teal-deep/60 via-transparent to-transparent" />
           </div>
         </div>
       </section>
@@ -43,9 +43,9 @@ export default function Home() {
       {/* Audio — Listen to the Narrative */}
       <section className="relative z-10 py-12 px-6">
         <div className="max-w-md mx-auto">
-          <div className="rounded-lg border border-gold/15 bg-teal-rich/30 backdrop-blur-sm p-5">
+          <div className="rounded-lg border border-gold/15 bg-teal-rich/30 backdrop-blur-xs p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center shrink-0">
                 <Headphones className="w-4 h-4 text-gold/70" />
               </div>
               <div>
@@ -120,7 +120,7 @@ export default function Home() {
         <div className="max-w-3xl mx-auto space-y-12">
           {/* The Drift */}
           <div className="relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-purple-500/30 to-transparent" />
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-linear-to-b from-transparent via-purple-500/30 to-transparent" />
             <div className="pl-8">
               <h2 className="text-sm uppercase tracking-[0.2em] text-purple-400/80 mb-3 font-medium">The Drift</h2>
               <p className="text-lg leading-relaxed text-parchment-muted">
@@ -131,7 +131,7 @@ export default function Home() {
 
           {/* The Fold */}
           <div className="relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-blue-500/30 to-transparent" />
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-linear-to-b from-transparent via-blue-500/30 to-transparent" />
             <div className="pl-8">
               <h2 className="text-sm uppercase tracking-[0.2em] text-blue-400/80 mb-3 font-medium">The Fold</h2>
               <p className="text-lg leading-relaxed text-parchment-muted">
@@ -142,7 +142,7 @@ export default function Home() {
 
           {/* The Anchors */}
           <div className="relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent" />
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-linear-to-b from-transparent via-gold/30 to-transparent" />
             <div className="pl-8">
               <h2 className="text-sm uppercase tracking-[0.2em] text-gold/80 mb-3 font-medium">The Anchors</h2>
               <p className="text-lg leading-relaxed text-parchment-muted mb-4">
@@ -165,7 +165,7 @@ export default function Home() {
 
           {/* The Unraveling */}
           <div className="relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-red-500/30 to-transparent" />
+            <div className="absolute -left-4 top-0 bottom-0 w-px bg-linear-to-b from-transparent via-red-500/30 to-transparent" />
             <div className="pl-8">
               <h2 className="text-sm uppercase tracking-[0.2em] text-red-400/80 mb-3 font-medium">The Unraveling</h2>
               <p className="text-lg leading-relaxed text-parchment-muted mb-4">
@@ -200,7 +200,7 @@ export default function Home() {
         <div className="max-w-3xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Link href="/readers-guide" className="story-card p-6 flex items-center gap-4 hover:border-gold/40 transition-all group">
-              <div className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0">
                 <BookOpen className="w-5 h-5 text-gold" />
               </div>
               <div>
@@ -209,7 +209,7 @@ export default function Home() {
               </div>
             </Link>
             <Link href="/players-guide" className="story-card p-6 flex items-center gap-4 hover:border-purple-500/40 transition-all group">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
                 <ScrollText className="w-5 h-5 text-purple-400" />
               </div>
               <div>

@@ -195,7 +195,7 @@ export function CelestialAdvisor({
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
             placeholder="Ask your Celestial advisor..."
-            className="flex-1 bg-charcoal-950 border border-blue-500/10 rounded-lg px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40 focus:border-blue-500/30 focus:outline-none"
+            className="flex-1 bg-charcoal-950 border border-blue-500/10 rounded-lg px-3 py-2 text-sm text-parchment placeholder:text-parchment-muted/40 focus:border-blue-500/30 focus:outline-hidden"
             disabled={isLoading}
           />
           <Button

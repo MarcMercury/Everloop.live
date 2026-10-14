@@ -175,7 +175,7 @@ export default async function AuthorProfilePage({ params }: ProfilePageProps) {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-deep via-teal-rich to-teal-deep">
+    <div className="min-h-screen bg-linear-to-b from-teal-deep via-teal-rich to-teal-deep">
       {/* Header */}
       <header className="border-b border-gold/10 bg-teal-deep/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -197,7 +197,7 @@ export default async function AuthorProfilePage({ params }: ProfilePageProps) {
         {/* Author Header */}
         <div className="flex flex-col md:flex-row items-start gap-8 mb-12">
           {/* Avatar */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             {profile.avatar_url ? (
               <Image
                 src={profile.avatar_url}
@@ -322,7 +322,7 @@ export default async function AuthorProfilePage({ params }: ProfilePageProps) {
                         </div>
                       </div>
 
-                      <Badge className="bg-gold/10 text-gold border-gold/30 flex-shrink-0">
+                      <Badge className="bg-gold/10 text-gold border-gold/30 shrink-0">
                         <Sparkles className="w-3 h-3 mr-1" />
                         Canon
                       </Badge>

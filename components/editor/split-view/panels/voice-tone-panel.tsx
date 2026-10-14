@@ -133,7 +133,7 @@ export function VoiceTonePanel({ getText }: VoiceTonePanelProps) {
         {error && (
           <div className="p-4">
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm">
-              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
               <span className="text-red-300">{error}</span>
             </div>
           </div>
@@ -336,7 +336,7 @@ export function VoiceTonePanel({ getText }: VoiceTonePanelProps) {
               <ul className="space-y-2">
                 {analysis.voiceTone.strengths.map((strength, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
                     <span className="text-parchment-muted">{strength}</span>
                   </li>
                 ))}

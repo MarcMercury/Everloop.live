@@ -97,7 +97,7 @@ export function CanonCard({ entity, className }: CanonCardProps) {
           <Card
             className={cn(
               'group relative overflow-hidden transition-all duration-300',
-              'bg-gradient-to-br from-teal-rich/80 to-teal-deep/90',
+              'bg-linear-to-br from-teal-rich/80 to-teal-deep/90',
               'border-gold/10 hover:border-gold/30',
               'hover:shadow-xl hover:shadow-gold/10',
               'hover:-translate-y-1',
@@ -115,13 +115,13 @@ export function CanonCard({ entity, className }: CanonCardProps) {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-teal-deep/90 via-teal-deep/30 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-teal-deep/90 via-teal-deep/30 to-transparent" />
               </div>
             )}
 
             {/* Canonical glow effect */}
             {isCanonical && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gold/8 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-br from-gold/8 via-transparent to-transparent pointer-events-none" />
             )}
 
             <CardHeader className="pb-3 relative">

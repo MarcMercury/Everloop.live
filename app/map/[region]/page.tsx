@@ -63,7 +63,7 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
       <div className="absolute bottom-4 left-4 max-w-xs space-y-3 z-10">
         {/* Fray Status */}
         {regionalState && (
-          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-2">
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur-sm border border-gold/10 space-y-2">
             <h3 className="text-xs font-serif text-gold">{region.name} — World State</h3>
             <FrayIndicator intensity={regionalState.fray_intensity} showDescription />
             <MonsterWarning frayIntensity={regionalState.fray_intensity} />
@@ -78,7 +78,7 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
 
         {/* Shard Presence */}
         {shards.length > 0 && (
-          <div className="p-3 rounded-lg bg-purple-900/80 backdrop-blur border border-purple-500/20 space-y-1.5">
+          <div className="p-3 rounded-lg bg-purple-900/80 backdrop-blur-sm border border-purple-500/20 space-y-1.5">
             <h3 className="text-xs font-serif text-purple-300">Shard Presence</h3>
             {shards.map(shard => (
               <div key={shard.id} className="flex items-center justify-between text-[10px]">
@@ -94,7 +94,7 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
 
         {/* Cultural Lens — Attunement roles, regional concepts, time note */}
         {(region.attunementRoles || region.culturalConcepts || region.timeNote) && (
-          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-2">
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur-sm border border-gold/10 space-y-2">
             <h3 className="text-xs font-serif text-gold">Cultural Lens</h3>
 
             {region.attunementRoles && (
@@ -145,7 +145,7 @@ export default async function RegionMapPage({ params }: RegionMapPageProps) {
 
         {/* Canon Stories set here */}
         {stories.length > 0 && (
-          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur border border-gold/10 space-y-1.5">
+          <div className="p-3 rounded-lg bg-charcoal-900/90 backdrop-blur-sm border border-gold/10 space-y-1.5">
             <h3 className="text-xs font-serif text-gold">Canon Stories in {region.name}</h3>
             {stories.slice(0, 3).map(story => (
               <Link

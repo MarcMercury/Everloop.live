@@ -422,7 +422,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
         {/* Character Header with portrait */}
         <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-6">
           {/* Portrait */}
-          <div className="flex-shrink-0 relative">
+          <div className="shrink-0 relative">
             <div 
               className="w-full md:w-48 h-48 md:h-64 rounded-xl overflow-hidden border-2 relative cursor-pointer group"
               style={{ borderColor: `${classColor}40` }}
@@ -803,7 +803,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                         <div className="text-[10px] text-parchment-muted">{cantrip.school}</div>
                       </div>
                       {cantrip.damage && (
-                        <span className="text-xs text-red-400 font-mono ml-2 flex-shrink-0">{cantrip.damage}</span>
+                        <span className="text-xs text-red-400 font-mono ml-2 shrink-0">{cantrip.damage}</span>
                       )}
                     </button>
                   ))}
@@ -1603,7 +1603,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
                       className="w-full flex items-center justify-between py-1.5 px-2 rounded text-sm hover:bg-purple-500/10 transition-colors text-left"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <Sparkles className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                        <Sparkles className="w-3 h-3 text-purple-400 shrink-0" />
                         <span className="text-purple-200 truncate">{item.name}</span>
                         {item.attuned && <Badge variant="outline" className="text-[10px] py-0 border-purple-400/40 text-purple-300">attuned</Badge>}
                       </div>
@@ -1828,7 +1828,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
       )}
       
       {showCelestial && (
-        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-[28rem]">
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 z-50 md:w-md">
           <CelestialAdvisor characterId={char.id} characterName={char.name} onClose={() => setShowCelestial(false)} />
         </div>
       )}

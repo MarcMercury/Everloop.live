@@ -284,7 +284,7 @@ export default function ProfileSettingsPage() {
                   placeholder="Tell readers about yourself..."
                   maxLength={500}
                   rows={4}
-                  className="w-full px-3 py-2 rounded-md bg-teal-deep border border-gold/20 text-parchment placeholder:text-parchment-muted/50 focus:border-gold/50 focus:outline-none focus:ring-2 focus:ring-gold/20 resize-none"
+                  className="w-full px-3 py-2 rounded-md bg-teal-deep border border-gold/20 text-parchment placeholder:text-parchment-muted/50 focus:border-gold/50 focus:outline-hidden focus:ring-2 focus:ring-gold/20 resize-none"
                 />
                 <p className="text-xs text-parchment-muted">
                   {bio.length}/500 characters

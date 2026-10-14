@@ -170,7 +170,7 @@ export function ReadingMode({
       {/* Progress bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-black/10 z-50">
         <div 
-          className="h-full bg-gradient-to-r from-gold to-gold/70 transition-all duration-150"
+          className="h-full bg-linear-to-r from-gold to-gold/70 transition-all duration-150"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -182,7 +182,7 @@ export function ReadingMode({
       )}>
         <div className={cn(
           "flex items-center justify-between px-6 py-4",
-          "bg-gradient-to-b from-black/20 to-transparent"
+          "bg-linear-to-b from-black/20 to-transparent"
         )}>
           {/* Left: Close & Title */}
           <div className="flex items-center gap-4">
@@ -279,7 +279,7 @@ export function ReadingMode({
       )}>
         <div className={cn(
           "flex items-center justify-center gap-2 px-6 py-4",
-          "bg-gradient-to-t from-black/20 to-transparent"
+          "bg-linear-to-t from-black/20 to-transparent"
         )}>
           {/* Theme toggle */}
           <Button

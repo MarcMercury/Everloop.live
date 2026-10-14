@@ -169,7 +169,7 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
         {variant === 'rejected' && (adminReview?.feedback || latestReview?.feedback) && (
           <div className="mt-3 p-3 rounded bg-red-500/10 border border-red-500/20 text-sm">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
               <div>
                 <span className="text-red-400 font-medium">Feedback: </span>
                 <span className="text-parchment-muted">
@@ -184,7 +184,7 @@ function StoryRow({ story, variant }: { story: UserStory; variant: 'draft' | 'pe
         {variant === 'revision' && (adminReview?.feedback || latestReview?.feedback) && (
           <div className="mt-3 p-3 rounded bg-amber-500/10 border border-amber-500/20 text-sm">
             <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div>
                 <span className="text-amber-400 font-medium">Revisions requested: </span>
                 <span className="text-parchment-muted">

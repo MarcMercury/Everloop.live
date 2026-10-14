@@ -243,7 +243,7 @@ export function CommentsSidebar({
                     onClick={() => onCommentClick?.(comment)}
                   >
                     <div className="flex items-start gap-2">
-                      <Icon className={cn('w-4 h-4 mt-0.5 flex-shrink-0', config.color)} />
+                      <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', config.color)} />
                       <div className="flex-1 min-w-0">
                         {/* Selected Text */}
                         {comment.selected_text && (

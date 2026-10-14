@@ -71,7 +71,7 @@ export function StreamOfConsciousnessModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs"
         onClick={handleClose}
       />
       
@@ -109,7 +109,7 @@ export function StreamOfConsciousnessModal({
               placeholder="Type your loose ideas, fragments, bullet points, or stream-of-consciousness thoughts here..."
               className="w-full h-32 px-4 py-3 rounded-lg bg-navy/50 border border-charcoal-700 
                          text-foreground placeholder:text-muted-foreground/50
-                         focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-none
+                         focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-hidden
                          resize-none"
             />
             <div className="flex items-center justify-between mt-2">

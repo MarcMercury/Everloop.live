@@ -55,7 +55,7 @@ export function RosterSearch({ initialQuery = '' }: { initialQuery?: string }) {
         aria-label="Search roster"
         className="w-full pl-10 pr-10 py-2 rounded-lg bg-teal-deep/50 border border-gold/20
                    text-parchment placeholder:text-parchment-muted/60
-                   focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-none"
+                   focus:border-gold/50 focus:ring-1 focus:ring-gold/20 focus:outline-hidden"
       />
       {isPending ? (
         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-parchment-muted animate-spin" />

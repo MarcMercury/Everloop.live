@@ -162,7 +162,7 @@ export default function ReadersGuidePage() {
             {FOUNDATIONS.map((item) => (
               <div
                 key={item.term}
-                className={`relative p-6 rounded-lg border border-${item.border} bg-${item.accent} backdrop-blur-sm transition-all hover:scale-[1.01] hover:border-opacity-50`}
+                className={`relative p-6 rounded-lg border border-${item.border} bg-${item.accent} backdrop-blur-xs transition-all hover:scale-[1.01] hover:border-opacity-50`}
                 style={{
                   background: `linear-gradient(135deg, rgba(13, 26, 26, 0.6) 0%, rgba(20, 36, 36, 0.4) 100%)`,
                   borderColor: `var(--tw-border-opacity, 1)`,

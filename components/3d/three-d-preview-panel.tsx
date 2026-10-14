@@ -93,7 +93,7 @@ export function ThreeDPreviewPanel({
       {modelUrl ? (
         <div
           className={`rounded-lg border border-purple-500/20 bg-teal-deep/30 overflow-hidden transition-all duration-300 ${
-            isExpanded ? 'aspect-[4/3]' : 'aspect-square'
+            isExpanded ? 'aspect-4/3' : 'aspect-square'
           }`}
         >
           <ModelViewer

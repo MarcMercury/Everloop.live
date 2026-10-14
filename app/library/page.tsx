@@ -74,7 +74,7 @@ export default function LibraryHubPage() {
           const Icon = s.icon
           return (
             <Link key={s.href} href={s.href} className="group">
-              <Card className={`relative overflow-hidden p-5 bg-gradient-to-br ${s.bg} border-gold/10 hover:border-gold/30 transition-all hover:-translate-y-0.5`}>
+              <Card className={`relative overflow-hidden p-5 bg-linear-to-br ${s.bg} border-gold/10 hover:border-gold/30 transition-all hover:-translate-y-0.5`}>
                 <Icon className={`w-7 h-7 ${s.color} mb-3`} />
                 <h2 className="font-serif text-xl text-parchment mb-1">{s.title}</h2>
                 <p className="text-sm text-parchment-muted leading-relaxed">{s.description}</p>

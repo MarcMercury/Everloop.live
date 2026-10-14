@@ -169,7 +169,7 @@ function DiceFace({ value, isCrit, isFail, isAnimating, delay }: {
         isAnimating && !showValue ? 'animate-spin-fast' : ''
       } ${
         isCrit
-          ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 shadow-sm shadow-amber-500/20'
+          ? 'bg-amber-500/30 text-amber-300 border border-amber-500/50 shadow-xs shadow-amber-500/20'
           : isFail
           ? 'bg-red-500/30 text-red-300 border border-red-500/50'
           : 'bg-teal-rich/80 text-parchment border border-gold/20'

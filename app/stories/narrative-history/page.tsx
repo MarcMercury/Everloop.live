@@ -109,7 +109,7 @@ const SECTIONS: { title?: string; paragraphs: string[] }[] = [
       'These are the Hollows.',
       'Elsewhere, the opposite.',
       'Too much holds at once.',
-      'Moments overlap. Seasons sit on top of one another. Cause and effect lose their order. A shadow might hesitate, then move without its source. A word might be spoken twice, then not at all.',
+      'Moments overlap. Seasons sit on top of one another. Cause and effect lose their order. A shadow-sm might hesitate, then move without its source. A word might be spoken twice, then not at all.',
       'The world is not collapsing.',
       'It is losing its agreement with itself.',
     ],

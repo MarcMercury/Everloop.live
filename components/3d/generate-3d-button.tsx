@@ -179,7 +179,7 @@ export function Generate3DButton({
         <div className="mt-2 w-full">
           <div className="h-1.5 w-full bg-purple-900/30 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-fuchsia-500 rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-purple-500 to-fuchsia-500 rounded-full transition-all duration-500"
               style={{ width: `${Math.max(progress, 5)}%` }}
             />
           </div>

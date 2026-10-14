@@ -406,7 +406,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     dm_notes: p.dm_notes || dmHints,
                   }))
                 }}
-                className="rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-none focus:ring-2 focus:ring-gold/40"
+                className="rounded bg-teal-rich/50 border border-gold/20 text-parchment text-xs p-1.5 focus:outline-hidden focus:ring-2 focus:ring-gold/40"
               >
                 <option value="" disabled>
                   Template…
@@ -479,7 +479,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                 onChange={e => setNewScene(p => ({ ...p, description: e.target.value }))}
                 placeholder="A brief summary of what happens in this scene..."
                 rows={2}
-                className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40"
+                className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40"
               />
             </div>
 
@@ -493,7 +493,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                 onChange={e => setNewScene(p => ({ ...p, narration: e.target.value }))}
                 placeholder="The air grows cold as you step through the threshold. The walls seem to breathe..."
                 rows={3}
-                className="w-full mt-1 rounded-lg bg-gold/5 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40 font-serif italic"
+                className="w-full mt-1 rounded-lg bg-gold/5 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40 font-serif italic"
               />
             </div>
 
@@ -513,7 +513,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     onChange={e => setNewScene(p => ({ ...p, feeling: e.target.value }))}
                     placeholder="What should the table feel by the end?"
                     rows={2}
-                    className="w-full mt-1 rounded bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+                    className="w-full mt-1 rounded bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-rose-400/30"
                   />
                 </div>
                 <div>
@@ -523,7 +523,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     onChange={e => setNewScene(p => ({ ...p, reveal: e.target.value }))}
                     placeholder="What truth, clue, or escalation surfaces?"
                     rows={2}
-                    className="w-full mt-1 rounded bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                    className="w-full mt-1 rounded bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-amber-400/30"
                   />
                 </div>
                 <div>
@@ -533,7 +533,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                     onChange={e => setNewScene(p => ({ ...p, choice: e.target.value }))}
                     placeholder="What real decision do the players face?"
                     rows={2}
-                    className="w-full mt-1 rounded bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                    className="w-full mt-1 rounded bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-indigo-400/30"
                   />
                 </div>
               </div>
@@ -585,7 +585,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                 onChange={e => setNewScene(p => ({ ...p, dm_notes: e.target.value }))}
                 placeholder="The hidden passage is behind the bookshelf. DC 15 Perception..."
                 rows={2}
-                className="w-full mt-1 rounded-lg bg-red-500/5 border border-red-500/10 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                className="w-full mt-1 rounded-lg bg-red-500/5 border border-red-500/10 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-red-500/20"
               />
             </div>
 
@@ -1037,7 +1037,7 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
                               }
                               placeholder="A roughly circular stone chamber, 40 ft across. Single arched door on the south wall, collapsed passage on the north. Central raised dais 10 ft square with a shattered altar. Two pillars flank the dais (full cover). Shallow water (difficult terrain) covers the western third of the floor. Dim torchlight from sconces on east and west walls."
                               rows={5}
-                              className="w-full rounded bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-gold/40 font-mono"
+                              className="w-full rounded bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-y focus:outline-hidden focus:ring-2 focus:ring-gold/40 font-mono"
                             />
                             <div className="flex items-center gap-2">
                               <Button

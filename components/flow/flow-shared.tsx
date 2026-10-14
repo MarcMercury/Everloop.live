@@ -175,7 +175,7 @@ export function ArchivePicker({
           onChange={e => setSearch(e.target.value)}
           placeholder={loaded ? 'Search the Archive...' : 'Loading archive...'}
           disabled={!loaded}
-          className="w-full bg-teal-deep/60 border border-gold/20 rounded pl-7 pr-2 py-1.5 text-xs text-parchment focus:outline-none focus:ring-2 focus:ring-gold/40"
+          className="w-full bg-teal-deep/60 border border-gold/20 rounded pl-7 pr-2 py-1.5 text-xs text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/40"
         />
       </div>
 

@@ -115,7 +115,7 @@ export function NotesPanel({ storyId }: NotesPanelProps) {
           className={cn(
             'w-full h-full resize-none bg-charcoal-800 border border-charcoal-700 rounded-lg p-3',
             'text-sm text-foreground placeholder:text-muted-foreground/50',
-            'focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/20',
+            'focus:outline-hidden focus:border-gold/50 focus:ring-1 focus:ring-gold/20',
             'transition-colors'
           )}
         />

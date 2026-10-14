@@ -48,7 +48,7 @@ export function ResizablePanel({ children, className }: ResizablePanelProps) {
       ref={panelRef}
       style={{ width: panelWidth }}
       className={cn(
-        'relative flex-shrink-0 h-full border-l border-charcoal-700 bg-charcoal',
+        'relative shrink-0 h-full border-l border-charcoal-700 bg-charcoal',
         className
       )}
     >

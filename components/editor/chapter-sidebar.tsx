@@ -300,7 +300,7 @@ export function ChapterSidebar({
                   )}
                 >
                   {/* Drag Handle */}
-                  <div className="flex-shrink-0 mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="shrink-0 mt-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity">
                     <GripVertical className="w-4 h-4 text-muted-foreground" />
                   </div>
 
@@ -333,7 +333,7 @@ export function ChapterSidebar({
                   {/* Delete Button */}
                   <button
                     onClick={(e) => handleDeleteChapter(chapter.id, e)}
-                    className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 
+                    className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 
                                hover:bg-destructive/20 text-muted-foreground hover:text-destructive 
                                transition-all"
                     title="Delete chapter"

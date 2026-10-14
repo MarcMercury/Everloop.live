@@ -113,9 +113,9 @@ export default async function CreateMonsterPage({
                 >
                   <CardContent className="p-0">
                     <div
-                      className={`h-36 bg-gradient-to-br ${mp.gradient} flex items-center justify-center`}
+                      className={`h-36 bg-linear-to-br ${mp.gradient} flex items-center justify-center`}
                     >
-                      <div className="p-4 rounded-full bg-teal-deep/50 backdrop-blur-sm">
+                      <div className="p-4 rounded-full bg-teal-deep/50 backdrop-blur-xs">
                         <Icon className={`w-12 h-12 ${mp.iconColor}`} />
                       </div>
                     </div>

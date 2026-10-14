@@ -145,8 +145,8 @@ export function NewStoryModal({ children }: NewStoryModalProps) {
                 >
                   {/* Icon */}
                   <div className={`
-                    flex-shrink-0 w-14 h-14 rounded-lg 
-                    bg-gradient-to-br from-gold/20 to-gold/5
+                    shrink-0 w-14 h-14 rounded-lg 
+                    bg-linear-to-br from-gold/20 to-gold/5
                     flex items-center justify-center
                     text-gold group-hover:text-gold/80
                     transition-colors

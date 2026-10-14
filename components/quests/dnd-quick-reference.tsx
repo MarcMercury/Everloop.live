@@ -90,7 +90,7 @@ export function DnDQuickReference() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               placeholder={tab === 'actions' ? 'Search actions...' : 'Search conditions...'}
-              className="w-full pl-7 pr-2 py-1 rounded bg-teal-rich/40 border border-gold/10 text-xs text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-1 focus:ring-gold/30"
+              className="w-full pl-7 pr-2 py-1 rounded bg-teal-rich/40 border border-gold/10 text-xs text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-1 focus:ring-gold/30"
             />
           </div>
 

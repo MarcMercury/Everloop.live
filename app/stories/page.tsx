@@ -119,7 +119,7 @@ export default async function StoriesPage({ searchParams }: StoriesPageProps) {
                 defaultValue={search}
                 className="w-full px-4 py-3 pl-12 rounded-lg bg-teal-deep/50 border border-gold/20 
                            text-parchment placeholder:text-parchment-muted/50 focus:border-gold/50
-                           focus:ring-2 focus:ring-gold/20 focus:outline-none transition-all"
+                           focus:ring-2 focus:ring-gold/20 focus:outline-hidden transition-all"
               />
               <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-parchment-muted" />
             </div>

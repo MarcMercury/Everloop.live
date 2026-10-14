@@ -331,7 +331,7 @@ export function ReviewClient({ story }: ReviewClientProps) {
                     placeholder="What does the author need to change?"
                     className="w-full h-24 px-3 py-2 rounded bg-charcoal border border-charcoal-700 
                                text-foreground placeholder:text-muted-foreground/50
-                               focus:border-amber-500/50 focus:outline-none resize-none text-sm"
+                               focus:border-amber-500/50 focus:outline-hidden resize-none text-sm"
                   />
                   <div className="flex gap-2">
                     <Button
@@ -373,7 +373,7 @@ export function ReviewClient({ story }: ReviewClientProps) {
                     placeholder="Reason for rejection..."
                     className="w-full h-24 px-3 py-2 rounded bg-charcoal border border-charcoal-700 
                                text-foreground placeholder:text-muted-foreground/50
-                               focus:border-red-500/50 focus:outline-none resize-none text-sm"
+                               focus:border-red-500/50 focus:outline-hidden resize-none text-sm"
                   />
                   <div className="flex gap-2">
                     <Button

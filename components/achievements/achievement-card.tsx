@@ -94,13 +94,13 @@ export function AchievementCard({ achievement, compact = false }: AchievementCar
     >
       {/* Locked overlay */}
       {!isUnlocked && !isSecret && (
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent pointer-events-none" />
       )}
       
       <div className="flex items-start gap-4">
         {/* Icon */}
         <div className={cn(
-          "flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-lg text-4xl",
+          "shrink-0 w-16 h-16 flex items-center justify-center rounded-lg text-4xl",
           isUnlocked ? tierStyle.bg : "bg-muted/30",
           !isUnlocked && "grayscale"
         )}>

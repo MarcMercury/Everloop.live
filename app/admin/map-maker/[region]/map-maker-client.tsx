@@ -301,7 +301,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
   return (
     <div className="relative">
       {/* Toolbar */}
-      <div className="px-6 py-3 border-b border-gold/10 bg-charcoal-900/40 flex items-center gap-3 flex-wrap sticky top-0 z-30 backdrop-blur">
+      <div className="px-6 py-3 border-b border-gold/10 bg-charcoal-900/40 flex items-center gap-3 flex-wrap sticky top-0 z-30 backdrop-blur-sm">
         <span className="text-xs text-parchment-muted">
           Drag any pin to reposition. Pan the map with the background.
         </span>

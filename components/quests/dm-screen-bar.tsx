@@ -25,7 +25,7 @@ export function DMScreenBar() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-charcoal-900/95 backdrop-blur border-t border-gold/15 px-3 py-2">
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-charcoal-900/95 backdrop-blur-sm border-t border-gold/15 px-3 py-2">
         <div className="max-w-5xl mx-auto flex items-center gap-1 overflow-x-auto">
           <span className="text-[10px] uppercase tracking-wider text-parchment-muted px-2 shrink-0">
             <BookOpen className="w-3 h-3 inline mr-1" /> DM Screen
@@ -41,7 +41,7 @@ export function DMScreenBar() {
 
       {open && (
         <div className="fixed bottom-12 left-0 right-0 z-40 px-3 pb-3">
-          <Card className="max-w-5xl mx-auto bg-charcoal-900/95 backdrop-blur border border-gold/20 p-4 max-h-[60vh] overflow-y-auto relative">
+          <Card className="max-w-5xl mx-auto bg-charcoal-900/95 backdrop-blur-sm border border-gold/20 p-4 max-h-[60vh] overflow-y-auto relative">
             <button
               onClick={() => setOpen(null)}
               className="absolute top-2 right-2 text-parchment-muted hover:text-parchment"

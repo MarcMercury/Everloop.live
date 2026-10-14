@@ -81,7 +81,7 @@ export function DamageDialog({ open, onClose, modifiers, status, conSaveModifier
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4" onClick={onClose}>
       <Card className="w-full max-w-md bg-charcoal-900 border-rose-500/30" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between p-4 border-b border-gold/10">
           <h3 className="font-serif text-lg text-parchment flex items-center gap-2">

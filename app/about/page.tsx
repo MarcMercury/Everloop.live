@@ -150,7 +150,7 @@ export default function AboutPage() {
         <section className="mb-16">
           <h2 className="text-2xl font-serif text-parchment mb-6">The World</h2>
           <Card className="overflow-hidden">
-            <div className="h-32 bg-gradient-to-r from-teal-rich via-gold/10 to-teal-rich" />
+            <div className="h-32 bg-linear-to-r from-teal-rich via-gold/10 to-teal-rich" />
             <CardContent className="pt-6">
               <p className="text-parchment-muted leading-relaxed mb-4">
                 The Everloop is a realm where time doesn&apos;t flow in straight lines. Ancient 
@@ -191,7 +191,7 @@ export default function AboutPage() {
             <Heart className="w-6 h-6 text-red-400" />
             Our Vision
           </h2>
-          <div className="bg-gradient-to-r from-gold/5 to-transparent p-6 rounded-lg border border-gold/10">
+          <div className="bg-linear-to-r from-gold/5 to-transparent p-6 rounded-lg border border-gold/10">
             <p className="text-parchment-muted leading-relaxed italic">
               &quot;We believe the best stories are the ones we build together. The Everloop isn&apos;t 
               just a writing platform — it&apos;s a collective journey toward something unknown. 

@@ -489,7 +489,7 @@ export function DMControlPanelClient({
                   onChange={e => setNarrationInput(e.target.value)}
                   placeholder="The ground trembles as reality folds..."
                   rows={4}
-                  className="w-full rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40"
+                  className="w-full rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40"
                 />
                 <ToneSelector value={narrationTone} onChange={setNarrationTone} />
                 <Button onClick={handleNarrate} className="w-full mt-2 btn-fantasy text-sm" disabled={!session}>
@@ -528,7 +528,7 @@ export function DMControlPanelClient({
                   onChange={e => setAiPrompt(e.target.value)}
                   placeholder="Describe what you need: a scene transition, NPC reaction, event..."
                   rows={2}
-                  className="w-full rounded-lg bg-violet-500/5 border border-violet-500/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  className="w-full rounded-lg bg-violet-500/5 border border-violet-500/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-violet-500/40"
                 />
                 <div className="grid grid-cols-2 gap-1 mt-2">
                   <Button
@@ -892,7 +892,7 @@ export function DMControlPanelClient({
           {/* Scene Atmosphere Banner */}
           {activeScene && (
             <div
-              className={`px-4 py-2 border-b border-gold/10 bg-gradient-to-r ${moodTheme.bgGradient}`}
+              className={`px-4 py-2 border-b border-gold/10 bg-linear-to-r ${moodTheme.bgGradient}`}
             >
               <div className="flex items-center gap-2 text-sm">
                 <span>{moodTheme.icon}</span>

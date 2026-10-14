@@ -430,7 +430,7 @@ export default function CreateQuestPage() {
           </div>
           <div>
             <Label htmlFor="description" className="text-parchment">Description</Label>
-            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What pulls your players into this story? What is the local problem, the contained issue, the thing that feels bigger than it should? In the Everloop, every campaign begins somewhere ordinary... but never ends there." rows={3} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40" />
+            <textarea id="description" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="What pulls your players into this story? What is the local problem, the contained issue, the thing that feels bigger than it should? In the Everloop, every campaign begins somewhere ordinary... but never ends there." rows={3} className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40" />
           </div>
 
           {/* Narrative Compass: Hook + Stakes Triad */}
@@ -449,7 +449,7 @@ export default function CreateQuestPage() {
                 onChange={e => setForm(f => ({ ...f, hook: e.target.value }))}
                 placeholder="One sentence. What grabs the party in the first ten minutes? (A burning letter. A child's empty bed. A bell ringing where no bell hangs.)"
                 rows={2}
-                className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gold/40 font-serif italic"
+                className="w-full mt-1 rounded-lg bg-teal-rich/50 border border-gold/20 text-parchment placeholder:text-parchment-muted/50 p-3 text-sm resize-none focus:outline-hidden focus:ring-2 focus:ring-gold/40 font-serif italic"
               />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -461,7 +461,7 @@ export default function CreateQuestPage() {
                   onChange={e => setForm(f => ({ ...f, stakes_personal: e.target.value }))}
                   placeholder="What does someone in the party stand to lose or become?"
                   rows={3}
-                  className="w-full mt-1 rounded-lg bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+                  className="w-full mt-1 rounded-lg bg-rose-950/20 border border-rose-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-rose-400/30"
                 />
               </div>
               <div>
@@ -472,7 +472,7 @@ export default function CreateQuestPage() {
                   onChange={e => setForm(f => ({ ...f, stakes_world: e.target.value }))}
                   placeholder="What changes in the region if no one acts?"
                   rows={3}
-                  className="w-full mt-1 rounded-lg bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                  className="w-full mt-1 rounded-lg bg-amber-950/20 border border-amber-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-amber-400/30"
                 />
               </div>
               <div>
@@ -483,7 +483,7 @@ export default function CreateQuestPage() {
                   onChange={e => setForm(f => ({ ...f, stakes_mystery: e.target.value }))}
                   placeholder="What truth — Shard, Fray, or older — sits behind the surface problem?"
                   rows={3}
-                  className="w-full mt-1 rounded-lg bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                  className="w-full mt-1 rounded-lg bg-indigo-950/20 border border-indigo-400/20 text-parchment placeholder:text-parchment-muted/40 p-2 text-xs resize-none focus:outline-hidden focus:ring-2 focus:ring-indigo-400/30"
                 />
               </div>
             </div>
@@ -673,7 +673,7 @@ export default function CreateQuestPage() {
             <Label className="text-parchment mb-3 block">Leveling Style</Label>
             <div className="space-y-2">
               {(['milestone', 'xp_based', 'hybrid'] as const).map(val => (
-                <OptionCard key={val} selected={form.leveling_style === val} onClick={() => setForm(f => ({ ...f, leveling_style: val }))} className="!p-3">
+                <OptionCard key={val} selected={form.leveling_style === val} onClick={() => setForm(f => ({ ...f, leveling_style: val }))} className="p-3!">
                   <span className="text-sm text-parchment capitalize">{val.replace('_', '-')}</span>
                 </OptionCard>
               ))}
@@ -683,7 +683,7 @@ export default function CreateQuestPage() {
             <Label className="text-parchment mb-3 block">Progression Speed</Label>
             <div className="space-y-2">
               {(['fast', 'standard', 'slow'] as const).map(val => (
-                <OptionCard key={val} selected={form.progression_speed === val} onClick={() => setForm(f => ({ ...f, progression_speed: val }))} className="!p-3">
+                <OptionCard key={val} selected={form.progression_speed === val} onClick={() => setForm(f => ({ ...f, progression_speed: val }))} className="p-3!">
                   <span className="text-sm text-parchment capitalize">{val}</span>
                 </OptionCard>
               ))}
@@ -773,7 +773,7 @@ export default function CreateQuestPage() {
                 <Label className="text-parchment text-sm mb-2 block">Who Earns Idols</Label>
                 <div className="space-y-2">
                   {(['individuals', 'teams'] as const).map(val => (
-                    <OptionCard key={val} selected={form.idol_who_earns === val} onClick={() => setForm(f => ({ ...f, idol_who_earns: val }))} className="!p-3">
+                    <OptionCard key={val} selected={form.idol_who_earns === val} onClick={() => setForm(f => ({ ...f, idol_who_earns: val }))} className="p-3!">
                       <span className="text-sm text-parchment capitalize">{val}</span>
                     </OptionCard>
                   ))}
@@ -783,7 +783,7 @@ export default function CreateQuestPage() {
                 <Label className="text-parchment text-sm mb-2 block">When Usable</Label>
                 <div className="space-y-2">
                   {([['before_events', 'Before Events'], ['anytime', 'Anytime']] as const).map(([val, label]) => (
-                    <OptionCard key={val} selected={form.idol_when_usable === val} onClick={() => setForm(f => ({ ...f, idol_when_usable: val as typeof form.idol_when_usable }))} className="!p-3">
+                    <OptionCard key={val} selected={form.idol_when_usable === val} onClick={() => setForm(f => ({ ...f, idol_when_usable: val as typeof form.idol_when_usable }))} className="p-3!">
                       <span className="text-sm text-parchment">{label}</span>
                     </OptionCard>
                   ))}

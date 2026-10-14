@@ -564,7 +564,7 @@ export function CharacterForge() {
   return (
     <div className="min-h-screen pb-24">
       {/* ── Progress Bar ── */}
-      <div className="sticky top-0 z-30 bg-charcoal/95 backdrop-blur-sm border-b border-gold-500/10 py-3 px-4 md:px-6">
+      <div className="sticky top-0 z-30 bg-charcoal/95 backdrop-blur-xs border-b border-gold-500/10 py-3 px-4 md:px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-serif text-gold-500">
@@ -729,7 +729,7 @@ export function CharacterForge() {
       </div>
 
       {/* ── Bottom Navigation ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-charcoal/95 backdrop-blur-sm border-t border-gold-500/10 p-4">
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-charcoal/95 backdrop-blur-xs border-t border-gold-500/10 p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
           <Button
             variant="ghost"
@@ -1184,7 +1184,7 @@ function StepClass({
                       }`}
                     >
                       <span className="flex items-center gap-1.5">
-                        {isSelected && <Check className="w-3 h-3 text-emerald-400 flex-shrink-0" />}
+                        {isSelected && <Check className="w-3 h-3 text-emerald-400 shrink-0" />}
                         {skill}
                       </span>
                     </button>
@@ -1511,7 +1511,7 @@ function StepAbilities({
                       }`}
                     >
                       <div className={`text-sm font-medium flex items-center gap-1.5 ${isSelected ? 'text-gold-500' : 'text-parchment'}`}>
-                        {isSelected && <Check className="w-3 h-3 flex-shrink-0" />}
+                        {isSelected && <Check className="w-3 h-3 shrink-0" />}
                         {feat.name}
                       </div>
                       <div className="text-[10px] text-parchment-muted mt-0.5 line-clamp-1">{feat.desc}</div>
@@ -2209,7 +2209,7 @@ function StepEquipment({
                   {wpnData && <span className="text-[10px] text-parchment-muted/50">{wpnData.cost} · {wpnData.weight} lb</span>}
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => removeWeapon(i)} className="text-red-400 h-8 w-8 p-0 flex-shrink-0">
+              <Button variant="ghost" size="sm" onClick={() => removeWeapon(i)} className="text-red-400 h-8 w-8 p-0 shrink-0">
                 <X className="w-3.5 h-3.5" />
               </Button>
             </div>
@@ -2652,7 +2652,7 @@ function StepSpells({
                     }`}
                   >
                     <span className="flex items-center gap-1.5">
-                      {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                      {isSelected && <Check className="w-3 h-3 text-purple-400 shrink-0" />}
                       {name}
                     </span>
                   </button>
@@ -2698,7 +2698,7 @@ function StepSpells({
                       }`}
                     >
                       <span className="flex items-center gap-1.5">
-                        {isSelected && <Check className="w-3 h-3 text-amber-400 flex-shrink-0" />}
+                        {isSelected && <Check className="w-3 h-3 text-amber-400 shrink-0" />}
                         {name}
                       </span>
                     </button>
@@ -2778,7 +2778,7 @@ function StepSpells({
                       }`}
                     >
                       <span className="flex items-center gap-1.5">
-                        {isSelected && <Check className="w-3 h-3 text-purple-400 flex-shrink-0" />}
+                        {isSelected && <Check className="w-3 h-3 text-purple-400 shrink-0" />}
                         {name}
                         {isBonus && <span className="text-[9px] text-amber-400 ml-auto">bonus</span>}
                       </span>
@@ -2869,12 +2869,12 @@ function StepReview({
   return (
     <div className="space-y-6">
       {/* Character Card Preview */}
-      <Card className="overflow-hidden border-gold-500/20 bg-gradient-to-br from-teal-rich/80 to-charcoal-900/80">
+      <Card className="overflow-hidden border-gold-500/20 bg-linear-to-br from-teal-rich/80 to-charcoal-900/80">
         <div className="h-1.5" style={{ backgroundColor: classColor }} />
         <div className="p-6">
           <div className="flex items-start gap-6">
             {/* Portrait */}
-            <div className="w-24 h-32 rounded-lg overflow-hidden flex-shrink-0 border border-gold-500/20">
+            <div className="w-24 h-32 rounded-lg overflow-hidden shrink-0 border border-gold-500/20">
               {portraitUrl ? (
                 <img src={portraitUrl} alt={name} className="w-full h-full object-cover" />
               ) : (

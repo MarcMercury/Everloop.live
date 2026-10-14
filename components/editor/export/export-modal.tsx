@@ -208,7 +208,7 @@ export function ExportModal({
                   value={selectedChapter || ''}
                   onChange={(e) => setSelectedChapter(e.target.value)}
                   className="w-full mt-2 px-3 py-2 rounded-md bg-teal-rich/50 border border-gold/20 
-                             text-parchment text-sm focus:outline-none focus:border-gold/40"
+                             text-parchment text-sm focus:outline-hidden focus:border-gold/40"
                 >
                   <option value="">Select a chapter...</option>
                   {chapters.map((ch, i) => (

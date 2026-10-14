@@ -178,7 +178,7 @@ export function DistractionFreeMode({
   const portalContent = (
     <div 
       className={cn(
-        'fixed inset-0 z-[100] flex flex-col transition-colors duration-500',
+        'fixed inset-0 z-100 flex flex-col transition-colors duration-500',
         themeStyles.bg
       )}
       onMouseMove={handleMouseMove}
@@ -186,7 +186,7 @@ export function DistractionFreeMode({
       {/* Top controls bar - fades in/out */}
       <div 
         className={cn(
-          'fixed top-0 left-0 right-0 p-4 flex items-center justify-between transition-opacity duration-300 backdrop-blur-sm',
+          'fixed top-0 left-0 right-0 p-4 flex items-center justify-between transition-opacity duration-300 backdrop-blur-xs',
           themeStyles.controls,
           showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
@@ -346,7 +346,7 @@ export function DistractionFreeMode({
               value={content}
               onChange={(e) => onContentChange?.(e.target.value)}
               className={cn(
-                'w-full h-full min-h-[60vh] resize-none border-none outline-none font-serif transition-all',
+                'w-full h-full min-h-[60vh] resize-none border-none outline-hidden font-serif transition-all',
                 themeStyles.bg,
                 themeStyles.text,
                 'placeholder:opacity-30'

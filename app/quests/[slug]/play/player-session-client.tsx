@@ -137,7 +137,7 @@ export function PlayerSessionClient({
   return (
     <div className="h-screen flex flex-col bg-charcoal overflow-hidden">
       {/* Top Bar - Scene Atmosphere */}
-      <div className={`px-4 py-3 border-b border-gold/10 bg-gradient-to-r ${moodTheme.bgGradient}`}>
+      <div className={`px-4 py-3 border-b border-gold/10 bg-linear-to-r ${moodTheme.bgGradient}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href={`/quests/${campaign.slug}`} className="text-parchment-muted hover:text-parchment">

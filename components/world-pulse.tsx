@@ -53,7 +53,7 @@ export function WorldPulse({ convergence, compact = false, className }: WorldPul
   return (
     <div className={cn(
       'p-4 rounded-lg border',
-      'bg-gradient-to-br from-teal-rich/80 to-teal-deep/90',
+      'bg-linear-to-br from-teal-rich/80 to-teal-deep/90',
       'border-gold/10',
       phase.glow,
       className
@@ -78,7 +78,7 @@ export function WorldPulse({ convergence, compact = false, className }: WorldPul
         </div>
         <div className="h-1.5 bg-charcoal-700 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-gold/60 to-gold rounded-full transition-all duration-1000"
+            className="h-full bg-linear-to-r from-gold/60 to-gold rounded-full transition-all duration-1000"
             style={{ width: `${convergence.convergence_percentage}%` }}
           />
         </div>

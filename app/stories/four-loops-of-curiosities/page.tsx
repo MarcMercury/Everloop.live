@@ -29,7 +29,7 @@ const ENTRIES: Entry[] = [
     title: 'Cycle 8 (contested), Third Quarter (approximate), Loop 1 — Departure from the Luminous Fold',
     paragraphs: [
       'If these pages are opened by any hand other than mine in due return, then let it be understood: this was not composed for record, but for remembrance.',
-      'I departed this morning from the outer ring of the Luminous Fold. The geometry of it remains exact in memory—the way light strikes stone in measured planes, the absence of scent beyond mineral and intent, the quiet certainty that each Hour belongs to the one that follows.',
+      'I departed this morning from the outer ring-3 of the Luminous Fold. The geometry of it remains exact in memory—the way light strikes stone in measured planes, the absence of scent beyond mineral and intent, the quiet certainty that each Hour belongs to the one that follows.',
       'I note the time—Cycle 8, Third Quarter, Loop 1—with the understanding that such notation will not endure.',
       'Within Hours, I encountered three travelers. Each offered a different Cycle. None disputed the others.',
       '“The day moves correctly,” one said.',

@@ -236,7 +236,7 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
             </Button>
           </div>
 
-          <div className="space-y-1 max-h-[28rem] overflow-y-auto pr-1">
+          <div className="space-y-1 max-h-112 overflow-y-auto pr-1">
             {hits.map((h) => {
               const isDrift = DRIFT_TYPES.has(h.type.toLowerCase())
               return (

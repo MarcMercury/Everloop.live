@@ -483,7 +483,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       {/* Edit/Create Modal */}
       {(editingEntity || showCreateModal) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={closeModal} />
           
           <div className="relative w-full max-w-lg mx-4 bg-charcoal border border-charcoal-700 rounded-lg shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-charcoal-700">
@@ -529,7 +529,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                     className="w-full px-3 py-2 rounded-md bg-navy/50 border border-charcoal-700 
-                               text-foreground focus:border-gold/50 focus:outline-none"
+                               text-foreground focus:border-gold/50 focus:outline-hidden"
                   >
                     {entityTypes.map((type) => (
                       <option key={type} value={type} className="bg-charcoal">
@@ -545,7 +545,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     className="w-full px-3 py-2 rounded-md bg-navy/50 border border-charcoal-700 
-                               text-foreground focus:border-gold/50 focus:outline-none"
+                               text-foreground focus:border-gold/50 focus:outline-hidden"
                   >
                     {statusOptions.map((status) => (
                       <option key={status} value={status} className="bg-charcoal">
@@ -579,7 +579,7 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
                   rows={4}
                   className="w-full px-3 py-2 rounded-md bg-navy/50 border border-charcoal-700 
                              text-foreground placeholder:text-muted-foreground/50
-                             focus:border-gold/50 focus:outline-none resize-none"
+                             focus:border-gold/50 focus:outline-hidden resize-none"
                 />
                 {editingEntity && (
                   <p className="text-xs text-muted-foreground mt-1">

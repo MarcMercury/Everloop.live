@@ -140,7 +140,7 @@ function Select({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment focus:outline-none focus:ring-2 focus:ring-gold/30 ${className}`}
+      className={`w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment focus:outline-hidden focus:ring-2 focus:ring-gold/30 ${className}`}
     >
       {children}
     </select>
@@ -1267,7 +1267,7 @@ export function MonsterQuestWizard() {
             value={a.description}
             onChange={(e) => onUpdate(i, { description: e.target.value })}
             rows={2}
-            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none text-sm"
+            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none text-sm"
           />
         </CardContent>
       </Card>
@@ -1436,7 +1436,7 @@ export function MonsterQuestWizard() {
                   value={t.description}
                   onChange={(e) => updateTrait(i, { description: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none text-sm"
+                  className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none text-sm"
                 />
               </CardContent>
             </Card>
@@ -1451,7 +1451,7 @@ export function MonsterQuestWizard() {
             value={tactics}
             onChange={(e) => setTactics(e.target.value)}
             rows={3}
-            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+            className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none"
           />
           <p className="text-xs text-gold/60 italic">These appear in the DM stat block during quests.</p>
         </div>
@@ -1511,7 +1511,7 @@ export function MonsterQuestWizard() {
           value={whatBrokeHere}
           onChange={(e) => setWhatBrokeHere(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none"
         />
         <p className="text-xs text-parchment-muted">
           What event, location, or force in the Fray allowed this monster to exist?
@@ -1528,7 +1528,7 @@ export function MonsterQuestWizard() {
           value={whatLeakedThrough}
           onChange={(e) => setWhatLeakedThrough(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none"
         />
         <p className="text-xs text-parchment-muted">
           Was it raw Drift, corrupted local reality, or something shaped from memory?
@@ -1545,7 +1545,7 @@ export function MonsterQuestWizard() {
           value={drawnTo}
           onChange={(e) => setDrawnTo(e.target.value)}
           rows={3}
-          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none"
         />
         <p className="text-xs text-parchment-muted">
           Is it drawn to a Shard, a place, a person, or instability itself?
@@ -1579,7 +1579,7 @@ export function MonsterQuestWizard() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={8}
-          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-none focus:ring-2 focus:ring-gold/30 resize-none"
+          className="w-full px-3 py-2 bg-teal-deep/50 border border-gold/20 rounded-md text-parchment placeholder:text-parchment-muted/50 focus:outline-hidden focus:ring-2 focus:ring-gold/30 resize-none"
         />
       </div>
     </div>
@@ -1857,7 +1857,7 @@ export function MonsterQuestWizard() {
         </div>
         <div className="h-1 bg-teal-deep/30 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-red-500 to-orange-500 transition-all duration-500"
+            className="h-full bg-linear-to-r from-red-500 to-orange-500 transition-all duration-500"
             style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
           />
         </div>

@@ -92,7 +92,7 @@ export function TemplatePicker({ scope, onSelect, onCancel, isLoading }: Templat
           'disabled:opacity-50 disabled:cursor-not-allowed'
         )}
       >
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-gold/10 flex items-center justify-center">
+        <div className="shrink-0 w-12 h-12 rounded-lg bg-gold/10 flex items-center justify-center">
           <FileText className="w-6 h-6 text-gold/70" />
         </div>
         <div className="flex-1">

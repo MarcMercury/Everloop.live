@@ -22,7 +22,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen">
       {/* Admin sub-nav (the global Navbar already renders the logo + auth UI) */}
-      <div className="border-b border-gold/15 bg-teal-deep/40 backdrop-blur-sm">
+      <div className="border-b border-gold/15 bg-teal-deep/40 backdrop-blur-xs">
         <div className="max-w-7xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">

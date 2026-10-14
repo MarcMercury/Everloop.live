@@ -142,7 +142,7 @@ export function LoreChat({ campaignId }: LoreChatProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-purple-900/30 transition-all hover:scale-105 hover:shadow-purple-900/50"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-linear-to-r from-purple-600 to-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-purple-900/30 transition-all hover:scale-105 hover:shadow-purple-900/50"
       >
         <BookOpen className="h-4 w-4" />
         Ask the Lore Oracle

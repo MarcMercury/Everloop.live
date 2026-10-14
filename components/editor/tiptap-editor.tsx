@@ -293,7 +293,7 @@ export function TiptapEditor({
           'prose-blockquote:border-l-gold prose-blockquote:border-l-2 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-muted-foreground',
           'prose-strong:text-foreground prose-strong:font-semibold',
           'prose-ul:text-foreground/90 prose-ol:text-foreground/90',
-          'focus:outline-none min-h-[500px] p-4'
+          'focus:outline-hidden min-h-[500px] p-4'
         ),
       },
     },

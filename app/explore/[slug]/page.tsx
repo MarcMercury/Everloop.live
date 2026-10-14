@@ -519,7 +519,7 @@ export default async function EntityPage({ params }: EntityPageProps) {
 
             {/* Shard Connections */}
             {crossRefs.shard_connections.length > 0 && (
-              <div className="p-6 rounded-lg bg-gradient-to-br from-purple-900/20 to-teal-rich/50 border border-purple-500/20 space-y-4">
+              <div className="p-6 rounded-lg bg-linear-to-br from-purple-900/20 to-teal-rich/50 border border-purple-500/20 space-y-4">
                 <h3 className="text-lg font-serif text-purple-300 flex items-center gap-2">
                   <Diamond className="w-4 h-4" />
                   Shard Presence

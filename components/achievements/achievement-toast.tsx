@@ -52,20 +52,20 @@ export function AchievementToast({
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-[100] max-w-sm",
+        "fixed bottom-6 right-6 z-100 max-w-sm",
         "transition-all duration-300 ease-out",
         isVisible && !isLeaving
           ? "translate-y-0 opacity-100"
           : "translate-y-4 opacity-0"
       )}
     >
-      <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-gold/20 via-gold/10 to-transparent border border-gold/40 shadow-xl shadow-gold/20">
+      <div className="relative overflow-hidden rounded-lg bg-linear-to-r from-gold/20 via-gold/10 to-transparent border border-gold/40 shadow-xl shadow-gold/20">
         {/* Sparkle effect */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.3),transparent_50%)]" />
         
         <div className="relative flex items-center gap-4 p-4">
           {/* Icon */}
-          <div className="flex-shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-gold/20 text-3xl animate-bounce">
+          <div className="shrink-0 w-14 h-14 flex items-center justify-center rounded-full bg-gold/20 text-3xl animate-bounce">
             {achievement.icon}
           </div>
           
@@ -85,7 +85,7 @@ export function AchievementToast({
           {/* Close button */}
           <button
             onClick={handleDismiss}
-            className="flex-shrink-0 p-1 rounded-full hover:bg-white/10 transition-colors"
+            className="shrink-0 p-1 rounded-full hover:bg-white/10 transition-colors"
           >
             <X className="w-4 h-4 text-parchment-muted" />
           </button>
@@ -152,7 +152,7 @@ export function AchievementToastContainer({
       
       {/* Indicator for remaining achievements */}
       {remaining > 0 && (
-        <div className="fixed bottom-20 right-6 z-[99] text-xs text-parchment-muted">
+        <div className="fixed bottom-20 right-6 z-99 text-xs text-parchment-muted">
           +{remaining} more
         </div>
       )}

@@ -75,8 +75,8 @@ export default async function CreatorStudioPage() {
                 <Card className={`group h-full cursor-pointer transition-all duration-300 ${entity.borderColor} hover:scale-[1.02]`}>
                   <CardContent className="p-0">
                     {/* Gradient Header */}
-                    <div className={`h-32 bg-gradient-to-br ${entity.gradient} flex items-center justify-center`}>
-                      <div className="p-4 rounded-full bg-teal-deep/50 backdrop-blur-sm">
+                    <div className={`h-32 bg-linear-to-br ${entity.gradient} flex items-center justify-center`}>
+                      <div className="p-4 rounded-full bg-teal-deep/50 backdrop-blur-xs">
                         <Icon className={`w-10 h-10 ${entity.iconColor}`} />
                       </div>
                     </div>

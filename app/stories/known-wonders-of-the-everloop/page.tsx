@@ -393,7 +393,7 @@ export default function KnownWondersPage() {
                 <FieldRow label="Peoples" value={region.peoples} />
               </div>
 
-              <div className="my-6 p-4 border border-gold/15 rounded bg-parchment/[0.02]">
+              <div className="my-6 p-4 border border-gold/15 rounded bg-parchment/2">
                 <div className="text-gold/60 font-serif text-xs uppercase tracking-[0.18em] mb-3">Attuned Classification</div>
                 <div className="grid sm:grid-cols-2 gap-3 text-parchment/85 font-crimson">
                   <div>

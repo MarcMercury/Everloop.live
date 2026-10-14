@@ -199,7 +199,7 @@ export function LoreBrowserPanel() {
                   className="w-full p-3 text-left hover:bg-charcoal-700/50 transition-colors"
                 >
                   <div className="flex items-start gap-2">
-                    <Icon className={cn('w-4 h-4 mt-0.5 flex-shrink-0', config.color)} />
+                    <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', config.color)} />
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">{entity.name}</p>
                       <p className="text-xs text-muted-foreground line-clamp-2">

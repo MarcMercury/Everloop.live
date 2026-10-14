@@ -576,7 +576,7 @@ export function ShardsClient({ shards }: ShardsClientProps) {
                 <span className="text-xs text-parchment-muted w-8 text-right font-mono">
                   #{shard.shard_number || '?'}
                 </span>
-                <Diamond className="w-4 h-4 text-gold flex-shrink-0" />
+                <Diamond className="w-4 h-4 text-gold shrink-0" />
                 <span className="font-medium text-parchment flex-1">{shard.name}</span>
 
                 {shard.form_state && (
