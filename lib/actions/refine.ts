@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { rateLimitError } from '@/lib/rate-limit'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
+import { AI_MODELS } from '@/lib/ai/models'
 
 /**
  * Refines rough notes into polished prose using AI
@@ -30,7 +31,7 @@ export async function refineNotesSimple(roughNotes: string): Promise<{
 
   try {
     const result = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: openai(AI_MODELS.text),
       system: `You are a fantasy novelist writing for the Everloop universe — a vast collaborative world where reality is fractured into Shards, the remnants of the Anchors that once held everything together. The Pattern is the fabric of existence, the Fray is where it unravels, and Monsters are what leak through the cracks from the Drift.
 
 Your task is to transform rough notes into atmospheric, polished prose. Follow these guidelines:

@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import type { EverloopRegion } from '@/lib/data/regions'
@@ -259,7 +260,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
   }, [])
 
   const handleResetLabel = useCallback(async (name: string) => {
-    if (!confirm(`Reset "${name}" to its default position?`)) return
+    if (!(await confirmDialog({ description: `Reset "${name}" to its default position?`, destructive: true }))) return
     setSaving(true)
     try {
       const res = await fetch(

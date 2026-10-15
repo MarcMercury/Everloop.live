@@ -11,6 +11,7 @@ import {
   type ReadabilityMetrics,
   type SentenceMetrics 
 } from '@/lib/utils/readability'
+import { AI_MODELS } from '@/lib/ai/models'
 
 // Schema for voice/tone analysis
 const VoiceToneSchema = z.object({
@@ -91,7 +92,7 @@ export async function analyzeVoiceTone(
 
     // Get AI-powered voice/tone analysis
     const { object: voiceTone } = await generateObject({
-      model: openai('gpt-4o-mini'),
+      model: openai(AI_MODELS.text),
       schema: VoiceToneSchema,
       prompt: `You are a literary analyst specializing in voice and tone analysis for the Everloop collaborative fiction universe. Everloop stories are characterized by a "contemplative, high-function, elegant" style.
 
@@ -145,7 +146,7 @@ export async function getQuickToneIndicator(
 
   try {
     const { object } = await generateObject({
-      model: openai('gpt-4o-mini'),
+      model: openai(AI_MODELS.text),
       schema: z.object({
         tone: z.string(),
         confidence: z.number().min(0).max(100),

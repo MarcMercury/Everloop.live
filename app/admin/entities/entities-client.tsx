@@ -1,5 +1,7 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { toast } from '@/components/ui/sonner'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -171,8 +173,8 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
     })
   }
   
-  const handleDelete = (entity: CanonEntity) => {
-    if (!confirm(`Are you sure you want to delete "${entity.name}"? This cannot be undone.`)) {
+  const handleDelete = async (entity: CanonEntity) => {
+    if (!(await confirmDialog({ description: `Are you sure you want to delete "${entity.name}"? This cannot be undone.`, destructive: true }))) {
       return
     }
     
@@ -180,17 +182,17 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       const result = await deleteCanonEntity(entity.id)
       
       if (!result.success) {
-        alert(result.error || 'Failed to delete')
+        toast.error(result.error || 'Failed to delete')
       } else {
         router.refresh()
       }
     })
   }
   
-  const handleCanonize = (entity: CanonEntity) => {
+  const handleCanonize = async (entity: CanonEntity) => {
     const isProposed = entity.status === 'proposed'
     const verb = isProposed ? 'Approve' : 'Promote'
-    if (!confirm(`${verb} "${entity.name}" and add it to canon? This will publish it and generate its AI embedding.`)) {
+    if (!(await confirmDialog(`${verb} "${entity.name}" and add it to canon? This will publish it and generate its AI embedding.`))) {
       return
     }
     
@@ -199,9 +201,9 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       const result = await canonizeEntity(entity.id)
       
       if (!result.success) {
-        alert(result.error || 'Failed to canonize')
+        toast.error(result.error || 'Failed to canonize')
       } else if (result.hydrated === false) {
-        alert(`"${entity.name}" was added to canon, but embedding generation failed. Click the Hydrate button to retry.`)
+        toast.error(`"${entity.name}" was added to canon, but embedding generation failed. Click the Hydrate button to retry.`)
         router.refresh()
       } else {
         router.refresh()
@@ -216,9 +218,9 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       const result = await hydrateEntity(entity.id)
       
       if (!result.success) {
-        alert(result.error || 'Failed to hydrate')
+        toast.error(result.error || 'Failed to hydrate')
       } else {
-        alert(`Embedding generated for "${entity.name}".`)
+        toast.success(`Embedding generated for "${entity.name}".`)
         router.refresh()
       }
       setHydratingId(null)
@@ -228,11 +230,11 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
   const handleHydrateAll = async () => {
     const needsHydration = currentEntities.filter(e => !e.has_embedding)
     if (needsHydration.length === 0) {
-      alert('All entities are already hydrated!')
+      toast.info('All entities are already hydrated!')
       return
     }
     
-    if (!confirm(`Hydrate ${needsHydration.length} entities? This may take a moment.`)) {
+    if (!(await confirmDialog(`Hydrate ${needsHydration.length} entities? This may take a moment.`))) {
       return
     }
     
@@ -242,13 +244,13 @@ export function EntitiesClient({ entities }: EntitiesClientProps) {
       const data = await response.json()
       
       if (data.success) {
-        alert(`Hydrated ${data.hydrated} entities!`)
+        toast.success(`Hydrated ${data.hydrated} entities!`)
         router.refresh()
       } else {
-        alert(data.error || 'Failed to hydrate all')
+        toast.error(data.error || 'Failed to hydrate all')
       }
     } catch {
-      alert('Failed to hydrate all entities')
+      toast.error('Failed to hydrate all entities')
     }
   }
 

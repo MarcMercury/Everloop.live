@@ -18,6 +18,7 @@
  */
 
 import OpenAI from 'openai'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export type ImageProvider = 'openai' | 'gemini' | 'stability'
 
@@ -59,7 +60,7 @@ async function tryOpenAI(opts: GenerateImageOptions): Promise<Buffer> {
   // Only allow valid OpenAI sizes. For square, only 1024x1024 is supported.
   const size = '1024x1024' as const
   const response = await client.images.generate({
-    model: 'gpt-image-1',
+    model: AI_MODELS.image,
     prompt: opts.prompt,
     n: 1,
     size,

@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -29,11 +30,11 @@ export function SubmitToCanonButton({ entityId, entityName }: SubmitToCanonButto
           router.refresh()
         }, 1000)
       } else {
-        alert(result.error || 'Failed to submit entity')
+        toast.error(result.error || 'Failed to submit entity')
         setShowConfirm(false)
       }
     } catch {
-      alert('An error occurred')
+      toast.error('An error occurred')
       setShowConfirm(false)
     } finally {
       setIsSubmitting(false)

@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -90,7 +91,7 @@ export function LevelUpClient({ character }: Props) {
         })
         router.push(`/player-deck/${character.id}`)
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Level-up failed')
+        toast.error(err instanceof Error ? err.message : 'Level-up failed')
       }
     })
   }

@@ -6,6 +6,7 @@ import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
 import OpenAI from 'openai'
+import { AI_MODELS } from '@/lib/ai/models'
 
 // Initialize OpenAI client for embeddings
 const openaiClient = new OpenAI({
@@ -39,7 +40,7 @@ interface CanonEntity {
  */
 async function generateEmbedding(text: string): Promise<number[]> {
   const response = await openaiClient.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: AI_MODELS.embedding,
     input: text.slice(0, 8000), // Limit input to avoid token limits
   })
   
@@ -165,7 +166,7 @@ ${storyContent}
 Please analyze this story for canon compatibility and provide your assessment.`
 
     const { object: analysis } = await generateObject({
-      model: openai('gpt-4o-mini'),
+      model: openai(AI_MODELS.text),
       schema: CanonAnalysisSchema,
       system: systemPrompt,
       prompt: userPrompt,

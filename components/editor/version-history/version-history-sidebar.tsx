@@ -1,5 +1,7 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { toast } from '@/components/ui/sonner'
 import { useState, useEffect, useCallback } from 'react'
 import { 
   History, 
@@ -99,7 +101,7 @@ export function VersionHistorySidebar({
   }, [loadRevisions])
   
   const handleRestore = async (revision: StoryRevision) => {
-    if (!confirm(`Restore to revision #${revision.revision_number}? This will replace your current content.`)) {
+    if (!(await confirmDialog(`Restore to revision #${revision.revision_number}? This will replace your current content.`))) {
       return
     }
     
@@ -110,7 +112,7 @@ export function VersionHistorySidebar({
       // Reload the page to get the restored content
       window.location.reload()
     } else {
-      alert(result.error || 'Failed to restore revision')
+      toast.error(result.error || 'Failed to restore revision')
     }
     
     setIsRestoring(false)

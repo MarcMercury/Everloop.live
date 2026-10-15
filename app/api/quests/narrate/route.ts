@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 
@@ -211,7 +212,7 @@ Use the Hook beat as the opening, weave through Scenes and Encounters, present C
 
   try {
     const result = await generateText({
-      model: openai('gpt-4o-mini'),
+      model: openai(AI_MODELS.text),
       system: systemPrompt,
       messages,
     })

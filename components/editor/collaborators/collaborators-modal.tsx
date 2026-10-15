@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useState, useEffect, useCallback } from 'react'
 import { 
   Users, 
@@ -150,7 +151,7 @@ export function CollaboratorsModal({
   }
   
   const handleRemove = async (collaboratorId: string, userName: string) => {
-    if (!confirm(`Remove ${userName} from this story?`)) return
+    if (!(await confirmDialog({ description: `Remove ${userName} from this story?`, destructive: true }))) return
     
     const result = await removeCollaborator(collaboratorId)
     

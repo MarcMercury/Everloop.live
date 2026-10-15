@@ -13,6 +13,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { PassResult } from '../types'
+import { AI_MODELS } from '@/lib/ai/models'
 
 interface EntityNameRow {
   id: string
@@ -124,7 +125,7 @@ export async function runEntityDiscovery(
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: AI_MODELS.text,
           temperature: 0.1,
           response_format: { type: 'json_object' },
           messages: [

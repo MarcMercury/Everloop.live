@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useState, useEffect } from 'react'
 import { 
   Plus, 
@@ -98,7 +99,7 @@ export function ChapterSidebar({
   const handleDeleteChapter = async (chapterId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    if (!confirm('Delete this chapter? This cannot be undone.')) return
+    if (!(await confirmDialog({ description: 'Delete this chapter? This cannot be undone.', destructive: true }))) return
     
     const result = await deleteChapter(chapterId)
     

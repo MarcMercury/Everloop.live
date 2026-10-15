@@ -64,6 +64,8 @@ export async function proxy(request: NextRequest) {
     '/profile',    // Public author profiles
     '/readers-guide',  // Reader's guide
     '/players-guide',  // Player's guide
+    '/sitemap.xml',
+    '/robots.txt',
   ]
   
   const isPublicRoute = publicRoutes.some(route => 

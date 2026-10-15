@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -234,8 +235,8 @@ export function ShardsClient({ shards }: ShardsClientProps) {
     })
   }
 
-  function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete shard "${name}"? This cannot be undone.`)) return
+  async function handleDelete(id: string, name: string) {
+    if (!(await confirmDialog({ description: `Delete shard "${name}"? This cannot be undone.`, destructive: true }))) return
 
     startTransition(async () => {
       const result = await deleteShard(id)

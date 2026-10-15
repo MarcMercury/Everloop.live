@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import OpenAI from 'openai'
+import { AI_MODELS } from '@/lib/ai/models'
 
 /**
  * POST /api/admin/hydrate
@@ -115,7 +116,7 @@ export async function POST() {
         
         // Generate embedding
         const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
+          model: AI_MODELS.embedding,
           input: textToEmbed,
         })
         

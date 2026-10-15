@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bot, Loader2 } from 'lucide-react'
@@ -16,9 +17,9 @@ export function JournalSummarizeButton({ sessionId, existingSummary }: Props) {
         const res = await fetch(`/api/quests/sessions/${sessionId}/summarize`, { method: 'POST' })
         const json = await res.json()
         if (json.summary) setSummary(json.summary)
-        else alert(json.error || 'Failed to summarize')
+        else toast.error(json.error || 'Failed to summarize')
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to summarize')
+        toast.error(err instanceof Error ? err.message : 'Failed to summarize')
       }
     })
   }

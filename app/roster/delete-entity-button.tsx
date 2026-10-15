@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -25,10 +26,10 @@ export function DeleteEntityButton({ entityId, entityName }: DeleteEntityButtonP
       if (result.success) {
         router.refresh()
       } else {
-        alert(result.error || 'Failed to delete entity')
+        toast.error(result.error || 'Failed to delete entity')
       }
     } catch {
-      alert('An error occurred')
+      toast.error('An error occurred')
     } finally {
       setIsDeleting(false)
       setShowConfirm(false)

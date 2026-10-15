@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitError } from '@/lib/rate-limit'
 import OpenAI from 'openai'
+import { AI_MODELS } from '@/lib/ai/models'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -111,7 +112,7 @@ Write a single paragraph that introduces ${entity.name} into the story at this p
 
     // Call OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.text,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },

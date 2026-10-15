@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useEffect, useState, useTransition } from 'react'
 import { Plus, Eye, EyeOff, Trash2, ChevronRight, Loader2, Cog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -94,8 +95,8 @@ export function WorldCogsPanel({ questId }: { questId: string }) {
     })
   }
 
-  const handleDelete = (cog: WorldCog) => {
-    if (!window.confirm(`Delete the cog "${cog.faction}"? This cannot be undone.`)) return
+  const handleDelete = async (cog: WorldCog) => {
+    if (!(await confirmDialog({ description: `Delete the cog "${cog.faction}"? This cannot be undone.`, destructive: true }))) return
     startTransition(async () => {
       const res = await deleteWorldCog(cog.id)
       if (res.success) setCogs(prev => prev.filter(c => c.id !== cog.id))

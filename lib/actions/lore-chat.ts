@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitError } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 interface LoreSearchResult {
   id: string
@@ -38,7 +39,7 @@ export async function searchLoreBySemantic(query: string, count = 8): Promise<{
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
     const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: AI_MODELS.embedding,
       input: query.slice(0, 4000),
     })
 

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     .join('\n')
 
   const { text } = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai(AI_MODELS.text),
     system: `You are a D&D 5e build optimizer. Recommend spells for a character based on their class, subclass, and level. Focus on versatility and in-combat effectiveness. Keep recommendations practical — these are for live table play.
 
 Respond in EXACTLY this JSON format (no markdown, no code fences):

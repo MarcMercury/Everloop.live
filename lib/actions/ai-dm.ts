@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { rateLimitError } from '@/lib/rate-limit'
 import type { SceneMood } from '@/types/quest'
 import { attachDmSecrets, QUEST_NPC_PUBLIC_COLUMNS } from '@/lib/quests/columns'
+import { AI_MODELS } from '@/lib/ai/models'
 
 /**
  * AI Co-DM System
@@ -73,7 +74,7 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.text,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -433,7 +434,7 @@ export async function advanceWorldClock(
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.text,
       messages: [
         {
           role: 'system',

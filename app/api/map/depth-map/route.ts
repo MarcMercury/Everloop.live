@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '@/lib/supabase/server'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -25,7 +26,7 @@ export async function POST() {
 
   try {
     const response = await client.images.generate({
-      model: 'gpt-image-1',
+      model: AI_MODELS.image,
       prompt: [
         'Create a grayscale heightmap/depth map for a fantasy world terrain map.',
         'The image should be a top-down grayscale elevation map where:',

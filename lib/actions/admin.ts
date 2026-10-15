@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { runLoreAgent } from '@/lib/agents/lore-agent'
+import { AI_MODELS } from '@/lib/ai/models'
 
 /**
  * Trigger the Lore Agent in the background. We intentionally do NOT await
@@ -400,7 +401,7 @@ export async function hydrateEntity(entityId: string) {
   
   try {
     const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: AI_MODELS.embedding,
       input: textForEmbedding,
     })
     

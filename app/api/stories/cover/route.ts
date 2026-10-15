@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const response = await client.images.generate({
-      model: 'gpt-image-1',
+      model: AI_MODELS.image,
       prompt,
       n: 1,
       size: '1024x1536',

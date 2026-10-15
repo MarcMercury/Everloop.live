@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -123,7 +124,7 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
 
   async function launch() {
     if (!session) {
-      alert('Start a session from the DM panel first.')
+      toast.info('Start a session from the DM panel first.')
       return
     }
     if (encounter.length === 0) return
@@ -176,7 +177,7 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
         await startCombat({ sessionId: session.id, combatants: [...pcs, ...monsters] })
         router.push(`/quests/${quest.slug}/dm`)
       } catch (err) {
-        alert(err instanceof Error ? err.message : 'Failed to start combat')
+        toast.error(err instanceof Error ? err.message : 'Failed to start combat')
       }
     })
   }

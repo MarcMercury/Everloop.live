@@ -1,5 +1,6 @@
 'use client'
 
+import { toast } from '@/components/ui/sonner'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -22,7 +23,7 @@ export function DeleteStoryButton({ storyId, storyTitle }: DeleteStoryButtonProp
       if (result.success) {
         router.refresh()
       } else {
-        alert(result.error || 'Failed to delete story')
+        toast.error(result.error || 'Failed to delete story')
       }
       setShowConfirm(false)
     })

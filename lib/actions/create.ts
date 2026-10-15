@@ -114,7 +114,7 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
          Return ONLY the description text, no headers or labels.`
 
     const { text } = await generateText({
-      model: openai('gpt-4o'),
+      model: openai(AI_MODELS.textPremium),
       prompt,
       maxOutputTokens: 800,
     })
@@ -236,7 +236,7 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
     let response
     try {
       response = await getOpenAIClient().images.generate({
-        model: 'gpt-image-1',
+        model: AI_MODELS.image,
         prompt,
         n: 1,
         size: '1024x1024',
@@ -735,6 +735,7 @@ export async function updateEntity(input: UpdateEntityInput): Promise<{
 // ═══════════════════════════════════════════════════════════
 
 import type { MonsterStats } from '@/lib/dnd-rules/monsters'
+import { AI_MODELS } from '@/lib/ai/models'
 
 // Full D&D 5e stat block — see lib/dnd-rules/monsters.ts.
 type QuestMonsterStats = MonsterStats

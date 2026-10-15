@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 /**
  * Combat Tracker — DM-facing initiative + HP + conditions board.
  * Powered by quest_sessions.initiative_order (JSONB) — zero new tables.
@@ -83,8 +84,8 @@ export function CombatTracker({ sessionId, initial, isDM, onAmbience }: Props) {
     })
   }
 
-  function end() {
-    if (!confirm('End combat? Initiative order will be cleared.')) return
+  async function end() {
+    if (!(await confirmDialog({ description: 'End combat? Initiative order will be cleared.', destructive: true }))) return
     startTransition(() => {
       endCombat(sessionId).catch(() => {})
     })

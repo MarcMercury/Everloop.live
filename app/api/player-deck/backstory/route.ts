@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai(AI_MODELS.text),
     system: systemPrompt,
     messages: [{ role: 'user', content: userPrompt }],
   })

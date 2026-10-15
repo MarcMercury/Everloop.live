@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
   const charSummary = `${char.name}, ${char.race} ${char.subclass ? char.subclass + ' ' : ''}${char.class} (Level ${char.level})`
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai(AI_MODELS.text),
     system: `You are a fantasy chronicler writing a narrative recap of a D&D character's adventures. Write in third person, past tense, with evocative but concise prose. Highlight key events, battles, discoveries, and character moments. Keep it to 2-4 paragraphs. Make it feel like a journal entry that the character would treasure.`,
     messages: [{
       role: 'user',

@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 /**
  * InPersonDashboardClient
  * -----------------------
@@ -115,7 +116,7 @@ export function InPersonDashboardClient({
   }
 
   async function handleEndSession() {
-    if (!confirm('End this session? You can start a new one later.')) return
+    if (!(await confirmDialog({ description: 'End this session? You can start a new one later.', destructive: true }))) return
     setEndingSession(true)
     const result = await endSession(session.id, quest.id)
     if (result.success) {
@@ -718,8 +719,8 @@ function CombatTrackerPanel({
     })
   }
 
-  function resetCombat() {
-    if (!confirm('Clear all combatants?')) return
+  async function resetCombat() {
+    if (!(await confirmDialog({ description: 'Clear all combatants?', destructive: true }))) return
     setCombatants([])
     setRound(1)
     setActiveIdx(0)

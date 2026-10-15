@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -71,7 +72,7 @@ export async function POST(_req: NextRequest, context: { params: Promise<{ id: s
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: AI_MODELS.text,
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7,
         max_tokens: 600,

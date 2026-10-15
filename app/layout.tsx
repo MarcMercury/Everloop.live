@@ -3,6 +3,8 @@ import { Crimson_Text, Inter } from 'next/font/google'
 import './globals.css'
 import { Navbar } from '@/components/navbar'
 import { AuthProfileCheck } from '@/components/auth-profile-check'
+import { Toaster } from '@/components/ui/sonner'
+import { ConfirmDialogHost } from '@/components/ui/confirm-dialog'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -62,6 +64,8 @@ export default function RootLayout({
         <Navbar />
         <AuthProfileCheck />
         <main className="flex-1">{children}</main>
+        <Toaster />
+        <ConfirmDialogHost />
       </body>
     </html>
   )

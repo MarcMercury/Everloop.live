@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 
@@ -61,7 +62,7 @@ When suggesting spells or abilities, format them as: **Spell Name** (Level X, Sl
 When suggesting skill checks, format as: **Skill (Ability)** — DC estimate and what it might reveal.`
 
   const result = streamText({
-    model: openai('gpt-4o-mini'),
+    model: openai(AI_MODELS.text),
     system: systemPrompt,
     messages: [
       ...(context ? [{ role: 'user' as const, content: `Current situation context: ${context}` }] : []),

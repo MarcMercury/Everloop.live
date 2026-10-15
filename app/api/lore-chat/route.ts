@@ -4,6 +4,7 @@ import OpenAI from 'openai'
 import { z } from 'zod'
 import { parseBody } from '@/lib/api/parse-body'
 import { rateLimitResponse } from '@/lib/rate-limit'
+import { AI_MODELS } from '@/lib/ai/models'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Generate embedding for the user's question
     const embeddingResponse = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: AI_MODELS.embedding,
       input: question.slice(0, 4000),
     })
     const embedding = embeddingResponse.data[0].embedding
@@ -203,7 +204,7 @@ ${question}`,
     })
 
     const stream = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: AI_MODELS.text,
       messages,
       max_tokens: 800,
       temperature: 0.4,

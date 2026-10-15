@@ -1,5 +1,6 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -228,7 +229,7 @@ export function CharacterForm({ character }: Props) {
   }
   
   async function handleDelete() {
-    if (!character || !confirm('Are you sure you want to delete this character? This cannot be undone.')) return
+    if (!character || !(await confirmDialog({ description: 'Are you sure you want to delete this character? This cannot be undone.', destructive: true }))) return
     
     startTransition(async () => {
       const result = await deletePlayerCharacter(character.id)

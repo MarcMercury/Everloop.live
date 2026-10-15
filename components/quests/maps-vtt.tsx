@@ -1,5 +1,7 @@
 'use client'
 
+import { confirmDialog } from '@/components/ui/confirm-dialog'
+import { toast } from '@/components/ui/sonner'
 /**
  * MapsVTT — minimal in-browser VTT for a quest scene.
  *
@@ -195,7 +197,7 @@ export function MapsVTT({ sceneId, bgUrl, initialState, isDM }: Props) {
     return null
   }
 
-  function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+  async function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!isDM) return
     const rect = canvasRef.current!.getBoundingClientRect()
     const x = e.clientX - rect.left
@@ -211,7 +213,7 @@ export function MapsVTT({ sceneId, bgUrl, initialState, isDM }: Props) {
       return
     }
     if (tool === 'add-token') {
-      const isPC = confirm('Player character? OK = PC, Cancel = Monster.')
+      const isPC = await confirmDialog({ title: 'Add token', description: 'Is this token a player character or a monster?', confirmLabel: 'Player character', cancelLabel: 'Monster' })
       const label = prompt('Token label?') ?? 'New'
       const token: VttToken = {
         id: crypto.randomUUID(),
@@ -268,14 +270,14 @@ export function MapsVTT({ sceneId, bgUrl, initialState, isDM }: Props) {
       await saveVttState(sceneId, state)
       setDirty(false)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Save failed')
+      toast.error(err instanceof Error ? err.message : 'Save failed')
     } finally {
       setSaving(false)
     }
   }
 
-  function clearFog() {
-    if (!confirm('Reset fog of war (re-cover the map)?')) return
+  async function clearFog() {
+    if (!(await confirmDialog({ description: 'Reset fog of war (re-cover the map)?', destructive: true }))) return
     setState((s) => ({ ...s, fog: [] }))
     setDirty(true)
   }
