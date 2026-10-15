@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { QUEST_SCENE_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 import { GAME_MODE_INFO, MOOD_THEMES } from '@/types/quest'
 import type { GameMode, QuestPlayer, LivePlayConfig, SceneLivePlay } from '@/types/quest'
 import { Users, Clock, Flame, Swords, Play, Map, Crown, Bell, Volume2, Dice5, EyeOff, Link2, Presentation } from 'lucide-react'
@@ -52,7 +53,7 @@ export default async function QuestPage({ params }: PageProps) {
   // Fetch scenes
   const { data: scenesData } = await supabase
     .from('quest_scenes')
-    .select('*')
+    .select(QUEST_SCENE_PUBLIC_COLUMNS)
     .eq('quest_id', campaign.id)
     .order('scene_order', { ascending: true })
 

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 
@@ -19,6 +20,9 @@ export async function refineNotesSimple(roughNotes: string): Promise<{
   if (!user) {
     return { success: false, error: 'You must be logged in to use AI refinement.' }
   }
+
+  const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'refine')
+  if (limitError) return { success: false, error: limitError }
 
   if (!roughNotes || roughNotes.trim().length < 10) {
     return { success: false, error: 'Please provide at least a few words to refine.' }

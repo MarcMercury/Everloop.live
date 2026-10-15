@@ -882,6 +882,14 @@ type DeclaredFunctions = {
     Args: Record<string, never>
     Returns: Json
   }
+  get_quest_dm_secrets: {
+    Args: { p_quest_id: string }
+    Returns: Json
+  }
+  consume_rate_limit: {
+    Args: { p_bucket: string; p_feature: string; p_limit: number; p_window_seconds: number }
+    Returns: Json
+  }
   increment_template_use_count: {
     Args: { template_id: string }
     Returns: undefined

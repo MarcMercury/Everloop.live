@@ -1,7 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import type { SceneMood } from '@/types/quest'
+import { attachDmSecrets, QUEST_NPC_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 
 /**
  * AI Co-DM System
@@ -57,6 +59,9 @@ export async function generateAINarration(input: AINarrationInput): Promise<AINa
   if (!campaignRow || campaignRow.dm_id !== user.id) {
     return { success: false, error: 'Only the DM can use AI narration' }
   }
+
+  const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'ai-narration')
+  if (limitError) return { success: false, error: limitError }
 
   // Build the system prompt based on Everloop lore
   const systemPrompt = buildSystemPrompt(input)
@@ -368,13 +373,19 @@ export async function advanceWorldClock(
     return { success: false, error: 'Only the DM can advance the world clock' }
   }
 
+  const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'world-clock')
+  if (limitError) return { success: false, error: limitError }
+
   // Gather faction NPCs
   const { data: npcsData } = await supabase
     .from('quest_npcs')
-    .select('*')
+    .select(QUEST_NPC_PUBLIC_COLUMNS)
     .eq('quest_id', campaignId)
 
-  const npcs = (npcsData ?? []) as unknown as Array<{
+  const { npcs: npcsWithSecrets } = await attachDmSecrets(supabase, campaignId, {
+    npcs: (npcsData ?? []) as unknown as Array<{ id: string }>,
+  })
+  const npcs = npcsWithSecrets as unknown as Array<{
     id: string; name: string; npc_type: string;
     personality: string | null; motivations: string | null;
     secrets: string | null; description: string | null

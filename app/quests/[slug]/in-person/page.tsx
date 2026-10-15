@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { attachDmSecrets, QUEST_NPC_PUBLIC_COLUMNS, QUEST_SCENE_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 import type { Quest, QuestPlayer, QuestScene, QuestSession, QuestNpc } from '@/types/quest'
 import { InPersonDashboardClient } from './in-person-dashboard-client'
 
@@ -38,12 +39,12 @@ export default async function InPersonDashboardPage({ params }: PageProps) {
       .eq('status', 'accepted'),
     supabase
       .from('quest_scenes')
-      .select('*')
+      .select(QUEST_SCENE_PUBLIC_COLUMNS)
       .eq('quest_id', quest.id)
       .order('scene_order', { ascending: true }),
     supabase
       .from('quest_npcs')
-      .select('*')
+      .select(QUEST_NPC_PUBLIC_COLUMNS)
       .eq('quest_id', quest.id),
     supabase
       .from('quest_sessions')
@@ -56,6 +57,10 @@ export default async function InPersonDashboardPage({ params }: PageProps) {
   ])
 
   const session = sessionRes.data as unknown as QuestSession | null
+  const { scenes, npcs } = await attachDmSecrets(supabase, quest.id, {
+    scenes: (scenesRes.data ?? []) as unknown as QuestScene[],
+    npcs: (npcsRes.data ?? []) as unknown as QuestNpc[],
+  })
   if (!session) {
     // No active session — bounce back to the launcher.
     redirect(`/quests/${slug}`)
@@ -65,8 +70,8 @@ export default async function InPersonDashboardPage({ params }: PageProps) {
     <InPersonDashboardClient
       quest={quest}
       players={(playersRes.data ?? []) as unknown as QuestPlayer[]}
-      scenes={(scenesRes.data ?? []) as unknown as QuestScene[]}
-      npcs={(npcsRes.data ?? []) as unknown as QuestNpc[]}
+      scenes={scenes}
+      npcs={npcs}
       session={session}
     />
   )

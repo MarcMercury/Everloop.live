@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 import { z } from 'zod'
 import { parseBody } from '@/lib/api/parse-body'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -40,6 +41,9 @@ export async function POST(request: NextRequest) {
       headers: { 'Content-Type': 'application/json' },
     })
   }
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:text', 'lore-chat')
+  if (limited) return limited
 
   const parsed = await parseBody(request, LoreChatSchema)
   if (!parsed.ok) return parsed.response

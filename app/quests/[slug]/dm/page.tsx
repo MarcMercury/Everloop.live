@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { attachDmSecrets, QUEST_NPC_PUBLIC_COLUMNS, QUEST_SCENE_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 import { DMControlPanelClient } from './dm-control-panel-client'
 import type { Quest, QuestPlayer, QuestScene, QuestSession, QuestMessage, NarrativeIdol, QuestNpc } from '@/types/quest'
 
@@ -38,7 +39,7 @@ export default async function DMControlPage({ params }: PageProps) {
       .eq('status', 'accepted'),
     supabase
       .from('quest_scenes')
-      .select('*')
+      .select(QUEST_SCENE_PUBLIC_COLUMNS)
       .eq('quest_id', campaign.id)
       .order('scene_order', { ascending: true }),
     supabase
@@ -51,7 +52,7 @@ export default async function DMControlPage({ params }: PageProps) {
       .maybeSingle(),
     supabase
       .from('quest_npcs')
-      .select('*')
+      .select(QUEST_NPC_PUBLIC_COLUMNS)
       .eq('quest_id', campaign.id),
     supabase
       .from('narrative_idols')
@@ -60,6 +61,10 @@ export default async function DMControlPage({ params }: PageProps) {
   ])
 
   const session = sessionRes.data as unknown as QuestSession | null
+  const { scenes, npcs } = await attachDmSecrets(supabase, campaign.id, {
+    scenes: (scenesRes.data ?? []) as unknown as QuestScene[],
+    npcs: (npcsRes.data ?? []) as unknown as QuestNpc[],
+  })
 
   // Fetch messages if session exists
   let messages: QuestMessage[] = []
@@ -80,10 +85,10 @@ export default async function DMControlPage({ params }: PageProps) {
     <DMControlPanelClient
       campaign={campaign}
       players={(playersRes.data ?? []) as unknown as QuestPlayer[]}
-      scenes={(scenesRes.data ?? []) as unknown as QuestScene[]}
+      scenes={scenes}
       session={session}
       messages={messages}
-      npcs={(npcsRes.data ?? []) as unknown as QuestNpc[]}
+      npcs={npcs}
       idols={(idolsRes.data ?? []) as unknown as NarrativeIdol[]}
       userId={user.id}
     />

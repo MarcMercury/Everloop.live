@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { attachDmSecrets } from '@/lib/quests/columns'
 import {
   configuredImageProviders,
   generateImage,
   hasAnyImageProvider,
 } from '@/lib/image-gen'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -36,6 +38,9 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:image', 'scene-image')
+  if (limited) return limited
+
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const sceneId = typeof body.sceneId === 'string' ? body.sceneId : null
   if (!sceneId) {
@@ -64,13 +69,16 @@ export async function POST(
   const { data: sceneRow } = await supabase
     .from('quest_scenes')
     .select(
-      'title, description, narration, dm_notes, scene_type, mood, feeling, reveal, choice, sensory_anchors, pacing, linked_entities',
+      'id, title, description, narration, scene_type, mood, feeling, reveal, choice, sensory_anchors, pacing, linked_entities',
     )
     .eq('id', sceneId)
     .eq('quest_id', quest.id)
     .maybeSingle()
 
-  const scene = (sceneRow ?? null) as {
+  const sceneWithNotes = sceneRow
+    ? (await attachDmSecrets(supabase, quest.id, { scenes: [sceneRow as unknown as { id: string }] })).scenes[0]
+    : null
+  const scene = (sceneWithNotes ?? null) as {
     title: string | null
     description: string | null
     narration: string | null

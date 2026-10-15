@@ -29,6 +29,7 @@ import type {
   WorldCog,
 } from '@/types/quest'
 import type { Json } from '@/types/database'
+import { attachDmSecrets, QUEST_NPC_PUBLIC_COLUMNS, QUEST_SCENE_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 
 // =====================================================
 // CAMPAIGNS
@@ -596,7 +597,7 @@ async function assertDmOfQuest(questId: string) {
     .eq('id', questId)
     .single()
   if (!quest || quest.dm_id !== user.id) {
-    return { ok: false as const, error: 'Only the DM can manage world cogs', supabase, user }
+    return { ok: false as const, error: 'Only the DM can manage this quest', supabase, user }
   }
   return { ok: true as const, supabase, user, slug: quest.slug as string | null }
 }
@@ -707,7 +708,7 @@ export async function getQuestScenes(campaignId: string): Promise<{
 
   const { data, error } = await supabase
     .from('quest_scenes')
-    .select('*')
+    .select(QUEST_SCENE_PUBLIC_COLUMNS)
     .eq('quest_id', campaignId)
     .order('scene_order', { ascending: true })
 
@@ -716,15 +717,19 @@ export async function getQuestScenes(campaignId: string): Promise<{
     return { success: false, error: error.message }
   }
 
-  return { success: true, scenes: (data ?? []) as unknown as QuestScene[] }
+  // DM notes are only filled in for the quest's DM (the RPC returns nothing otherwise).
+  const { scenes } = await attachDmSecrets(supabase, campaignId, {
+    scenes: (data ?? []) as unknown as QuestScene[],
+  })
+  return { success: true, scenes }
 }
 
 export async function createScene(input: QuestSceneInsert): Promise<{
   success: boolean; scene?: QuestScene; error?: string
 }> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { success: false, error: 'Not authenticated' }
+  const g = await assertDmOfQuest(input.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const { supabase } = g
 
   // Get next scene order
   const { count } = await supabase
@@ -735,7 +740,7 @@ export async function createScene(input: QuestSceneInsert): Promise<{
   const { data, error } = await supabase
     .from('quest_scenes')
     .insert({ ...input, scene_order: input.scene_order ?? (count ?? 0) })
-    .select()
+    .select(QUEST_SCENE_PUBLIC_COLUMNS)
     .single()
 
   if (error) {
@@ -744,20 +749,23 @@ export async function createScene(input: QuestSceneInsert): Promise<{
   }
 
   revalidatePath(`/quests/${input.quest_id}`)
-  return { success: true, scene: data as unknown as QuestScene }
+  const scene = { ...(data as unknown as QuestScene), dm_notes: input.dm_notes ?? null }
+  return { success: true, scene }
 }
 
 export async function updateScene(id: string, campaignId: string, updates: QuestSceneUpdate): Promise<{
   success: boolean; scene?: QuestScene; error?: string
 }> {
-  const supabase = await createClient()
+  const g = await assertDmOfQuest(campaignId)
+  if (!g.ok) return { success: false, error: g.error }
+  const { supabase } = g
 
   const { data, error } = await supabase
     .from('quest_scenes')
     .update(updates)
     .eq('id', id)
     .eq('quest_id', campaignId)
-    .select()
+    .select(QUEST_SCENE_PUBLIC_COLUMNS)
     .single()
 
   if (error) {
@@ -766,7 +774,10 @@ export async function updateScene(id: string, campaignId: string, updates: Quest
   }
 
   revalidatePath(`/quests/${campaignId}`)
-  return { success: true, scene: data as unknown as QuestScene }
+  const { scenes } = await attachDmSecrets(supabase, campaignId, {
+    scenes: [data as unknown as QuestScene],
+  })
+  return { success: true, scene: scenes[0] }
 }
 
 // =====================================================
@@ -904,7 +915,9 @@ export async function endSession(sessionId: string, campaignId: string, summary?
 export async function changeScene(sessionId: string, sceneId: string, campaignId: string): Promise<{
   success: boolean; error?: string
 }> {
-  const supabase = await createClient()
+  const g = await assertDmOfQuest(campaignId)
+  if (!g.ok) return { success: false, error: g.error }
+  const { supabase } = g
 
   // Deactivate old scene
   const { data: session } = await supabase
@@ -1252,12 +1265,15 @@ export async function getQuestNpcs(campaignId: string): Promise<{
 
   const { data, error } = await supabase
     .from('quest_npcs')
-    .select('*')
+    .select(QUEST_NPC_PUBLIC_COLUMNS)
     .eq('quest_id', campaignId)
     .order('created_at', { ascending: false })
 
   if (error) return { success: false, error: error.message }
-  return { success: true, npcs: (data ?? []) as unknown as QuestNpc[] }
+  const { npcs } = await attachDmSecrets(supabase, campaignId, {
+    npcs: (data ?? []) as unknown as QuestNpc[],
+  })
+  return { success: true, npcs }
 }
 
 export async function createNpc(input: {
@@ -1272,12 +1288,14 @@ export async function createNpc(input: {
   canon_entity_id?: string
   stats?: NpcStats
 }): Promise<{ success: boolean; npc?: QuestNpc; error?: string }> {
-  const supabase = await createClient()
+  const g = await assertDmOfQuest(input.quest_id)
+  if (!g.ok) return { success: false, error: g.error }
+  const { supabase } = g
 
   const { data, error } = await supabase
     .from('quest_npcs')
     .insert(input)
-    .select()
+    .select(QUEST_NPC_PUBLIC_COLUMNS)
     .single()
 
   if (error) {
@@ -1286,7 +1304,7 @@ export async function createNpc(input: {
   }
 
   revalidatePath(`/quests/${input.quest_id}`)
-  return { success: true, npc: data as unknown as QuestNpc }
+  return { success: true, npc: { ...(data as unknown as QuestNpc), secrets: input.secrets ?? null } }
 }
 
 // =====================================================

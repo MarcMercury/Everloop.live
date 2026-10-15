@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -35,6 +36,9 @@ export async function weaveEntityIntoStory(params: WeaveParams): Promise<WeaveRe
     if (!user) {
       return { success: false, error: 'Authentication required' }
     }
+
+    const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'weave')
+    if (limitError) return { success: false, error: limitError }
 
     // Type for entity from database
     type EntityData = {

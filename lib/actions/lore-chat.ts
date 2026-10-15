@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 
 interface LoreSearchResult {
   id: string
@@ -28,6 +29,9 @@ export async function searchLoreBySemantic(query: string, count = 8): Promise<{
   if (!query || query.trim().length < 3) {
     return { success: false, error: 'Query too short' }
   }
+
+  const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'lore-search')
+  if (limitError) return { success: false, error: limitError }
 
   try {
     const { default: OpenAI } = await import('openai')

@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
@@ -106,6 +107,9 @@ export async function analyzeStoryCanon(storyContent: string, storyTitle: string
     if (!user) {
       return { success: false, error: 'You must be logged in to analyze stories.' }
     }
+
+    const limitError = await rateLimitError(authClient, user.id, 'ai:text', 'canon-analysis')
+    if (limitError) return { success: false, error: limitError }
 
     // Step 1: Generate embedding for the story
     const fullText = `${storyTitle}\n\n${storyContent}`

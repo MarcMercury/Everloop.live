@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -15,6 +16,9 @@ export async function POST(_req: NextRequest, context: { params: Promise<{ id: s
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:text', 'session-summary')
+  if (limited) return limited
 
   const { data: sess } = await supabase
     .from('quest_sessions')

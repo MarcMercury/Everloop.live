@@ -6,6 +6,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSoundEffect, generateSceneAmbience } from '@/lib/elevenlabs'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -16,6 +17,9 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:audio', 'elevenlabs-sfx')
+  if (limited) return limited
 
   const body = await request.json()
   const { prompt, scene_type, mood, duration_seconds, prompt_influence } = body as {

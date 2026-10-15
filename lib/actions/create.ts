@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import { openai } from '@ai-sdk/openai'
 import { generateText } from 'ai'
 import OpenAI from 'openai'
@@ -55,6 +56,9 @@ export async function generateEntityDescription(input: GenerateDescriptionInput)
     if (!user) {
       return { success: false, error: 'You must be logged in to use AI features' }
     }
+
+    const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'entity-description')
+    if (limitError) return { success: false, error: limitError }
 
     const typeDescriptions: Record<EntityType, string> = {
       character: 'a character in the Everloop, a world where reality is fractured into Shards — broken remnants of the Anchors that once held everything together. Characters are shaped by their relationship to the Shards: seeking them, protecting them, being changed by them, or drawn toward them without understanding why',
@@ -183,6 +187,9 @@ export async function generateEntityImage(input: GenerateImageInput): Promise<{
     if (!user) {
       return { success: false, error: 'You must be logged in to use AI features' }
     }
+
+    const limitError = await rateLimitError(supabase, user.id, 'ai:image', 'entity-image')
+    if (limitError) return { success: false, error: limitError }
 
     const styleId = input.style && ENTITY_ART_STYLES[input.style]
       ? input.style

@@ -12,6 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { requireUser } from '@/lib/api/auth'
 
 export const runtime = 'nodejs'
 
@@ -31,6 +32,9 @@ interface FreesoundResponse {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = await requireUser()
+  if (!auth.ok) return auth.response
+
   const apiKey = process.env.FREESOUND_API_KEY
   if (!apiKey) {
     return NextResponse.json(

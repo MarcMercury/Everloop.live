@@ -5,6 +5,7 @@ import {
   generateImage,
   hasAnyImageProvider,
 } from '@/lib/image-gen'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -37,6 +38,9 @@ export async function POST(
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:image', 'quest-map')
+  if (limited) return limited
 
   const body = await request.json().catch(() => ({} as Record<string, unknown>))
   const sceneId = typeof body.sceneId === 'string' ? body.sceneId : null

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createTextTo3DPreview, createTextTo3DRefine } from '@/lib/meshy'
 import type { TextTo3DPreviewRequest, TextTo3DRefineRequest } from '@/types/meshy'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -13,6 +14,9 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:3d', 'meshy-text-to-3d')
+  if (limited) return limited
 
   try {
     const body = await request.json()

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { parseBody } from '@/lib/api/parse-body'
 import { textToSpeech, textToSpeechStream, EVERLOOP_VOICE_PRESETS, type VoicePresetKey } from '@/lib/elevenlabs'
+import { rateLimitResponse } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const limited = await rateLimitResponse(supabase, user.id, 'ai:audio', 'elevenlabs-tts')
+  if (limited) return limited
 
   const parsed = await parseBody(request, TtsSchema)
   if (!parsed.ok) return parsed.response

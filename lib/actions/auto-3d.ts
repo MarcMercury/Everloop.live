@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import { createTextTo3DPreview, getTextTo3DTask } from '@/lib/meshy'
 
 /**
@@ -42,6 +43,9 @@ export async function queueEntityModel(entityId: string): Promise<AutoGenerate3D
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { success: false, error: 'Not authenticated' }
+
+  const limitError = await rateLimitError(supabase, user.id, 'ai:3d', 'auto-3d')
+  if (limitError) return { success: false, error: limitError }
 
   // Fetch entity
   const { data: entity, error: fetchErr } = await supabase

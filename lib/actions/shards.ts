@@ -36,9 +36,9 @@ async function gateShardAdmin(): Promise<ShardAdminGate> {
  * Fetch all shards, optionally filtered by region
  */
 export async function getShards(region?: ShardRegion): Promise<{ data: ShardRecord[] | null; error: string | null }> {
-  const adminClient = createAdminClient()
-  const regularClient = await createClient()
-  const client = adminClient || regularClient
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { data: null, error: gate.error }
+  const client = gate.adminClient
 
   let query = client
     .from('shards')
@@ -63,9 +63,9 @@ export async function getShards(region?: ShardRegion): Promise<{ data: ShardReco
  * Fetch a single shard by ID
  */
 export async function getShard(id: string): Promise<{ data: ShardRecord | null; error: string | null }> {
-  const adminClient = createAdminClient()
-  const regularClient = await createClient()
-  const client = adminClient || regularClient
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { data: null, error: gate.error }
+  const client = gate.adminClient
 
   const { data, error } = await client
     .from('shards')
@@ -193,9 +193,9 @@ export async function deleteShard(id: string): Promise<{ success: boolean; error
  * Get shard stats by region (for world state display)
  */
 export async function getShardStats(): Promise<{ data: Record<string, { total: number; by_state: Record<string, number>; by_form: Record<string, number> }> | null; error: string | null }> {
-  const adminClient = createAdminClient()
-  const regularClient = await createClient()
-  const client = adminClient || regularClient
+  const gate = await gateShardAdmin()
+  if (!gate.ok) return { data: null, error: gate.error }
+  const client = gate.adminClient
 
   const { data, error } = await client
     .from('shards')

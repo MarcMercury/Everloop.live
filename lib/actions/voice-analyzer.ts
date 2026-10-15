@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitError } from '@/lib/rate-limit'
 import { openai } from '@ai-sdk/openai'
 import { generateObject } from 'ai'
 import { z } from 'zod'
@@ -71,6 +72,9 @@ export async function analyzeVoiceTone(
       return { success: false, error: 'You must be logged in to analyze voice/tone.' }
     }
 
+    const limitError = await rateLimitError(supabase, user.id, 'ai:text', 'voice-analysis')
+    if (limitError) return { success: false, error: limitError }
+
     if (!text || text.trim().length < 100) {
       return { success: false, error: 'Text must be at least 100 characters for analysis' }
     }
@@ -133,6 +137,11 @@ export async function getQuickToneIndicator(
   text: string
 ): Promise<{ tone: string; confidence: number } | null> {
   if (!text || text.length < 50) return null
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  if (await rateLimitError(supabase, user.id, 'ai:text', 'tone-indicator')) return null
 
   try {
     const { object } = await generateObject({

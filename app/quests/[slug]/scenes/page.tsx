@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { attachDmSecrets, QUEST_SCENE_PUBLIC_COLUMNS } from '@/lib/quests/columns'
 import { SceneBuilderClient } from './scene-builder-client'
 import type { Quest, QuestScene } from '@/types/quest'
 
@@ -24,11 +25,15 @@ export default async function SceneBuilderPage({ params }: PageProps) {
   if (!campaign) notFound()
   if (campaign.dm_id !== user.id) redirect(`/quests/${slug}`)
 
-  const { data: scenes } = await supabase
+  const { data: sceneRows } = await supabase
     .from('quest_scenes')
-    .select('*')
+    .select(QUEST_SCENE_PUBLIC_COLUMNS)
     .eq('quest_id', campaign.id)
     .order('scene_order', { ascending: true })
+
+  const { scenes } = await attachDmSecrets(supabase, campaign.id, {
+    scenes: (sceneRows ?? []) as unknown as QuestScene[],
+  })
 
   // Fetch canon entities for linking
   const { data: entities } = await supabase
@@ -41,7 +46,7 @@ export default async function SceneBuilderPage({ params }: PageProps) {
   return (
     <SceneBuilderClient
       campaign={campaign}
-      scenes={(scenes ?? []) as unknown as QuestScene[]}
+      scenes={scenes}
       entities={(entities ?? []) as { id: string; name: string; type: string; slug: string }[]}
     />
   )
