@@ -6,8 +6,9 @@
  * Usage: npm run env:sync            (runs automatically on Codespace start)
  *        npm run env:sync -- --check (verify only, don't rewrite .env.local)
  *
- * Needs VERCEL_TOKEN (Codespaces secret). Keys that exist only locally
- * (e.g. SUPABASE_ACCESS_TOKEN) are preserved. SUPABASE_PROJECT_ID is derived
+ * Needs VERCEL_TOKEN (Codespaces secret). SUPABASE_ACCESS_TOKEN is stored in
+ * Vercel's development target and restored from there. Keys that exist only
+ * locally are preserved. SUPABASE_PROJECT_ID is derived
  * from NEXT_PUBLIC_SUPABASE_URL. Exits 0 even on failure so container start
  * never blocks; problems are printed instead.
  */
@@ -17,6 +18,7 @@ const FILE = '.env.local'
 const PROJECT = process.env.VERCEL_PROJECT || 'everloop-live'
 const TARGET = process.env.VERCEL_ENV_TARGET || 'production'
 const checkOnly = process.argv.includes('--check')
+const DEV_ONLY_KEYS = ['SUPABASE_ACCESS_TOKEN']
 
 function readEnvFile() {
   const env = {}
@@ -39,7 +41,10 @@ async function vercel(path) {
 async function pullFromVercel() {
   const { envs } = await vercel(`/v9/projects/${PROJECT}/env`)
   const pulled = {}
-  for (const e of envs.filter((e) => e.target?.includes(TARGET))) {
+  // Tooling secrets live only in Vercel's development target so the production
+  // runtime never sees them; pull them alongside the production app config.
+  const wanted = (e) => e.target?.includes(TARGET) || (DEV_ONLY_KEYS.includes(e.key) && e.target?.includes('development'))
+  for (const e of envs.filter(wanted)) {
     const full = await vercel(`/v1/projects/${PROJECT}/env/${e.id}`)
     if (typeof full.value === 'string') pulled[e.key] = full.value.trim()
   }
@@ -72,20 +77,17 @@ async function checkSupabase(env) {
     })
     console.log(`${res.ok ? '✓' : '✗'} Service-role database access: HTTP ${res.status}`)
 
-    // Detect migrations that are in the repo but not yet applied to the database.
-    const pending = []
-    for (const [file, rpc] of [
+    // Detect migrations that are in the repo but not yet applied, via the
+    // RPCs they create (PostgREST's OpenAPI spec lists every exposed function).
+    const spec = await fetch(`${url}/rest/v1/`, {
+      headers: { apikey: service, Authorization: `Bearer ${service}` },
+    }).then((r) => (r.ok ? r.json() : { paths: {} }))
+    const pending = [
       ['20261014_001_protect_dm_secrets.sql', 'get_quest_dm_secrets'],
       ['20261014_002_api_rate_limits.sql', 'consume_rate_limit'],
-    ]) {
-      const r = await fetch(`${url}/rest/v1/rpc/${rpc}`, {
-        method: 'POST',
-        headers: { apikey: service, Authorization: `Bearer ${service}`, 'Content-Type': 'application/json' },
-        body: '{}',
-      })
-      const body = await r.text()
-      if (body.includes('PGRST202') && body.includes('Could not find')) pending.push(file)
-    }
+    ]
+      .filter(([, rpc]) => !(`/rpc/${rpc}` in (spec.paths ?? {})))
+      .map(([file]) => file)
     if (pending.length) console.log(`! Pending migrations: ${pending.join(', ')} → npm run db:migrate -- <files>`)
     else console.log('✓ Known migrations applied')
   }
@@ -93,7 +95,7 @@ async function checkSupabase(env) {
   console.log(
     env.SUPABASE_ACCESS_TOKEN
       ? '✓ SUPABASE_ACCESS_TOKEN present (migrations + type generation enabled)'
-      : '! SUPABASE_ACCESS_TOKEN not set — add it as a Codespaces secret to enable migrations',
+      : '! SUPABASE_ACCESS_TOKEN not set — add it to Vercel (development target) or as a Codespaces secret',
   )
 }
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-14
 **Scope:** Full-repo health check (security, deps, types, lint, architecture, tooling, integrations)
-**Status:** Implemented (2026-10-14 → 2026-10-16) — see *Resolution* below. Open: apply migrations 20261014_001/002 to production.
+**Status:** Implemented (2026-10-14 → 2026-10-16) — see *Resolution* below. Migrations 20261014_001/002 applied to production 2026-10-16.
 
 ---
 
@@ -90,4 +90,4 @@
 - The region `.glb` models (`model3dPath`) are currently unused by the UI; kept in Storage.
 - `public/audio/library/*` referenced by `lib/media/sound-libraries.ts` never existed — placeholders, unchanged.
 - Four `react-hooks/set-state-in-effect` suppressions remain, all for post-mount `localStorage` restores (avoids hydration mismatch).
-- Migrations require a Supabase personal access token (`SUPABASE_ACCESS_TOKEN`) or DB password; the service-role key cannot run DDL. Apply with `node scripts/push-migration.mjs supabase/migrations/20261014_00{1,2}_*.sql`.
+- Migrations require `SUPABASE_ACCESS_TOKEN` (service-role key cannot run DDL). Applied 2026-10-16 via `npm run db:migrate`; verified anon/authenticated lack SELECT on `dm_notes`/`secrets` and both RPCs are `authenticated`-only.
