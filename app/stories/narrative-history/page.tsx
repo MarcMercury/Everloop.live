@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Sparkles, Clock, Headphones } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { assetUrl } from '@/lib/assets'
 
 export const metadata = {
   title: 'The Everloop – Narrative History | Everloop Library',
@@ -261,7 +262,7 @@ export default function NarrativeHistoryPage() {
               controls
               preload="metadata"
               className="w-full [&::-webkit-media-controls-panel]:bg-teal-deep/80"
-              src="/audio/ElevenLabs_Everlop_full_Narator.mp3"
+              src={assetUrl('/audio/ElevenLabs_Everlop_full_Narator.mp3')}
             >
               Your browser does not support the audio element.
             </audio>

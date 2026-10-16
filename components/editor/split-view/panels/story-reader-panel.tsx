@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Loader2, BookOpen, User, ChevronRight, ExternalLink } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -29,24 +29,32 @@ export function StoryReaderPanel() {
   const [storyContent, setStoryContent] = useState<string | null>(null)
   const [loadingContent, setLoadingContent] = useState(false)
 
-  useEffect(() => {
-    loadStories()
+  const fetchStories = useCallback(() => {
+    return fetch('/api/stories/canon')
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load stories')
+        return response.json()
+      })
+      .then(data => {
+        setStories(data.stories || [])
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : 'Failed to load stories')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
+
+  // Initial state is already loading=true / error=null, so the mount fetch needs no reset
+  useEffect(() => {
+    fetchStories()
+  }, [fetchStories])
 
   const loadStories = async () => {
     setIsLoading(true)
     setError(null)
-    
-    try {
-      const response = await fetch('/api/stories/canon')
-      if (!response.ok) throw new Error('Failed to load stories')
-      const data = await response.json()
-      setStories(data.stories || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load stories')
-    } finally {
-      setIsLoading(false)
-    }
+    await fetchStories()
   }
 
   const loadStoryContent = async (slug: string) => {
@@ -56,7 +64,7 @@ export function StoryReaderPanel() {
       if (!response.ok) throw new Error('Failed to load story content')
       const data = await response.json()
       setStoryContent(data.content_text || 'No content available.')
-    } catch (err) {
+    } catch {
       setStoryContent('Failed to load story content.')
     } finally {
       setLoadingContent(false)

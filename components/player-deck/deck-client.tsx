@@ -380,6 +380,7 @@ function CharacterTile({ character }: { character: PlayerCharacter }) {
         {/* Portrait */}
         <div className="relative aspect-3/4 overflow-hidden">
           {character.portrait_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-supplied portrait URL from arbitrary hosts
             <img
               src={character.portrait_url}
               alt={character.name}
@@ -486,6 +487,7 @@ function CharacterRow({ character }: { character: PlayerCharacter }) {
         {/* Mini Portrait */}
         <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-lg overflow-hidden shrink-0 border" style={{ borderColor: `${classColor}40` }}>
           {character.portrait_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- user-supplied portrait URL from arbitrary hosts
             <img src={character.portrait_url} alt={character.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${classColor}20, ${classColor}05)` }}>

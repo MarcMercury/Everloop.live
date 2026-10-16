@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Shield, EyeOff, Loader2, RefreshCw } from 'lucide-react'
 import { getQuestSafetySummary } from '@/lib/actions/quests'
 
@@ -19,26 +19,39 @@ type Summary = {
 
 export function SafetySummaryCard({ questId, totalPlayers }: Props) {
   const [summary, setSummary] = useState<Summary | null>(null)
-  const [loading, setLoading] = useState(false)
+  // Starts in the loading state because the summary is fetched immediately on mount
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(true)
+  const [prevQuestId, setPrevQuestId] = useState(questId)
+
+  // Enter the loading state during render when the quest changes
+  if (prevQuestId !== questId) {
+    setPrevQuestId(questId)
+    setLoading(true)
+    setError(null)
+  }
+
+  const fetchSummary = useCallback(() => {
+    return getQuestSafetySummary(questId).then(res => {
+      if (res.success && res.data) {
+        setSummary(res.data)
+      } else {
+        setError(res.error ?? 'Failed to load safety summary')
+      }
+      setLoading(false)
+    })
+  }, [questId])
 
   async function load() {
     setLoading(true)
     setError(null)
-    const res = await getQuestSafetySummary(questId)
-    if (res.success && res.data) {
-      setSummary(res.data)
-    } else {
-      setError(res.error ?? 'Failed to load safety summary')
-    }
-    setLoading(false)
+    await fetchSummary()
   }
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questId])
+    fetchSummary()
+  }, [fetchSummary])
 
   const dominantTone =
     summary &&

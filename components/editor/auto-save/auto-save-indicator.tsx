@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { Check, Cloud, CloudOff, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -107,39 +107,38 @@ interface UseAutoSaveOptions {
   enabled?: boolean
 }
 
+function subscribeOnlineStatus(callback: () => void) {
+  window.addEventListener('online', callback)
+  window.addEventListener('offline', callback)
+  return () => {
+    window.removeEventListener('online', callback)
+    window.removeEventListener('offline', callback)
+  }
+}
+
 export function useAutoSave({ onSave, delay = 2000, enabled = true }: UseAutoSaveOptions) {
   const [status, setStatus] = useState<AutoSaveStatus>('idle')
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>()
-  const [isOnline, setIsOnline] = useState(true)
   
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pendingSaveRef = useRef(false)
   
-  // Monitor online status
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
+  // Monitor online status (assume online during SSR)
+  const isOnline = useSyncExternalStore(
+    subscribeOnlineStatus,
+    () => navigator.onLine,
+    () => true
+  )
+  const [prevIsOnline, setPrevIsOnline] = useState(true)
+  if (isOnline !== prevIsOnline) {
+    setPrevIsOnline(isOnline)
+    if (isOnline) {
       setStatus(prev => prev === 'offline' ? 'idle' : prev)
-    }
-    
-    const handleOffline = () => {
-      setIsOnline(false)
+    } else {
       setStatus('offline')
     }
-    
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    
-    // Check initial status
-    setIsOnline(navigator.onLine)
-    if (!navigator.onLine) setStatus('offline')
-    
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [])
+  }
   
   // Trigger save with debounce
   const triggerSave = useCallback(() => {

@@ -203,7 +203,7 @@ export function PlayerSessionClient({
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
             {messages.map(msg => (
-              <PlayerMessageBubble key={msg.id} message={msg} userId={userId} />
+              <PlayerMessageBubble key={msg.id} message={msg} />
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -365,8 +365,7 @@ export function PlayerSessionClient({
   )
 }
 
-function PlayerMessageBubble({ message, userId }: { message: QuestMessage; userId: string }) {
-  const isOwn = message.sender_id === userId
+function PlayerMessageBubble({ message }: { message: QuestMessage }) {
   const sender = message.sender as { username: string; display_name: string | null } | null
 
   const typeConfig: Record<string, { bg: string; nameColor: string; icon?: React.ReactNode }> = {

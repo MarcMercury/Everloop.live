@@ -353,7 +353,6 @@ function computeSimpleDiff(oldText: string, newText: string): DiffChange[] {
   
   // Simple line-by-line diff (not optimal but works for display)
   const oldSet = new Set(oldLines)
-  const newSet = new Set(newLines)
   
   // Track which lines were matched
   const matchedOld = new Set<number>()

@@ -301,6 +301,7 @@ export default function ProfileSettingsPage() {
                   <div className="relative">
                     {avatarUrl ? (
                       <div className="relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- user-entered avatar URL preview from arbitrary hosts */}
                         <img
                           src={avatarUrl}
                           alt="Avatar preview"

@@ -14,4 +14,23 @@ export const AI_MODELS = {
    * a 1536-dim pgvector column, so changing models requires re-embedding.
    */
   embedding: 'text-embedding-3-small',
+  /**
+   * Gemini :generateContent image models, tried in order. Override with a
+   * comma-separated GEMINI_IMAGE_MODELS. Check what a key can reach via
+   * GET /api/admin/gemini-models.
+   */
+  geminiImage: listFromEnv('GEMINI_IMAGE_MODELS', [
+    'gemini-3.1-flash-image',
+    'gemini-3-pro-image',
+    'gemini-2.5-flash-image',
+  ]),
+  /** Imagen :predict models (paid tier). Off by default; set GEMINI_IMAGEN_MODELS to enable. */
+  imagen: listFromEnv('GEMINI_IMAGEN_MODELS', []),
 } as const
+
+function listFromEnv(name: string, fallback: string[]): readonly string[] {
+  const raw = process.env[name]
+  if (!raw) return fallback
+  const list = raw.split(',').map((s) => s.trim()).filter(Boolean)
+  return list.length ? list : fallback
+}

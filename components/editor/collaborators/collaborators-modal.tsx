@@ -97,26 +97,40 @@ export function CollaboratorsModal({
   // Role dropdown state
   const [openRoleDropdown, setOpenRoleDropdown] = useState<string | null>(null)
   
+  const [loadParams, setLoadParams] = useState({ isOpen, storyId })
+
+  // Enter the loading state during render when (re)opening or switching story
+  if (loadParams.isOpen !== isOpen || loadParams.storyId !== storyId) {
+    setLoadParams({ isOpen, storyId })
+    if (isOpen) {
+      setIsLoading(true)
+      setError(null)
+    }
+  }
+
+  const fetchCollaborators = useCallback(() => {
+    return getCollaborators(storyId).then(result => {
+      if (result.success && result.collaborators) {
+        setCollaborators(result.collaborators)
+      } else {
+        setError(result.error || 'Failed to load collaborators')
+      }
+
+      setIsLoading(false)
+    })
+  }, [storyId])
+
   const loadCollaborators = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    
-    const result = await getCollaborators(storyId)
-    
-    if (result.success && result.collaborators) {
-      setCollaborators(result.collaborators)
-    } else {
-      setError(result.error || 'Failed to load collaborators')
-    }
-    
-    setIsLoading(false)
-  }, [storyId])
+    await fetchCollaborators()
+  }, [fetchCollaborators])
   
   useEffect(() => {
     if (isOpen) {
-      loadCollaborators()
+      fetchCollaborators()
     }
-  }, [isOpen, loadCollaborators])
+  }, [isOpen, fetchCollaborators])
   
   const handleAddCollaborator = async () => {
     if (!username.trim()) return
@@ -316,6 +330,7 @@ export function CollaboratorsModal({
                       {/* Avatar */}
                       <div className="w-10 h-10 rounded-full bg-charcoal-700 flex items-center justify-center overflow-hidden">
                         {collab.user?.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- user-supplied avatar URL from arbitrary hosts
                           <img 
                             src={collab.user.avatar_url} 
                             alt="" 

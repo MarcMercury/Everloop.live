@@ -27,14 +27,11 @@ interface QuestLobbyClientProps {
 
 export function QuestLobbyClient({
   campaignId,
-  campaignSlug,
   campaignTitle,
   campaignStatus,
-  campaignType,
   characterEntryMode,
   joinCode,
   isDM,
-  isPlayer,
   myPlayer,
   myCharacters,
   pendingPlayers = [],
@@ -183,6 +180,7 @@ export function QuestLobbyClient({
                 <div key={player.id} className="flex items-center justify-between p-3 rounded-lg bg-teal-rich/30 border border-gold/5">
                   <div className="flex items-center gap-3">
                     {player.user?.avatar_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- user-supplied avatar URL from arbitrary hosts
                       <img src={player.user.avatar_url} alt="" className="w-8 h-8 rounded-full" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-teal-rich border border-gold/20" />

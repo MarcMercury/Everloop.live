@@ -34,9 +34,10 @@ export interface CatalogSound {
  * search API covers the long tail. Authors can also paste raw URLs in the
  * Quest Builder.
  *
- * NOTE: the URLs below are placeholders pointing at the user's own /public/audio
- * folder. Drop CC0/Pixabay MP3 files in `public/audio/library/` and they'll
- * show up. We don't ship third-party audio in the repo.
+ * NOTE: the URLs below are placeholders. `/audio/*` redirects to the
+ * `site-assets` Supabase Storage bucket (see lib/assets.ts), so upload CC0/
+ * Pixabay MP3 files to `site-assets/audio/library/` and they'll show up.
+ * We don't ship third-party audio in the repo.
  */
 export const CATALOG_AMBIENCE: CatalogSound[] = [
   {

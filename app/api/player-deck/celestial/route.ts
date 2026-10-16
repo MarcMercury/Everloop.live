@@ -75,7 +75,6 @@ When suggesting skill checks, format as: **Skill (Ability)** — DC estimate and
 
 function buildCharacterContext(char: Record<string, unknown>): string {
   const spellcasting = (char.spellcasting || {}) as Record<string, unknown>
-  const proficiencies = (char.proficiencies || {}) as Record<string, unknown>
   const features = (char.features || []) as Record<string, unknown>[]
   const inventory = (char.inventory || {}) as Record<string, unknown>
   const status = (char.status || {}) as Record<string, unknown>

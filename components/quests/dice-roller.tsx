@@ -28,14 +28,22 @@ interface Props {
 }
 
 export function DiceRollVisualizer({ results, maxVisible = 5 }: Props) {
-  const [animatingId, setAnimatingId] = useState<number | null>(null)
+  const [animatingId, setAnimatingId] = useState<number | null>(() =>
+    results.length > 0 ? results[results.length - 1].timestamp : null
+  )
+  const [prevResults, setPrevResults] = useState(results)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // Animate the latest roll
+  // Animate the latest roll (set during render when results change; initial state covers mount)
+  if (prevResults !== results) {
+    setPrevResults(results)
+    if (results.length > 0) {
+      setAnimatingId(results[results.length - 1].timestamp)
+    }
+  }
+
   useEffect(() => {
     if (results.length > 0) {
-      const latest = results[results.length - 1]
-      setAnimatingId(latest.timestamp)
       const timer = setTimeout(() => setAnimatingId(null), 1200)
       return () => clearTimeout(timer)
     }
@@ -137,11 +145,21 @@ function DiceFace({ value, isCrit, isFail, isAnimating, delay }: {
   delay: number
 }) {
   const [showValue, setShowValue] = useState(!isAnimating)
-  const [tumbleValue, setTumbleValue] = useState(Math.ceil(Math.random() * 20))
+  const [tumbleValue, setTumbleValue] = useState(() => Math.ceil(Math.random() * 20))
+  const [animParams, setAnimParams] = useState({ isAnimating, value, delay })
+
+  // Hide the value during render when an animation (re)starts; show it when animation stops
+  if (
+    animParams.isAnimating !== isAnimating ||
+    animParams.value !== value ||
+    animParams.delay !== delay
+  ) {
+    setAnimParams({ isAnimating, value, delay })
+    setShowValue(!isAnimating)
+  }
 
   useEffect(() => {
     if (isAnimating) {
-      setShowValue(false)
       // Tumble through random values
       const interval = setInterval(() => {
         setTumbleValue(Math.ceil(Math.random() * 20))
@@ -156,8 +174,6 @@ function DiceFace({ value, isCrit, isFail, isAnimating, delay }: {
         clearInterval(interval)
         clearTimeout(timer)
       }
-    } else {
-      setShowValue(true)
     }
   }, [isAnimating, value, delay])
 

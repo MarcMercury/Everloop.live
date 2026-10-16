@@ -27,15 +27,9 @@ import { SafetySummaryCard } from '@/components/quests/safety-summary-card'
 import { WorldCogsPanel } from '@/components/quests/world-cogs-panel'
 import { SessionMediaPanel } from '@/components/quests/session-media-panel'
 import { supabase } from '@/lib/supabase/client'
-import dynamic from 'next/dynamic'
 import { Generate3DButton } from '@/components/3d/generate-3d-button'
 import { CombatTracker } from '@/components/quests/combat-tracker'
 import { DMScreenBar } from '@/components/quests/dm-screen-bar'
-
-const ModelViewerCompact = dynamic(
-  () => import('@/components/3d/model-viewer').then((mod) => mod.ModelViewerCompact),
-  { ssr: false }
-)
 
 interface Props {
   campaign: Quest
@@ -692,7 +686,7 @@ export function DMControlPanelClient({
           {activeTab === 'scenes' && (
             <div className="flex-1 flex flex-col p-4 gap-2 overflow-y-auto">
               <h3 className="text-sm font-serif text-parchment">Scenes</h3>
-              {scenes.map((scene, i) => {
+              {scenes.map((scene) => {
                 const theme = MOOD_THEMES[scene.mood as SceneMood]
                 const isActive = scene.id === session?.active_scene_id
                 return (
@@ -923,7 +917,7 @@ export function DMControlPanelClient({
               </div>
             ) : (
               messages.map(msg => (
-                <MessageBubble key={msg.id} message={msg} userId={userId} />
+                <MessageBubble key={msg.id} message={msg} />
               ))
             )}
             <div ref={messagesEndRef} />
@@ -963,8 +957,7 @@ export function DMControlPanelClient({
   )
 }
 
-function MessageBubble({ message, userId }: { message: QuestMessage; userId: string }) {
-  const isOwn = message.sender_id === userId
+function MessageBubble({ message }: { message: QuestMessage }) {
   const sender = message.sender as { username: string; display_name: string | null } | null
 
   const typeStyles: Record<string, string> = {

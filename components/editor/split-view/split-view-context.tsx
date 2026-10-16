@@ -38,6 +38,7 @@ export function SplitViewProvider({ children }: { children: ReactNode }) {
       if (stored) {
         const state: StoredState = JSON.parse(stored)
         if (state.panelWidth >= MIN_WIDTH && state.panelWidth <= MAX_WIDTH) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage after mount; reading during render would cause an SSR hydration mismatch
           setPanelWidthState(state.panelWidth)
         }
       }

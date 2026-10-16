@@ -35,6 +35,7 @@ function ProjectorInner() {
     // Hydrate from last-known
     try {
       const raw = localStorage.getItem(key)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating from localStorage (external store) after mount; reading during render would cause an SSR hydration mismatch
       if (raw) setPayload(JSON.parse(raw))
     } catch { /* ignore */ }
 
@@ -69,6 +70,7 @@ function ProjectorInner() {
     <div className="fixed inset-0 bg-black flex flex-col items-center justify-center overflow-hidden">
       {payload.imageUrl ? (
         <>
+          {/* eslint-disable-next-line @next/next/no-img-element -- dynamic projected image URL with unknown dimensions/host */}
           <img
             src={payload.imageUrl}
             alt={payload.caption ?? ''}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Moon, Sun, Type, AlignLeft, AlignCenter, AlignJustify, Minus, Plus, Volume2, VolumeX, Music } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,6 +26,8 @@ const AMBIENT_SOUNDS = {
   forest: 'https://assets.mixkit.co/sfx/preview/mixkit-forest-birds-ambience-1210.mp3',
 }
 
+const noopSubscribe = () => () => {}
+
 export function DistractionFreeMode({
   isOpen,
   onClose,
@@ -37,21 +39,22 @@ export function DistractionFreeMode({
 }: DistractionFreeModeProps) {
   const [theme, setTheme] = useState<DistractionFreeTheme>('dark')
   const [fontSize, setFontSize] = useState(20)
-  const [lineHeight, setLineHeight] = useState(1.8)
+  const [lineHeight] = useState(1.8)
   const [alignment, setAlignment] = useState<TextAlignment>('left')
   const [showControls, setShowControls] = useState(false)
   const [typingFocus, setTypingFocus] = useState(true) // Highlight current paragraph
   const [ambientSound, setAmbientSound] = useState<keyof typeof AMBIENT_SOUNDS | null>(null)
-  const [audioVolume, setAudioVolume] = useState(0.3)
+  const [audioVolume] = useState(0.3)
   
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [mounted, setMounted] = useState(false)
-  
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // false during SSR/hydration, true once running on the client
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false
+  )
   
   // Handle ambient sounds
   useEffect(() => {

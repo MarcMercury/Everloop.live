@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useEffectEvent } from 'react'
 import { cn } from '@/lib/utils'
 import { Trophy, X } from 'lucide-react'
 
@@ -24,6 +24,18 @@ export function AchievementToast({
   const [isVisible, setIsVisible] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
   
+  const handleDismiss = () => {
+    setIsLeaving(true)
+    setTimeout(() => {
+      onDismiss()
+    }, 300)
+  }
+
+  // Effect event so the auto-hide timer isn't restarted when onDismiss changes
+  const onAutoHide = useEffectEvent(() => {
+    handleDismiss()
+  })
+  
   useEffect(() => {
     // Animate in
     const showTimer = setTimeout(() => setIsVisible(true), 50)
@@ -32,7 +44,7 @@ export function AchievementToast({
     let hideTimer: NodeJS.Timeout
     if (autoHide) {
       hideTimer = setTimeout(() => {
-        handleDismiss()
+        onAutoHide()
       }, duration)
     }
     
@@ -41,13 +53,6 @@ export function AchievementToast({
       if (hideTimer) clearTimeout(hideTimer)
     }
   }, [autoHide, duration])
-  
-  const handleDismiss = () => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss()
-    }, 300)
-  }
   
   return (
     <div
@@ -121,10 +126,13 @@ export function AchievementToastContainer({
   const [queue, setQueue] = useState(achievements)
   const [currentIndex, setCurrentIndex] = useState(0)
   
-  useEffect(() => {
+  // Reset the queue when a new batch of achievements arrives
+  const [prevAchievements, setPrevAchievements] = useState(achievements)
+  if (achievements !== prevAchievements) {
+    setPrevAchievements(achievements)
     setQueue(achievements)
     setCurrentIndex(0)
-  }, [achievements])
+  }
   
   const handleDismiss = () => {
     if (currentIndex < queue.length - 1) {

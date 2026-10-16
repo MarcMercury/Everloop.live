@@ -449,6 +449,7 @@ export default async function QuestPage({ params }: PageProps) {
                     <div key={player.id} className="p-3 rounded-lg bg-teal-rich/30 space-y-2">
                       <div className="flex items-center gap-3">
                         {pUser?.avatar_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- user-supplied avatar URL from arbitrary hosts
                           <img src={pUser.avatar_url} alt="" className="w-8 h-8 rounded-full border border-gold/20" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-teal-mid flex items-center justify-center text-xs text-parchment-muted">

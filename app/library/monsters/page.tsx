@@ -54,46 +54,47 @@ export default async function MonstersPage({ searchParams }: PageProps) {
 }
 
 async function Results({ search, cr, type, ordering }: { search?: string; cr?: string; type?: string; ordering?: string }) {
+  let data: Awaited<ReturnType<typeof searchCreatures>>
   try {
-    const data = await searchCreatures({ search, cr, type, ordering, limit: 60 })
-    if (data.results.length === 0) {
-      return <p className="text-parchment-muted text-center py-8">No creatures found.</p>
-    }
-    return (
-      <div className="overflow-x-auto rounded-lg border border-gold/10">
-        <table className="w-full text-sm">
-          <thead className="bg-teal-rich/40 text-parchment-muted text-xs uppercase tracking-wider">
-            <tr>
-              <th className="px-3 py-2 text-left">CR</th>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-left">Type</th>
-              <th className="px-3 py-2 text-left">Size</th>
-              <th className="px-3 py-2 text-right">HP</th>
-              <th className="px-3 py-2 text-right">AC</th>
-              <th className="px-3 py-2 text-right">XP</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gold/5">
-            {data.results.map((m) => (
-              <tr key={m.key} className="hover:bg-gold/5">
-                <td className="px-3 py-2 text-rose-300 font-mono">{m.challenge_rating_text}</td>
-                <td className="px-3 py-2">
-                  <Link href={`/library/monsters/${m.key}`} className="text-parchment hover:text-gold font-medium">
-                    {m.name}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 text-parchment-muted capitalize">{m.type?.name}</td>
-                <td className="px-3 py-2 text-parchment-muted">{m.size?.name}</td>
-                <td className="px-3 py-2 text-parchment text-right font-mono">{m.hit_points}</td>
-                <td className="px-3 py-2 text-parchment text-right font-mono">{m.armor_class}</td>
-                <td className="px-3 py-2 text-parchment-muted text-right font-mono">{m.experience_points?.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
+    data = await searchCreatures({ search, cr, type, ordering, limit: 60 })
   } catch (e) {
     return <p className="text-red-400">Failed to load creatures: {(e as Error).message}</p>
   }
+  if (data.results.length === 0) {
+    return <p className="text-parchment-muted text-center py-8">No creatures found.</p>
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-gold/10">
+      <table className="w-full text-sm">
+        <thead className="bg-teal-rich/40 text-parchment-muted text-xs uppercase tracking-wider">
+          <tr>
+            <th className="px-3 py-2 text-left">CR</th>
+            <th className="px-3 py-2 text-left">Name</th>
+            <th className="px-3 py-2 text-left">Type</th>
+            <th className="px-3 py-2 text-left">Size</th>
+            <th className="px-3 py-2 text-right">HP</th>
+            <th className="px-3 py-2 text-right">AC</th>
+            <th className="px-3 py-2 text-right">XP</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gold/5">
+          {data.results.map((m) => (
+            <tr key={m.key} className="hover:bg-gold/5">
+              <td className="px-3 py-2 text-rose-300 font-mono">{m.challenge_rating_text}</td>
+              <td className="px-3 py-2">
+                <Link href={`/library/monsters/${m.key}`} className="text-parchment hover:text-gold font-medium">
+                  {m.name}
+                </Link>
+              </td>
+              <td className="px-3 py-2 text-parchment-muted capitalize">{m.type?.name}</td>
+              <td className="px-3 py-2 text-parchment-muted">{m.size?.name}</td>
+              <td className="px-3 py-2 text-parchment text-right font-mono">{m.hit_points}</td>
+              <td className="px-3 py-2 text-parchment text-right font-mono">{m.armor_class}</td>
+              <td className="px-3 py-2 text-parchment-muted text-right font-mono">{m.experience_points?.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   MessageSquare, 
   Lightbulb, 
@@ -66,27 +66,45 @@ export function CommentsSidebar({
   const [showFilters, setShowFilters] = useState(false)
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set())
 
+  const [loadParams, setLoadParams] = useState({ isOpen, storyId, chapterId })
+
+  // Enter the loading state during render when (re)opening or switching story/chapter
+  if (
+    loadParams.isOpen !== isOpen ||
+    loadParams.storyId !== storyId ||
+    loadParams.chapterId !== chapterId
+  ) {
+    setLoadParams({ isOpen, storyId, chapterId })
+    if (isOpen) setIsLoading(true)
+  }
+
+  const fetchComments = useCallback(() => {
+    return getStoryComments(storyId, { chapterId: chapterId || undefined }).then(result => {
+      if (result.success && result.comments) {
+        setComments(result.comments)
+      }
+      setIsLoading(false)
+    })
+  }, [storyId, chapterId])
+
+  const loadCounts = useCallback(() => {
+    return getCommentCounts(storyId).then(result => {
+      if (result.success && result.counts) {
+        setCounts(result.counts)
+      }
+    })
+  }, [storyId])
+
   useEffect(() => {
     if (isOpen) {
-      loadComments()
+      fetchComments()
       loadCounts()
     }
-  }, [isOpen, storyId, chapterId])
+  }, [isOpen, fetchComments, loadCounts])
 
   const loadComments = async () => {
     setIsLoading(true)
-    const result = await getStoryComments(storyId, { chapterId: chapterId || undefined })
-    if (result.success && result.comments) {
-      setComments(result.comments)
-    }
-    setIsLoading(false)
-  }
-
-  const loadCounts = async () => {
-    const result = await getCommentCounts(storyId)
-    if (result.success && result.counts) {
-      setCounts(result.counts)
-    }
+    await fetchComments()
   }
 
   const handleResolve = async (commentId: string, currentState: boolean) => {

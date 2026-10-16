@@ -252,7 +252,6 @@ export function TiptapEditor({
   storyId,
   chapterId,
   onCommentCreated,
-  comments = [],
 }: TiptapEditorProps) {
   // Comment popover state
   const [showCommentPopover, setShowCommentPopover] = useState(false)

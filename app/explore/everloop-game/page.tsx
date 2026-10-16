@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import { assetUrl } from '@/lib/assets'
 
 export const metadata = {
   title: 'Everloop: The Game | Everloop',
@@ -9,14 +10,14 @@ export const metadata = {
 }
 
 const SIGIL_VALUES = [
-  { value: 1, name: 'Rat', icon: '🐀', image: '/game/sigil-rat.png' },
-  { value: 2, name: 'Snake', icon: '🐍', image: '/game/sigil-snake.png' },
-  { value: 3, name: 'Fang', icon: '🦷', image: '/game/sigil-fang.png' },
-  { value: 4, name: 'Tail', icon: '🦎', image: '/game/sigil-tail.png' },
-  { value: 5, name: 'Crown', icon: '👑', image: '/game/sigil-crown.png' },
-  { value: 6, name: 'Boar', icon: '🐗', image: '/game/sigil-boar.png' },
-  { value: 7, name: 'Eye', icon: '👁️', image: '/game/sigil-eye.png' },
-  { value: 8, name: 'Wolf', icon: '🐺', image: '/game/sigil-wolf.png' },
+  { value: 1, name: 'Rat', icon: '🐀', image: assetUrl('/game/sigil-rat.png') },
+  { value: 2, name: 'Snake', icon: '🐍', image: assetUrl('/game/sigil-snake.png') },
+  { value: 3, name: 'Fang', icon: '🦷', image: assetUrl('/game/sigil-fang.png') },
+  { value: 4, name: 'Tail', icon: '🦎', image: assetUrl('/game/sigil-tail.png') },
+  { value: 5, name: 'Crown', icon: '👑', image: assetUrl('/game/sigil-crown.png') },
+  { value: 6, name: 'Boar', icon: '🐗', image: assetUrl('/game/sigil-boar.png') },
+  { value: 7, name: 'Eye', icon: '👁️', image: assetUrl('/game/sigil-eye.png') },
+  { value: 8, name: 'Wolf', icon: '🐺', image: assetUrl('/game/sigil-wolf.png') },
 ]
 
 const MODIFIERS = [
@@ -79,7 +80,7 @@ export default function EverloopGamePage() {
           {/* Hero Image */}
           <div className="relative w-full aspect-video rounded-xl overflow-hidden mb-12 border border-gold/20">
             <Image
-              src="/game/full-set.png"
+              src={assetUrl('/game/full-set.png')}
               alt="The complete Everloop game set laid out on a dark stone table"
               fill
               className="object-cover"
@@ -142,7 +143,7 @@ export default function EverloopGamePage() {
                   <div className="rounded-lg bg-teal-rich/50 border border-gold/10 overflow-hidden">
                     <div className="relative aspect-square">
                       <Image
-                        src="/game/spiral-board.png"
+                        src={assetUrl('/game/spiral-board.png')}
                         alt="The Spiral Board — a circular obsidian slab with 100 glowing spaces"
                         fill
                         className="object-cover"
@@ -156,7 +157,7 @@ export default function EverloopGamePage() {
                   <div className="rounded-lg bg-teal-rich/50 border border-gold/10 overflow-hidden">
                     <div className="relative aspect-square">
                       <Image
-                        src="/game/loop-totem.png"
+                        src={assetUrl('/game/loop-totem.png')}
                         alt="The Loop Totem — a jagged obsidian spire game piece"
                         fill
                         className="object-cover"
@@ -174,7 +175,7 @@ export default function EverloopGamePage() {
                   <div className="rounded-lg bg-teal-rich/50 border border-gold/10 overflow-hidden">
                     <div className="relative aspect-square">
                       <Image
-                        src="/game/sigil-deck.png"
+                        src={assetUrl('/game/sigil-deck.png')}
                         alt="The Sigil Deck — tattered parchment cards with creature illustrations"
                         fill
                         className="object-cover"
@@ -188,7 +189,7 @@ export default function EverloopGamePage() {
                   <div className="rounded-lg bg-teal-rich/50 border border-gold/10 overflow-hidden">
                     <div className="relative aspect-square">
                       <Image
-                        src="/game/fray-card.png"
+                        src={assetUrl('/game/fray-card.png')}
                         alt="Fray Cards and Vaults — crimson-backed cards and weathered leather pouches"
                         fill
                         className="object-cover"
@@ -242,7 +243,7 @@ export default function EverloopGamePage() {
               {/* Modifier & Reaction cards image */}
               <div className="relative w-full aspect-2/1 rounded-lg overflow-hidden mb-8 border border-gold/10">
                 <Image
-                  src="/game/modifier-cards.png"
+                  src={assetUrl('/game/modifier-cards.png')}
                   alt="Modifier and Reaction cards — Split, Inverse, Loop, Shield, and Compass"
                   fill
                   className="object-cover"
@@ -441,7 +442,7 @@ export default function EverloopGamePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 <div className="relative aspect-square rounded-lg overflow-hidden border border-gold/10">
                   <Image
-                    src="/game/score-trackers.png"
+                    src={assetUrl('/game/score-trackers.png')}
                     alt="Personal Score Trackers — bone-chimes and notched wooden sticks with sliding rings"
                     fill
                     className="object-cover"

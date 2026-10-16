@@ -55,15 +55,6 @@ while ((m = r2.exec(raw)) !== null) {
 }
 console.log(`📖 Loaded ${Object.keys(LOCATION_DESCRIPTIONS).length} unique descriptions from TS file`)
 
-// ── Slug helper ──────────────────────────────────────────────────
-function toSlug(name) {
-  return name
-    .toLowerCase()
-    .replace(/['']/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-}
-
 // ── Main ─────────────────────────────────────────────────────────
 async function main() {
   console.log('\n🔄 Location Description Updater')

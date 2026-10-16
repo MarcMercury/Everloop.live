@@ -293,6 +293,7 @@ export default async function RosterPage({
                     {/* Image — click to view details */}
                     <Link href={detailHref} className="block aspect-square relative bg-teal-deep/50 overflow-hidden cursor-pointer">
                       {imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- dynamic entity image URL from arbitrary hosts
                         <img
                           src={imageUrl}
                           alt={entity.name}

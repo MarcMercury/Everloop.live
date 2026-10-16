@@ -483,6 +483,7 @@ function ImageBoardPanel({
         {/* Current pushed preview */}
         <div className="aspect-video rounded-lg border border-gold/20 bg-teal-rich/50 overflow-hidden flex items-center justify-center">
           {pushed ? (
+            // eslint-disable-next-line @next/next/no-img-element -- dynamic scene/handout URLs with unknown dimensions/host
             <img src={pushed} alt={caption} className="w-full h-full object-contain" />
           ) : (
             <div className="text-center text-parchment-muted text-xs px-4">
@@ -513,6 +514,7 @@ function ImageBoardPanel({
               onClick={() => pushImage(scene.image_url!, scene.title)}
               className="block w-full rounded-lg overflow-hidden border border-gold/20 hover:border-gold/50 transition-all"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- dynamic scene/handout URLs with unknown dimensions/host */}
               <img src={scene.image_url} alt={scene.title} className="w-full aspect-video object-cover" />
             </button>
           </div>
@@ -536,6 +538,7 @@ function ImageBoardPanel({
                   }`}
                   title={item.label}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- dynamic scene/handout URLs with unknown dimensions/host */}
                   <img src={item.url} alt={item.label} className="w-full h-full object-cover" />
                 </button>
               ))}
@@ -600,6 +603,7 @@ function CombatTrackerPanel({
       const raw = localStorage.getItem(storageKey)
       if (raw) {
         const data = JSON.parse(raw)
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage after mount; reading it during render would cause an SSR hydration mismatch
         setCombatants(data.combatants ?? [])
         setRound(data.round ?? 1)
         setActiveIdx(data.activeIdx ?? 0)

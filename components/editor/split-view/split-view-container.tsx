@@ -90,7 +90,7 @@ export function SplitViewContainer({ children, storyId, getText, getEditor }: Sp
 
 // Toggle button to show in the editor toolbar
 export function SplitViewToggle() {
-  const { isPanelOpen, togglePanel, panelType } = useSplitView()
+  const { isPanelOpen, togglePanel } = useSplitView()
 
   return (
     <button

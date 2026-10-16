@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Headphones, BookOpen, ScrollText } from 'lucide-react'
+import { assetUrl } from '@/lib/assets'
 
 export default function Home() {
   return (
@@ -29,7 +30,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto">
           <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-gold/20 shadow-2xl shadow-gold/10">
             <Image
-              src="/Maps/New Structure Map.png"
+              src={assetUrl('/Maps/New Structure Map.png')}
               alt="Structure of the Everloop"
               fill
               className="object-cover"
@@ -53,13 +54,12 @@ export default function Home() {
                 <p className="text-xs text-parchment-muted">The Everloop — spoken aloud</p>
               </div>
             </div>
-            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <audio
               controls
               preload="none"
               className="w-full h-10 [&::-webkit-media-controls-panel]:bg-teal-deep/80 [&::-webkit-media-controls-current-time-display]:text-parchment-muted [&::-webkit-media-controls-time-remaining-display]:text-parchment-muted"
             >
-              <source src="/audio/ElevenLabs_The_Everloop_Intro.mp3" type="audio/mpeg" />
+              <source src={assetUrl('/audio/ElevenLabs_The_Everloop_Intro.mp3')} type="audio/mpeg" />
               Your browser does not support the audio element.
             </audio>
           </div>

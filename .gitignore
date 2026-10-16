@@ -60,3 +60,12 @@ public/DandDStuff/MarekAzurePact_*.pdf
 
 # D&D source material (copyrighted, do not commit)
 docs/DandDcontext/
+
+# Large media lives in Supabase Storage bucket `site-assets` (lib/assets.ts)
+/public/Maps/
+/public/game/
+/public/audio/
+/public/covers/
+/public/books/
+/public/DandDStuff/
+/public/Everloop info/

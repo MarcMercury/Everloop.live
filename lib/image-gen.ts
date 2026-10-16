@@ -157,13 +157,9 @@ async function tryGeminiFlashImage(prompt: string, key: string, model: string): 
 }
 
 /**
- * Gemini image generation with multi-model fallback. Google ships image
- * generation under many names that come and go and have different billing
- * tiers; we try every known endpoint so the call survives one model being
- * retired or gated behind paid billing on the caller's key.
- *
- * Run `node scripts/list-gemini-models.cjs` to see exactly which models
- * your specific API key has access to.
+ * Gemini image generation with multi-model fallback. Model lists live in
+ * lib/ai/models.ts (env-overridable) so retired names can be swapped without
+ * touching this file. GET /api/admin/gemini-models lists what the key can use.
  */
 async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
   const key = geminiKey()
@@ -171,13 +167,7 @@ async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
 
   const errors: string[] = []
 
-  // Imagen via :predict (paid tier only on most keys).
-  const imagenModels = [
-    'imagen-4.0-generate-001',
-    'imagen-3.0-generate-002',
-    'imagen-3.0-fast-generate-001',
-  ]
-  for (const model of imagenModels) {
+  for (const model of AI_MODELS.imagen) {
     try {
       return await tryGeminiImagen(opts.prompt, key, model)
     } catch (err) {
@@ -185,16 +175,7 @@ async function tryGemini(opts: GenerateImageOptions): Promise<Buffer> {
     }
   }
 
-  // Image generation via :generateContent. Names have shifted across
-  // releases; try every one we have seen in the wild.
-  const flashModels = [
-    'gemini-2.5-flash-image',
-    'gemini-2.5-flash-image-preview',
-    'gemini-2.0-flash-preview-image-generation',
-    'gemini-2.0-flash-exp-image-generation',
-    'gemini-2.0-flash-exp',
-  ]
-  for (const model of flashModels) {
+  for (const model of AI_MODELS.geminiImage) {
     try {
       return await tryGeminiFlashImage(opts.prompt, key, model)
     } catch (err) {

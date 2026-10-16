@@ -42,28 +42,29 @@ export default async function MagicItemsPage({ searchParams }: PageProps) {
 }
 
 async function Results({ search, rarity }: { search?: string; rarity?: string }) {
+  let data: Awaited<ReturnType<typeof searchMagicItems>>
   try {
-    const data = await searchMagicItems({ search, rarity, limit: 60 })
-    if (data.results.length === 0) return <p className="text-parchment-muted text-center py-8">No magic items found.</p>
-    return (
-      <ul className="space-y-2">
-        {data.results.map((it) => (
-          <li key={it.key} className="rounded-md border border-gold/10 bg-teal-rich/20 p-3 hover:border-gold/30">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-parchment font-serif">{it.name}</h3>
-                <p className="text-xs text-parchment-muted capitalize">
-                  {it.rarity?.name}
-                  {it.requires_attunement && <span className="text-amber-400"> • requires attunement</span>}
-                </p>
-              </div>
-            </div>
-            {it.description && <p className="text-xs text-parchment-muted mt-2 line-clamp-3">{it.description}</p>}
-          </li>
-        ))}
-      </ul>
-    )
+    data = await searchMagicItems({ search, rarity, limit: 60 })
   } catch (e) {
     return <p className="text-red-400">Failed to load magic items: {(e as Error).message}</p>
   }
+  if (data.results.length === 0) return <p className="text-parchment-muted text-center py-8">No magic items found.</p>
+  return (
+    <ul className="space-y-2">
+      {data.results.map((it) => (
+        <li key={it.key} className="rounded-md border border-gold/10 bg-teal-rich/20 p-3 hover:border-gold/30">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-parchment font-serif">{it.name}</h3>
+              <p className="text-xs text-parchment-muted capitalize">
+                {it.rarity?.name}
+                {it.requires_attunement && <span className="text-amber-400"> • requires attunement</span>}
+              </p>
+            </div>
+          </div>
+          {it.description && <p className="text-xs text-parchment-muted mt-2 line-clamp-3">{it.description}</p>}
+        </li>
+      ))}
+    </ul>
+  )
 }

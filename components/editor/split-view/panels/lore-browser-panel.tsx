@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Loader2, User, MapPin, Sword, Calendar, Users, Lightbulb, Bug, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -32,24 +32,32 @@ export function LoreBrowserPanel() {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [selectedEntity, setSelectedEntity] = useState<CanonEntity | null>(null)
 
-  useEffect(() => {
-    loadEntities()
+  const fetchEntities = useCallback(() => {
+    return fetch('/api/entities')
+      .then(response => {
+        if (!response.ok) throw new Error('Failed to load entities')
+        return response.json()
+      })
+      .then(data => {
+        setEntities(data.entities || [])
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : 'Failed to load lore')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
+
+  // Initial state is already loading=true / error=null, so the mount fetch needs no reset
+  useEffect(() => {
+    fetchEntities()
+  }, [fetchEntities])
 
   const loadEntities = async () => {
     setIsLoading(true)
     setError(null)
-    
-    try {
-      const response = await fetch('/api/entities')
-      if (!response.ok) throw new Error('Failed to load entities')
-      const data = await response.json()
-      setEntities(data.entities || [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load lore')
-    } finally {
-      setIsLoading(false)
-    }
+    await fetchEntities()
   }
 
   const filteredEntities = entities.filter(entity => {

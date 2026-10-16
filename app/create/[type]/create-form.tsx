@@ -554,6 +554,7 @@ export function CreateEntityForm({ type, initialData, isEditMode = false }: Crea
                       <p className="text-parchment-muted/60 text-xs mt-1">This may take a moment</p>
                     </div>
                   ) : imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- dynamic AI-generated image URL with unknown dimensions/host
                     <img
                       src={imageUrl}
                       alt={name || 'Generated concept art'}

@@ -55,47 +55,48 @@ export default async function SpellsPage({ searchParams }: PageProps) {
 }
 
 async function SpellResults({ search, level, school, classKey }: { search?: string; level?: number; school?: string; classKey?: string }) {
+  let data: Awaited<ReturnType<typeof searchSpells>>
   try {
-    const data = await searchSpells({ search, level, school, class_key: classKey, limit: 60 })
-    if (data.results.length === 0) {
-      return <p className="text-parchment-muted text-center py-8">No spells found.</p>
-    }
-    return (
-      <div className="overflow-x-auto rounded-lg border border-gold/10">
-        <table className="w-full text-sm">
-          <thead className="bg-teal-rich/40 text-parchment-muted text-xs uppercase tracking-wider">
-            <tr>
-              <th className="px-3 py-2 text-left">Lvl</th>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-left">School</th>
-              <th className="px-3 py-2 text-left">Casting Time</th>
-              <th className="px-3 py-2 text-left">Range</th>
-              <th className="px-3 py-2 text-left">Tags</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gold/5">
-            {data.results.map((s) => (
-              <tr key={s.key} className="hover:bg-gold/5">
-                <td className="px-3 py-2 text-gold font-mono">{s.level === 0 ? 'C' : s.level}</td>
-                <td className="px-3 py-2">
-                  <Link href={`/library/spells/${s.key}`} className="text-parchment hover:text-gold font-medium">
-                    {s.name}
-                  </Link>
-                </td>
-                <td className="px-3 py-2 text-parchment-muted capitalize">{s.school?.name}</td>
-                <td className="px-3 py-2 text-parchment-muted">{s.casting_time}</td>
-                <td className="px-3 py-2 text-parchment-muted">{s.range}</td>
-                <td className="px-3 py-2 text-xs">
-                  {s.requires_concentration && <span className="text-amber-400 mr-1">CONC</span>}
-                  {s.ritual && <span className="text-purple-400">RIT</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    )
+    data = await searchSpells({ search, level, school, class_key: classKey, limit: 60 })
   } catch (e) {
     return <p className="text-red-400">Failed to load spells: {(e as Error).message}</p>
   }
+  if (data.results.length === 0) {
+    return <p className="text-parchment-muted text-center py-8">No spells found.</p>
+  }
+  return (
+    <div className="overflow-x-auto rounded-lg border border-gold/10">
+      <table className="w-full text-sm">
+        <thead className="bg-teal-rich/40 text-parchment-muted text-xs uppercase tracking-wider">
+          <tr>
+            <th className="px-3 py-2 text-left">Lvl</th>
+            <th className="px-3 py-2 text-left">Name</th>
+            <th className="px-3 py-2 text-left">School</th>
+            <th className="px-3 py-2 text-left">Casting Time</th>
+            <th className="px-3 py-2 text-left">Range</th>
+            <th className="px-3 py-2 text-left">Tags</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gold/5">
+          {data.results.map((s) => (
+            <tr key={s.key} className="hover:bg-gold/5">
+              <td className="px-3 py-2 text-gold font-mono">{s.level === 0 ? 'C' : s.level}</td>
+              <td className="px-3 py-2">
+                <Link href={`/library/spells/${s.key}`} className="text-parchment hover:text-gold font-medium">
+                  {s.name}
+                </Link>
+              </td>
+              <td className="px-3 py-2 text-parchment-muted capitalize">{s.school?.name}</td>
+              <td className="px-3 py-2 text-parchment-muted">{s.casting_time}</td>
+              <td className="px-3 py-2 text-parchment-muted">{s.range}</td>
+              <td className="px-3 py-2 text-xs">
+                {s.requires_concentration && <span className="text-amber-400 mr-1">CONC</span>}
+                {s.ritual && <span className="text-purple-400">RIT</span>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }

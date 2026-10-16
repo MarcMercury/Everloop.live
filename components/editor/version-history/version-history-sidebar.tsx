@@ -68,7 +68,6 @@ function formatTime(dateString: string): string {
 export function VersionHistorySidebar({
   storyId,
   chapterId,
-  currentWordCount,
   onClose,
   onRevisionSelect,
   onCompareSelect,
@@ -81,24 +80,36 @@ export function VersionHistorySidebar({
   const [compareMode, setCompareMode] = useState(false)
   const [compareRevision, setCompareRevision] = useState<StoryRevision | null>(null)
   
+  const [loadParams, setLoadParams] = useState({ storyId, chapterId })
+
+  // Enter the loading state during render when the story/chapter changes (initial state covers mount)
+  if (loadParams.storyId !== storyId || loadParams.chapterId !== chapterId) {
+    setLoadParams({ storyId, chapterId })
+    setIsLoading(true)
+    setError(null)
+  }
+
+  const fetchRevisions = useCallback(() => {
+    return getRevisions(storyId, chapterId, { limit: 50 }).then(result => {
+      if (result.success && result.revisions) {
+        setRevisions(result.revisions)
+      } else {
+        setError(result.error || 'Failed to load history')
+      }
+
+      setIsLoading(false)
+    })
+  }, [storyId, chapterId])
+
   const loadRevisions = useCallback(async () => {
     setIsLoading(true)
     setError(null)
-    
-    const result = await getRevisions(storyId, chapterId, { limit: 50 })
-    
-    if (result.success && result.revisions) {
-      setRevisions(result.revisions)
-    } else {
-      setError(result.error || 'Failed to load history')
-    }
-    
-    setIsLoading(false)
-  }, [storyId, chapterId])
+    await fetchRevisions()
+  }, [fetchRevisions])
   
   useEffect(() => {
-    loadRevisions()
-  }, [loadRevisions])
+    fetchRevisions()
+  }, [fetchRevisions])
   
   const handleRestore = async (revision: StoryRevision) => {
     if (!(await confirmDialog(`Restore to revision #${revision.revision_number}? This will replace your current content.`))) {

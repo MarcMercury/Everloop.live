@@ -33,7 +33,6 @@ const SCOPE_ICONS: Record<StoryScope, React.ReactNode> = {
 export function TemplatePicker({ scope, onSelect, onCancel, isLoading }: TemplatePickerProps) {
   const [templates, setTemplates] = useState<StoryTemplate[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplate | null>(null)
   const [previewTemplate, setPreviewTemplate] = useState<StoryTemplate | null>(null)
 
   useEffect(() => {

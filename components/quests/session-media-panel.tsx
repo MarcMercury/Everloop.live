@@ -48,7 +48,14 @@ interface FreesoundHit {
 export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }: Props) {
   const audio = useAudioPlayer(0.5)
   const mic = useMicSoundMeter()
-  const cam = useCameraCapture('environment')
+  const {
+    videoRef: camVideoRef,
+    start: camStart,
+    stop: camStop,
+    capture: camCapture,
+    active: camActive,
+    error: camError,
+  } = useCameraCapture('environment')
 
   const sceneMeta = (scene?.metadata as Record<string, unknown> | null | undefined) ?? null
   const media = (sceneMeta?.media as SceneMediaConfig | undefined) ?? {}
@@ -78,11 +85,7 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
   // Auto-arm mic Sound Meter if scene asks for it (still requires user gesture
   // — browsers block getUserMedia without one — so we surface a prompt instead).
   const autoArmRequested = media.auto_arm_sound_meter || soundMeterScene
-  const [showAutoArmPrompt, setShowAutoArmPrompt] = useState(false)
-  useEffect(() => {
-    if (autoArmRequested && !mic.listening) setShowAutoArmPrompt(true)
-    else setShowAutoArmPrompt(false)
-  }, [autoArmRequested, mic.listening, scene?.id])
+  const showAutoArmPrompt = !!autoArmRequested && !mic.listening
 
   // Wire mic threshold → onSoundMeterTick (sustained loud = 1 tick, 1s cooldown).
   useEffect(() => {
@@ -150,17 +153,19 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
     }
   }, [scene?.narration, media.narration_voice_preset])
 
+  const sessionId = session?.id
+  const sceneId = scene?.id
   const handleCapture = useCallback(async (caption: string | null) => {
     setCaptureError(null)
     setCaptureUploading(true)
     try {
-      const blob = await cam.capture()
+      const blob = await camCapture()
       if (!blob) throw new Error('Camera not ready')
       const form = new FormData()
       form.set('image', blob, `capture-${Date.now()}.jpg`)
       form.set('quest_id', questId)
-      if (session?.id) form.set('session_id', session.id)
-      if (scene?.id) form.set('scene_id', scene.id)
+      if (sessionId) form.set('session_id', sessionId)
+      if (sceneId) form.set('scene_id', sceneId)
       if (caption) form.set('caption', caption)
       const res = await fetch('/api/sessions/captures', { method: 'POST', body: form })
       const data = await res.json()
@@ -171,7 +176,7 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
     } finally {
       setCaptureUploading(false)
     }
-  }, [cam, questId, session?.id, scene?.id])
+  }, [camCapture, questId, sessionId, sceneId])
 
   return (
     <div className="rounded-lg border border-amber-500/20 bg-teal-rich/30 overflow-hidden">
@@ -193,7 +198,7 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
               <Mic className="w-3 h-3" /> Mic
             </span>
           )}
-          {cam.active && (
+          {camActive && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-500/20 inline-flex items-center gap-1">
               <Camera className="w-3 h-3" /> Cam
             </span>
@@ -375,16 +380,15 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
         {activeTab === 'cam' && (
           <div className="space-y-2">
             <div className="aspect-video bg-black/60 rounded overflow-hidden border border-gold/15">
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <video ref={cam.videoRef as React.RefObject<HTMLVideoElement>} playsInline muted className="w-full h-full object-cover" />
+              <video ref={camVideoRef as React.RefObject<HTMLVideoElement>} playsInline muted className="w-full h-full object-cover" />
             </div>
             <div className="flex gap-2">
-              {!cam.active ? (
+              {!camActive ? (
                 <>
-                  <button onClick={() => cam.start({ facingMode: 'environment' })} className="flex-1 text-[11px] px-2 py-1.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-200 inline-flex items-center justify-center gap-1">
+                  <button onClick={() => camStart({ facingMode: 'environment' })} className="flex-1 text-[11px] px-2 py-1.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-cyan-200 inline-flex items-center justify-center gap-1">
                     <Camera className="w-3 h-3" /> Open camera (rear)
                   </button>
-                  <button onClick={() => cam.start({ facingMode: 'user' })} className="text-[11px] px-2 py-1.5 rounded bg-teal-rich/50 border border-gold/10 text-parchment-muted">
+                  <button onClick={() => camStart({ facingMode: 'user' })} className="text-[11px] px-2 py-1.5 rounded bg-teal-rich/50 border border-gold/10 text-parchment-muted">
                     Front
                   </button>
                 </>
@@ -398,19 +402,19 @@ export function SessionMediaPanel({ scene, session, questId, onSoundMeterTick }:
                     {captureUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
                     Capture & save
                   </button>
-                  <button onClick={cam.stop} className="text-[11px] px-2 py-1.5 rounded bg-red-500/15 border border-red-500/30 text-red-300 inline-flex items-center gap-1">
+                  <button onClick={camStop} className="text-[11px] px-2 py-1.5 rounded bg-red-500/15 border border-red-500/30 text-red-300 inline-flex items-center gap-1">
                     <X className="w-3 h-3" /> Close
                   </button>
                 </>
               )}
             </div>
-            {cam.error && <p className="text-[10px] text-red-400">{cam.error}</p>}
+            {camError && <p className="text-[10px] text-red-400">{camError}</p>}
             {captureError && <p className="text-[10px] text-red-400">{captureError}</p>}
             {captures.length > 0 && (
               <div className="grid grid-cols-3 gap-1 mt-2">
                 {captures.map((c, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <a key={i} href={c.url} target="_blank" rel="noreferrer" className="block aspect-square rounded overflow-hidden border border-gold/10">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- blob/user capture URL with unknown dimensions */}
                     <img src={c.url} alt={c.caption ?? 'capture'} className="w-full h-full object-cover" />
                   </a>
                 ))}

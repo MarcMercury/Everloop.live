@@ -372,6 +372,7 @@ function CharacterRow({ character }: { character: Pick<PlayerCharacter, 'id' | '
     <div className="flex items-center justify-between p-4 rounded-lg bg-teal-rich/30 border border-gold/10 hover:border-gold/20 transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {character.portrait_url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- user-supplied portrait URL from arbitrary hosts
           <img src={character.portrait_url} alt={character.name} className="w-10 h-10 rounded-full border border-gold/20 object-cover" />
         ) : (
           <div className="w-10 h-10 rounded-full border border-gold/20 flex items-center justify-center" style={{ backgroundColor: character.theme_color || '#1a3a3a' }}>

@@ -17,9 +17,11 @@ export function RosterSearch({ initialQuery = '' }: { initialQuery?: string }) {
   const [isPending, startTransition] = useTransition()
 
   // Keep local state in sync if the URL changes externally (e.g. filter click).
-  useEffect(() => {
+  const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery)
+  if (initialQuery !== prevInitialQuery) {
+    setPrevInitialQuery(initialQuery)
     setValue(initialQuery)
-  }, [initialQuery])
+  }
 
   useEffect(() => {
     const handle = setTimeout(() => {

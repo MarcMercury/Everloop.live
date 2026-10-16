@@ -64,6 +64,9 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const isPanning = useRef(false)
+  // Mirrors isPanning for rendering (cursor / transition); the ref stays the
+  // source of truth inside pointer handlers.
+  const [isPanningView, setIsPanningView] = useState(false)
   const panStart = useRef({ x: 0, y: 0 })
   const panOrigin = useRef({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
@@ -131,6 +134,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
     if ((e.target as HTMLElement).dataset.pin) return
     if (e.button !== 0) return
     isPanning.current = true
+    setIsPanningView(true)
     panStart.current = { x: e.clientX, y: e.clientY }
     panOrigin.current = { ...pan }
     ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
@@ -147,6 +151,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
 
   const handleSurfacePointerUp = useCallback(() => {
     isPanning.current = false
+    setIsPanningView(false)
   }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -406,7 +411,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
       <div
         ref={containerRef}
         className="relative w-full h-[calc(100vh-160px)] overflow-hidden bg-charcoal"
-        style={{ cursor: isPanning.current ? 'grabbing' : 'grab', touchAction: 'none' }}
+        style={{ cursor: isPanningView ? 'grabbing' : 'grab', touchAction: 'none' }}
         onPointerDown={handleSurfacePointerDown}
         onPointerMove={handleSurfacePointerMove}
         onPointerUp={handleSurfacePointerUp}
@@ -428,7 +433,7 @@ export default function MapMakerClient({ region, staticLabels }: Props) {
           style={{
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
-            transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
+            transition: isPanningView ? 'none' : 'transform 0.15s ease-out',
           }}
           onPointerMove={handlePinPointerMove}
           onPointerUp={endPinDrag}

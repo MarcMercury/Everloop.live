@@ -47,7 +47,7 @@ export function UsersClient() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'frozen'>('all')
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [actioningId, setActioningId] = useState<string | null>(null)
   const [actionType, setActionType] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -56,28 +56,41 @@ export function UsersClient() {
   const [resetLink, setResetLink] = useState<string | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
   const [reconciling, setReconciling] = useState(false)
+  // Reference time for "last sign-in" relative labels, captured when the user list is fetched
+  const [now, setNow] = useState(() => Date.now())
+
+  // Fetches without the synchronous loading reset so it can run from an effect
+  // (initial state already has loading=true, error=null).
+  const loadUsers = useCallback(() => {
+    return fetch('/api/admin/users')
+      .then(async res => {
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Failed to fetch users')
+        }
+        return res.json()
+      })
+      .then(data => {
+        setUsers(data.users)
+        setNow(Date.now())
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : 'Failed to load users')
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [])
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     setError(null)
-    try {
-      const res = await fetch('/api/admin/users')
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to fetch users')
-      }
-      const data = await res.json()
-      setUsers(data.users)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load users')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+    await loadUsers()
+  }, [loadUsers])
 
   useEffect(() => {
-    fetchUsers()
-  }, [fetchUsers])
+    loadUsers()
+  }, [loadUsers])
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg)
@@ -237,7 +250,6 @@ export function UsersClient() {
 
   const relativeTime = (d: string | null) => {
     if (!d) return 'Never'
-    const now = Date.now()
     const then = new Date(d).getTime()
     const diff = now - then
     const mins = Math.floor(diff / 60000)
@@ -396,6 +408,7 @@ export function UsersClient() {
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gold/10 flex items-center justify-center text-gold text-xs font-bold shrink-0 overflow-hidden">
                             {user.avatar_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element -- user-supplied avatar URL from arbitrary hosts
                               <img src={user.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
                             ) : (
                               (user.username?.[0] || user.email[0]).toUpperCase()

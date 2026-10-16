@@ -4,11 +4,15 @@ import { useState, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { WORLD_LOCATIONS } from '@/lib/data/region-locations'
+import { assetUrl } from '@/lib/assets'
 
 export default function MapPageClient() {
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const isPanning = useRef(false)
+  // Mirrors isPanning for rendering (cursor / transition); the ref stays the
+  // source of truth inside pointer handlers.
+  const [isPanningView, setIsPanningView] = useState(false)
   const panStart = useRef({ x: 0, y: 0 })
   const panOrigin = useRef({ x: 0, y: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
@@ -16,6 +20,7 @@ export default function MapPageClient() {
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return
     isPanning.current = true
+    setIsPanningView(true)
     panStart.current = { x: e.clientX, y: e.clientY }
     panOrigin.current = { ...pan }
     ;(e.target as HTMLElement).setPointerCapture?.(e.pointerId)
@@ -30,6 +35,7 @@ export default function MapPageClient() {
 
   const handlePointerUp = useCallback(() => {
     isPanning.current = false
+    setIsPanningView(false)
   }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -62,7 +68,7 @@ export default function MapPageClient() {
     <div
       ref={containerRef}
       className="relative h-[calc(100vh-60px)] bg-charcoal overflow-hidden"
-      style={{ cursor: isPanning.current ? 'grabbing' : 'grab', touchAction: 'none' }}
+      style={{ cursor: isPanningView ? 'grabbing' : 'grab', touchAction: 'none' }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -74,11 +80,11 @@ export default function MapPageClient() {
         style={{
           transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           transformOrigin: 'center center',
-          transition: isPanning.current ? 'none' : 'transform 0.15s ease-out',
+          transition: isPanningView ? 'none' : 'transform 0.15s ease-out',
         }}
       >
         <Image
-          src="/everloop-map-base.png"
+          src={assetUrl('/everloop-map-base.png')}
           alt="The Everloop — Interactive World Map"
           fill
           className="object-contain"

@@ -90,6 +90,12 @@ const extractTextFromJSON = (json: JSONContent | null): string => {
   return ''
 }
 
+const countInitialWords = (initialContent: Json): number => {
+  if (!initialContent) return 0
+  const text = extractTextFromJSON(initialContent as JSONContent)
+  return text.trim().split(/\s+/).filter(w => w.length > 0).length
+}
+
 export function WriteClientWithStory({ 
   storyId, 
   initialTitle, 
@@ -105,7 +111,18 @@ export function WriteClientWithStory({
   const [title, setTitle] = useState(initialTitle || '')
   const [content, setContent] = useState<JSONContent | null>(initialContent as JSONContent | null)
   const [error, setError] = useState<string | null>(null)
-  const [wordCount, setWordCount] = useState(0)
+  const [initialWordCount, setInitialWordCount] = useState(() => countInitialWords(initialContent))
+  const [wordCount, setWordCount] = useState(initialWordCount)
+  // Re-derive the word count when the server sends new initial content
+  const [prevInitialContent, setPrevInitialContent] = useState(initialContent)
+  if (initialContent !== prevInitialContent) {
+    setPrevInitialContent(initialContent)
+    if (initialContent) {
+      const words = countInitialWords(initialContent)
+      setWordCount(words)
+      setInitialWordCount(words)
+    }
+  }
   const [hasChanges, setHasChanges] = useState(false)
   
   // Canon analysis state
@@ -116,6 +133,8 @@ export function WriteClientWithStory({
   const [showStreamModal, setShowStreamModal] = useState(false)
   const [showRosterSidebar, setShowRosterSidebar] = useState(false)
   const editorRef = useRef<Editor | null>(null)
+  // Editor instance for rendering (e.g. MobileToolbar); handlers use editorRef
+  const [editorInstance, setEditorInstance] = useState<Editor | null>(null)
   
   // Collaborators state
   const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false)
@@ -150,7 +169,6 @@ export function WriteClientWithStory({
   
   // Writing session state
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const initialWordCountRef = useRef(0)
   
   // Auto-save hook
   const handleAutoSave = useCallback(async () => {
@@ -218,20 +236,10 @@ export function WriteClientWithStory({
     return editorRef.current
   }, [])
   
-  // Calculate initial word count
-  useEffect(() => {
-    if (initialContent) {
-      const text = extractTextFromJSON(initialContent as JSONContent)
-      const words = text.trim().split(/\s+/).filter(w => w.length > 0).length
-      setWordCount(words)
-      initialWordCountRef.current = words
-    }
-  }, [initialContent])
-  
   // Start writing session on mount
   useEffect(() => {
     const initSession = async () => {
-      const result = await startWritingSession(storyId, null, initialWordCountRef.current)
+      const result = await startWritingSession(storyId, null, initialWordCount)
       if (result.data) {
         setSessionId(result.data.id)
       }
@@ -291,6 +299,7 @@ export function WriteClientWithStory({
   // Handle editor ready
   const handleEditorReady = (editor: Editor) => {
     editorRef.current = editor
+    setEditorInstance(editor)
   }
   
   // Insert prose from Stream of Consciousness
@@ -864,7 +873,7 @@ export function WriteClientWithStory({
         {/* Mobile Toolbar */}
         {isMobile && (
           <MobileToolbar
-            editor={editorRef.current}
+            editor={editorInstance}
             wordCount={wordCount}
             onToggleDistractionFree={() => setShowDistractionFree(true)}
             onToggleReadingMode={() => setShowReadingMode(true)}

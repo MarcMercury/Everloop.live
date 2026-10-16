@@ -1,7 +1,7 @@
 'use client'
 
 import { confirmDialog } from '@/components/ui/confirm-dialog'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   Plus, 
   GripVertical, 
@@ -50,7 +50,6 @@ export function ChapterSidebar({
   currentChapterId,
   onChapterSelect,
   onChapterCreate,
-  onClose,
   isCollapsed = false,
   onToggleCollapse,
 }: ChapterSidebarProps) {
@@ -61,23 +60,35 @@ export function ChapterSidebar({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadChapters()
+  const [loadedStoryId, setLoadedStoryId] = useState(storyId)
+
+  // Reset loading state during render when the story changes (initial state covers mount)
+  if (loadedStoryId !== storyId) {
+    setLoadedStoryId(storyId)
+    setIsLoading(true)
+    setError(null)
+  }
+
+  const fetchChapters = useCallback(() => {
+    return getChapters(storyId).then(result => {
+      if (result.success && result.chapters) {
+        setChapters(result.chapters)
+      } else {
+        setError(result.error || 'Failed to load chapters')
+      }
+
+      setIsLoading(false)
+    })
   }, [storyId])
+
+  useEffect(() => {
+    fetchChapters()
+  }, [fetchChapters])
 
   const loadChapters = async () => {
     setIsLoading(true)
     setError(null)
-    
-    const result = await getChapters(storyId)
-    
-    if (result.success && result.chapters) {
-      setChapters(result.chapters)
-    } else {
-      setError(result.error || 'Failed to load chapters')
-    }
-    
-    setIsLoading(false)
+    await fetchChapters()
   }
 
   const handleCreateChapter = async () => {

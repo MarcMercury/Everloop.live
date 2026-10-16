@@ -52,30 +52,6 @@ export function MapsVTT({ sceneId, bgUrl, initialState, isDM }: Props) {
   const [dirty, setDirty] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Load background image.
-  useEffect(() => {
-    const url = state.bgUrl
-    if (!url) {
-      bgImageRef.current = null
-      draw()
-      return
-    }
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      bgImageRef.current = img
-      draw()
-    }
-    img.src = url
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.bgUrl])
-
-  // Redraw on state change.
-  useEffect(() => {
-    draw()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, measure])
-
   const draw = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -169,6 +145,29 @@ export function MapsVTT({ sceneId, bgUrl, initialState, isDM }: Props) {
       ctx.restore()
     }
   }, [state, measure])
+
+  // Load background image.
+  useEffect(() => {
+    const url = state.bgUrl
+    if (!url) {
+      bgImageRef.current = null
+      draw()
+      return
+    }
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      bgImageRef.current = img
+      draw()
+    }
+    img.src = url
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.bgUrl])
+
+  // Redraw on state change (draw is recreated whenever state or measure change).
+  useEffect(() => {
+    draw()
+  }, [draw])
 
   // Resize canvas to container.
   useEffect(() => {

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createScene, updateScene } from '@/lib/actions/quests'
 import { MOOD_THEMES } from '@/types/quest'
-import type { Quest, QuestScene, QuestSceneUpdate, SceneType, SceneMood, ScenePacing } from '@/types/quest'
+import type { Quest, QuestScene, SceneType, SceneMood, ScenePacing } from '@/types/quest'
 import { ArrowLeft, Plus, Save, Map, Sparkles, GripVertical, Box, Printer, Image as ImageIcon, Loader2, Bell, Volume2, Dice5, EyeOff, Presentation, Link2, ChevronDown, ChevronUp, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,10 +52,9 @@ const SCENE_TYPES: { value: SceneType; label: string; icon: string }[] = [
   { value: 'event', label: 'Event', icon: '⚡' },
 ]
 
-export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }: Props) {
+export function SceneBuilderClient({ campaign, scenes: initialScenes }: Props) {
   const router = useRouter()
   const [scenes, setScenes] = useState(initialScenes)
-  const [editingScene, setEditingScene] = useState<string | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [loading, setLoading] = useState(false)
   const [generatingMapFor, setGeneratingMapFor] = useState<string | null>(null)
@@ -330,16 +329,6 @@ export function SceneBuilderClient({ campaign, scenes: initialScenes, entities }
       setShowNew(false)
     }
     setLoading(false)
-  }
-
-  async function handleUpdateScene(sceneId: string, updates: QuestSceneUpdate) {
-    setLoading(true)
-    const result = await updateScene(sceneId, campaign.id, updates)
-    if (result.success && result.scene) {
-      setScenes(prev => prev.map(s => s.id === sceneId ? result.scene! : s))
-    }
-    setLoading(false)
-    setEditingScene(null)
   }
 
   return (

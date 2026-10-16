@@ -35,21 +35,24 @@ export function WritingStatsCard({ className }: WritingStatsCardProps) {
   const [loading, setLoading] = useState(true)
   const [goalsDialogOpen, setGoalsDialogOpen] = useState(false)
 
-  const loadStats = useCallback(async () => {
-    try {
-      const [summaryData, dailyData, goalsData] = await Promise.all([
-        getWritingStatsSummary(30),
-        getDailyStats(30),
-        getWritingGoals(),
-      ])
-      setSummary(summaryData)
-      setDailyStats(dailyData)
-      setGoals(goalsData)
-    } catch (error) {
-      console.error('Error loading writing stats:', error)
-    } finally {
-      setLoading(false)
-    }
+  // State is only set from promise callbacks, so this is safe to call from an effect
+  const loadStats = useCallback(() => {
+    return Promise.all([
+      getWritingStatsSummary(30),
+      getDailyStats(30),
+      getWritingGoals(),
+    ])
+      .then(([summaryData, dailyData, goalsData]) => {
+        setSummary(summaryData)
+        setDailyStats(dailyData)
+        setGoals(goalsData)
+      })
+      .catch((error) => {
+        console.error('Error loading writing stats:', error)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [])
 
   useEffect(() => {
@@ -241,18 +244,21 @@ function GoalsDialog({
   onOpenChange: (open: boolean) => void
   onSave: () => void
 }) {
-  const [dailyGoal, setDailyGoal] = useState(goals?.daily_word_goal || 500)
-  const [weeklyGoal, setWeeklyGoal] = useState(goals?.weekly_word_goal || 3500)
-  const [monthlyGoal, setMonthlyGoal] = useState(goals?.monthly_word_goal || 15000)
+  const [dailyGoal, setDailyGoal] = useState(goals ? goals.daily_word_goal : 500)
+  const [weeklyGoal, setWeeklyGoal] = useState(goals ? goals.weekly_word_goal : 3500)
+  const [monthlyGoal, setMonthlyGoal] = useState(goals ? goals.monthly_word_goal : 15000)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
+  // Re-sync the form when fresh goals are loaded
+  const [prevGoals, setPrevGoals] = useState(goals)
+  if (goals !== prevGoals) {
+    setPrevGoals(goals)
     if (goals) {
       setDailyGoal(goals.daily_word_goal)
       setWeeklyGoal(goals.weekly_word_goal)
       setMonthlyGoal(goals.monthly_word_goal)
     }
-  }, [goals])
+  }
 
   const handleSave = async () => {
     setSaving(true)

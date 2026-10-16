@@ -39,13 +39,11 @@ export function ThreeDPreviewPanel({
   asCard = true,
 }: ThreeDPreviewPanelProps) {
   const [modelUrl, setModelUrl] = useState<string | null>(existingModelUrl || null)
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleComplete = (glbUrl: string, thumb: string) => {
     setModelUrl(glbUrl)
-    setThumbnailUrl(thumb)
     setError(null)
     onModelGenerated?.(glbUrl, thumb)
   }

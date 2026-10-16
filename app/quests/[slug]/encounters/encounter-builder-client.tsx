@@ -1,7 +1,7 @@
 'use client'
 
 import { toast } from '@/components/ui/sonner'
-import { useEffect, useMemo, useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -181,12 +181,6 @@ export function EncounterBuilderClient({ quest, players, session }: Props) {
       }
     })
   }
-
-  useEffect(() => {
-    // Auto-search on mount with empty (popular monsters).
-    runSearch()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const diffColor =
     assessment.difficulty === 'trivial' ? 'text-slate-400' :

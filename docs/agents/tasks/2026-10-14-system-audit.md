@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-14
 **Scope:** Full-repo health check (security, deps, types, lint, architecture, tooling, integrations)
-**Status:** Review complete — recommendations only, no code changed
+**Status:** Implemented (2026-10-14 → 2026-10-16) — see *Resolution* below. Open: apply migrations 20261014_001/002 to production.
 
 ---
 
@@ -57,3 +57,37 @@
 
 - The quest rename migration (`20260522000000_quest_rename.sql`) has been applied; code uses `quest_*` tables exclusively. Heuristics updated accordingly.
 - Most `rules-of-hooks` lint errors are false positives from naming, not real hook misuse.
+
+---
+
+## Resolution (2026-10-16)
+
+| Check | Audit | Now |
+|-------|-------|-----|
+| `tsc --noEmit` | ✅ with `@ts-nocheck` | ✅ no `@ts-nocheck` |
+| `eslint .` | ❌ 210 errors / 25 warnings | ✅ 0 problems |
+| `npm audit --omit=dev` | ❌ 45 vulns | ✅ 0 |
+| Tests | ❌ none | ✅ 37 (Vitest, `tests/unit/`) |
+| CI | ❌ none | ✅ `.github/workflows/ci.yml` (lint, typecheck, test, build, audit) |
+| `public/` | 460 MB in git | 3 MB; media in Supabase Storage `site-assets` |
+
+| Finding | Resolution |
+|---------|------------|
+| S1/S2 deps | Next 16, React 19, TipTap 3, Tailwind 4, AI SDK 7 |
+| S3 DM secrets | Migration `20261014_001` (column grants + `get_quest_dm_secrets()` RPC); print route DM-only; app falls back gracefully until applied |
+| S4 rate limits | Migration `20261014_002` + `lib/rate-limit.ts` (in-memory fallback until applied) |
+| S5–S9 | Shard reads admin-gated, `server-only` guards, security headers, Freesound auth, explicit DM asserts |
+| `as never` / `@ts-nocheck` | 146 → 4 casts; nocheck removed; `use*` server actions renamed |
+| Mega-components | Split into `character-forge-parts/`, `everloop-map-parts/`, `monster-quest-wizard-parts/` (entry files 316 / 30 / 121 lines) |
+| `alert()`/`confirm()` | sonner toasts + `confirmDialog()` |
+| SEO | `app/sitemap.ts`, `app/robots.ts` |
+| AI model IDs | `lib/ai/models.ts`; deprecated `gemini-2.0-*-exp` / `imagen-3.0` removed — Gemini image fallbacks now `gemini-3.1-flash-image`, `gemini-3-pro-image`, `gemini-2.5-flash-image` (verified against the production key's model list) |
+| Repo hygiene | Raw story dumps → `docs/lore/source-text/`, `.sql.bak` → `supabase/archive/`, `.env.example` complete; media moved to Storage (`lib/assets.ts`, legacy URLs 308-redirect); git history rewritten to drop old media blobs |
+
+### Pitfalls & decisions (implementation)
+
+- Supabase Storage on this project caps objects at 50 MB; `bellroot-vale.glb` (83 MB) was meshopt-compressed to 25 MB.
+- The region `.glb` models (`model3dPath`) are currently unused by the UI; kept in Storage.
+- `public/audio/library/*` referenced by `lib/media/sound-libraries.ts` never existed — placeholders, unchanged.
+- Four `react-hooks/set-state-in-effect` suppressions remain, all for post-mount `localStorage` restores (avoids hydration mismatch).
+- Migrations require a Supabase personal access token (`SUPABASE_ACCESS_TOKEN`) or DB password; the service-role key cannot run DDL. Apply with `node scripts/push-migration.mjs supabase/migrations/20261014_00{1,2}_*.sql`.

@@ -58,6 +58,10 @@ type InfoTarget =
   | { kind: 'damageType'; name: string }
   | { kind: 'rarity'; name: string }
 
+function rollDie(sides: number): number {
+  return Math.floor(Math.random() * sides) + 1
+}
+
 export function CharacterSheet({ character: initial }: { character: PlayerCharacter }) {
   const [char, setChar] = useState(initial)
   const [isPending, startTransition] = useTransition()
@@ -319,8 +323,8 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
 
   // Quick roll from sheet (D&D Beyond-style click-to-roll)
   function quickRoll(label: string, modifier: number, advantage?: 'advantage' | 'disadvantage') {
-    const roll1 = Math.floor(Math.random() * 20) + 1
-    const roll2 = Math.floor(Math.random() * 20) + 1
+    const roll1 = rollDie(20)
+    const roll2 = rollDie(20)
     let die: number
     let detail: string
 
@@ -348,7 +352,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
     const sides = parseInt(match[2])
     const bonus = parseInt(match[3] || '0')
     const rolls: number[] = []
-    for (let i = 0; i < count; i++) rolls.push(Math.floor(Math.random() * sides) + 1)
+    for (let i = 0; i < count; i++) rolls.push(rollDie(sides))
     const total = rolls.reduce((s, r) => s + r, 0) + bonus
     const detail = `${rolls.join('+')}${bonus ? ` + ${bonus}` : ''} = ${total}`
     setLastRoll({ label: `${label} damage`, result: total, detail })
@@ -429,6 +433,7 @@ export function CharacterSheet({ character: initial }: { character: PlayerCharac
               onClick={() => setShowPortraitGen(!showPortraitGen)}
             >
               {char.portrait_url ? (
+                // eslint-disable-next-line @next/next/no-img-element -- user-supplied portrait URL from arbitrary hosts
                 <img src={char.portrait_url} alt={char.name} className="w-full h-full object-cover" />
               ) : (
                 <div 
@@ -1884,7 +1889,7 @@ function StatBox({ icon, label, value, color }: { icon: React.ReactNode; label: 
 
 function SpellCard({ 
   name, school, description, damage, isCantrip, concentration, ritual, prepared, castingTime, range, duration, spellComponents,
-  spellLevel, concentrationActive, onQuickCast
+  concentrationActive, onQuickCast
 }: { 
   name: string; school: string; description: string; damage?: string; isCantrip?: boolean
   concentration?: boolean; ritual?: boolean; prepared?: boolean; castingTime?: string; range?: string; duration?: string; spellComponents?: string

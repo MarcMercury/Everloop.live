@@ -46,12 +46,21 @@ export function SessionZeroModal({ questId, questTitle, open, onOpenChange, onCo
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
+  const [loadParams, setLoadParams] = useState({ open, questId })
+
+  // Enter the loading state during render when the modal opens or the quest changes
+  if (loadParams.open !== open || loadParams.questId !== questId) {
+    setLoadParams({ open, questId })
+    if (open) {
+      setLoadingExisting(true)
+      setError(null)
+    }
+  }
+
   // Load existing answers (if any) when modal opens
   useEffect(() => {
     if (!open) return
     let cancelled = false
-    setLoadingExisting(true)
-    setError(null)
     getSessionZero(questId).then((res) => {
       if (cancelled) return
       if (res.success && res.data) {

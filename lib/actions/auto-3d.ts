@@ -12,7 +12,7 @@ function buildMeshyPrompt(
   name: string,
   type: string,
   description: string,
-  tagline?: string
+  _tagline?: string
 ): string {
   const typeHints: Record<string, string> = {
     character: 'fantasy character figurine, full body, detailed',

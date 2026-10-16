@@ -243,7 +243,7 @@ while ((_m = descRegex2.exec(_descRaw)) !== null) {
 }
 console.log(`📖 Loaded ${Object.keys(LOCATION_DESCRIPTIONS).length} unique location descriptions`)
 
-function generateLocationFlavor(locationName, regionName, regionDesc, category) {
+function generateLocationFlavor(locationName, regionName, regionDesc, _category) {
   if (LOCATION_DESCRIPTIONS[locationName]) {
     return LOCATION_DESCRIPTIONS[locationName]
   }
@@ -545,9 +545,16 @@ async function main() {
     // For entries that have a static local image (region maps), upload that instead
     if (entry?.staticImage) {
       const localPath = path.join(process.cwd(), 'public', entry.staticImage)
-      if (fs.existsSync(localPath)) {
+      // Region maps live in the site-assets bucket (lib/assets.ts), not public/.
+      const assetSrc = `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/public/site-assets${encodeURI(entry.staticImage)}`
+      {
         try {
-          const buffer = fs.readFileSync(localPath)
+          const buffer = fs.existsSync(localPath)
+            ? fs.readFileSync(localPath)
+            : await fetch(assetSrc).then(async (r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status} for ${assetSrc}`)
+                return Buffer.from(await r.arrayBuffer())
+              })
           const filePath = `archive/${loc.slug}.png`
           await supabase.storage
             .from('entity-images')

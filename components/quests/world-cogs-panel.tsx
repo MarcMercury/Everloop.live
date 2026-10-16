@@ -1,7 +1,7 @@
 'use client'
 
 import { confirmDialog } from '@/components/ui/confirm-dialog'
-import { useEffect, useState, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { Plus, Eye, EyeOff, Trash2, ChevronRight, Loader2, Cog } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,17 +35,29 @@ export function WorldCogsPanel({ questId }: { questId: string }) {
   const [nextBeat, setNextBeat] = useState('')
   const [visible, setVisible] = useState(false)
 
+  const [prevQuestId, setPrevQuestId] = useState(questId)
+
+  // Enter the loading state during render when the quest changes (initial state covers mount)
+  if (prevQuestId !== questId) {
+    setPrevQuestId(questId)
+    setLoading(true)
+  }
+
+  const fetchCogs = useCallback(() => {
+    return listWorldCogs(questId).then(res => {
+      if (res.success && res.data) setCogs(res.data as WorldCog[])
+      setLoading(false)
+    })
+  }, [questId])
+
   const load = async () => {
     setLoading(true)
-    const res = await listWorldCogs(questId)
-    if (res.success && res.data) setCogs(res.data as WorldCog[])
-    setLoading(false)
+    await fetchCogs()
   }
 
   useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questId])
+    fetchCogs()
+  }, [fetchCogs])
 
   const resetForm = () => {
     setFaction(''); setGoal(''); setTempo('steady'); setNextBeat(''); setVisible(false); setAdding(false)

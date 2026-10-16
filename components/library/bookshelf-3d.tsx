@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { X, BookOpen, Sparkles } from 'lucide-react'
+import { assetUrl } from '@/lib/assets'
 
 /* ───────── types ───────── */
 interface Story {
@@ -45,7 +46,7 @@ const LORE_BOOKS: LoreBook[] = [
     slug: 'four-loops-of-curiosities',
     href: '/stories/four-loops-of-curiosities',
     description: 'Private Entries from the Journal of Archael Viremont — Senior Archivist of the Luminous Fold, Fellow of the Seventh Circle, Honorary Member of the Cartographic Society of Iterants. Copied and Preserved in the Grand Archive of the Luminous Fold, One Hundred and Twelve Loops After Their Composition.',
-    coverImage: '/covers/four-loops-of-curiosities.png',
+    coverImage: assetUrl('/covers/four-loops-of-curiosities.png'),
   },
   {
     id: 'lore-known-wonders',
@@ -54,16 +55,16 @@ const LORE_BOOKS: LoreBook[] = [
     slug: 'known-wonders-of-the-everloop',
     href: '/stories/known-wonders-of-the-everloop',
     description: 'Being a Survey, Classification, and Personal Account of the Notable Regions, Peoples, and Phenomena of the Everloop. By Archael Viremont, Senior Archivist of the Luminous Fold, Fellow of the Seventh Circle, Honorary Member of the Cartographic Society of Iterants.',
-    coverImage: '/covers/known-wonders-of-the-everloop.png',
+    coverImage: assetUrl('/covers/known-wonders-of-the-everloop.png'),
   },
 ]
 
 /* ───────── cover map ───────── */
 const COVER_IMAGES: Record<string, string> = {
-  'the-bell-tree-and-the-broken-world': '/covers/story1-01.png',
-  'the-prince-and-the-drowning-city': '/covers/story2-01.png',
-  'the-ballad-of-rook-and-myx': '/covers/story3-01.png',
-  'in-service-of-the-veykar': '/covers/story4-01.png',
+  'the-bell-tree-and-the-broken-world': assetUrl('/covers/story1-01.png'),
+  'the-prince-and-the-drowning-city': assetUrl('/covers/story2-01.png'),
+  'the-ballad-of-rook-and-myx': assetUrl('/covers/story3-01.png'),
+  'in-service-of-the-veykar': assetUrl('/covers/story4-01.png'),
 }
 
 /* ───────── palette for book spines ───────── */
@@ -454,14 +455,14 @@ function useShelfBooks(
     const posRng = seededRandom(baseSeed + 31)
 
     // Place lore books first (near the center for prominence)
-    for (const lb of loreOnShelf) {
+    for (let i = 0; i < loreOnShelf.length; i++) {
       const centerArea = Math.floor(totalSlots * 0.4) + Math.floor(posRng() * Math.floor(totalSlots * 0.2))
       let pos = centerArea
       while (lorePositions.has(pos) || realPositions.has(pos)) pos++
       lorePositions.add(pos)
     }
 
-    for (const story of realOnShelf) {
+    for (let i = 0; i < realOnShelf.length; i++) {
       let pos: number
       do {
         pos = Math.floor(posRng() * totalSlots)

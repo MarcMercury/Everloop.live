@@ -462,6 +462,10 @@ function validateGraph(graph: QuestFlowGraph): {
 // Inner builder
 // ---------------------------------------------------------------------------
 
+function randomNodePosition(): { x: number; y: number } {
+  return { x: 100 + Math.random() * 360, y: 220 + Math.random() * 220 }
+}
+
 function BuilderInner({
   initial,
   onChange,
@@ -534,7 +538,7 @@ function BuilderInner({
       id,
       type: 'campaign',
       position:
-        position ?? { x: 100 + Math.random() * 360, y: 220 + Math.random() * 220 },
+        position ?? randomNodePosition(),
       data: { kind, label: `New ${meta.label}` },
     }
     setNodes(ns => [...ns, newNode])

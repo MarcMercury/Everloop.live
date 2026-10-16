@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useTransition } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -24,7 +24,6 @@ export default function LoginPage() {
 }
 
 function LoginPageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)

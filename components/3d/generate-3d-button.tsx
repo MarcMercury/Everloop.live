@@ -40,7 +40,6 @@ export function Generate3DButton({
 }: Generate3DButtonProps) {
   const [status, setStatus] = useState<MeshyTaskStatus | 'idle'>('idle')
   const [progress, setProgress] = useState(0)
-  const [taskId, setTaskId] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const stopPolling = useCallback(() => {
@@ -96,7 +95,6 @@ export function Generate3DButton({
     if (!input) return
     setStatus('PENDING')
     setProgress(0)
-    setTaskId(null)
 
     try {
       let endpoint: string
@@ -133,7 +131,6 @@ export function Generate3DButton({
       }
 
       const { taskId: newTaskId } = await res.json()
-      setTaskId(newTaskId)
       setStatus('IN_PROGRESS')
       pollTask(newTaskId, taskType)
     } catch (err) {

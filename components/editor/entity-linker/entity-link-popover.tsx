@@ -37,10 +37,8 @@ interface EntityLinkPopoverProps {
 }
 
 export function EntityLinkPopover({
-  editor,
   position,
   selectedText,
-  selectionRange,
   onClose,
   onLink,
 }: EntityLinkPopoverProps) {

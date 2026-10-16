@@ -1,3 +1,4 @@
+import { assetUrl } from '@/lib/assets'
 // ═══════════════════════════════════════════════════════════════
 // EVERLOOP REGION DATA
 // Shared between world map and region sub-map pages
@@ -46,8 +47,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'A dense, deeply wooded region crisscrossed by rivers and threaded with patches of true jungle. Towering redwood stands give way to humid jungle pockets, fern-choked ravines, and mixed woodland transitions. Rivers and tributaries braid through the floor of the Vale, feeding wetlands, marshes, and hidden villages tucked beneath the ancient canopy.',
     color: '#50c070',
-    mapImage: '/Maps/bellroot-vale.png',
-    model3dPath: '/Maps/3D/bellroot-vale.glb',
+    mapImage: assetUrl('/Maps/bellroot-vale.png'),
+    model3dPath: assetUrl('/Maps/3D/bellroot-vale.glb'),
     x: 28,
     z: -3,
     attunementRoles: { vaultkeeper: 'Rootwardens', dreamer: 'Weave-Tenders' },
@@ -65,8 +66,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'A land of unnatural order and perfection. Geometric land patterns and structured landscapes stretch across evenly spaced settlements. Subtle glowing energy lines trace through the terrain. Beautiful — but unnerving in its precision.',
     color: '#e0d890',
-    mapImage: '/Maps/luminous-expanse.png',
-    model3dPath: '/Maps/3D/luminous-expanse.glb',
+    mapImage: assetUrl('/Maps/luminous-expanse.png'),
+    model3dPath: assetUrl('/Maps/3D/luminous-expanse.glb'),
     x: 55,
     z: -40,
     attunementRoles: { vaultkeeper: 'Archivists', dreamer: 'Iterants' },
@@ -84,8 +85,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'A broken backbone of the world. A long, continuous mountain range of jagged, spine-like ridges spans the entire region. Multiple volcanoes feed branching lava flows that meet river systems in hundreds of steam plumes. Small settlements cling to valleys and geothermal edges.',
     color: '#cc5533',
-    mapImage: '/Maps/ashen-spine.png',
-    model3dPath: '/Maps/3D/ashen-spine.glb',
+    mapImage: assetUrl('/Maps/ashen-spine.png'),
+    model3dPath: assetUrl('/Maps/3D/ashen-spine.glb'),
     x: 0,
     z: -45,
     attunementRoles: { vaultkeeper: 'Ember Scribes', dreamer: 'Flamecallers' },
@@ -103,8 +104,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'The past being erased. Partially submerged land and broken coastlines reveal flooded ruins and sunken cities. Scattered islands dot waters that rise without clear source, encroaching ever further inland.',
     color: '#509088',
-    mapImage: '/Maps/drowned-reach.png',
-    model3dPath: '/Maps/3D/drowned-reach.glb',
+    mapImage: assetUrl('/Maps/drowned-reach.png'),
+    model3dPath: assetUrl('/Maps/3D/drowned-reach.glb'),
     x: 0,
     z: 45,
     attunementRoles: { vaultkeeper: 'Depthwardens', dreamer: 'Undertides' },
@@ -122,8 +123,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Reality folding on itself. A crystalline desert of reflective surfaces and fractured dunes stretches endlessly. Mirrored terrain patterns and strange light behavior create "echo" formations. Rare, reflective pools shimmer beneath an alien sky.',
     color: '#c0c8d0',
-    mapImage: '/Maps/glass-expanse.png',
-    model3dPath: '/Maps/3D/glass-expanse.glb',
+    mapImage: assetUrl('/Maps/glass-expanse.png'),
+    model3dPath: assetUrl('/Maps/3D/glass-expanse.glb'),
     x: 75,
     z: -5,
     attunementRoles: { vaultkeeper: 'Refractionists', dreamer: 'Lightbreakers' },
@@ -141,8 +142,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Beauty with subtle wrongness. A fractured coastline of islands, coves, and peninsulas gives way to inland forests and hills. Multiple port towns dot the irregular waterways. Fog banks and shifting weather lend an uneasy atmosphere to this unstable shore.',
     color: '#8888aa',
-    mapImage: '/Maps/virelay-coastlands.png',
-    model3dPath: '/Maps/3D/virelay-coastlands.glb',
+    mapImage: assetUrl('/Maps/virelay-coastlands.png'),
+    model3dPath: assetUrl('/Maps/3D/virelay-coastlands.glb'),
     x: -70,
     z: 30,
     attunementRoles: { vaultkeeper: 'Tidewatchers', dreamer: 'Current-Speakers' },
@@ -160,8 +161,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Sprawl without control. A chaotic mix of plains, forests, rocky mesas, and dry patches hosts the densest — yet most decentralized — civilization in the Everloop. Roads crisscross everywhere between camps and trade routes.',
     color: '#a08050',
-    mapImage: '/Maps/varnhalt-frontier.png',
-    model3dPath: '/Maps/3D/varnhalt-frontier.glb',
+    mapImage: assetUrl('/Maps/varnhalt-frontier.png'),
+    model3dPath: assetUrl('/Maps/3D/varnhalt-frontier.glb'),
     x: -80,
     z: -5,
     attunementRoles: { vaultkeeper: 'Ledger-Seers', dreamer: 'Chancebinders' },
@@ -179,8 +180,8 @@ export const REGIONS: EverloopRegion[] = [
     description:
       'Feels infinite and empty. Rolling grasslands and dry plains stretch beyond sight, crossed by sparse rivers and occasional rock formations. Faint migration paths and barely visible herds mark the wind-swept, open-sky expanse of endless movement.',
     color: '#d4a84b',
-    mapImage: '/Maps/deyune-steps.png',
-    model3dPath: '/Maps/3D/deyune-steps.glb',
+    mapImage: assetUrl('/Maps/deyune-steps.png'),
+    model3dPath: assetUrl('/Maps/3D/deyune-steps.glb'),
     x: -55,
     z: -35,
     attunementRoles: { vaultkeeper: 'Pathkeepers', dreamer: 'Windshapers' },

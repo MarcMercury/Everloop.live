@@ -191,7 +191,6 @@ export async function markAchievementsNotified(achievementIds: string[]): Promis
     return { success: true, error: null }
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await supabase
     .from('user_achievements')
     .update({ notified: true })
@@ -219,7 +218,6 @@ export async function getPendingAchievements(): Promise<{
     return { data: null, error: 'Not authenticated' }
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await supabase
     .from('user_achievements')
     .select(`

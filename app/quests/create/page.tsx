@@ -932,9 +932,11 @@ export default function CreateQuestPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                allCatSelected
-                                  ? deselectAllInCategory(category.items)
-                                  : selectAllInCategory(category.items)
+                                if (allCatSelected) {
+                                  deselectAllInCategory(category.items)
+                                } else {
+                                  selectAllInCategory(category.items)
+                                }
                               }}
                               className="text-xs px-2 py-1 rounded border border-gold/15 text-parchment-muted hover:text-gold hover:border-gold/30 transition-all"
                             >

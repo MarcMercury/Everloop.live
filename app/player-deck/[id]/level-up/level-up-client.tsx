@@ -96,14 +96,6 @@ export function LevelUpClient({ character }: Props) {
     })
   }
 
-  function StepBtn({ label, target, disabled }: { label: string; target: Step; disabled?: boolean }) {
-    return (
-      <Button onClick={() => setStep(target)} disabled={disabled} variant="outline" size="sm">
-        {label}
-      </Button>
-    )
-  }
-
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-5">
       <div>

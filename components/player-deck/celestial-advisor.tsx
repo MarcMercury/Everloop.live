@@ -83,9 +83,10 @@ export function CelestialAdvisor({
             try {
               const text = JSON.parse(line.slice(2))
               assistantContent += text
+              const content = assistantContent
               setMessages(prev => {
                 const updated = [...prev]
-                updated[updated.length - 1] = { role: 'assistant', content: assistantContent }
+                updated[updated.length - 1] = { role: 'assistant', content }
                 return updated
               })
             } catch {

@@ -93,11 +93,10 @@ export function EntityLinkPanel({ getText, getEditor }: EntityLinkPanelProps) {
   }, [getEditor])
   
   const applyAllLinks = useCallback(() => {
-    let count = 0
     for (const entity of detectedEntities) {
       const key = `${entity.entityId}-${entity.startIndex}`
       if (!appliedLinks.has(key)) {
-        if (applyLink(entity)) count++
+        applyLink(entity)
       }
     }
   }, [detectedEntities, appliedLinks, applyLink])

@@ -29,7 +29,6 @@ export function MobileToolbar({
   className,
 }: MobileToolbarProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const [showFormatting, setShowFormatting] = useState(false)
   const [keyboardVisible, setKeyboardVisible] = useState(false)
   
   // Detect mobile keyboard visibility

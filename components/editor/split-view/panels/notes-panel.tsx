@@ -27,6 +27,7 @@ export function NotesPanel({ storyId }: NotesPanelProps) {
       const saved = localStorage.getItem(storageKey)
       if (saved) {
         const parsed = JSON.parse(saved)
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from localStorage (external store) per storageKey after mount; reading during render would cause an SSR hydration mismatch
         setNotes(parsed.content || '')
         setLastSaved(parsed.savedAt ? new Date(parsed.savedAt) : null)
       }
@@ -34,17 +35,6 @@ export function NotesPanel({ storyId }: NotesPanelProps) {
       // Ignore localStorage errors
     }
   }, [storageKey])
-
-  // Autosave with debounce
-  useEffect(() => {
-    if (!hasChanges) return
-
-    const timer = setTimeout(() => {
-      saveNotes()
-    }, AUTOSAVE_DELAY)
-
-    return () => clearTimeout(timer)
-  }, [notes, hasChanges])
 
   const saveNotes = useCallback(() => {
     setIsSaving(true)
@@ -62,6 +52,17 @@ export function NotesPanel({ storyId }: NotesPanelProps) {
       setIsSaving(false)
     }
   }, [notes, storageKey])
+
+  // Autosave with debounce (saveNotes changes whenever notes change, restarting the timer)
+  useEffect(() => {
+    if (!hasChanges) return
+
+    const timer = setTimeout(() => {
+      saveNotes()
+    }, AUTOSAVE_DELAY)
+
+    return () => clearTimeout(timer)
+  }, [hasChanges, saveNotes])
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNotes(e.target.value)

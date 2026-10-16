@@ -4,6 +4,7 @@ import { useRef, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
+import { assetUrl } from '@/lib/assets'
 
 // Displacement vertex shader — uses depth map for height
 const TerrainVertex = `
@@ -51,16 +52,8 @@ const TerrainFragment = `
   }
 `
 
-function Terrain() {
-  const matRef = useRef<THREE.ShaderMaterial>(null)
-
-  // Load both textures
-  const [colorMap, depthMap] = useTexture([
-    '/everloop-map-base.png',
-    '/Maps/depth-map.png',
-  ])
-
-  // Configure textures
+// Configure textures once loaded (runs in drei's layout effect, before GPU upload)
+function configureTerrainTextures([colorMap, depthMap]: THREE.Texture[]) {
   colorMap.colorSpace = THREE.SRGBColorSpace
   colorMap.minFilter = THREE.LinearMipmapLinearFilter
   colorMap.magFilter = THREE.LinearFilter
@@ -68,6 +61,16 @@ function Terrain() {
 
   depthMap.minFilter = THREE.LinearMipmapLinearFilter
   depthMap.magFilter = THREE.LinearFilter
+}
+
+function Terrain() {
+  const matRef = useRef<THREE.ShaderMaterial>(null)
+
+  // Load both textures
+  const [colorMap, depthMap] = useTexture(
+    [assetUrl('/everloop-map-base.png'), assetUrl('/Maps/depth-map.png')],
+    configureTerrainTextures
+  )
 
   const uniforms = useMemo(() => ({
     uColorMap: { value: colorMap },

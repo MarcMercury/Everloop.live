@@ -48,7 +48,6 @@ function getUserColor(userId: string): string {
 
 export function PresenceIndicator({ storyId, currentUser }: PresenceIndicatorProps) {
   const [presences, setPresences] = useState<Presence[]>([])
-  const [isConnected, setIsConnected] = useState(false)
   
   useEffect(() => {
     const supabase = createClient()
@@ -88,20 +87,18 @@ export function PresenceIndicator({ storyId, currentUser }: PresenceIndicatorPro
     })
     
     // Handle join events
-    channel.on('presence', { event: 'join' }, ({ key, newPresences }) => {
+    channel.on('presence', { event: 'join' }, () => {
       // Presence state will be synced automatically
     })
     
     // Handle leave events
-    channel.on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+    channel.on('presence', { event: 'leave' }, () => {
       // Presence state will be synced automatically
     })
     
     // Subscribe and track presence
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        setIsConnected(true)
-        
         // Track our presence
         await channel.track({
           id: currentUser.id,
@@ -137,6 +134,7 @@ export function PresenceIndicator({ storyId, currentUser }: PresenceIndicatorPro
             title={presence.displayName || presence.username}
           >
             {presence.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- user-supplied avatar URL from arbitrary hosts
               <img 
                 src={presence.avatarUrl} 
                 alt="" 

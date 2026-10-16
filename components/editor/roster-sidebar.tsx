@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { fetchRoster, type RosterEntity } from '@/lib/actions/roster'
 import { weaveEntityIntoStory } from '@/lib/actions/weave'
@@ -45,35 +45,51 @@ export function RosterSidebar({
   getContextBefore,
 }: RosterSidebarProps) {
   const [entities, setEntities] = useState<RosterEntity[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  // Starts loading immediately when mounted open (the list is always empty on mount)
+  const [isLoading, setIsLoading] = useState(isOpen)
   const [isWeaving, setIsWeaving] = useState<string | null>(null) // Entity ID being woven
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [sourceFilter, setSourceFilter] = useState<'all' | 'global' | 'private'>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+
+  // Enter the loading state during render when the sidebar is opened with an empty roster
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen)
+    if (isOpen && entities.length === 0) {
+      setIsLoading(true)
+      setError(null)
+    }
+  }
+
+  const fetchRosterEntities = useCallback(() => {
+    return fetchRoster()
+      .then(result => {
+        if (result.success && result.entities) {
+          setEntities(result.entities)
+        } else {
+          setError(result.error || 'Failed to load roster')
+        }
+      })
+      .catch(err => {
+        setError(err instanceof Error ? err.message : 'Failed to load roster')
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
+  }, [])
 
   useEffect(() => {
     if (isOpen && entities.length === 0) {
-      loadRoster()
+      fetchRosterEntities()
     }
-  }, [isOpen])
+  }, [isOpen, entities.length, fetchRosterEntities])
 
   const loadRoster = async () => {
     setIsLoading(true)
     setError(null)
-    
-    try {
-      const result = await fetchRoster()
-      if (result.success && result.entities) {
-        setEntities(result.entities)
-      } else {
-        setError(result.error || 'Failed to load roster')
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load roster')
-    } finally {
-      setIsLoading(false)
-    }
+    await fetchRosterEntities()
   }
 
   const filteredEntities = entities.filter(entity => {
