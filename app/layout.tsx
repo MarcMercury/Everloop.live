@@ -5,6 +5,8 @@ import { Navbar } from '@/components/navbar'
 import { AuthProfileCheck } from '@/components/auth-profile-check'
 import { Toaster } from '@/components/ui/sonner'
 import { ConfirmDialogHost } from '@/components/ui/confirm-dialog'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -66,6 +68,8 @@ export default function RootLayout({
         <main className="flex-1">{children}</main>
         <Toaster />
         <ConfirmDialogHost />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

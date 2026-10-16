@@ -1,0 +1,21 @@
+{
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "eslint.useFlatConfig": true,
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "tailwindCSS.experimental.configFile": "app/globals.css",
+  "tailwindCSS.classFunctions": ["cn", "cva"],
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "public/Maps": true,
+    "docs/lore/source-text": true
+  },
+  "cSpell.words": [
+    "Everloop", "Fray", "Shards", "Anchors", "Archael", "Viremont", "Virelay", "Varnhalt",
+    "Veykar", "Myx", "Bellroot", "Drift", "Rogue", "Open5E", "Meshy", "ElevenLabs",
+    "Supabase", "pgvector", "tiptap", "xyflow", "sonner"
+  ]
+}

@@ -2,17 +2,45 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
+import { sendEmail, storyReviewEmail, type StoryReviewDecision } from '@/lib/email'
 import { runLoreAgent } from '@/lib/agents/lore-agent'
 import { AI_MODELS } from '@/lib/ai/models'
 
 /**
- * Trigger the Lore Agent in the background. We intentionally do NOT await
- * the result so canonization actions stay fast — the agent writes its own
- * audit row to lore_agent_runs.
+ * Trigger the Lore Agent after the response is sent so canonization actions
+ * stay fast. `after()` keeps the serverless function alive until the run
+ * finishes (a bare un-awaited promise can be frozen mid-run on Vercel). The
+ * agent writes its own audit row to lore_agent_runs.
  */
 function triggerLoreAgent(input: Parameters<typeof runLoreAgent>[0]) {
-  void runLoreAgent(input).catch((err) => {
-    console.error('[lore-agent] background run failed:', err)
+  after(async () => {
+    try {
+      await runLoreAgent(input)
+    } catch (err) {
+      console.error('[lore-agent] background run failed:', err)
+    }
+  })
+}
+
+/** Email the story's author about a review decision, after the response is sent. */
+function notifyAuthorOfReview(storyId: string, decision: StoryReviewDecision, feedback?: string | null) {
+  after(async () => {
+    const admin = createAdminClient()
+    if (!admin) return
+    const { data: story } = await admin
+      .from('stories')
+      .select('title, slug, author_id')
+      .eq('id', storyId)
+      .single()
+    if (!story?.author_id) return
+    const { data: authorData } = await admin.auth.admin.getUserById(story.author_id)
+    const email = authorData?.user?.email
+    if (!email) return
+    await sendEmail({
+      to: email,
+      ...storyReviewEmail({ decision, storyTitle: story.title, storySlug: story.slug, feedback }),
+    })
   })
 }
 
@@ -94,6 +122,7 @@ export async function approveStory(storyId: string, reviewNotes?: string) {
     triggerRef: storyId,
     triggerStoryId: storyId,
   })
+  notifyAuthorOfReview(storyId, 'approve', reviewNotes)
 
   return { success: true }
 }
@@ -135,6 +164,7 @@ export async function requestRevisionStory(storyId: string, feedback: string) {
 
   revalidatePath('/admin')
   revalidatePath('/dashboard')
+  notifyAuthorOfReview(storyId, 'request_revision', feedback.trim())
   return { success: true }
 }
 
@@ -172,6 +202,7 @@ export async function rejectStory(storyId: string, reason: string) {
   revalidatePath('/admin')
   revalidatePath('/stories')
   revalidatePath('/explore')
+  notifyAuthorOfReview(storyId, 'reject', reason)
   return { success: true }
 }
 

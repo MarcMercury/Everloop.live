@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+    "usernamehw.errorlens",
+    "supabase.vscode-supabase-extension",
+    "ms-ossdata.vscode-pgsql",
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "streetsidesoftware.code-spell-checker",
+    "mikestead.dotenv"
+  ]
+}

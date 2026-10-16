@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "id": "supabase_project_ref",
+      "type": "promptString",
+      "description": "Supabase project ref (Project Settings → General)"
+    }
+  ],
+  "servers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=${input:supabase_project_ref}&read_only=true"
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    }
+  }
+}

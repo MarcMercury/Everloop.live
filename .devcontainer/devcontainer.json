@@ -1,0 +1,30 @@
+{
+  "name": "Everloop",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "node",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Next.js", "onAutoForward": "notify" }
+  },
+  "postCreateCommand": "npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "yoavbls.pretty-ts-errors",
+        "usernamehw.errorlens",
+        "supabase.vscode-supabase-extension",
+        "ms-ossdata.vscode-pgsql",
+        "vitest.explorer",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
+        "streetsidesoftware.code-spell-checker",
+        "mikestead.dotenv"
+      ]
+    }
+  }
+}
