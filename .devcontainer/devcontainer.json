@@ -5,9 +5,14 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "remoteUser": "node",
-  "forwardPorts": [3000],
+  "forwardPorts": [
+    3000
+  ],
   "portsAttributes": {
-    "3000": { "label": "Next.js", "onAutoForward": "notify" }
+    "3000": {
+      "label": "Next.js",
+      "onAutoForward": "notify"
+    }
   },
   "postCreateCommand": "npm ci",
   "customizations": {
@@ -26,5 +31,6 @@
         "mikestead.dotenv"
       ]
     }
-  }
+  },
+  "postStartCommand": "npm run env:sync"
 }

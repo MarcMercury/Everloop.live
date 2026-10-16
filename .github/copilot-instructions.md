@@ -75,8 +75,14 @@ types/        # TypeScript interfaces (database.ts)
 ## 7. Commands
 
 ```bash
-npm run dev      # Start dev server
-npm run build    # Production build (validates types)
-npm run lint     # ESLint
-git push         # Deploy to Vercel
+npm run dev        # Start dev server
+npm run build      # Production build (validates types)
+npm run lint       # ESLint
+npm test           # Vitest unit tests
+git push           # Deploy to Vercel (main → production)
+
+# Supabase connection (auto-runs on Codespace start)
+npm run env:sync   # Pull .env.local from Vercel + verify Supabase, report pending migrations
+npm run db:check   # Verify Supabase connection only
+npm run db:migrate -- supabase/migrations/<file>.sql   # Apply via Management API (needs SUPABASE_ACCESS_TOKEN)
 ```

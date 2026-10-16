@@ -10,7 +10,10 @@
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > types/database.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "env:sync": "node scripts/sync-env.mjs",
+    "db:check": "node scripts/sync-env.mjs --check",
+    "db:migrate": "node scripts/push-migration.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.93",
